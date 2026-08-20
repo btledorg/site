@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BTLED | Logo</title>
+    <link rel="icon" type="image/png" href="/resources/image/logo/2.png" />
+    <link rel="stylesheet" href="/resources/css/landing.css" />
+    <style>
+      /* --- LOGO PAGE SPECIFIC STYLES --- */
+
+      .logo-banner h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #111;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      /* Colorful Stripe */
+      .color-stripe {
+        display: flex;
+        height: 20px;
+        width: 100%;
+      }
+
+      .color-stripe div {
+        flex: 1;
+      }
+
+      /* Main Content Container */
+      .logo-content {
+        background-color: #ffffff;
+        padding: 4rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      /* Section 1: Text and Logo Split */
+      .logo-intro-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+        margin-bottom: 5rem;
+      }
+
+      .logo-text h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+        color: #111;
+      }
+
+      .logo-text p {
+        font-size: 1rem;
+        line-height: 1.8;
+        color: #444;
+        margin-bottom: 1.5rem;
+        text-align: justify;
+      }
+
+      .logo-main-img {
+        display: flex;
+        justify-content: center;
+      }
+
+      .logo-main-img img {
+        max-width: 100%;
+        height: auto;
+        object-fit: contain;
+      }
+
+      /* Section 2: Video Embed */
+      .logo-video-section {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 5rem;
+      }
+
+      .video-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 800px;
+        padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+        height: 0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .video-wrapper iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+
+      /* Section 3: Logo Variants */
+      .logo-variants-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        align-items: center;
+        justify-items: center;
+      }
+
+      .logo-variants-grid img {
+        max-width: 100%;
+        height: auto;
+        object-fit: contain;
+        filter: drop-shadow(2px 4px 6px rgba(111, 110, 161, 0.755));
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .logo-intro-grid {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+          text-align: center;
+        }
+        .logo-text p {
+          text-align: left;
+        }
+        .logo-banner {
+          margin-top: 60px;
+          padding: 2rem 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <header class="navbar">
+      <div class="container nav-container">
+        <a href="index.html" class="brand">
+          <img
+            src="/resources/image/logo/2.png"
+            alt="University of Rizal System Logo"
+            class="brand-logo"
+          />
+          <div class="brand-text">
+            <span class="brand-title">BTLED ORGANIZATION</span>
+            <span class="brand-sub">Industrial Arts</span>
+          </div>
+        </a>
+
+        <button class="menu-toggle" aria-label="Toggle Navigation">
+          <span class="hamburger"></span>
+        </button>
+
+        <nav class="nav-menu">
+          <div class="dropdown">
+            <a href="#" class="nav-link">About Us ▾</a>
+            <ul class="dropdown-menu">
+              <li>
+                <a href="/about/#history-constitution"
+                  >History & Constitution</a
+                >
+              </li>
+              <li><a href="/about/#spotlight">Vision & Mission</a></li>
+              <li><a href="#">BTLED LOGO</a></li>
+              <li><a href="/about/#officers">Executive Officers</a></li>
+              <li>
+                <a href="/about/documents.html#achievements"
+                  >Achievements & Awards</a
+                >
+              </li>
+              <li>
+                <a href="/about/documents.html#permits"
+                  >Permits & Certifications</a
+                >
+              </li>
+            </ul>
+          </div>
+
+            <a href="/finance/budget.html" class="nav-link">Finance</a>
+            <a href="/events/event.html" class="nav-link">Events</a>
+            <a href="/events/forms.html" class="nav-link">Forms</a>
+
+          <div class="dropdown">
+            <a href="#" class="nav-link">Contact Us ▾</a>
+            <ul class="dropdown-menu">
+              <li><a href="mailto:email@example.com">Email</a></li>
+              <li><a href="tel:+63000000000">Phone</a></li>
+              <li><a href="index.html#location">Location</a></li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <!-- 1. Hero Section -->
+    <section
+      id="hero"
+      style="min-height: 40vh"
+      class="hero-bg animate-on-scroll"
+    >
+      <div
+        class="hero-image"
+        style="background-image: url(&quot;/resources/image/3.png&quot;)"
+      ></div>
+      <div class="hero-overlay"></div>
+
+      <div class="container hero-content-container">
+        <!-- Text Block on the Right -->
+        <div class="hero-text-block animate-on-scroll delay-1">
+          <h1 class="hero-title">
+            BTLED <span class="highlight-text">LOGO</span>
+          </h1>
+          <p class="hero-description">
+            Bravehearts Technology And Livelihood Education
+          </p>
+        </div>
+      </div>
+    </section>
+    <!-- Main Content Area -->
+    <main class="logo-content animate-on-scroll">
+      <!-- Section 1: Logo Description & Image -->
+      <div class="logo-intro-grid animate-on-scroll">
+        <div class="logo-text">
+          <h2>THE BTLED EMBLEM</h2>
+          <p>
+            The BTLED Organization prides itself on an emblem that reflects our
+            core foundations: Heart, Gear, Hand, and Book. What sets the BTLED
+            identity apart is its commitment to providing an inclusive,
+            technical, and resource-driven education for all aspiring Industrial
+            Arts educators.
+          </p>
+          <p>
+            True to its name, the Bravehearts Technology and Livelihood
+            Education logo serves as a badge of honor and technical excellence.
+            We are at the forefront of raising up leaders equipped with
+            technical integration, practical craftsmanship, and a steadfast
+            dedication to service. Together, we prepare the next generation of
+            educators to create positive and lasting change for the betterment
+            of the community.
+          </p>
+        </div>
+        <div class="logo-main-img animate-on-scroll delay-1">
+          <!-- Update src to your actual main logo path -->
+          <img src="/resources/image/logo/2.png" alt="BTLED Official Logo" />
+        </div>
+      </div>
+
+      <!-- Section 2: Logo Video Presentation -->
+      <div class="logo-video-section animate-on-scroll">
+        <div class="video-wrapper">
+          <!-- Replace this iframe src with your actual YouTube embed link -->
+          <iframe
+            src="/resources/video/BTLEEEEEED.mp4"
+            title="BTLED Logo Video"
+            allow="
+              accelerometer;
+              autoplay;
+              clipboard-write;
+              encrypted-media;
+              gyroscope;
+              picture-in-picture;
+            "
+            allowfullscreen
+          >
+          </iframe>
+        </div>
+      </div>
+
+      <!-- Section 3: Logo Variations -->
+      <div class="logo-variants-grid animate-on-scroll">
+        <img
+          src="/resources/image/logo/2.png"
+          class="animate-on-scroll delay-1"
+          alt="BTLED Logo Variant 1"
+        />
+        <img
+          src="/resources/image/logo/5.png"
+          class="animate-on-scroll delay-2"
+          alt="BTLED Logo Variant 2"
+        />
+        <img
+          src="/resources/image/logo/6.png"
+          class="animate-on-scroll delay-3"
+          alt="BTLED Logo Variant 3"
+        />
+        <img
+          src="/resources/image/logo/1.png"
+          class="animate-on-scroll delay-4"
+          alt="BTLED Lockup Horizontal"
+        />
+      </div>
+    </main>
+
+    <!-- Bottom Multi-colored stripe matching reference -->
+    <div class="color-stripe">
+      <div class="stripe-1"></div>
+      <div class="stripe-2"></div>
+      <div class="stripe-3"></div>
+      <div class="stripe-4"></div>
+      <div class="stripe-5"></div>
+      <div class="stripe-6"></div>
+      <div class="stripe-7"></div>
+      <div class="stripe-8"></div>
+      <div class="stripe-9"></div>
+      <div class="stripe-10"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer-grid">
+        <div>
+          <strong class="footer-brand">BTLED Organization</strong>
+          <p>
+            One of the official student-led organizations at URS Cainta Campus,
+            the BTLEd - IA Program Organization.
+          </p>
+        </div>
+        <div class="footer-right">
+          <p>&copy; 2026 BTLED. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Interactive Scripts -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const menuToggle = document.querySelector(".menu-toggle");
+        const navMenu = document.querySelector(".nav-menu");
+        const navLinks = document.querySelectorAll(".nav-link");
+        const dropdowns = document.querySelectorAll(".dropdown");
+
+        // Mobile menu toggle
+        menuToggle.addEventListener("click", () => {
+          menuToggle.classList.toggle("active");
+          navMenu.classList.toggle("active");
+        });
+
+        // Dropdown toggle functionality for mobile only
+        dropdowns.forEach((dropdown) => {
+          const toggleLink = dropdown.querySelector(".nav-link");
+
+          toggleLink.addEventListener("click", (e) => {
+            // Only prevent default and toggle on mobile
+            if (window.innerWidth <= 850) {
+              e.preventDefault();
+              dropdown.classList.toggle("active");
+            }
+          });
+        });
+
+        // Close menu when clicking sublinks (only on mobile)
+        const sublinks = document.querySelectorAll(".dropdown-menu a");
+        sublinks.forEach((link) => {
+          link.addEventListener("click", () => {
+            if (window.innerWidth <= 850) {
+              menuToggle.classList.remove("active");
+              navMenu.classList.remove("active");
+              dropdowns.forEach((d) => d.classList.remove("active"));
+            }
+          });
+        });
+
+        // Close menu when clicking outside (only on mobile)
+        document.addEventListener("click", (e) => {
+          if (window.innerWidth <= 850 && !e.target.closest(".navbar")) {
+            menuToggle.classList.remove("active");
+            navMenu.classList.remove("active");
+            dropdowns.forEach((d) => d.classList.remove("active"));
+          }
+        });
+
+        // Close menu on resize to desktop
+        window.addEventListener("resize", () => {
+          if (window.innerWidth > 850) {
+            menuToggle.classList.remove("active");
+            navMenu.classList.remove("active");
+            dropdowns.forEach((d) => d.classList.remove("active"));
+          }
+        });
+
+        // Scroll animations
+        const observerOptions = {
+          root: null,
+          rootMargin: "0px",
+          threshold: 0.15,
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              observer.unobserve(entry.target);
+            }
+          });
+        }, observerOptions);
+
+        const animatedElements =
+          document.querySelectorAll(".animate-on-scroll");
+        animatedElements.forEach((el) => observer.observe(el));
+      });
+    </script>
+  </body>
+</html>

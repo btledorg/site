@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { background-color: #f3f4f6; color: #111827; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+        .email-wrapper { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        
+        /* 100% Image Header Bar */
+        .header-bar { background-color: #1d4ed8; line-height: 0; }
+        .header-img { width: 100%; height: auto; max-height: 130px; object-fit: cover; display: block; border: none; }
+
+        /* Content Body (Clean White Theme) */
+        .content-body { padding: 35px 30px; font-size: 15px; line-height: 1.6; color: #374151; }
+        .greeting { font-weight: 700; font-size: 18px; color: #111827; margin-bottom: 15px; }
+        
+        /* Inline FoodPanda style image banner */
+        .banner-container { margin: 25px 0; text-align: center; }
+        .banner-img { width: 100%; max-height: 220px; object-fit: cover; filter: drop-shadow(2px 4px 6px black); display: block; }
+
+        /* Details list box */
+        .details-box { background: #f9fafb; border-left: 4px solid #1d4ed8; padding: 15px 20px; margin: 20px 0; border-radius: 0 6px 6px 0; font-size: 14px; color: #4b5563; }
+        
+        /* Footer disclaimers */
+        .footer { background-color: #f9fafb; padding: 25px 30px; font-size: 12px; color: #6b7280; text-align: left; border-top: 1px solid #e5e7eb; line-height: 1.5; }
+        .footer-highlight { color: #111827; font-weight: 600; }
+      </style>
+    </head>
+    <body>
+      <div style="padding: 10px;">
+        <div class="email-wrapper">
+          
+          <!-- 100% Image Header -->
+          <div class="header-bar">
+            <img src="/resources/image/banner/2.png" alt="BTLED Connect Header" class="header-img" />
+          </div>
+
+          <!-- Main Content Section (White Background) -->
+          <div class="content-body">
+            <div class="greeting">Dear ${firstName},</div>
+            
+            <p>${mainBodyText}</p>
+
+            <!-- FoodPanda style inline banner image -->
+            <div class="banner-container">
+              <img src="/resources/image/banner/3.png" alt="BTLED Connect Banner" class="banner-img" />
+            </div>
+
+            ${detailsHtml ? `<div class="details-box">${detailsHtml}</div>` : ''}
+
+            <p style="margin-top: 25px;">Please save this email as a reference for your activity.</p>
+            <p>We look forward to connecting with you again.</p>
+
+            <p style="margin-top: 30px; margin-bottom: 0;">
+              Yours Sincerely,<br>
+              <span style="color: #1d4ed8; font-weight: 700;">BTLED Connect Team</span>
+            </p>
+          </div>
+
+          <!-- Footer Information Disclaimer -->
+          <div class="footer">
+            This is a system-generated message, please do not reply to this email.<br><br>
+            <span class="footer-highlight">BTLED Organization</span><br>One of the official student-led organizations at URS Cainta Campus, the BTLEd - IA Program Organization.
+          </div>
+
+        </div>
+      </div>
+    </body>
+    </html>
