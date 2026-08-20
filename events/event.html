@@ -340,6 +340,24 @@
           }
         });
       });
+
+      document.addEventListener("DOMContentLoaded", function() {
+    // Find all links on the page
+    const links = document.querySelectorAll('a');
+    
+    links.forEach(link => {
+        let href = link.getAttribute('href');
+        if (href) {
+            // Replace 3 or more consecutive slashes with a single slash (except for https://)
+            // This turns things like /site////about/logo.html into /site/about/logo.html
+            let cleanedHref = href.replace(/([^:]\/)\/+/g, '$1');
+            
+            if (cleanedHref !== href) {
+                link.setAttribute('href', cleanedHref);
+            }
+        }
+    });
+});
     </script>
 
   </body>
