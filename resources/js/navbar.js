@@ -67,7 +67,13 @@
       return joinPath(ROOT, path);
     }
 
-    mount.innerHTML =
+    // IMPORTANT: use outerHTML, not innerHTML. innerHTML would leave the
+    // <header> nested one level deep inside <div id="site-navbar">, which
+    // breaks any CSS that depends on the header being a direct child of
+    // <body> (e.g. sticky/fixed positioning, "body > .navbar" selectors).
+    // outerHTML replaces the wrapper itself, so <header class="navbar">
+    // ends up in exactly the same place it was before.
+    var headerHtml =
       '<header class="navbar">' +
       '<div class="container nav-container">' +
       '<a href="' + link("index.html") + '" class="brand">' +
@@ -106,6 +112,8 @@
       "</nav>" +
       "</div>" +
       "</header>";
+
+    mount.outerHTML = headerHtml;
 
     initNavbarBehavior();
     cleanupStraySlashes();
