@@ -674,23 +674,27 @@ body {
 }
 
 @media (max-width: 850px) {
-    .menu-toggle { display: block; }
+    .menu-toggle { 
+        display: block; 
+    }
+    
     .nav-menu {
         position: absolute;
-        top: 71px; left: 0; width: 100%;
+        top: 71px; 
+        left: 0; 
+        width: 100%;
         background: var(--bg-page);
         border-bottom: 1px solid var(--border-dark);
         flex-direction: column;
         padding: 0;
-        visibility: hidden; opacity: 0;
-        transform: translateY(-10px);
-        transition: all 0.3s ease-in-out;
+        /* Replaced visibility with strict display toggling */
+        display: none; 
         max-height: calc(100vh - 71px);
         overflow-y: auto;
     }
+    
     .nav-menu.active {
-        visibility: visible; opacity: 1;
-        transform: translateY(0);
+        display: flex;
     }
     
     .nav-menu .dropdown {
@@ -708,11 +712,8 @@ body {
         border-bottom: 1px solid var(--border-light);
     }
     
-    .nav-menu .dropdown > a i {
-        margin-left: auto;
-    }
-    
     .nav-menu .dropdown-menu {
+        display: none; /* Submenu hidden by default */
         position: static;
         border: none;
         border-top: none;
@@ -724,32 +725,22 @@ body {
         padding: 0;
     }
     
+    .nav-menu .dropdown.active .dropdown-menu {
+        display: block; /* Show submenu when active */
+    }
+    
     .nav-menu .dropdown-menu li a {
-        padding: 0.75rem 1.5rem 0.75rem 2rem !important;
-        font-size: 0.75rem;
+        padding: 0.75rem 1.5rem 0.75rem 2.5rem !important;
+        font-size: 0.8rem;
         border: none;
     }
     
-    .nav-menu .dropdown-menu li a:hover {
-        border-left: none;
-    }
-    
-    .nav-menu a {
+    .nav-menu > a {
         margin: 0; 
         padding: 1rem 1.5rem;
         display: block; 
         width: 100%;
         border-bottom: 1px solid var(--border-light);
-    }
-    
-    .footer-grid {
-        flex-direction: column;
-        text-align: center;
-        gap: 1.5rem;
-    }
-    
-    .footer-contact {
-        justify-content: center;
     }
 }
 .auth-modal-overlay {
