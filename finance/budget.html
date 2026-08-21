@@ -251,36 +251,6 @@
     </div>
 
     <script src="../resources/js/login.js"></script>
-    <!-- Interactive Scripts for Mobile Nav Toggle -->
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const menuToggle = document.querySelector(".menu-toggle");
-        const navMenu = document.querySelector(".nav-menu");
-        const dropdowns = document.querySelectorAll(".dropdown");
 
-        menuToggle.addEventListener("click", () => {
-          menuToggle.classList.toggle("active");
-          navMenu.classList.toggle("active");
-        });
-
-        dropdowns.forEach((dropdown) => {
-          const toggleLink = dropdown.querySelector(".nav-link");
-          toggleLink.addEventListener("click", (e) => {
-            if (window.innerWidth <= 850) {
-              e.preventDefault();
-              dropdown.classList.toggle("active");
-            }
-          });
-        });
-
-        window.addEventListener("resize", () => {
-          if (window.innerWidth > 850) {
-            menuToggle.classList.remove("active");
-            navMenu.classList.remove("active");
-            dropdowns.forEach((d) => d.classList.remove("active"));
-          }
-        });
-      });
-    </script>
   </body>
 </html>
