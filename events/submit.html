@@ -255,56 +255,65 @@
     </div>
 
     <script src="../resources/js/login.js"></script>
-    <script>
-      (function () {
-        const BASE_URL =
-          "https://script.google.com/macros/s/AKfycbzRvZQoEZXf_du3jDCO7m5VjKy9K8R4mIE1tg6ojZeIdKwb9CvEpHcWhcg7n5DurVE/exec";
+<script>
+  (function () {
+    const BASE_URL =
+      "https://script.google.com/macros/s/AKfycbzRvZQoEZXf_du3jDCO7m5VjKy9K8R4mIE1tg6ojZeIdKwb9CvEpHcWhcg7n5DurVE/exec";
 
-        // Default page or fallback parameters
-        const params = new URLSearchParams({
-          page: "Submit",
-        });
+    // 1. Parse incoming parameters from the current URL (e.g., eventID, page)
+    const pageParams = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams();
 
-        try {
-          // 1. Read student JSON from localStorage
-          const rawData = localStorage.getItem("btled_student");
-          if (rawData) {
-            const student = JSON.parse(rawData);
+    // Copy all current URL parameters (e.g. eventID=..., page=Submit)
+    for (const [key, value] of pageParams.entries()) {
+      params.set(key, value);
+    }
 
-            // 2. Map JSON fields to URL query parameters
-            if (student["Student No."] || student.id)
-              params.set("studentid", student["Student No."] || student.id);
-            if (student["Surname"] || student.surname)
-              params.set("surname", student["Surname"] || student.surname);
-            if (student["First Name"] || student.name)
-              params.set("name", student["First Name"] || student.name);
-            if (student["Middle Name"])
-              params.set("middleName", student["Middle Name"]);
-            if (student["Program"]) params.set("program", student["Program"]);
-            if (student["Sex"]) params.set("sex", student["Sex"]);
-            if (student["Birthdate"])
-              params.set("birthdate", student["Birthdate"]);
-            if (student["Street / Barangay"])
-              params.set("street", student["Street / Barangay"]);
-            if (student["Municipality / City"])
-              params.set("municipality", student["Municipality / City"]);
-            if (student["Province"])
-              params.set("province", student["Province"]);
-            if (student["Contact Number"])
-              params.set("contact", student["Contact Number"]);
-            if (student["E-mail Address"])
-              params.set("email", student["E-mail Address"]);
-          }
-        } catch (err) {
-          console.error("Error reading btled_student from localStorage:", err);
-        }
+    // Set fallback default for 'page' if missing in URL
+    if (!params.has("page")) {
+      params.set("page", "Submit");
+    }
 
-        // 3. Set the constructed URL into the iframe
-        const iframe = document.getElementById("btled-frame");
-        if (iframe) {
-          iframe.src = `${BASE_URL}?${params.toString()}`;
-        }
-      })();
-    </script>
+    try {
+      // 2. Read student JSON from localStorage
+      const rawData = localStorage.getItem("btled_student");
+      if (rawData) {
+        const student = JSON.parse(rawData);
+
+        // 3. Map JSON fields to URL query parameters
+        if (student["Student No."] || student.id)
+          params.set("studentid", student["Student No."] || student.id);
+        if (student["Surname"] || student.surname)
+          params.set("surname", student["Surname"] || student.surname);
+        if (student["First Name"] || student.name)
+          params.set("name", student["First Name"] || student.name);
+        if (student["Middle Name"])
+          params.set("middleName", student["Middle Name"]);
+        if (student["Program"]) params.set("program", student["Program"]);
+        if (student["Sex"]) params.set("sex", student["Sex"]);
+        if (student["Birthdate"])
+          params.set("birthdate", student["Birthdate"]);
+        if (student["Street / Barangay"])
+          params.set("street", student["Street / Barangay"]);
+        if (student["Municipality / City"])
+          params.set("municipality", student["Municipality / City"]);
+        if (student["Province"])
+          params.set("province", student["Province"]);
+        if (student["Contact Number"])
+          params.set("contact", student["Contact Number"]);
+        if (student["E-mail Address"])
+          params.set("email", student["E-mail Address"]);
+      }
+    } catch (err) {
+      console.error("Error reading btled_student from localStorage:", err);
+    }
+
+    // 4. Set the constructed URL into the iframe
+    const iframe = document.getElementById("btled-frame");
+    if (iframe) {
+      iframe.src = `${BASE_URL}?${params.toString()}`;
+    }
+  })();
+</script>
   </body>
 </html>
