@@ -260,27 +260,33 @@
     const BASE_URL =
       "https://script.google.com/macros/s/AKfycbzRvZQoEZXf_du3jDCO7m5VjKy9K8R4mIE1tg6ojZeIdKwb9CvEpHcWhcg7n5DurVE/exec";
 
-    // 1. Parse incoming parameters from the current URL (e.g., eventID, page)
-    const pageParams = new URLSearchParams(window.location.search);
+    // 1. Read incoming parameters directly from the browser URL bar
+    const urlParams = new URLSearchParams(window.location.search);
     const params = new URLSearchParams();
 
-    // Copy all current URL parameters (e.g. eventID=..., page=Submit)
-    for (const [key, value] of pageParams.entries()) {
-      params.set(key, value);
+    // 2. Copy all parameters (e.g. eventID, formType) and clean up typos like '??'
+    for (const [key, value] of urlParams.entries()) {
+      const cleanKey = key.replace(/\?+$/, "").trim();
+      const cleanVal = value.replace(/\?+$/, "").trim();
+      if (cleanKey) params.set(cleanKey, cleanVal);
     }
 
-    // Set fallback default for 'page' if missing in URL
+    // Ensure both eventID and eventId are mapped
+    if (params.has("eventID") && !params.has("eventId")) {
+      params.set("eventId", params.get("eventID"));
+    }
+
+    // Set fallback page parameter
     if (!params.has("page")) {
       params.set("page", "Submit");
     }
 
     try {
-      // 2. Read student JSON from localStorage
+      // 3. Append student JSON details from localStorage
       const rawData = localStorage.getItem("btled_student");
       if (rawData) {
         const student = JSON.parse(rawData);
 
-        // 3. Map JSON fields to URL query parameters
         if (student["Student No."] || student.id)
           params.set("studentid", student["Student No."] || student.id);
         if (student["Surname"] || student.surname)
@@ -308,7 +314,7 @@
       console.error("Error reading btled_student from localStorage:", err);
     }
 
-    // 4. Set the constructed URL into the iframe
+    // 4. Inject complete parameters into the iframe src
     const iframe = document.getElementById("btled-frame");
     if (iframe) {
       iframe.src = `${BASE_URL}?${params.toString()}`;
