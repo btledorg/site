@@ -3,13 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BTLED | Events</title>
+    <title>BTLED | Workspace</title>
     <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
     <link rel="stylesheet" href="../resources/css/landing.css" />
     <link rel="stylesheet" href="../resources/css/form.css" />
     <style>
-      /* --- FULLSCREEN IFRAME SPECIFIC STYLES --- */
-
       * {
         box-sizing: border-box;
       }
@@ -22,11 +20,9 @@
         height: 100%;
       }
 
-      /* Assuming standard navbar height is ~70px or 80px. 
-         Adjust calc() if your navbar height is different. */
       .iframe-viewport {
         position: absolute;
-        top: 70px; /* Distance from top matching your navbar height */
+        top: 70px;
         left: 0;
         width: 100%;
         height: calc(100vh - 70px);
@@ -40,7 +36,6 @@
         display: block;
       }
 
-      /* Responsive adjustment for mobile screens if menu toggle drops down */
       @media (max-width: 850px) {
         .iframe-viewport {
           top: 70px;
@@ -49,25 +44,26 @@
       }
 
       .table-wrapper {
-        max-height: 500px; /* or whatever height fits your layout */
+        max-height: 500px;
         overflow-y: auto;
       }
     </style>
   </head>
   <body>
-    <header class="navbar" id="site-navbar" data-root="../"></header>
-    <script src="../resources/js/navbar.js"></script>
 
+  <header class="navbar" id="site-navbar" data-root="../"></header>
+  <script src="../resources/js/navbar.js"></script>
+
+    <!-- Fullscreen Iframe Container -->
     <div class="iframe-viewport">
       <iframe
-        id="btled-frame"
+        src="https://script.google.com/macros/s/AKfycbzRvZQoEZXf_du3jDCO7m5VjKy9K8R4mIE1tg6ojZeIdKwb9CvEpHcWhcg7n5DurVE/exec?page=Budget&term=2627&sem=1"
         class="fullscreen-frame"
         title="BTLED Workspace Frame"
       ></iframe>
     </div>
 
     <!-- LOGIN & REGISTRATION COMPONENT -->
-
     <div id="auth-modal-wrapper" class="auth-modal-overlay hidden">
       <!-- INTRO / IDENTIFY VIEW -->
       <div id="login-view" class="auth-modal-card">
@@ -255,56 +251,6 @@
     </div>
 
     <script src="../resources/js/login.js"></script>
-    <script>
-      (function () {
-        const BASE_URL =
-          "https://script.google.com/macros/s/AKfycbzRvZQoEZXf_du3jDCO7m5VjKy9K8R4mIE1tg6ojZeIdKwb9CvEpHcWhcg7n5DurVE/exec";
 
-        // Default page or fallback parameters
-        const params = new URLSearchParams({
-          page: "Submit",
-        });
-
-        try {
-          // 1. Read student JSON from localStorage
-          const rawData = localStorage.getItem("btled_student");
-          if (rawData) {
-            const student = JSON.parse(rawData);
-
-            // 2. Map JSON fields to URL query parameters
-            if (student["Student No."] || student.id)
-              params.set("studentid", student["Student No."] || student.id);
-            if (student["Surname"] || student.surname)
-              params.set("surname", student["Surname"] || student.surname);
-            if (student["First Name"] || student.name)
-              params.set("name", student["First Name"] || student.name);
-            if (student["Middle Name"])
-              params.set("middleName", student["Middle Name"]);
-            if (student["Program"]) params.set("program", student["Program"]);
-            if (student["Sex"]) params.set("sex", student["Sex"]);
-            if (student["Birthdate"])
-              params.set("birthdate", student["Birthdate"]);
-            if (student["Street / Barangay"])
-              params.set("street", student["Street / Barangay"]);
-            if (student["Municipality / City"])
-              params.set("municipality", student["Municipality / City"]);
-            if (student["Province"])
-              params.set("province", student["Province"]);
-            if (student["Contact Number"])
-              params.set("contact", student["Contact Number"]);
-            if (student["E-mail Address"])
-              params.set("email", student["E-mail Address"]);
-          }
-        } catch (err) {
-          console.error("Error reading btled_student from localStorage:", err);
-        }
-
-        // 3. Set the constructed URL into the iframe
-        const iframe = document.getElementById("btled-frame");
-        if (iframe) {
-          iframe.src = `${BASE_URL}?${params.toString()}`;
-        }
-      })();
-    </script>
   </body>
 </html>

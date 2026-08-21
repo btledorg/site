@@ -9,12 +9,13 @@
     <link rel="stylesheet" href="../resources/css/form.css" />
     <style>
       /* --- FULLSCREEN IFRAME SPECIFIC STYLES --- */
-      
+
       * {
         box-sizing: border-box;
       }
 
-      body, html {
+      body,
+      html {
         margin: 0;
         padding: 0;
         width: 100%;
@@ -48,26 +49,24 @@
       }
 
       .table-wrapper {
-  max-height: 500px; /* or whatever height fits your layout */
-  overflow-y: auto; 
-}
+        max-height: 500px; /* or whatever height fits your layout */
+        overflow-y: auto;
+      }
     </style>
   </head>
   <body>
+    <header class="navbar" id="site-navbar" data-root="../"></header>
+    <script src="../resources/js/navbar.js"></script>
 
-  <header class="navbar" id="site-navbar" data-root="../"></header>
-  <script src="../resources/js/navbar.js"></script>
-
-    <!-- Fullscreen Iframe Container -->
     <div class="iframe-viewport">
       <iframe
-        src="https://script.google.com/macros/s/AKfycbzRvZQoEZXf_du3jDCO7m5VjKy9K8R4mIE1tg6ojZeIdKwb9CvEpHcWhcg7n5DurVE/exec?page=Forms"
+        id="btled-frame"
         class="fullscreen-frame"
         title="BTLED Workspace Frame"
       ></iframe>
     </div>
 
-        <!-- LOGIN & REGISTRATION COMPONENT -->
+    <!-- LOGIN & REGISTRATION COMPONENT -->
 
     <div id="auth-modal-wrapper" class="auth-modal-overlay hidden">
       <!-- INTRO / IDENTIFY VIEW -->
@@ -256,6 +255,56 @@
     </div>
 
     <script src="../resources/js/login.js"></script>
+    <script>
+      (function () {
+        const BASE_URL =
+          "https://script.google.com/macros/s/AKfycbzRvZQoEZXf_du3jDCO7m5VjKy9K8R4mIE1tg6ojZeIdKwb9CvEpHcWhcg7n5DurVE/exec";
 
+        // Default page or fallback parameters
+        const params = new URLSearchParams({
+          page: "Form",
+        });
+
+        try {
+          // 1. Read student JSON from localStorage
+          const rawData = localStorage.getItem("btled_student");
+          if (rawData) {
+            const student = JSON.parse(rawData);
+
+            // 2. Map JSON fields to URL query parameters
+            if (student["Student No."] || student.id)
+              params.set("studentid", student["Student No."] || student.id);
+            if (student["Surname"] || student.surname)
+              params.set("surname", student["Surname"] || student.surname);
+            if (student["First Name"] || student.name)
+              params.set("name", student["First Name"] || student.name);
+            if (student["Middle Name"])
+              params.set("middleName", student["Middle Name"]);
+            if (student["Program"]) params.set("program", student["Program"]);
+            if (student["Sex"]) params.set("sex", student["Sex"]);
+            if (student["Birthdate"])
+              params.set("birthdate", student["Birthdate"]);
+            if (student["Street / Barangay"])
+              params.set("street", student["Street / Barangay"]);
+            if (student["Municipality / City"])
+              params.set("municipality", student["Municipality / City"]);
+            if (student["Province"])
+              params.set("province", student["Province"]);
+            if (student["Contact Number"])
+              params.set("contact", student["Contact Number"]);
+            if (student["E-mail Address"])
+              params.set("email", student["E-mail Address"]);
+          }
+        } catch (err) {
+          console.error("Error reading btled_student from localStorage:", err);
+        }
+
+        // 3. Set the constructed URL into the iframe
+        const iframe = document.getElementById("btled-frame");
+        if (iframe) {
+          iframe.src = `${BASE_URL}?${params.toString()}`;
+        }
+      })();
+    </script>
   </body>
 </html>
