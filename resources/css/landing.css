@@ -674,74 +674,38 @@ body {
 }
 
 @media (max-width: 850px) {
-    .menu-toggle { 
-        display: block; 
-    }
-    
-    .nav-menu {
-        position: absolute;
-        top: 71px; 
-        left: 0; 
-        width: 100%;
-        background: var(--bg-page);
-        border-bottom: 1px solid var(--border-dark);
-        flex-direction: column;
-        padding: 0;
-        /* Replaced visibility with strict display toggling */
-        display: none; 
-        max-height: calc(100vh - 71px);
-        overflow-y: auto;
-    }
-    
-    .nav-menu.active {
-        display: flex;
-    }
-    
-    .nav-menu .dropdown {
-        display: block;
-        width: 100%;
-    }
-    
-    .nav-menu .dropdown > a {
-        margin: 0 !important; 
-        padding: 1rem 1.5rem !important;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        border-bottom: 1px solid var(--border-light);
-    }
-    
-    .nav-menu .dropdown-menu {
-        display: none; /* Submenu hidden by default */
-        position: static;
-        border: none;
-        border-top: none;
-        box-shadow: none;
-        background: var(--bg-subtle);
-        min-width: auto;
-        margin: 0;
-        border-radius: 0;
-        padding: 0;
-    }
-    
-    .nav-menu .dropdown.active .dropdown-menu {
-        display: block; /* Show submenu when active */
-    }
-    
-    .nav-menu .dropdown-menu li a {
-        padding: 0.75rem 1.5rem 0.75rem 2.5rem !important;
-        font-size: 0.8rem;
-        border: none;
-    }
-    
-    .nav-menu > a {
-        margin: 0; 
-        padding: 1rem 1.5rem;
-        display: block; 
-        width: 100%;
-        border-bottom: 1px solid var(--border-light);
-    }
+  .menu-toggle {
+    display: block;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  .nav-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: var(--bg-page, #ffffff);
+    flex-direction: column;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+
+  .nav-menu.active {
+    display: flex;
+  }
+
+  .nav-menu .dropdown-menu {
+    display: none;
+    flex-direction: column;
+    background-color: var(--bg-subtle, #f9f9f9);
+  }
+
+  .nav-menu .dropdown.active .dropdown-menu {
+    display: flex;
+  }
 }
 .auth-modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
