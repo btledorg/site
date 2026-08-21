@@ -55,8 +55,8 @@
   </head>
   <body>
 
-  <header class="navbar" id="site-navbar" data-root="./"></header>
-  <script src="resources/js/navbar.js"></script>
+  <header class="navbar" id="site-navbar" data-root=" ../"></header>
+  <script src="../resources/js/navbar.js"></script>
 
     <!-- Fullscreen Iframe Container -->
     <div class="iframe-viewport">
@@ -257,54 +257,29 @@
 
     <script src="../resources/js/login.js"></script>
 
-    <!-- Interactive Scripts for Mobile Nav Toggle -->
+    <!-- Interactive Scripts -->
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const menuToggle = document.querySelector(".menu-toggle");
-        const navMenu = document.querySelector(".nav-menu");
-        const dropdowns = document.querySelectorAll(".dropdown");
-
-        menuToggle.addEventListener("click", () => {
-          menuToggle.classList.toggle("active");
-          navMenu.classList.toggle("active");
-        });
-
-        dropdowns.forEach((dropdown) => {
-          const toggleLink = dropdown.querySelector(".nav-link");
-          toggleLink.addEventListener("click", (e) => {
-            if (window.innerWidth <= 850) {
-              e.preventDefault();
-              dropdown.classList.toggle("active");
+        // Scroll animations
+        const observerOptions = {
+          root: null,
+          rootMargin: "0px",
+          threshold: 0.15,
+        };
+ 
+        const observer = new IntersectionObserver((entries, observer) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              observer.unobserve(entry.target);
             }
           });
-        });
-
-        window.addEventListener("resize", () => {
-          if (window.innerWidth > 850) {
-            menuToggle.classList.remove("active");
-            navMenu.classList.remove("active");
-            dropdowns.forEach((d) => d.classList.remove("active"));
-          }
-        });
+        }, observerOptions);
+ 
+        const animatedElements =
+          document.querySelectorAll(".animate-on-scroll");
+        animatedElements.forEach((el) => observer.observe(el));
       });
-
-      document.addEventListener("DOMContentLoaded", function() {
-    // Find all links on the page
-    const links = document.querySelectorAll('a');
-    
-    links.forEach(link => {
-        let href = link.getAttribute('href');
-        if (href) {
-            // Replace 3 or more consecutive slashes with a single slash (except for https://)
-            // This turns things like /site////about/logo.html into /site/about/logo.html
-            let cleanedHref = href.replace(/([^:]\/)\/+/g, '$1');
-            
-            if (cleanedHref !== href) {
-                link.setAttribute('href', cleanedHref);
-            }
-        }
-    });
-});
     </script>
 
   </body>
