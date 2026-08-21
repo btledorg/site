@@ -57,6 +57,7 @@
     <!-- Fullscreen Iframe Container -->
     <div class="iframe-viewport">
       <iframe
+        id="btled-frame"
         src="https://script.google.com/macros/s/AKfycbzRvZQoEZXf_du3jDCO7m5VjKy9K8R4mIE1tg6ojZeIdKwb9CvEpHcWhcg7n5DurVE/exec?page=Budget&term=2627&sem=1"
         class="fullscreen-frame"
         title="BTLED Workspace Frame"
@@ -221,7 +222,7 @@
               placeholder="email@example.com"
             />
           </div>
-          <!-- Add this hidden field inside your <form id="register-form"> -->
+          <!-- Honeypot anti-spam field -->
           <div style="display: none">
             <label>Leave this field empty</label>
             <input
@@ -252,5 +253,54 @@
 
     <script src="../resources/js/login.js"></script>
 
+    <!-- DYNAMIC IFRAME LOADER SCRIPT -->
+    <script>
+      (function updateIframeSource() {
+        const BASE_URL = "https://script.google.com/macros/s/AKfycbzRvZQoEZXf_du3jDCO7m5VjKy9K8R4mIE1tg6ojZeIdKwb9CvEpHcWhcg7n5DurVE/exec";
+        const iframe = document.getElementById("btled-frame");
+        if (!iframe) return;
+
+        // 1. Read existing parameters from browser URL
+        const pageParams = new URLSearchParams(window.location.search);
+        const params = new URLSearchParams();
+
+        // Copy and clean all URL params (e.g. page, eventID, term, sem)
+        for (const [key, value] of pageParams.entries()) {
+          const cleanKey = key.replace(/[^a-zA-Z0-9_-]/g, "").trim();
+          const cleanVal = value.replace(/\?+$/, "").trim();
+          if (cleanKey) params.set(cleanKey, cleanVal);
+        }
+
+        // Default fallbacks if not present in URL
+        if (!params.has("page")) params.set("page", "Budget");
+        if (!params.has("term")) params.set("term", "2627");
+        if (!params.has("sem")) params.set("sem", "1");
+
+        // 2. Append student details from localStorage
+        try {
+          const rawData = localStorage.getItem("btled_student");
+          if (rawData) {
+            const student = JSON.parse(rawData);
+            if (student["Student No."] || student.id) params.set("studentid", student["Student No."] || student.id);
+            if (student["Surname"] || student.surname) params.set("surname", student["Surname"] || student.surname);
+            if (student["First Name"] || student.name) params.set("name", student["First Name"] || student.name);
+            if (student["Middle Name"]) params.set("middleName", student["Middle Name"]);
+            if (student["Program"]) params.set("program", student["Program"]);
+            if (student["Sex"]) params.set("sex", student["Sex"]);
+            if (student["Birthdate"]) params.set("birthdate", student["Birthdate"]);
+            if (student["Street / Barangay"]) params.set("street", student["Street / Barangay"]);
+            if (student["Municipality / City"]) params.set("municipality", student["Municipality / City"]);
+            if (student["Province"]) params.set("province", student["Province"]);
+            if (student["Contact Number"]) params.set("contact", student["Contact Number"]);
+            if (student["E-mail Address"]) params.set("email", student["E-mail Address"]);
+          }
+        } catch (e) {
+          console.warn("Could not load btled_student from localStorage:", e);
+        }
+
+        // 3. Update iframe src
+        iframe.src = `${BASE_URL}?${params.toString()}`;
+      })();
+    </script>
   </body>
 </html>
