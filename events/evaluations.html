@@ -301,6 +301,20 @@
 
     </div>
 
+    <footer class="footer">
+      <div class="container footer-grid">
+        <div class="footer-brand-section">
+          <strong class="footer-brand">BTLED Organization</strong>
+          <p style="color: #999">
+            One of the official student-led organizations at URS Cainta Campus,
+            the BTLEd - IA Program Organization.
+          </p>
+        </div>
+        <div class="footer-right">
+          <p>&copy; 2026 BTLED. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
     <script>
       function getParam(key) {
         try { const urlParams = new URLSearchParams(window.location.search); if (urlParams.has(key)) return urlParams.get(key); } catch (e) {}
@@ -400,6 +414,7 @@
           document.getElementById("field-callout").value = "";
         }
       }
+
 
       function getLocalStorageData() {
         try {
@@ -509,9 +524,12 @@
             document.getElementById("eval-info-title").textContent = title.toUpperCase();
             document.getElementById("eval-info-datevenue").textContent = `${dateStr} @ ${venue}`;
 
-            if (eventData.poster) {
+if (eventData.poster) {
               document.getElementById("header-bg-poster").style.backgroundImage = `url('${eventData.poster}')`;
-              document.documentElement.style.setProperty("--accent-blue", "#1d4ed8");
+              
+              // Extract colors from poster and apply them
+              const colors = await extractColorsFromImage(eventData.poster);
+              applyColorScheme(colors);
             }
 
           } else {
@@ -599,6 +617,87 @@
         document.getElementById("btn-ended-back").addEventListener("click", goBackFn);
         document.getElementById("btn-submitted-back").addEventListener("click", goBackFn);
       });
+
+            // ---- Dynamic color scheme from poster (enforces darker tones) ----
+      function extractColorsFromImage(url) {
+        return new Promise((resolve) => {
+          try {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+              try {
+                const size = 50;
+                const canvas = document.createElement("canvas");
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, size, size);
+                const data = ctx.getImageData(0, 0, size, size).data;
+                const buckets = {};
+
+                for (let i = 0; i < data.length; i += 4) {
+                  const r = data[i],
+                    g = data[i + 1],
+                    b = data[i + 2],
+                    a = data[i + 3];
+                  if (a < 200) continue;
+
+                  const brightness = (r + g + b) / 3;
+
+                  // RESTRICTED BRIGHTNESS FOR DARKER COLORS:
+                  // Keeps colors darker than 130 average brightness while avoiding pitch black (< 25)
+                  if (brightness < 25 || brightness > 130) continue;
+
+                  const key = `${Math.round(r / 24)}-${Math.round(g / 24)}-${Math.round(b / 24)}`;
+                  if (!buckets[key])
+                    buckets[key] = { r: 0, g: 0, b: 0, count: 0 };
+                  buckets[key].r += r;
+                  buckets[key].g += g;
+                  buckets[key].b += b;
+                  buckets[key].count++;
+                }
+
+                const sorted = Object.values(buckets).sort(
+                  (a, b) => b.count - a.count,
+                );
+                const colors = sorted.slice(0, 3).map((c) => {
+                  const r = Math.round(c.r / c.count),
+                    g = Math.round(c.g / c.count),
+                    b = Math.round(c.b / c.count);
+                  return `rgb(${r}, ${g}, ${b})`;
+                });
+
+                resolve(colors.length ? colors : null);
+              } catch (err) {
+                console.warn(
+                  "Color extraction blocked (likely CORS on poster host):",
+                  err.message,
+                );
+                resolve(null);
+              }
+            };
+            img.onerror = () => resolve(null);
+            img.src = url;
+          } catch (err) {
+            resolve(null);
+          }
+        });
+      }
+
+      function applyColorScheme(colors) {
+        if (!colors || colors.length < 2) return; // keep default theme
+        document.documentElement.style.setProperty("--accent-blue", colors[0]);
+        document.documentElement.style.setProperty(
+          "--accent-yellow",
+          colors[1],
+        );
+        if (colors[2])
+          document.documentElement.style.setProperty(
+            "--border-dark",
+            colors[2],
+          );
+      }
+
     </script>
   </body>
 </html>
