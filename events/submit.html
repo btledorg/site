@@ -3,323 +3,1587 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BTLED | Events</title>
+    <title>BTLED | Event Form</title>
     <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
     <link rel="stylesheet" href="../resources/css/landing.css" />
-    <link rel="stylesheet" href="../resources/css/form.css" />
+
     <style>
-      /* --- FULLSCREEN IFRAME SPECIFIC STYLES --- */
+      :root {
+        --bg-page: #ffffff;
+        --bg-subtle: #f9f9f9;
+        --border-dark: #111111;
+        --border-light: #e2e2dc;
+        --text-main: #111111;
+        --text-muted: #666666;
+        --accent-yellow: #4462ba;
+        --accent-yellow-hover: #305abb;
+        --accent-blue: #1d4ed8;
+        --radius-sm: 4px;
+        --scheme-transition:
+          background-color 0.6s ease, border-color 0.6s ease, color 0.6s ease;
+      }
 
       * {
         box-sizing: border-box;
-      }
-
-      body,
-      html {
         margin: 0;
         padding: 0;
-        width: 100%;
-        height: 100%;
       }
 
-      /* Assuming standard navbar height is ~70px or 80px. 
-         Adjust calc() if your navbar height is different. */
-      .iframe-viewport {
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        background-color: var(--bg-subtle);
+        color: var(--text-main);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .form-wrapper {
+        max-width: 720px;
+        margin: 40px auto;
+        background: var(--bg-page);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-light);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+        overflow: hidden;
+      }
+
+      /* ---- Global Loading Overlay w/ Animated Logo ---- */
+      #global-loader {
+        position: fixed;
+        inset: 0;
+        background: #ffffff;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+        transition:
+          opacity 0.4s ease,
+          visibility 0.4s ease;
+      }
+      #global-loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .loader-logo-wrap {
+        position: relative;
+        width: 84px;
+        height: 84px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .loader-logo-ring {
         position: absolute;
-        top: 70px; /* Distance from top matching your navbar height */
+        inset: 0;
+        border: 3px solid var(--border-light);
+        border-top-color: var(--accent-blue);
+        border-radius: 50%;
+        animation: loader-spin 0.9s linear infinite;
+      }
+      .loader-logo-img {
+        width: 46px;
+        height: 46px;
+        object-fit: contain;
+        animation: loader-pulse 1.6s ease-in-out infinite;
+      }
+      @keyframes loader-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes loader-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(0.9);
+          opacity: 0.7;
+        }
+      }
+      .loader-text {
+        font-size: 0.8rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-muted);
+      }
+
+      /* ---- Registration Closed Overlay ---- */
+      #ended-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(17, 17, 17, 0.92);
+        z-index: 9998;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      #ended-overlay.show {
+        display: flex;
+      }
+      .ended-card {
+        background: #ffffff;
+        border-radius: var(--radius-sm);
+        padding: 2.5rem 2rem;
+        text-align: center;
+        max-width: 420px;
+        width: 100%;
+      }
+      .ended-card .ended-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+      .ended-card h2 {
+        font-size: 1.3rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-bottom: 0.75rem;
+      }
+      .ended-card p {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+      }
+
+      /* ---- Header with Blurred Background Poster & Overlay ---- */
+      .form-header {
+        position: relative;
+        color: #ffffff;
+        padding: 3rem 2rem;
+        text-align: center;
+        overflow: hidden;
+        background: var(--border-dark);
+        border-bottom: 5px solid var(--accent-yellow);
+        transition: var(--scheme-transition);
+      }
+      .header-bg-poster {
+        position: absolute;
+        top: -10%;
+        left: -10%;
+        width: 120%;
+        height: 120%;
+        background-size: cover;
+        background-position: center;
+        filter: blur(12px) brightness(0.55);
+        z-index: 0;
+        transform: scale(1.1);
+        transition: background-image 0.5s ease;
+      }
+      .header-overlay {
+        position: absolute;
+        top: 0;
         left: 0;
         width: 100%;
-        height: calc(100vh - 70px);
+        height: 100%;
+        background: linear-gradient(
+          180deg,
+          rgba(17, 24, 39, 0.45) 0%,
+          rgba(17, 24, 39, 0.88) 100%
+        );
+        z-index: 1;
+      }
+      .header-content {
+        position: relative;
+        z-index: 2;
+      }
+
+      .form-type-badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--accent-blue);
+        background: var(--bg-page);
+        padding: 4px 12px;
+        border-radius: 20px;
+        margin-bottom: 1rem;
+        transition: var(--scheme-transition);
+      }
+      .form-header h1 {
+        font-size: 2rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        line-height: 1.1;
+        margin-bottom: 1rem;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      }
+      .header-meta {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #eaeaea;
+      }
+      .header-meta-item {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.75rem;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 20px;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      .skeleton {
+        animation: pulse 1.5s ease-in-out infinite;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: transparent !important;
+        border-radius: var(--radius-sm);
+        user-select: none;
+      }
+      .skeleton-dark {
+        background-color: var(--border-light);
+        color: transparent !important;
+      }
+
+      /* ---- Wizard Navigation ---- */
+      .step-indicator {
+        display: flex;
+        background: var(--bg-subtle);
+        border-bottom: 1px solid var(--border-light);
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+      .step-item {
+        flex: 1;
+        min-width: 100px;
+        padding: 1rem 0.5rem;
+        text-align: center;
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        border-bottom: 3px solid transparent;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        cursor: default;
+        transition: var(--scheme-transition);
+      }
+      .step-item.active {
+        color: var(--accent-blue);
+        border-bottom-color: var(--accent-blue);
+        background: var(--bg-page);
+      }
+
+      .step-content {
+        padding: 2rem;
+        display: none;
+        opacity: 0;
+        transform: translateY(10px);
+        transition:
+          opacity 0.3s ease,
+          transform 0.3s ease;
+      }
+      .step-content.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+      }
+      .full-width {
+        grid-column: span 2;
+      }
+
+      .form-group label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-main);
+        margin-bottom: 0.4rem;
+      }
+      .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        color: var(--text-main);
+        background: var(--bg-page);
+        transition: border-color 0.2s;
+      }
+      .form-control:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+      }
+      .form-control[readonly] {
+        background: var(--bg-subtle);
+        color: var(--text-muted);
+        border-color: var(--border-light);
+      }
+
+      .section-title {
+        font-size: 1.2rem;
+        font-weight: 900;
+        margin-bottom: 1.2rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--border-light);
+        color: var(--text-main);
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+        transition: var(--scheme-transition);
+      }
+
+      .terms-box {
+        background: var(--bg-subtle);
+        border: 1px solid var(--border-light);
+        padding: 1.5rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        max-height: 240px;
+        overflow-y: auto;
+        margin-bottom: 1.5rem;
+      }
+
+      .collab-card {
+        background: var(--bg-page);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+      }
+      .collab-card-title {
+        font-size: 0.9rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--text-main);
+        margin-bottom: 1rem;
+      }
+      .collab-card-note {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+      .member1-upload-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.6rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--accent-blue);
+      }
+
+      .canva-container {
+        position: relative;
+        width: 100%;
+        height: 0;
+        padding-top: 100%;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        background: var(--bg-subtle);
+      }
+      .canva-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         border: none;
       }
 
-      .fullscreen-frame {
-        width: 100%;
-        height: 100%;
-        border: 0;
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin: 1.5rem 0;
+      }
+
+      .button-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 0.8rem 1.5rem;
+        font-size: 0.85rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-radius: var(--radius-sm);
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+      }
+      .btn-primary {
+        background: var(--accent-blue);
+        color: #ffffff;
+      }
+      .btn-primary:hover {
+        filter: brightness(0.85);
+      }
+      .btn-secondary {
+        background: var(--bg-subtle);
+        color: var(--text-main);
+        border: 1px solid var(--border-light);
+      }
+      .btn-secondary:hover {
+        background: #e2e2dc;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* ---- Upload Dropzone ---- */
+      .dropzone {
+        border: 2px dashed var(--border-light);
+        border-radius: var(--radius-sm);
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        background: var(--bg-subtle);
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+      }
+      .dropzone.dragover {
+        border-color: var(--accent-blue);
+        background: #eef2ff;
+      }
+      .dropzone .dz-icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+      }
+      .dropzone .dz-title {
+        font-weight: 800;
+        font-size: 0.9rem;
+        margin-bottom: 0.35rem;
+      }
+      .dropzone .dz-sub {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+      .file-preview {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 1rem;
+        padding: 0.85rem 1rem;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        background: var(--bg-page);
+        font-size: 0.85rem;
+      }
+      .file-preview.show {
+        display: flex;
+      }
+      .file-preview .fp-remove {
+        color: #dc2626;
+        font-weight: 800;
+        cursor: pointer;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+      }
+
+      .question-block {
+        margin-bottom: 1.5rem;
+      }
+      .question-block label {
         display: block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-main);
+      }
+      .question-block textarea.form-control {
+        min-height: 90px;
+        resize: vertical;
       }
 
-      /* Responsive adjustment for mobile screens if menu toggle drops down */
-      @media (max-width: 850px) {
-        .iframe-viewport {
-          top: 70px;
-          height: calc(100vh - 70px);
+      /* ---- Registration Closed & Already Submitted Overlays ---- */
+      #ended-overlay, #submitted-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(17, 17, 17, 0.92);
+        z-index: 9998;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      #ended-overlay.show, #submitted-overlay.show {
+        display: flex;
+      }
+
+      @media (max-width: 600px) {
+        .form-grid {
+          grid-template-columns: 1fr;
         }
-      }
-
-      .table-wrapper {
-        max-height: 500px; /* or whatever height fits your layout */
-        overflow-y: auto;
+        .full-width {
+          grid-column: span 1;
+        }
+        .form-header h1 {
+          font-size: 1.5rem;
+        }
+        .step-item {
+          min-width: auto;
+          font-size: 0.68rem;
+          padding: 1rem 0.25rem;
+        }
       }
     </style>
   </head>
   <body>
+    <div id="global-loader">
+      <div class="loader-logo-wrap">
+        <div class="loader-logo-ring"></div>
+        <img
+          src="../resources/image/logo/2.png"
+          alt="BTLED"
+          class="loader-logo-img"
+        />
+      </div>
+      <div class="loader-text">Loading Event</div>
+    </div>
+
+    <div id="ended-overlay">
+      <div class="ended-card">
+        <div class="ended-icon">🔒</div>
+        <h2>Registration Closed</h2>
+        <p>
+          This form is no longer accepting submissions. Please check the events
+          page for other open opportunities.
+        </p>
+        <button id="btn-ended-back" class="btn btn-primary">Go Back</button>
+      </div>
+    </div>
+
+    <div id="submitted-overlay">
+      <div class="ended-card">
+        <div class="ended-icon">✅</div>
+        <h2>Already Submitted</h2>
+        <p>
+          You have already submitted an entry for this event. Multiple submissions are not permitted.
+        </p>
+        <button id="btn-submitted-back" class="btn btn-primary">Go Back</button>
+      </div>
+    </div>
+
     <header class="navbar" id="site-navbar" data-root="../"></header>
     <script src="../resources/js/navbar.js"></script>
 
-    <div class="iframe-viewport">
-      <iframe
-        id="btled-frame"
-        class="fullscreen-frame"
-        title="BTLED Workspace Frame"
-      ></iframe>
-    </div>
-
-    <!-- LOGIN & REGISTRATION COMPONENT -->
-
-    <div id="auth-modal-wrapper" class="auth-modal-overlay hidden">
-      <!-- INTRO / IDENTIFY VIEW -->
-      <div id="login-view" class="auth-modal-card">
-        <h3>Let's Get to Know You</h3>
-        <p>
-          This is a public site open to everyone — no login required. We'd just
-          like to know who's visiting so we can personalize your experience.
-          Enter your details below to continue.
-        </p>
-
-        <!-- Top Alert Box -->
-        <div id="login-alert" class="auth-alert"></div>
-
-        <form id="login-form">
-          <div class="auth-form-group">
-            <label>Student No.</label>
-            <input
-              type="text"
-              id="login-id"
-              required
-              placeholder="e.g., C2025-00001"
-            />
+    <div class="form-wrapper">
+      <div class="form-header">
+        <div id="header-bg-poster" class="header-bg-poster"></div>
+        <div class="header-overlay"></div>
+        <div class="header-content">
+          <span class="form-type-badge skeleton" id="form-type-display"
+            >Official Form</span
+          >
+          <h1 id="event-title-display" class="skeleton">‎</h1>
+          <div class="header-meta">
+            <span class="header-meta-item skeleton" id="meta-venue-wrap"
+              ><span id="meta-venue">‎ </span></span
+            >
+            <span class="header-meta-item skeleton" id="meta-date-wrap"
+              ><span id="meta-date">‎ </span></span
+            >
           </div>
-          <div class="auth-form-group">
-            <label>First Name</label>
-            <input
-              type="text"
-              id="login-name"
-              required
-              placeholder="First Name"
-            />
-          </div>
-          <div class="auth-form-group">
-            <label>Surname</label>
-            <input
-              type="text"
-              id="login-surname"
-              required
-              placeholder="Surname"
-            />
-          </div>
-
-          <div class="auth-checkbox-row">
-            <input type="checkbox" id="login-privacy" required />
-            <label for="login-privacy">
-              I have read and agree that my personal information will be
-              collected and processed in accordance with the
-              <strong>Data Privacy Act of 2012 (RA 10173)</strong>.
-            </label>
-          </div>
-
-          <button type="submit" id="login-btn" class="auth-btn">
-            <span class="btn-text">Continue</span>
-            <span class="spinner"></span>
-          </button>
-        </form>
+        </div>
       </div>
 
-      <!-- REGISTRATION VIEW -->
-      <div id="register-view" class="auth-modal-card hidden">
-        <h3>Just a Few More Details</h3>
-        <p>
-          We don't have your information on file yet. Fill out the short form
-          below so we can get to know you better.
-        </p>
+      <div class="step-indicator" id="step-indicator"></div>
 
-        <!-- Top Alert Box -->
-        <div id="reg-alert" class="auth-alert"></div>
+      <!-- STEP 1: PRIVACY -->
+      <div id="step-page-1" class="step-content active">
+        <h3 class="section-title">Data Privacy Agreement</h3>
+        <div class="terms-box">
+          <p><strong>BTLED Organization Data Privacy Notice:</strong></p>
+          <br />
+          <p>
+            In compliance with Republic Act No. 10173 (Data Privacy Act of
+            2012), all personal data collected through this form shall be
+            processed exclusively by the BTLED Student Organization at URS
+            Cainta Campus for event registration, attendance tracking, and
+            evaluation purposes.
+          </p>
+          <br />
+          <p>
+            Your details will remain strictly confidential and will not be
+            shared with third parties without your prior explicit consent.
+          </p>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="terms-check" />
+          <label for="terms-check"
+            >I have read, understood, and accept the Data Privacy Policy.</label
+          >
+        </div>
+        <div class="button-row">
+          <div></div>
+          <button id="btn-to-step2" class="btn btn-primary" disabled>
+            Accept & Proceed
+          </button>
+        </div>
+      </div>
 
-        <form id="register-form">
-          <div class="auth-row">
-            <div class="auth-form-group">
-              <label>Student No.</label
-              ><input type="text" id="reg-id" required readonly />
-            </div>
-            <div class="auth-form-group">
-              <label>Program</label
-              ><input
-                type="text"
-                id="reg-program"
-                required
-                placeholder="e.g., BTLED-IA"
-              />
-            </div>
+      <!-- STEP 2: USER DATA -->
+      <div id="step-page-2" class="step-content">
+        <h3 class="section-title">Submitter Information</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Last Name <span style="color: red">*</span></label>
+            <input
+              type="text"
+              id="field-surname"
+              class="form-control"
+              required
+            />
           </div>
-          <div class="auth-row">
-            <div class="auth-form-group">
-              <label>Surname</label
-              ><input type="text" id="reg-surname" required readonly />
-            </div>
-            <div class="auth-form-group">
-              <label>First Name</label
-              ><input type="text" id="reg-name" required readonly />
-            </div>
+          <div class="form-group">
+            <label>First Name <span style="color: red">*</span></label>
+            <input
+              type="text"
+              id="field-firstname"
+              class="form-control"
+              required
+            />
           </div>
-          <div class="auth-row">
-            <div class="auth-form-group">
-              <label>Middle Name</label
-              ><input type="text" id="reg-mname" placeholder="Middle Name" />
-            </div>
-            <div class="auth-form-group">
-              <label>Sex</label>
-              <select id="reg-sex" required>
-                <option value="">Select Sex</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label>Middle Name</label>
+            <input type="text" id="field-middlename" class="form-control" />
           </div>
-          <div class="auth-form-group">
-            <label>Birthdate</label
-            ><input type="date" id="reg-bdate" required />
+          <div class="form-group">
+            <label>Student ID <span style="color: red">*</span></label>
+            <input
+              type="text"
+              id="field-studentid"
+              class="form-control"
+              required
+            />
           </div>
-          <div class="auth-row">
-            <div class="auth-form-group">
-              <label>Street / Barangay</label
-              ><input
-                type="text"
-                id="reg-street"
-                required
-                placeholder="Street / Brgy"
-              />
-            </div>
-            <div class="auth-form-group">
-              <label>Municipality / City</label
-              ><input type="text" id="reg-city" required placeholder="City" />
-            </div>
+          <div class="form-group">
+            <label>Program <span style="color: red">*</span></label>
+            <input
+              type="text"
+              id="field-program"
+              class="form-control"
+              required
+            />
           </div>
-          <div class="auth-row">
-            <div class="auth-form-group">
-              <label>Province</label
-              ><input
-                type="text"
-                id="reg-prov"
-                required
-                placeholder="Province"
-              />
-            </div>
-            <div class="auth-form-group">
-              <label>Contact Number</label
-              ><input
-                type="tel"
-                id="reg-contact"
-                required
-                placeholder="09XXXXXXXXX"
-              />
-            </div>
+          <div class="form-group">
+            <label>Phone Number <span style="color: red">*</span></label>
+            <input type="text" id="field-phone" class="form-control" required />
           </div>
-          <div class="auth-form-group">
-            <label>E-mail Address</label
-            ><input
+          <div class="form-group full-width">
+            <label>Email Address <span style="color: red">*</span></label>
+            <input
               type="email"
-              id="reg-email"
+              id="field-email"
+              class="form-control"
               required
-              placeholder="email@example.com"
             />
           </div>
-          <!-- Add this hidden field inside your <form id="register-form"> -->
-          <div style="display: none">
-            <label>Leave this field empty</label>
+          <div class="form-group full-width">
+            <label>Address <span style="color: red">*</span></label>
             <input
               type="text"
-              id="reg-website"
-              name="website"
-              value=""
-              autocomplete="off"
+              id="field-address"
+              class="form-control"
+              required
             />
           </div>
-
-          <div class="auth-checkbox-row">
-            <input type="checkbox" id="reg-privacy" required />
-            <label for="reg-privacy">
-              I have read and agree that my personal information will be
-              collected and processed in accordance with the
-              <strong>Data Privacy Act of 2012 (RA 10173)</strong>.
-            </label>
+          <div class="form-group full-width">
+            <label
+              >Facebook Profile Link <span style="color: red">*</span></label
+            >
+            <input
+              type="url"
+              id="field-fblink"
+              class="form-control"
+              placeholder="https://facebook.com/your.username"
+              required
+            />
           </div>
-
-          <button type="submit" id="reg-btn" class="auth-btn">
-            <span class="btn-text">Save My Details</span>
-            <span class="spinner"></span>
+        </div>
+        <div class="button-row">
+          <button class="btn btn-secondary" onclick="prevStep('2')">
+            Back
           </button>
-        </form>
+          <button
+            class="btn btn-primary"
+            onclick="nextStep('2', validateStep2)"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP: COLLABORATORS -->
+      <div id="step-page-collab" class="step-content">
+        <h3 class="section-title">Team / Collaborators Details</h3>
+        <p
+          id="collab-instructions"
+          style="
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+          "
+        ></p>
+        <div id="collaborators-container"></div>
+        <div class="button-row">
+          <button class="btn btn-secondary" onclick="prevStep('collab')">
+            Back
+          </button>
+          <button
+            class="btn btn-primary"
+            onclick="nextStep('collab', validateCollab)"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP: UPLOAD -->
+      <div id="step-page-upload" class="step-content">
+        <h3 class="section-title">Requirement Upload</h3>
+        <p
+          style="
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+          "
+        >
+          Please complete your file upload via the secure module above before
+          proceeding.
+        </p>
+        <div style="width: 100%; height: 140px; border: none">
+          <iframe
+            id="upload-iframe"
+            src=""
+            style="width: 100%; height: 100%; border: none"
+          ></iframe>
+        </div>
+        <div class="button-row">
+          <button class="btn btn-secondary" onclick="prevStep('upload')">
+            Back
+          </button>
+          <!-- Notice it calls handleUploadNext instead of nextStep directly -->
+          <button
+            id="btn-upload-next"
+            class="btn btn-primary"
+            onclick="handleUploadNext()"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP: QUESTIONS -->
+      <div id="step-page-questions" class="step-content">
+        <h3 class="section-title">Additional Questions</h3>
+        <div id="questions-container"></div>
+        <div class="button-row">
+          <button class="btn btn-secondary" onclick="prevStep('questions')">
+            Back
+          </button>
+          <button
+            class="btn btn-primary"
+            onclick="nextStep('questions', validateQuestions)"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP: MECHANICS & SUBMIT -->
+      <div id="step-page-mech" class="step-content">
+        <h3 class="section-title">Event Mechanics & Guidelines</h3>
+        <div class="canva-container skeleton-dark" id="canva-wrapper">
+          <iframe
+            id="canva-iframe"
+            src=""
+            allowfullscreen="allowfullscreen"
+            allow="fullscreen"
+          ></iframe>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="mechanics-check" />
+          <label for="mechanics-check"
+            >I have thoroughly read and agree to follow all event
+            mechanics.</label
+          >
+        </div>
+        <div class="button-row">
+          <button class="btn btn-secondary" onclick="prevStep('mech')">
+            Back
+          </button>
+          <button id="btn-submit" class="btn btn-primary" disabled>
+            Submit Form
+          </button>
+        </div>
       </div>
     </div>
 
-    <script src="../resources/js/login.js"></script>
-<script>
-  (function () {
-    const BASE_URL =
-      "https://script.google.com/macros/s/AKfycbzRvZQoEZXf_du3jDCO7m5VjKy9K8R4mIE1tg6ojZeIdKwb9CvEpHcWhcg7n5DurVE/exec";
+    <footer class="footer">
+      <div class="container footer-grid">
+        <div class="footer-brand-section">
+          <strong class="footer-brand">BTLED Organization</strong>
+          <p style="color: #999">
+            One of the official student-led organizations at URS Cainta Campus,
+            the BTLEd - IA Program Organization.
+          </p>
+        </div>
+        <div class="footer-right">
+          <p>&copy; 2026 BTLED. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
 
-    // 1. Read incoming parameters directly from the browser URL bar
-    const urlParams = new URLSearchParams(window.location.search);
-    const params = new URLSearchParams();
-
-    // 2. Copy all parameters (e.g. eventID, formType) and clean up typos like '??'
-    for (const [key, value] of urlParams.entries()) {
-      const cleanKey = key.replace(/\?+$/, "").trim();
-      const cleanVal = value.replace(/\?+$/, "").trim();
-      if (cleanKey) params.set(cleanKey, cleanVal);
-    }
-
-    // Ensure both eventID and eventId are mapped
-    if (params.has("eventID") && !params.has("eventId")) {
-      params.set("eventId", params.get("eventID"));
-    }
-
-    // Set fallback page parameter
-    if (!params.has("page")) {
-      params.set("page", "Submit");
-    }
-
-    try {
-      // 3. Append student JSON details from localStorage
-      const rawData = localStorage.getItem("btled_student");
-      if (rawData) {
-        const student = JSON.parse(rawData);
-
-        if (student["Student No."] || student.id)
-          params.set("studentid", student["Student No."] || student.id);
-        if (student["Surname"] || student.surname)
-          params.set("surname", student["Surname"] || student.surname);
-        if (student["First Name"] || student.name)
-          params.set("name", student["First Name"] || student.name);
-        if (student["Middle Name"])
-          params.set("middleName", student["Middle Name"]);
-        if (student["Program"]) params.set("program", student["Program"]);
-        if (student["Sex"]) params.set("sex", student["Sex"]);
-        if (student["Birthdate"])
-          params.set("birthdate", student["Birthdate"]);
-        if (student["Street / Barangay"])
-          params.set("street", student["Street / Barangay"]);
-        if (student["Municipality / City"])
-          params.set("municipality", student["Municipality / City"]);
-        if (student["Province"])
-          params.set("province", student["Province"]);
-        if (student["Contact Number"])
-          params.set("contact", student["Contact Number"]);
-        if (student["E-mail Address"])
-          params.set("email", student["E-mail Address"]);
+    <script>
+      function getParam(key) {
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.has(key)) return urlParams.get(key);
+        } catch (e) {}
+        return "";
       }
-    } catch (err) {
-      console.error("Error reading btled_student from localStorage:", err);
-    }
 
-    // 4. Inject complete parameters into the iframe src
-    const iframe = document.getElementById("btled-frame");
-    if (iframe) {
-      iframe.src = `${BASE_URL}?${params.toString()}`;
-    }
-  })();
-</script>
+      function parseTeamSize(sizeStr) {
+        if (!sizeStr) return { min: 1, max: 1 };
+        const parts = String(sizeStr).trim().split("-");
+        if (parts.length === 2) {
+          return {
+            min: parseInt(parts[0], 10) || 1,
+            max: parseInt(parts[1], 10) || 1,
+          };
+        }
+        const val = parseInt(parts[0], 10) || 1;
+        return { min: val, max: val };
+      }
+
+      const FORM_TYPE =
+        getParam("formType") ||
+        getParam("form") ||
+        getParam("type") ||
+        "register";
+      const EVENT_ID =
+        getParam("eventID") ||
+        getParam("eventId") ||
+        getParam("event") ||
+        "BTLED Event";
+      const BASE_URL =
+        getParam("baseUrl") ||
+        "https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec";
+
+      let teamRange = parseTeamSize(
+        getParam("teamSize") || getParam("k") || "1",
+      );
+      let MIN_TEAM_SIZE = teamRange.min;
+      let MAX_TEAM_SIZE = teamRange.max;
+      let QUESTIONS = [];
+      let FILE_REQUIRED = false;
+      let uploadedFile = null; // { name, mimeType, data (base64, no prefix) }
+      let STEP_SEQUENCE = ["1", "2", "mech"];
+
+      const STEP_LABELS = {
+        1: "Privacy",
+        2: "User Data",
+        collab: "Collaborators",
+        upload: "Upload",
+        questions: "Questions",
+        mech: "Mechanics",
+      };
+
+      function getLocalStorageData() {
+        try {
+          const stored = localStorage.getItem("btled_student");
+          if (stored) return JSON.parse(stored);
+        } catch (e) {
+          console.warn("Could not read btled_student from localStorage:", e);
+        }
+        return {};
+      }
+
+      function formatTime(t) {
+        if (!t) return "";
+        if (typeof t === "string" && t.includes("T")) {
+          const d = new Date(t);
+          if (!isNaN(d.getTime()))
+            return d.toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            });
+        }
+        if (
+          typeof t === "string" &&
+          /^\d{1,2}:\d{2}(:\d{2})?$/.test(t.trim())
+        ) {
+          const parts = t.trim().split(":");
+          let h = parseInt(parts[0], 10);
+          const ampm = h >= 12 ? "PM" : "AM";
+          h = h % 12 || 12;
+          return `${h}:${parts[1]} ${ampm}`;
+        }
+        return t;
+      }
+
+      function setFieldState(elementId, value) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        const val = String(value || "").trim();
+        el.value = val;
+        if (val !== "") el.setAttribute("readonly", "readonly");
+        else el.removeAttribute("readonly");
+      }
+
+      function removeSkeletons(title, venue, dateStr, timeStr, posterUrl) {
+        const typeBadge = document.getElementById("form-type-display");
+        const titleDisp = document.getElementById("event-title-display");
+        const venueWrap = document.getElementById("meta-venue-wrap");
+        const dateWrap = document.getElementById("meta-date-wrap");
+        const bgPoster = document.getElementById("header-bg-poster");
+
+        typeBadge.classList.remove("skeleton");
+        typeBadge.textContent = `${FORM_TYPE.toUpperCase()} FORM`;
+        titleDisp.classList.remove("skeleton");
+        titleDisp.textContent = title.toUpperCase();
+        venueWrap.classList.remove("skeleton");
+        document.getElementById("meta-venue").textContent = venue || "TBA";
+        dateWrap.classList.remove("skeleton");
+        document.getElementById("meta-date").textContent =
+          dateStr + (timeStr ? ` • ${timeStr}` : "");
+
+        if (posterUrl) bgPoster.style.backgroundImage = `url('${posterUrl}')`;
+        else
+          bgPoster.style.backgroundImage = `url('https://github.com/AstraMarky/Connect/blob/main/resources/img/3.png?raw=true')`;
+      }
+
+      // ---- Dynamic color scheme from poster (enforces darker tones) ----
+      function extractColorsFromImage(url) {
+        return new Promise((resolve) => {
+          try {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+              try {
+                const size = 50;
+                const canvas = document.createElement("canvas");
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, size, size);
+                const data = ctx.getImageData(0, 0, size, size).data;
+                const buckets = {};
+
+                for (let i = 0; i < data.length; i += 4) {
+                  const r = data[i],
+                    g = data[i + 1],
+                    b = data[i + 2],
+                    a = data[i + 3];
+                  if (a < 200) continue;
+
+                  const brightness = (r + g + b) / 3;
+
+                  // RESTRICTED BRIGHTNESS FOR DARKER COLORS:
+                  // Keeps colors darker than 130 average brightness while avoiding pitch black (< 25)
+                  if (brightness < 25 || brightness > 130) continue;
+
+                  const key = `${Math.round(r / 24)}-${Math.round(g / 24)}-${Math.round(b / 24)}`;
+                  if (!buckets[key])
+                    buckets[key] = { r: 0, g: 0, b: 0, count: 0 };
+                  buckets[key].r += r;
+                  buckets[key].g += g;
+                  buckets[key].b += b;
+                  buckets[key].count++;
+                }
+
+                const sorted = Object.values(buckets).sort(
+                  (a, b) => b.count - a.count,
+                );
+                const colors = sorted.slice(0, 3).map((c) => {
+                  const r = Math.round(c.r / c.count),
+                    g = Math.round(c.g / c.count),
+                    b = Math.round(c.b / c.count);
+                  return `rgb(${r}, ${g}, ${b})`;
+                });
+
+                resolve(colors.length ? colors : null);
+              } catch (err) {
+                console.warn(
+                  "Color extraction blocked (likely CORS on poster host):",
+                  err.message,
+                );
+                resolve(null);
+              }
+            };
+            img.onerror = () => resolve(null);
+            img.src = url;
+          } catch (err) {
+            resolve(null);
+          }
+        });
+      }
+
+      function applyColorScheme(colors) {
+        if (!colors || colors.length < 2) return; // keep default theme
+        document.documentElement.style.setProperty("--accent-blue", colors[0]);
+        document.documentElement.style.setProperty(
+          "--accent-yellow",
+          colors[1],
+        );
+        if (colors[2])
+          document.documentElement.style.setProperty(
+            "--border-dark",
+            colors[2],
+          );
+      }
+
+async function populateHeaderAndForm() {
+        const localData = getLocalStorageData();
+        const surname = getParam("surname") || localData["Surname"] || localData["surname"] || "";
+        const firstName = getParam("firstName") || getParam("name") || localData["First Name"] || localData["name"] || "";
+        const middleName = getParam("middleName") || localData["Middle Name"] || localData["middleName"] || "";
+        const studentId = getParam("studentId") || getParam("studentid") || localData["Student No."] || localData["id"] || "";
+        const program = getParam("program") || localData["Program"] || localData["program"] || "";
+        const email = getParam("email") || localData["E-mail Address"] || localData["email"] || "";
+        const phone = getParam("contact") || localData["Contact Number"] || localData["contact"] || "";
+        const street = getParam("street") || localData["Street / Barangay"] || localData["street"] || "";
+        const municipality = getParam("municipality") || localData["Municipality / City"] || localData["municipality"] || "";
+        const province = getParam("province") || localData["Province"] || localData["province"] || "";
+
+        // Fill out the visual fields immediately
+        setFieldState("field-surname", surname);
+        setFieldState("field-firstname", firstName);
+        setFieldState("field-middlename", middleName);
+        setFieldState("field-studentid", studentId);
+        setFieldState("field-program", program);
+        setFieldState("field-email", email);
+        setFieldState("field-phone", phone);
+        setFieldState("field-address", [street, municipality, province].filter(Boolean).join(", "));
+
+        // Now fetch the event data
+        const targetUrl = `${BASE_URL}?module=eventinfo&eventID=${encodeURIComponent(EVENT_ID)}`;
+
+        try {
+          const response = await fetch(targetUrl);
+          const json = await response.json();
+
+          if (json.ok && json.found && json.data) {
+            const eventData = json.data; // eventData is defined HERE
+
+            // 1. Registration-closed check
+            const status = String(eventData.formStatus || "").trim().toLowerCase();
+            if (status === "ended" || String(eventData.formLink).trim().toLowerCase() === "ended") {
+              document.getElementById("ended-overlay").classList.add("show");
+              hideLoader();
+              return; // stop building the wizard entirely
+            }
+
+            // 2. Already-Submitted check
+            if (studentId && eventData.allowResubmit !== true) {
+              try {
+                const subRes = await fetch(`${BASE_URL}?module=checksubmission&eventID=${encodeURIComponent(EVENT_ID)}&studentId=${encodeURIComponent(studentId)}`);
+                const subJson = await subRes.json();
+                
+                if (subJson.ok && subJson.submitted) {
+                  document.getElementById("submitted-overlay").classList.add("show");
+                  hideLoader();
+                  return; // stop building the wizard entirely
+                }
+              } catch (e) {
+                console.warn("Could not check prior submissions", e);
+              }
+            }
+
+            // If we pass the checks, continue building the form UI
+            const title = eventData.name || EVENT_ID;
+            const venue = eventData.venue || "TBA";
+            const dateStr = eventData.dateDisplay || "Date TBA";
+            const timeStr = formatTime(eventData.time);
+            const posterUrl = eventData.poster;
+
+            removeSkeletons(title, venue, dateStr, timeStr, posterUrl);
+
+            if (posterUrl) {
+              const colors = await extractColorsFromImage(posterUrl);
+              applyColorScheme(colors);
+            }
+
+            const canvaLink = eventData.canvaLink;
+            const canvaWrapper = document.getElementById("canva-wrapper");
+            const canvaIframe = document.getElementById("canva-iframe");
+            if (canvaLink && canvaLink.includes("canva.com")) {
+              canvaWrapper.classList.remove("skeleton-dark");
+              const embedUrl = canvaLink.endsWith("/view?embed")
+                ? canvaLink
+                : `${canvaLink.replace(/\/view.*$/, "")}/view?embed`;
+              canvaIframe.src = embedUrl;
+            } else {
+              canvaWrapper.style.display = "none";
+            }
+
+            if (eventData.participants) {
+              const parsedSize = parseTeamSize(eventData.participants);
+              MIN_TEAM_SIZE = parsedSize.min;
+              MAX_TEAM_SIZE = parsedSize.max;
+            }
+
+            FILE_REQUIRED = String(eventData.file || "").trim().toLowerCase() === "yes";
+            QUESTIONS = String(eventData.questions || "").split(",").map((q) => q.trim()).filter(Boolean);
+
+          } else {
+            removeSkeletons(EVENT_ID.toUpperCase(), "Not Found", "Not Found", "", "");
+            if (json.ok && !json.found) console.warn("Event not found:", EVENT_ID);
+          }
+        } catch (err) {
+          removeSkeletons(EVENT_ID.toUpperCase(), "Error Fetching", "Error Fetching", "", "");
+          console.error("Failed to fetch event data:", err);
+        }
+
+        // Finally, build the steps if not blocked
+        buildStepSequence();
+        setupCollaborators();
+        setupUpload();
+        setupQuestions();
+        hideLoader();
+      }
+
+      function hideLoader() {
+        document.getElementById("global-loader").classList.add("hidden");
+      }
+
+      // ---- Dynamic step sequence + indicator ----
+      function buildStepSequence() {
+        STEP_SEQUENCE = ["1", "2"];
+        if (MAX_TEAM_SIZE > 1) STEP_SEQUENCE.push("collab");
+        if (FILE_REQUIRED) STEP_SEQUENCE.push("upload");
+        if (QUESTIONS.length) STEP_SEQUENCE.push("questions");
+        STEP_SEQUENCE.push("mech");
+        renderStepIndicator();
+        goToStep(STEP_SEQUENCE[0]);
+      }
+
+      function renderStepIndicator() {
+        const container = document.getElementById("step-indicator");
+        container.innerHTML = STEP_SEQUENCE.map(
+          (id, i) =>
+            `<div id="step-tab-${id}" class="step-item">${i + 1}. ${STEP_LABELS[id]}</div>`,
+        ).join("");
+      }
+
+      function goToStep(id) {
+        document
+          .querySelectorAll(".step-content")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".step-item")
+          .forEach((s) => s.classList.remove("active"));
+        document.getElementById(`step-page-${id}`).classList.add("active");
+        const tab = document.getElementById(`step-tab-${id}`);
+        if (tab) tab.classList.add("active");
+        window.scrollTo({ top: 100, behavior: "smooth" });
+      }
+
+      function nextStep(currentId, validateFn) {
+        if (validateFn && !validateFn()) return;
+        const idx = STEP_SEQUENCE.indexOf(currentId);
+        if (idx < STEP_SEQUENCE.length - 1) goToStep(STEP_SEQUENCE[idx + 1]);
+      }
+      function prevStep(currentId) {
+        const idx = STEP_SEQUENCE.indexOf(currentId);
+        if (idx > 0) goToStep(STEP_SEQUENCE[idx - 1]);
+      }
+
+      // ---- Step 2 validation ----
+      function validateStep2() {
+        const requiredFields = [
+          "field-surname",
+          "field-firstname",
+          "field-studentid",
+          "field-program",
+          "field-phone",
+          "field-email",
+          "field-address",
+          "field-fblink",
+        ];
+        for (const fieldId of requiredFields) {
+          const val = document.getElementById(fieldId).value.trim();
+          if (!val) {
+            alert(
+              "Please fill out all required submitter fields before proceeding.",
+            );
+            document.getElementById(fieldId).focus();
+            return false;
+          }
+        }
+        return true;
+      }
+
+      // ---- Collaborators (Program removed; all-or-nothing per optional card) ----
+      function setupCollaborators() {
+        if (MAX_TEAM_SIZE <= 1) return;
+        const container = document.getElementById("collaborators-container");
+        const instructions = document.getElementById("collab-instructions");
+
+        instructions.textContent =
+          MIN_TEAM_SIZE === MAX_TEAM_SIZE
+            ? `This event requires a team of exactly ${MAX_TEAM_SIZE} members (including the submitter).`
+            : `This event requires a minimum of ${MIN_TEAM_SIZE} and a maximum of ${MAX_TEAM_SIZE} members (including the submitter). If you start filling a member's details, all of that member's fields become required.`;
+
+        let html = `
+      <div class="collab-card">
+        <div class="collab-card-title">Member 1 (Submitter / Primary)</div>
+        <p class="collab-card-note">Populated from Submitter Information step.</p>
+        <div class="member1-upload-status" id="member1-upload-status" style="display:none;"></div>
+      </div>
+    `;
+
+        for (let i = 2; i <= MAX_TEAM_SIZE; i++) {
+          const isRequired = i <= MIN_TEAM_SIZE;
+          const requiredHTML = isRequired
+            ? '<span style="color:red;">*</span>'
+            : '<span style="color:#9ca3af; font-size:0.7rem; margin-left:4px;">(Optional)</span>';
+          html += `
+        <div class="collab-card">
+          <div class="collab-card-title">Member ${i} Details</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Student ID ${requiredHTML}</label>
+              <input type="text" id="collab-id-${i}" class="form-control" placeholder="e.g. C2025-00000" />
+            </div>
+            <div class="form-group full-width">
+              <label>Full Name ${requiredHTML}</label>
+              <input type="text" id="collab-name-${i}" class="form-control" placeholder="Last Name, First Name M.I" />
+            </div>
+          </div>
+        </div>
+      `;
+        }
+        container.innerHTML = html;
+      }
+
+      function validateCollab() {
+        if (MAX_TEAM_SIZE <= 1) return true;
+        for (let i = 2; i <= MAX_TEAM_SIZE; i++) {
+          const isRequired = i <= MIN_TEAM_SIZE;
+          const cId = document.getElementById(`collab-id-${i}`).value.trim();
+          const cName = document
+            .getElementById(`collab-name-${i}`)
+            .value.trim();
+          const anyFilled = cId || cName;
+          const allFilled = cId && cName;
+          if (isRequired && !allFilled) {
+            alert(`Please fill out all required fields for Member ${i}.`);
+            return false;
+          }
+          if (!isRequired && anyFilled && !allFilled) {
+            alert(
+              `Please complete all fields for Member ${i}, or leave them entirely blank.`,
+            );
+            return false;
+          }
+        }
+        return true;
+      }
+
+      function updateMember1UploadDisplay() {
+        const el = document.getElementById("member1-upload-status");
+        if (!el) return;
+        if (uploadedFile) {
+          el.style.display = "inline-flex";
+          el.textContent = `📎 Uploaded: ${uploadedFile.name}`;
+        } else {
+          el.style.display = "none";
+        }
+      }
+
+      function setupUpload() {
+        if (!FILE_REQUIRED) return;
+
+        const localData = getLocalStorageData();
+        const studentId =
+          document.getElementById("field-studentid").value.trim() ||
+          localData["Student No."] ||
+          localData["id"] ||
+          "";
+        const surname =
+          document.getElementById("field-surname").value.trim() ||
+          localData["Surname"] ||
+          localData["surname"] ||
+          "";
+        const firstname =
+          document.getElementById("field-firstname").value.trim() ||
+          localData["First Name"] ||
+          localData["name"] ||
+          "";
+
+        const iframe = document.getElementById("upload-iframe");
+
+        if (iframe && studentId) {
+          iframe.src = `${BASE_URL}?page=UploadIframe&studentid=${encodeURIComponent(studentId)}&surname=${encodeURIComponent(surname)}&firstname=${encodeURIComponent(firstname)}&event=${encodeURIComponent(EVENT_ID)}`;
+        }
+      }
+
+      let isUploadVerified = false;
+      let verifiedUploads = null;
+
+      // Intercepts the Next click, checks the server, and advances automatically if valid
+      async function handleUploadNext() {
+        const nextBtn = document.getElementById("btn-upload-next");
+
+        // If already verified previously, just skip server check and go to next step
+        if (isUploadVerified) {
+          nextStepDirect("upload");
+          return;
+        }
+
+        nextBtn.disabled = true;
+        nextBtn.textContent = "Verifying Upload...";
+
+        const isValid = await validateUpload();
+
+        if (isValid) {
+          isUploadVerified = true;
+          nextBtn.textContent = "Next";
+          nextBtn.disabled = false;
+          nextStepDirect("upload"); // Automatically advances to the next step!
+        } else {
+          nextBtn.textContent = "Next";
+          nextBtn.disabled = false;
+        }
+      }
+
+      // Helper to execute the actual step transition without running validation loops twice
+      function nextStepDirect(currentId) {
+        const idx = STEP_SEQUENCE.indexOf(currentId);
+        if (idx < STEP_SEQUENCE.length - 1) goToStep(STEP_SEQUENCE[idx + 1]);
+      }
+
+      async function validateUpload() {
+        if (!FILE_REQUIRED) return true;
+
+        const studentId = document
+          .getElementById("field-studentid")
+          .value.trim();
+        if (!studentId) {
+          alert("Student ID is missing.");
+          return false;
+        }
+
+        const checkUrl = `${BASE_URL}?module=checkuploadslist&studentId=${encodeURIComponent(studentId)}`;
+
+        try {
+          const res = await fetch(checkUrl);
+          const json = await res.json();
+
+          if (json.ok && json.slots && json.slots.slot1) {
+            verifiedUploads = json.slots; // keep for the submit payload below
+            return true;
+          } else {
+            alert(
+              "Upload not found yet. Please wait for your file to finish uploading in the box above, then try clicking Next again.",
+            );
+            return false;
+          }
+        } catch (err) {
+          console.error("Upload validation check failed:", err);
+          alert("Unable to verify upload status. Please try again.");
+          return false;
+        }
+      }
+
+      // ---- Questions step ----
+      function setupQuestions() {
+        if (!QUESTIONS.length) return;
+        const container = document.getElementById("questions-container");
+        container.innerHTML = QUESTIONS.map(
+          (q, i) => `
+      <div class="question-block">
+        <label>${i + 1}. ${q} <span style="color:red;">*</span></label>
+        <textarea id="question-${i}" class="form-control" placeholder="Your answer"></textarea>
+      </div>
+    `,
+        ).join("");
+      }
+
+      function validateQuestions() {
+        if (!QUESTIONS.length) return true;
+        for (let i = 0; i < QUESTIONS.length; i++) {
+          const val = document.getElementById(`question-${i}`).value.trim();
+          if (!val) {
+            alert(`Please answer question ${i + 1}.`);
+            document.getElementById(`question-${i}`).focus();
+            return false;
+          }
+        }
+        return true;
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        populateHeaderAndForm();
+
+        function closeOrGoBack() {
+          if (window.opener && !window.opener.closed) {
+            window.close();
+            return;
+          }
+
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            window.location.assign(
+              "https://btledorg.github.io/site/events/event.html",
+            );
+          }
+        }
+
+        document
+          .getElementById("btn-ended-back")
+          .addEventListener("click", (event) => {
+            event.preventDefault();
+            closeOrGoBack();
+          });
+
+        document
+          .getElementById("btn-submitted-back")
+          .addEventListener("click", (event) => {
+            event.preventDefault();
+            closeOrGoBack();
+          });
+
+        const termsCheck = document.getElementById("terms-check");
+        const btnToStep2 = document.getElementById("btn-to-step2");
+        termsCheck.addEventListener("change", () => {
+          btnToStep2.disabled = !termsCheck.checked;
+        });
+        btnToStep2.addEventListener("click", () => nextStep("1", null));
+
+        const mechanicsCheck = document.getElementById("mechanics-check");
+        const btnSubmit = document.getElementById("btn-submit");
+        mechanicsCheck.addEventListener("change", () => {
+          btnSubmit.disabled = !mechanicsCheck.checked;
+        });
+
+        btnSubmit.addEventListener("click", async () => {
+          btnSubmit.disabled = true;
+          btnSubmit.textContent = "Submitting...";
+
+          const collaborators = [];
+          if (MAX_TEAM_SIZE > 1) {
+            for (let i = 2; i <= MAX_TEAM_SIZE; i++) {
+              const cId = document
+                .getElementById(`collab-id-${i}`)
+                .value.trim();
+              const cName = document
+                .getElementById(`collab-name-${i}`)
+                .value.trim();
+              if (cId && cName)
+                collaborators.push({
+                  memberIndex: i,
+                  studentNo: cId,
+                  fullName: cName,
+                });
+            }
+          }
+
+          const answers = QUESTIONS.map((q, i) => ({
+            question: q,
+            answer: document.getElementById(`question-${i}`).value.trim(),
+          }));
+
+          function buildUploadsForPayload() {
+            const uploads = [];
+            if (verifiedUploads) {
+              if (verifiedUploads.slot1)
+                uploads.push({
+                  slot: 1,
+                  name: verifiedUploads.slot1.name,
+                  link: verifiedUploads.slot1.link,
+                });
+              if (verifiedUploads.slot2)
+                uploads.push({
+                  slot: 2,
+                  name: verifiedUploads.slot2.name,
+                  link: verifiedUploads.slot2.link,
+                });
+            }
+            return uploads;
+          }
+
+          const payload = {
+            action: "submitForm",
+            formType: FORM_TYPE,
+            eventName: EVENT_ID,
+            studentId: document.getElementById("field-studentid").value.trim(),
+            surname: document.getElementById("field-surname").value.trim(),
+            firstName: document.getElementById("field-firstname").value.trim(),
+            middleName: document
+              .getElementById("field-middlename")
+              .value.trim(),
+            studentNo: document.getElementById("field-studentid").value.trim(),
+            program: document.getElementById("field-program").value.trim(),
+            email: document.getElementById("field-email").value.trim(),
+            phone: document.getElementById("field-phone").value.trim(),
+            address: document.getElementById("field-address").value.trim(),
+            facebookLink: document.getElementById("field-fblink").value.trim(),
+            teamSize: collaborators.length + 1,
+            collaborators: collaborators,
+            uploads: buildUploadsForPayload(),
+            answers: answers,
+          };
+
+          try {
+            const res = await fetch(BASE_URL, {
+              method: "POST",
+              body: JSON.stringify(payload),
+            });
+            const json = await res.json();
+            if (json.ok) {
+              alert(
+                "Form submitted successfully! A confirmation email has been sent.",
+              );
+              closeOrGoBack();
+            } else {
+              throw new Error(json.error || "Submission failed.");
+            }
+          } catch (err) {
+            alert("Error submitting form: " + err.message);
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = "Submit Form";
+          }
+        });
+      });
+    </script>
   </body>
 </html>
