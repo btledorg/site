@@ -19,6 +19,24 @@
     var ROOT = normalizeRoot(header.getAttribute("data-root") || "./");
     function link(path) { return joinPath(ROOT, path); }
 
+    var hasStudentProfile = false;
+    try {
+      hasStudentProfile = !!JSON.parse(localStorage.getItem("btled_student"));
+    } catch (e) {
+      hasStudentProfile = false;
+    }
+
+    var profileNav = hasStudentProfile ?
+      '<div class="dropdown">' +
+        '<a href="' + link("profile/index.html") + '" class="nav-link">My Profile &#9662;</a>' +
+        '<ul class="dropdown-menu">' +
+          '<li><a href="' + link("profile/card.html") + '">BTLED Card</a></li>' +
+          '<li><a href="' + link("profile/participations.html") + '">Participations</a></li>' +
+          '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
+          '<li><a href="' + link("profile/index.html") + '">My Profile</a></li>' +
+        '</ul>' +
+      '</div>' : "";
+
     // Populate inside the existing <header> tag without creating a new header element
     header.innerHTML =
       '<div class="container nav-container">' +
@@ -40,13 +58,25 @@
               '<li><a href="' + link("about/#spotlight") + '">Vision &amp; Mission</a></li>' +
               '<li><a href="' + link("about/logo.html") + '">BTLED LOGO</a></li>' +
               '<li><a href="' + link("about/#officers") + '">Executive Officers</a></li>' +
+              '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
               '<li><a href="' + link("about/documents.html#achievements") + '">Achievements &amp; Awards</a></li>' +
               '<li><a href="' + link("about/documents.html#permits") + '">Permits &amp; Certifications</a></li>' +
             '</ul>' +
           '</div>' +
           '<a href="' + link("finance/budget.html") + '" class="nav-link">Finance</a>' +
-          '<a href="' + link("events/event.html") + '" class="nav-link">Events</a>' +
-          '<a href="' + link("events/forms.html") + '" class="nav-link">Forms</a>' +
+'<div class="dropdown">' +
+            '<a href="' + link("events/event.html") + '" class="nav-link">Events &#9662;</a>' +
+            '<ul class="dropdown-menu">' +
+              '<li><a href="' + link("events/forms.html") + '">Forms</a></li>' +
+              '<li><a href="' + link("validate.html") + '">Check Status</a></li>' +
+              '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
+              '<li><a href="' + link("events/certificates.html") + '">Certificates</a></li>' +
+              '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
+              '<li><a href="' + link("events/gallery.html") + '">Event Gallery</a></li>' +
+              '<li><a href="' + link("events/results.html") + '">Competition Results</a></li>' +
+            '</ul>' +
+          '</div>' +
+          profileNav +
           '<div class="dropdown">' +
             '<a href="#" class="nav-link">Contact Us &#9662;</a>' +
             '<ul class="dropdown-menu">' +

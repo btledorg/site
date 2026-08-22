@@ -1544,7 +1544,7 @@ async function populateHeaderAndForm() {
           const payload = {
             action: "submitForm",
             formType: FORM_TYPE,
-            eventName: EVENT_ID,
+            eventName: document.getElementById("event-title-display").textContent.trim(),
             studentId: document.getElementById("field-studentid").value.trim(),
             surname: document.getElementById("field-surname").value.trim(),
             firstName: document.getElementById("field-firstname").value.trim(),

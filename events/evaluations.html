@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BTLED | Event Evaluation</title>
+    <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
+    <link rel="stylesheet" href="../resources/css/landing.css" />
+
+    <style>
+      :root {
+        --bg-page: #ffffff;
+        --bg-subtle: #f9f9f9;
+        --border-dark: #111111;
+        --border-light: #e2e2dc;
+        --text-main: #111111;
+        --text-muted: #666666;
+        --accent-yellow: #4462ba;
+        --accent-yellow-hover: #305abb;
+        --accent-blue: #1d4ed8;
+        --radius-sm: 4px;
+        --scheme-transition:
+          background-color 0.6s ease, border-color 0.6s ease, color 0.6s ease;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-subtle);
+        color: var(--text-main);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .form-wrapper {
+        max-width: 850px;
+        margin: 40px auto;
+        background: var(--bg-page);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-light);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+        overflow: hidden;
+      }
+
+      /* ---- Global Loading Overlay ---- */
+      #global-loader {
+        position: fixed; inset: 0; background: #ffffff; z-index: 9999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem;
+        transition: opacity 0.4s ease, visibility 0.4s ease;
+      }
+      #global-loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+      .loader-logo-wrap { position: relative; width: 84px; height: 84px; display: flex; align-items: center; justify-content: center; }
+      .loader-logo-ring { position: absolute; inset: 0; border: 3px solid var(--border-light); border-top-color: var(--accent-blue); border-radius: 50%; animation: loader-spin 0.9s linear infinite; }
+      .loader-logo-img { width: 46px; height: 46px; object-fit: contain; animation: loader-pulse 1.6s ease-in-out infinite; }
+      @keyframes loader-spin { to { transform: rotate(360deg); } }
+      @keyframes loader-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.9); opacity: 0.7; } }
+      .loader-text { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); }
+
+      /* ---- Header with Blurred Background ---- */
+      .form-header {
+        position: relative; color: #ffffff; padding: 3rem 2rem; text-align: center; overflow: hidden;
+        background: var(--border-dark); border-bottom: 5px solid var(--accent-yellow); transition: var(--scheme-transition);
+      }
+      .header-bg-poster {
+        position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; background-size: cover; background-position: center;
+        filter: blur(12px) brightness(0.55); z-index: 0; transform: scale(1.1); transition: background-image 0.5s ease;
+      }
+      .header-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(17,24,39,0.45) 0%, rgba(17,24,39,0.88) 100%); z-index: 1; }
+      .header-content { position: relative; z-index: 2; }
+      .form-type-badge { display: inline-block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent-blue); background: var(--bg-page); padding: 4px 12px; border-radius: 20px; margin-bottom: 1rem; }
+      .form-header h1 { font-size: 2rem; font-weight: 900; text-transform: uppercase; line-height: 1.1; margin-bottom: 1rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+      .header-meta { display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; font-weight: 600; color: #eaeaea; }
+      .header-meta-item { display: inline-flex; align-items: center; padding: 0.3rem 0.75rem; background: rgba(255,255,255,0.12); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.18); border-radius: 20px; }
+
+      @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+      .skeleton { animation: pulse 1.5s ease-in-out infinite; background-color: rgba(255,255,255,0.2); color: transparent !important; border-radius: var(--radius-sm); user-select: none; }
+      .skeleton-dark { background-color: var(--border-light); color: transparent !important; }
+
+      /* ---- Wizard Navigation & Grids ---- */
+      .step-indicator { display: flex; background: var(--bg-subtle); border-bottom: 1px solid var(--border-light); overflow-x: auto; scrollbar-width: thin; }
+      .step-item { flex: 1; min-width: 100px; padding: 1rem 0.5rem; text-align: center; font-size: 0.72rem; font-weight: 800; color: var(--text-muted); border-bottom: 3px solid transparent; text-transform: uppercase; letter-spacing: 0.5px; transition: var(--scheme-transition); }
+      .step-item.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); background: var(--bg-page); }
+      .step-content { padding: 2rem; display: none; opacity: 0; transform: translateY(10px); transition: opacity 0.3s ease, transform 0.3s ease; }
+      .step-content.active { display: block; opacity: 1; transform: translateY(0); }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+      .full-width { grid-column: span 2; }
+      
+      .form-group label { display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-main); margin-bottom: 0.4rem; }
+      .form-control { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-light); border-radius: var(--radius-sm); font-size: 0.9rem; color: var(--text-main); background: var(--bg-page); transition: border-color 0.2s; }
+      .form-control:focus { outline: none; border-color: var(--accent-blue); }
+      .form-control[readonly] { background: var(--bg-subtle); color: var(--text-muted); border-color: var(--border-light); }
+      .section-title { font-size: 1.2rem; font-weight: 900; margin-bottom: 1.2rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-light); color: var(--text-main); text-transform: uppercase; letter-spacing: -0.5px; }
+
+      .checkbox-group { display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; font-weight: 600; margin: 1.5rem 0; }
+      .button-row { display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem; }
+      .btn { display: inline-block; padding: 0.8rem 1.5rem; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-radius: var(--radius-sm); border: none; cursor: pointer; transition: all 0.2s ease-in-out; }
+      .btn-primary { background: var(--accent-blue); color: #ffffff; }
+      .btn-primary:hover { filter: brightness(0.85); }
+      .btn-secondary { background: var(--bg-subtle); color: var(--text-main); border: 1px solid var(--border-light); }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      /* ---- Evaluation Likert Table Specifics ---- */
+      .eval-header-info { background: var(--bg-subtle); border: 1px solid var(--border-light); padding: 1.25rem; border-radius: var(--radius-sm); margin-bottom: 2rem; }
+      .eval-header-info p { font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--text-main); }
+      .eval-header-info strong { font-weight: 800; color: var(--accent-blue); }
+
+      .likert-wrapper { overflow-x: auto; margin-bottom: 1.5rem; border: 1px solid var(--border-light); border-radius: var(--radius-sm); }
+      .likert-table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 0.85rem; }
+      .likert-table th, .likert-table td { padding: 0.8rem 0.5rem; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); text-align: center; }
+      .likert-table th { background: var(--bg-subtle); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); position: sticky; top: 0; }
+      .likert-table td.aspect-col { text-align: left; font-weight: 600; width: 45%; }
+      .likert-table tr:last-child td { border-bottom: none; }
+      .likert-table th:last-child, .likert-table td:last-child { border-right: none; }
+      
+      .category-row td { background: #f3f4f6; font-weight: 900 !important; text-align: left !important; text-transform: uppercase; font-size: 0.75rem; color: var(--accent-blue); letter-spacing: 0.5px; }
+      
+      .radio-cell input[type="radio"] { width: 18px; height: 18px; accent-color: var(--accent-blue); cursor: pointer; }
+
+      /* ---- Overlays ---- */
+      #ended-overlay, #submitted-overlay { position: fixed; inset: 0; background: rgba(17, 17, 17, 0.92); z-index: 9998; display: none; align-items: center; justify-content: center; padding: 2rem; }
+      #ended-overlay.show, #submitted-overlay.show { display: flex; }
+      .ended-card { background: #ffffff; border-radius: var(--radius-sm); padding: 2.5rem 2rem; text-align: center; max-width: 420px; width: 100%; }
+      .ended-card .ended-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+      .ended-card h2 { font-size: 1.3rem; font-weight: 900; text-transform: uppercase; margin-bottom: 0.75rem; }
+      .ended-card p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+      @media (max-width: 600px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .full-width { grid-column: span 1; }
+        .form-header h1 { font-size: 1.5rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="global-loader">
+      <div class="loader-logo-wrap">
+        <div class="loader-logo-ring"></div>
+        <img src="../resources/image/logo/2.png" alt="BTLED" class="loader-logo-img" />
+      </div>
+      <div class="loader-text">Loading Evaluation</div>
+    </div>
+
+    <div id="ended-overlay">
+      <div class="ended-card">
+        <div class="ended-icon">🔒</div>
+        <h2>Evaluation Closed</h2>
+        <p>This event is not currently open for evaluations. Please check back later or contact the organizers.</p>
+        <button id="btn-ended-back" class="btn btn-primary">Go Back</button>
+      </div>
+    </div>
+
+    <div id="submitted-overlay">
+      <div class="ended-card">
+        <div class="ended-icon">✅</div>
+        <h2>Already Evaluated</h2>
+        <p>You have already submitted an evaluation for this event. Thank you for your feedback!</p>
+        <button id="btn-submitted-back" class="btn btn-primary">Go Back</button>
+      </div>
+    </div>
+
+    <header class="navbar" id="site-navbar" data-root="../"></header>
+    <script src="../resources/js/navbar.js"></script>
+
+    <div class="form-wrapper">
+      <div class="form-header">
+        <div id="header-bg-poster" class="header-bg-poster"></div>
+        <div class="header-overlay"></div>
+        <div class="header-content">
+          <span class="form-type-badge skeleton" id="form-type-display">Event Evaluation</span>
+          <h1 id="event-title-display" class="skeleton">‎</h1>
+          <div class="header-meta">
+            <span class="header-meta-item skeleton" id="meta-venue-wrap"><span id="meta-venue">‎ </span></span>
+            <span class="header-meta-item skeleton" id="meta-date-wrap"><span id="meta-date">‎ </span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-indicator" id="step-indicator">
+        <div id="step-tab-1" class="step-item active">1. Privacy</div>
+        <div id="step-tab-2" class="step-item">2. User Data</div>
+        <div id="step-tab-eval" class="step-item">3. Evaluation</div>
+      </div>
+
+      <!-- STEP 1: PRIVACY -->
+      <div id="step-page-1" class="step-content active">
+        <h3 class="section-title">Data Privacy Agreement</h3>
+        <div style="background: var(--bg-subtle); border: 1px solid var(--border-light); padding: 1.5rem; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+          <p><strong>BTLED Organization Evaluation Privacy Notice:</strong></p><br />
+          <p>In compliance with Republic Act No. 10173 (Data Privacy Act of 2012), your feedback and personal data collected through this evaluation form shall be processed exclusively by the BTLED Student Organization at URS Cainta Campus for organizational improvement, event tracking, and certificate generation.</p><br />
+          <p>Your honest feedback will remain highly confidential. <strong>Constructive feedback and accountability are highly encouraged.</strong></p>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="terms-check" />
+          <label for="terms-check">I have read, understood, and accept the Data Privacy Policy.</label>
+        </div>
+        <div class="button-row">
+          <div></div>
+          <button id="btn-to-step2" class="btn btn-primary" disabled onclick="goToStep('2')">Accept & Proceed</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: USER DATA -->
+      <div id="step-page-2" class="step-content">
+        <h3 class="section-title">Student Information</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Last Name <span style="color: red">*</span></label>
+            <input type="text" id="field-surname" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>First Name <span style="color: red">*</span></label>
+            <input type="text" id="field-firstname" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>Middle Name</label>
+            <input type="text" id="field-middlename" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>Student ID <span style="color: red">*</span></label>
+            <input type="text" id="field-studentid" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>Program <span style="color: red">*</span></label>
+            <input type="text" id="field-program" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>Email Address <span style="color: red">*</span></label>
+            <input type="email" id="field-email" class="form-control" required />
+          </div>
+        </div>
+        <div class="button-row">
+          <button class="btn btn-secondary" onclick="goToStep('1')">Back</button>
+          <button class="btn btn-primary" onclick="validateAndGoToEval()">Next</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: EVALUATION -->
+      <div id="step-page-eval" class="step-content">
+        <h3 class="section-title">Event Evaluation</h3>
+        
+        <div class="eval-header-info">
+          <p><strong>TITLE:</strong> <span id="eval-info-title">...</span></p>
+          <p><strong>ORGANIZATION:</strong> BTLED Organization</p>
+          <p><strong>DATE AND VENUE:</strong> <span id="eval-info-datevenue">...</span></p>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+          <label>Type of Evaluation <span style="color: red">*</span></label>
+          <select id="field-eventtype" class="form-control" required onchange="buildLikertTable(this.value)">
+            <option value="" disabled selected>Select the type of event...</option>
+            <option value="Activity">Activity</option>
+            <option value="Online Activity">Online Activity</option>
+            <option value="Seminar">Seminar</option>
+            <option value="Rate Organization">Rate Organization</option>
+            <option value="Open Forum">Open Forum</option>
+          </select>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Please indicate the extent to which the activity/organization met the following aspects by checking the column that corresponds to your honest evaluation using the following scale: <br><br>
+          <strong>5</strong> - Excellent | <strong>4</strong> - Very Satisfactory | <strong>3</strong> - Satisfactory | <strong>2</strong> - Less Satisfactory | <strong>1</strong> - Unsatisfactory
+        </p>
+
+        <div class="likert-wrapper">
+          <table class="likert-table">
+            <thead>
+              <tr>
+                <th class="aspect-col">Aspect</th>
+                <th>5</th><th>4</th><th>3</th><th>2</th><th>1</th>
+              </tr>
+            </thead>
+            <tbody id="likert-body">
+              <!-- Dynamically populated via JS based on selected Event Type -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- NEW: DYNAMIC SECTION FOR "RATE ORGANIZATION" ONLY -->
+        <div id="extra-org-questions" style="display: none;">
+          <div class="form-group full-width" style="margin-top: 1.5rem;">
+            <label>Specific Areas for Improvement (What should the organization do better?)</label>
+            <textarea id="field-improve" class="form-control" rows="3" placeholder="Suggest improvements for events, systems, or culture..."></textarea>
+          </div>
+          <div class="form-group full-width" style="margin-top: 1.5rem;">
+            <label>Officer Commendations & Accountability</label>
+            <textarea id="field-callout" class="form-control" rows="3" placeholder="Who did a great job? Who needs to step up? Please be constructive and name specific officers or committees if needed..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-group full-width" style="margin-top: 1.5rem;">
+          <label>General Comments and Suggestions (Optional)</label>
+          <textarea id="field-comments" class="form-control" rows="3" placeholder="Share any additional thoughts..."></textarea>
+        </div>
+
+        <div class="button-row">
+          <button class="btn btn-secondary" onclick="goToStep('2')">Back</button>
+          <button id="btn-submit" class="btn btn-primary" onclick="submitEvaluation()">Submit Evaluation</button>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      function getParam(key) {
+        try { const urlParams = new URLSearchParams(window.location.search); if (urlParams.has(key)) return urlParams.get(key); } catch (e) {}
+        return "";
+      }
+
+      const EVENT_ID = getParam("eventID") || getParam("eventId") || getParam("event") || "BTLED Event";
+      const BASE_URL = getParam("baseUrl") || "https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec";
+
+      // 1. ALL POSSIBLE QUESTIONS & CATEGORIES (Expanded for depth)
+      const CRITERIA = [
+        { category: "Program", questions: [
+          { id: "prog_plan", text: "Planning and Time Management" },
+          { id: "prog_obj", text: "Attainment of Objectives" },
+          { id: "prog_approp", text: "Appropriateness of Activities" },
+          { id: "prog_rel", text: "Relevance of the topic to my field/interests" },
+          { id: "prog_flow", text: "Overall flow and organization of the event" }
+        ]},
+        { category: "Participants", questions: [
+          { id: "part_att", text: "Attendance and Participation" },
+          { id: "part_disc", text: "Discipline and Behavior" },
+          { id: "part_interact", text: "Level of interaction and engagement" }
+        ]},
+        { category: "Resource Speaker/s or Trainer/s (as applicable)", questions: [
+          { id: "speak_rap", text: "Rapport with the participants" },
+          { id: "speak_exp", text: "Expertise and Knowledge on the Topic" },
+          { id: "speak_mot", text: "Motivation and Methodology" },
+          { id: "speak_clear", text: "Clarity of presentation and communication" },
+          { id: "speak_qa", text: "Ability to address questions effectively" }
+        ]},
+        { category: "Venue", questions: [
+          { id: "ven_approp", text: "Appropriateness of the Venue" },
+          { id: "ven_clean", text: "Cleanliness and Orderliness" },
+          { id: "ven_space", text: "Adequacy of Space" },
+          { id: "ven_vent", text: "Ventilation and Comfort" },
+          { id: "ven_access", text: "Accessibility and Location" }
+        ]},
+        { category: "Facilities & Materials", questions: [
+          { id: "fac_adeq", text: "Adequacy of Facilities/Equipment" },
+          { id: "fac_qual", text: "Quality of Facilities/Equipment" },
+          { id: "fac_tech", text: "Quality of Audio/Visuals and Tech Support" },
+          { id: "fac_mat", text: "Quality of handouts or learning materials" }
+        ]},
+        { category: "Organization Leadership & Performance", questions: [
+          { id: "org_leader", text: "Leadership, accountability, and approachability of officers" },
+          { id: "org_transp", text: "Transparency in operations, decision-making, and funds" },
+          { id: "org_engage", text: "Effectiveness in engaging and representing the student body" },
+          { id: "org_comm", text: "Clarity, responsiveness, and timeliness of communication" },
+          { id: "org_impact", text: "Overall impact and relevance of the organization's initiatives" }
+        ]}
+      ];
+
+      // 2. MAP FORM PARAMETERS TO RELEVANT CATEGORIES
+      const EVENT_TYPE_CRITERIA_MAP = {
+        "activity": ["Program", "Participants", "Venue", "Facilities & Materials"],
+        "online_activity": ["Program", "Participants", "Resource Speaker/s or Trainer/s (as applicable)"],
+        "seminar": ["Program", "Participants", "Resource Speaker/s or Trainer/s (as applicable)", "Venue", "Facilities & Materials"],
+        "rate_organization": ["Organization Leadership & Performance"], 
+        "open_forum": ["Program", "Participants", "Resource Speaker/s or Trainer/s (as applicable)", "Venue"]
+      };
+      const DEFAULT_CRITERIA = ["Program", "Participants", "Resource Speaker/s or Trainer/s (as applicable)", "Venue", "Facilities & Materials"];
+
+      // 3. DYNAMICALLY BUILD THE LIKERT TABLE
+      function buildLikertTable(selectedTypeOverride = null) {
+        const tbody = document.getElementById("likert-body");
+        let html = "";
+        
+        let formType = (selectedTypeOverride || getParam("formType") || getParam("form") || "").toLowerCase().trim();
+        formType = formType.replace(/\s+/g, '_'); 
+        
+        const activeCategories = EVENT_TYPE_CRITERIA_MAP[formType] || DEFAULT_CRITERIA;
+
+        const filteredCriteria = CRITERIA.filter(cat => activeCategories.includes(cat.category));
+
+        filteredCriteria.forEach(cat => {
+          html += `<tr class="category-row"><td colspan="6">${cat.category}</td></tr>`;
+          cat.questions.forEach(q => {
+            html += `<tr>
+              <td class="aspect-col">${q.text}</td>
+              <td class="radio-cell"><input type="radio" name="${q.id}" value="5"></td>
+              <td class="radio-cell"><input type="radio" name="${q.id}" value="4"></td>
+              <td class="radio-cell"><input type="radio" name="${q.id}" value="3"></td>
+              <td class="radio-cell"><input type="radio" name="${q.id}" value="2"></td>
+              <td class="radio-cell"><input type="radio" name="${q.id}" value="1"></td>
+            </tr>`;
+          });
+        });
+        
+        tbody.innerHTML = html;
+
+        // SHOW OR HIDE EXTRA TEXT BOXES FOR "RATE ORGANIZATION"
+        if (formType === 'rate_organization') {
+          document.getElementById('extra-org-questions').style.display = 'block';
+        } else {
+          document.getElementById('extra-org-questions').style.display = 'none';
+          document.getElementById("field-improve").value = "";
+          document.getElementById("field-callout").value = "";
+        }
+      }
+
+      function getLocalStorageData() {
+        try {
+          const stored = localStorage.getItem("btled_student");
+          if (stored) return JSON.parse(stored);
+        } catch (e) {}
+        return {};
+      }
+
+      function formatTime(t) {
+        if (!t) return "";
+        if (typeof t === "string" && t.includes("T")) {
+          const d = new Date(t);
+          if (!isNaN(d.getTime())) return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
+        }
+        return t;
+      }
+
+      function setFieldState(elementId, value) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        const val = String(value || "").trim();
+        el.value = val;
+        if (val !== "") el.setAttribute("readonly", "readonly");
+        else el.removeAttribute("readonly");
+      }
+
+      function goToStep(id) {
+        document.querySelectorAll(".step-content").forEach((p) => p.classList.remove("active"));
+        document.querySelectorAll(".step-item").forEach((s) => s.classList.remove("active"));
+        document.getElementById(`step-page-${id}`).classList.add("active");
+        const tab = document.getElementById(`step-tab-${id}`);
+        if (tab) tab.classList.add("active");
+        window.scrollTo({ top: 100, behavior: "smooth" });
+      }
+
+      function validateAndGoToEval() {
+        const fields = ["field-surname", "field-firstname", "field-studentid", "field-program", "field-email"];
+        for (const f of fields) {
+          if (!document.getElementById(f).value.trim()) {
+            alert("Please fill in all required student details.");
+            document.getElementById(f).focus();
+            return;
+          }
+        }
+        goToStep('eval');
+      }
+
+      async function populateHeaderAndForm() {
+        buildLikertTable();
+        
+        // Auto-select and LOCK the Event Type dropdown based on the URL parameter
+        const formParam = (getParam("formType") || getParam("form") || "").toLowerCase().trim();
+        const eventTypeSelect = document.getElementById("field-eventtype");
+        
+        if (formParam) {
+           for (let i = 0; i < eventTypeSelect.options.length; i++) {
+               const opt = eventTypeSelect.options[i];
+               if (!opt.value) continue; 
+               
+               const normalizedOption = opt.value.toLowerCase().replace(/[\s_-]+/g, '');
+               const normalizedParam = formParam.replace(/[\s_-]+/g, '');
+               
+               if (normalizedOption === normalizedParam) {
+                   eventTypeSelect.selectedIndex = i;
+                   
+                   eventTypeSelect.style.pointerEvents = "none";
+                   eventTypeSelect.style.backgroundColor = "var(--bg-subtle)";
+                   eventTypeSelect.style.color = "var(--text-main)";
+                   
+                   buildLikertTable(opt.value);
+                   break;
+               }
+           }
+        }
+
+        const localData = getLocalStorageData();
+        setFieldState("field-surname", getParam("surname") || localData["Surname"] || localData["surname"] || "");
+        setFieldState("field-firstname", getParam("firstName") || getParam("name") || localData["First Name"] || localData["name"] || "");
+        setFieldState("field-middlename", getParam("middleName") || localData["Middle Name"] || localData["middleName"] || "");
+        setFieldState("field-studentid", getParam("studentId") || getParam("studentid") || localData["Student No."] || localData["id"] || "");
+        setFieldState("field-program", getParam("program") || localData["Program"] || localData["program"] || "");
+        setFieldState("field-email", getParam("email") || localData["E-mail Address"] || localData["email"] || "");
+
+        const studentId = document.getElementById("field-studentid").value.trim();
+
+        try {
+          const response = await fetch(`${BASE_URL}?module=eventinfo&eventID=${encodeURIComponent(EVENT_ID)}`);
+          const json = await response.json();
+
+          if (json.ok && json.found && json.data) {
+            const eventData = json.data;
+            const title = eventData.name || EVENT_ID;
+            const venue = eventData.venue || "TBA";
+            const dateStr = eventData.dateDisplay || "Date TBA";
+            const timeStr = formatTime(eventData.time);
+
+            document.getElementById("form-type-display").classList.remove("skeleton");
+            const titleEl = document.getElementById("event-title-display");
+            titleEl.classList.remove("skeleton"); titleEl.textContent = title.toUpperCase();
+            
+            document.getElementById("meta-venue-wrap").classList.remove("skeleton");
+            document.getElementById("meta-venue").textContent = venue;
+            document.getElementById("meta-date-wrap").classList.remove("skeleton");
+            document.getElementById("meta-date").textContent = dateStr + (timeStr ? ` • ${timeStr}` : "");
+
+            document.getElementById("eval-info-title").textContent = title.toUpperCase();
+            document.getElementById("eval-info-datevenue").textContent = `${dateStr} @ ${venue}`;
+
+            if (eventData.poster) {
+              document.getElementById("header-bg-poster").style.backgroundImage = `url('${eventData.poster}')`;
+              document.documentElement.style.setProperty("--accent-blue", "#1d4ed8");
+            }
+
+          } else {
+            console.warn("Event not found");
+          }
+        } catch (err) {
+          console.error("Failed to fetch event data:", err);
+        }
+        document.getElementById("global-loader").classList.add("hidden");
+      }
+
+      async function submitEvaluation() {
+        const eventType = document.getElementById("field-eventtype").value;
+        if (!eventType) {
+          alert("Please select the Type of Event.");
+          document.getElementById("field-eventtype").focus();
+          return;
+        }
+
+        const ratings = {};
+        const allRadioNames = new Set();
+        
+        document.querySelectorAll('#likert-body input[type="radio"]').forEach(el => allRadioNames.add(el.name));
+        
+        for (const name of allRadioNames) {
+           const selected = document.querySelector(`input[name="${name}"]:checked`);
+           if (!selected) {
+               let questionText = "this aspect";
+               for (const cat of CRITERIA) {
+                   const found = cat.questions.find(q => q.id === name);
+                   if (found) { questionText = found.text; break; }
+               }
+               alert(`Please rate: "${questionText}"`);
+               return; 
+           }
+           ratings[name] = parseInt(selected.value, 10);
+        }
+
+        const btnSubmit = document.getElementById("btn-submit");
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = "Submitting...";
+
+        const payload = {
+          action: "submitEvaluation", 
+          eventName: EVENT_ID,
+          studentId: document.getElementById("field-studentid").value.trim(),
+          surname: document.getElementById("field-surname").value.trim(),
+          firstName: document.getElementById("field-firstname").value.trim(),
+          program: document.getElementById("field-program").value.trim(),
+          email: document.getElementById("field-email").value.trim(),
+          eventType: eventType,
+          ratings: ratings,
+          improveText: document.getElementById("field-improve").value.trim(),
+          calloutText: document.getElementById("field-callout").value.trim(),
+          comments: document.getElementById("field-comments").value.trim()
+        };
+
+        try {
+          const res = await fetch(BASE_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (json.ok) {
+            alert("Evaluation submitted successfully! Thank you for your feedback.");
+            window.location.assign("https://btledorg.github.io/site/events/forms.html");
+          } else {
+            throw new Error(json.error || "Submission failed.");
+          }
+        } catch (err) {
+          alert("Error submitting form: " + err.message);
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = "Submit Evaluation";
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        populateHeaderAndForm();
+
+        document.getElementById("terms-check").addEventListener("change", (e) => {
+          document.getElementById("btn-to-step2").disabled = !e.target.checked;
+        });
+
+        const goBackFn = (e) => { e.preventDefault(); if(window.history.length>1) window.history.back(); else window.close(); };
+        document.getElementById("btn-ended-back").addEventListener("click", goBackFn);
+        document.getElementById("btn-submitted-back").addEventListener("click", goBackFn);
+      });
+    </script>
+  </body>
+</html>
