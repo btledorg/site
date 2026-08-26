@@ -12,12 +12,44 @@
     return normalizeRoot(root) + String(path || "").replace(/^\/+/, "");
   }
 
+  // Helper to smart-link: if we are already on the target page, make it just an anchor (#)
+  function smartLink(ROOT, targetPath) {
+    var fullUrl = joinPath(ROOT, targetPath);
+    
+    // Split target path into pathname and hash (e.g., "about/index.html#history-constitution")
+    var parts = targetPath.split("#");
+    var targetFile = parts[0];
+    var targetHash = parts[1] ? "#" + parts[1] : "";
+
+    if (!targetFile || targetFile === "") {
+      return targetHash || fullUrl;
+    }
+
+    // Get current clean pathname
+    var currentPath = window.location.pathname;
+    
+    // Check if the current URL ends with or includes the target file
+    // Handles cases like "/about/index.html" vs "about/index.html" or root index
+    var isSamePage = false;
+    if (currentPath.endsWith(targetFile) || (targetFile === "index.html" && (currentPath.endsWith("/") || currentPath === ""))) {
+      isSamePage = true;
+    }
+
+    // If it's the same page and has a hash, return only the hash
+    if (isSamePage && targetHash) {
+      return targetHash;
+    }
+
+    return fullUrl;
+  }
+
   function renderNavbar() {
     var header = document.getElementById("site-navbar");
     if (!header) return;
 
     var ROOT = normalizeRoot(header.getAttribute("data-root") || "./");
     function link(path) { return joinPath(ROOT, path); }
+    function slink(path) { return smartLink(ROOT, path); }
 
     var hasStudentProfile = false;
     try {
@@ -37,7 +69,6 @@
         '</ul>' +
       '</div>' : "";
 
-    // Populate inside the existing <header> tag without creating a new header element
     header.innerHTML =
       '<div class="container nav-container">' +
         '<a href="' + link("index.html") + '" class="brand">' +
@@ -54,19 +85,20 @@
           '<div class="dropdown">' +
             '<a href="' + link("about/index.html") + '" class="nav-link">About Us &#9662;</a>' +
             '<ul class="dropdown-menu">' +
-              '<li><a href="' + link("about/#history-constitution") + '">History &amp; Constitution</a></li>' +
-              '<li><a href="' + link("about/#spotlight") + '">Vision &amp; Mission</a></li>' +
+              '<li><a href="' + slink("about/index.html#history-constitution") + '">History &amp; Constitution</a></li>' +
+              '<li><a href="' + slink("about/index.html#spotlight") + '">Vision &amp; Mission</a></li>' +
               '<li><a href="' + link("about/logo.html") + '">BTLED LOGO</a></li>' +
-              '<li><a href="' + link("about/#officers") + '">Executive Officers</a></li>' +
+              '<li><a href="' + slink("about/index.html#officers") + '">Executive Officers</a></li>' +
               '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
               '<li><a href="' + link("about/documents.html#achievements") + '">Achievements &amp; Awards</a></li>' +
               '<li><a href="' + link("about/documents.html#permits") + '">Permits &amp; Certifications</a></li>' +
             '</ul>' +
           '</div>' +
           '<a href="' + link("finance/budget.html") + '" class="nav-link">Finance</a>' +
-'<div class="dropdown">' +
+          '<div class="dropdown">' +
             '<a href="' + link("events/event.html") + '" class="nav-link">Events &#9662;</a>' +
             '<ul class="dropdown-menu">' +
+              '<li><a href="' + link("events/event.html") + '">Calendar</a></li>' +
               '<li><a href="' + link("events/forms.html") + '">Forms</a></li>' +
               '<li><a href="' + link("validate.html") + '">Check Status</a></li>' +
               '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' + 
@@ -82,13 +114,12 @@
             '<ul class="dropdown-menu">' +
               '<li><a href="mailto:email@example.com">Email</a></li>' +
               '<li><a href="tel:+63000000000">Phone</a></li>' +
-              '<li><a href="' + link("#location") + '">Location</a></li>' +
+              '<li><a href="' + slink("#location") + '">Location</a></li>' +
             '</ul>' +
           '</div>' +
         '</nav>' +
       '</div>';
 
-    // Bind event listeners directly to the populated elements
     var toggleBtn = header.querySelector(".menu-toggle");
     var navMenu = header.querySelector(".nav-menu");
     var dropdowns = header.querySelectorAll(".dropdown");
