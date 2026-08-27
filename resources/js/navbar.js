@@ -112,9 +112,9 @@
           '<div class="dropdown">' +
             '<a href="#" class="nav-link">Contact Us &#9662;</a>' +
             '<ul class="dropdown-menu">' +
-              '<li><a href="mailto:email@example.com">Email</a></li>' +
-              '<li><a href="tel:+63000000000">Phone</a></li>' +
-              '<li><a href="' + slink("#location") + '">Location</a></li>' +
+              '<li><a href="mailto:urscbtledorg@gmail.com">Email</a></li>' +
+              '<li><a href="tel:+639700337672">Phone</a></li>' +
+              '<li><a href="https://www.facebook.com/share/1H2gZ3VW9P/" target="_blank">Facebook</a></li>' +
             '</ul>' +
           '</div>' +
         '</nav>' +

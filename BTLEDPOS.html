@@ -449,8 +449,8 @@
             const qtyInput = document.getElementById('qty-' + contestantId);
             const qty = parseInt(qtyInput.value);
 
-            if (!firstName || !studentNo) {
-                alert('Wait! Please enter the Voter First Name and Student Number at the top first.');
+            if (!studentNo) {
+                alert('Wait! Please enter the Voter Student Number at the top first.');
                 document.getElementById('voterFirstName').focus();
                 return;
             }
