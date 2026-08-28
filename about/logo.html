@@ -7,7 +7,6 @@
     <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
     <link rel="stylesheet" href="../resources/css/landing.css" />
     <style>
-      /* --- LOGO PAGE SPECIFIC STYLES --- */
 
       .logo-banner h1 {
         margin: 0;
@@ -18,7 +17,6 @@
         text-transform: uppercase;
       }
 
-      /* Colorful Stripe */
       .color-stripe {
         display: flex;
         height: 20px;
@@ -29,7 +27,6 @@
         flex: 1;
       }
 
-      /* Main Content Container */
       .logo-content {
         background-color: #ffffff;
         padding: 4rem 2rem;
@@ -37,7 +34,6 @@
         margin: 0 auto;
       }
 
-      /* Section 1: Text and Logo Split */
       .logo-intro-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -73,7 +69,6 @@
         object-fit: contain;
       }
 
-      /* Section 2: Video Embed */
       .logo-video-section {
         display: flex;
         justify-content: center;
@@ -84,7 +79,7 @@
         position: relative;
         width: 100%;
         max-width: 800px;
-        padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+        padding-bottom: 56.25%;
         height: 0;
         border-radius: 8px;
         overflow: hidden;
@@ -100,7 +95,6 @@
         border: 0;
       }
 
-      /* Section 3: Logo Variants */
       .logo-variants-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -116,7 +110,6 @@
         filter: drop-shadow(2px 4px 6px rgba(111, 110, 161, 0.755));
       }
 
-      /* Responsive adjustments */
       @media (max-width: 768px) {
         .logo-intro-grid {
           grid-template-columns: 1fr;
@@ -135,16 +128,13 @@
   </head>
   <body>
 
-    <!-- Navigation -->
   <header class="navbar" id="site-navbar" data-root="../"></header>
   <script src="../resources/js/navbar.js"></script>
 
-    <!-- 1. Hero Section -->
     <section
       id="hero"
       style="min-height: 40vh"
-      class="hero-bg animate-on-scroll"
-    >
+      class="hero-bg animate-on-scroll">
       <div
         class="hero-image"
         style="background-image: url(&quot;../resources/image/3.png&quot;)"
@@ -152,7 +142,6 @@
       <div class="hero-overlay"></div>
 
       <div class="container hero-content-container">
-        <!-- Text Block on the Right -->
         <div class="hero-text-block animate-on-scroll delay-1">
           <h1 class="hero-title">
             BTLED <span class="highlight-text">LOGO</span>
@@ -163,9 +152,7 @@
         </div>
       </div>
     </section>
-    <!-- Main Content Area -->
     <main class="logo-content animate-on-scroll">
-      <!-- Section 1: Logo Description & Image -->
       <div class="logo-intro-grid animate-on-scroll">
         <div class="logo-text">
           <h2>THE BTLED EMBLEM</h2>
@@ -187,7 +174,6 @@
           </p>
         </div>
         <div class="logo-main-img animate-on-scroll delay-1">
-          <!-- Update src to your actual main logo path -->
           <img src="../resources/image/logo/2.png" alt="BTLED Official Logo" />
         </div>
       </div>
@@ -195,7 +181,6 @@
       <!-- Section 2: Logo Video Presentation -->
       <div class="logo-video-section animate-on-scroll">
         <div class="video-wrapper">
-          <!-- Replace this iframe src with your actual YouTube embed link -->
           <iframe
             src="../resources/video/BTLEEEEEED.mp4"
             title="BTLED Logo Video"
@@ -213,7 +198,6 @@
         </div>
       </div>
 
-      <!-- Section 3: Logo Variations -->
       <div class="logo-variants-grid animate-on-scroll">
         <img
           src="../resources/image/logo/2.png"
@@ -238,7 +222,6 @@
       </div>
     </main>
 
-    <!-- Bottom Multi-colored stripe matching reference -->
     <div class="color-stripe">
       <div class="stripe-1"></div>
       <div class="stripe-2"></div>
@@ -252,7 +235,6 @@
       <div class="stripe-10"></div>
     </div>
 
-    <!-- Footer -->
     <footer class="footer">
       <div class="container footer-grid">
         <div>
@@ -267,10 +249,9 @@
         </div>
       </div>
     </footer>
-    <!-- Interactive Scripts -->
+
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        // Scroll animations
         const observerOptions = {
           root: null,
           rootMargin: "0px",

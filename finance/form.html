@@ -259,43 +259,35 @@
         const iframe = document.getElementById("btled-frame");
         if (!iframe) return;
 
-        // --- SECURITY WHITELIST ---
-        // Only these Student Numbers are allowed to access this workspace
-        // (Keep these uppercase, the script will handle the rest)
         const ALLOWED_STUDENTS = ["C2026-0154", "C2025-0119"];
 
-        // 1. Read existing parameters from browser URL
         const pageParams = new URLSearchParams(window.location.search);
         const params = new URLSearchParams();
 
-        // Copy and clean all URL params (e.g. page, eventID, term, sem)
         for (const [key, value] of pageParams.entries()) {
           const cleanKey = key.replace(/[^a-zA-Z0-9_-]/g, "").trim();
           const cleanVal = value.replace(/\?+$/, "").trim();
           if (cleanKey) params.set(cleanKey, cleanVal);
         }
 
-        // Default fallbacks if not present in URL
         if (!params.has("page")) params.set("page", "FinancialForm");
         if (!params.has("term")) params.set("term", "2627");
         if (!params.has("sem")) params.set("sem", "1");
 
-        // 2. Append student details from localStorage and Check Whitelist
         try {
           const rawData = localStorage.getItem("btled_student");
           if (rawData) {
             const student = JSON.parse(rawData);
             const currentId = student["Student No."] || student.id;
 
-            // ENFORCE WHITELIST: Case-insensitive check
+
             if (currentId) {
-              // Convert their ID to uppercase and remove spaces to guarantee a match
               const normalizedId = currentId.toUpperCase().trim(); 
 
               if (!ALLOWED_STUDENTS.includes(normalizedId)) {
                 alert("Access Denied: You do not have the required permissions to view this workspace.");
-                window.location.href = "../index.html"; // Redirects to home page
-                return; // Immediately stop loading the iframe
+                window.location.href = "../index.html"; 
+                return; 
               }
             }
 
@@ -316,7 +308,6 @@
           console.warn("Could not load btled_student from localStorage:", e);
         }
 
-        // 3. Update iframe src (Only happens if they passed the whitelist check)
         iframe.src = `${BASE_URL}?${params.toString()}`;
       })();
     </script>
