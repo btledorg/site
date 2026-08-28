@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Easy Cash Computations</title>
+  <style>
+    :root {
+      --bg: #f4f7f6;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --border: #e0e0e0;
+      --primary: #1d4ed8;
+      --primary-hover: #1e3a8a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .calculator {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 450px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .header h2 { font-size: 1.4rem; color: #111; }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .row:last-child { border-bottom: none; }
+
+    .denom-label {
+      font-weight: 600;
+      font-size: 1.1rem;
+      width: 80px;
+      color: var(--primary);
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .input-group input {
+      width: 80px;
+      padding: 0.5rem;
+      font-size: 1rem;
+      text-align: center;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-group input:focus { border-color: var(--primary); }
+
+    .subtotal {
+      width: 100px;
+      text-align: right;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .total-section {
+      margin-top: 1.5rem;
+      background: #eef2ff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .total-label {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .total-amount {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #111;
+    }
+
+    .btn-clear {
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0.8rem;
+      background: #f1f5f9;
+      color: #475569;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-clear:hover { background: #e2e8f0; color: #1e293b; }
+
+    /* Hide number input arrows */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; margin: 0; 
+    }
+  </style>
+</head>
+<body>
+
+  <div class="calculator">
+    <div class="header">
+      <h2>Cash Breakdown</h2>
+    </div>
+
+    <div id="denominations-container">
+      <!-- Rows will be injected by JavaScript -->
+    </div>
+
+    <div class="total-section">
+      <div class="total-label">Grand Total</div>
+      <div class="total-amount" id="grand-total">₱0</div>
+    </div>
+
+    <button class="btn-clear" onclick="clearAll()">Clear All</button>
+  </div>
+
+  <script>
+    const denominations = [1000, 500, 200, 100, 50, 20, 10, 5, 1];
+    const container = document.getElementById('denominations-container');
+    const grandTotalDisplay = document.getElementById('grand-total');
+
+    // Number formatter for currency
+    const formatCurrency = (num) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(num);
+
+    // Render the input rows
+    denominations.forEach(denom => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      
+      row.innerHTML = `
+        <div class="denom-label">${denom}</div>
+        <div class="input-group">
+          <span>&times;</span>
+          <input type="number" min="0" placeholder="0" data-val="${denom}" class="count-input">
+        </div>
+        <div class="subtotal" id="sub-${denom}">₱0.00</div>
+      `;
+      container.appendChild(row);
+    });
+
+    // Listen to input changes
+    const inputs = document.querySelectorAll('.count-input');
+    
+    inputs.forEach(input => {
+      input.addEventListener('input', calculateTotal);
+    });
+
+    function calculateTotal() {
+      let grandTotal = 0;
+
+      inputs.forEach(input => {
+        const count = parseInt(input.value) || 0;
+        const value = parseInt(input.getAttribute('data-val'));
+        const subtotal = count * value;
+        
+        // Update row subtotal
+        document.getElementById(`sub-${value}`).textContent = formatCurrency(subtotal);
+        
+        // Add to grand total
+        grandTotal += subtotal;
+      });
+
+      // Update grand total display
+      grandTotalDisplay.textContent = formatCurrency(grandTotal);
+    }
+
+    function clearAll() {
+      inputs.forEach(input => {
+        input.value = '';
+      });
+      calculateTotal(); // Recalculate to reset everything to 0
+    }
+  </script>
+
+</body>
+</html>
