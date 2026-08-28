@@ -253,8 +253,6 @@
 
     <script src="../resources/js/login.js"></script>
 
-    <!-- DYNAMIC IFRAME LOADER SCRIPT -->
-    <!-- DYNAMIC IFRAME LOADER SCRIPT -->
     <script>
       (function updateIframeSource() {
         const BASE_URL = "https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec";
@@ -263,7 +261,8 @@
 
         // --- SECURITY WHITELIST ---
         // Only these Student Numbers are allowed to access this workspace
-        const ALLOWED_STUDENTS = ["C2026-0154", "C2025-0119", "c2026-0154", "c2025-0119"];
+        // (Keep these uppercase, the script will handle the rest)
+        const ALLOWED_STUDENTS = ["C2026-0154", "C2025-0119"];
 
         // 1. Read existing parameters from browser URL
         const pageParams = new URLSearchParams(window.location.search);
@@ -288,11 +287,16 @@
             const student = JSON.parse(rawData);
             const currentId = student["Student No."] || student.id;
 
-            // ENFORCE WHITELIST: If they have an ID but it's not on the list, kick them out
-            if (currentId && !ALLOWED_STUDENTS.includes(currentId)) {
-              alert("Access Denied: You do not have the required permissions to view this workspace.");
-              window.location.href = "../index.html"; // Redirects to home page
-              return; // Immediately stop loading the iframe
+            // ENFORCE WHITELIST: Case-insensitive check
+            if (currentId) {
+              // Convert their ID to uppercase and remove spaces to guarantee a match
+              const normalizedId = currentId.toUpperCase().trim(); 
+
+              if (!ALLOWED_STUDENTS.includes(normalizedId)) {
+                alert("Access Denied: You do not have the required permissions to view this workspace.");
+                window.location.href = "../index.html"; // Redirects to home page
+                return; // Immediately stop loading the iframe
+              }
             }
 
             if (currentId) params.set("studentid", currentId);
