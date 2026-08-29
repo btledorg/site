@@ -101,7 +101,7 @@
               '<li><a href="' + link("validate.html") + '">Check Status</a></li>' +
               '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
               '<li><a href="' + link("events/gallery.html") + '">Event Gallery</a></li>' +
-              '<li><a href="' + link("events/results.html") + '">Competition Results</a></li>' +
+              '<li><a href="' + link("events/result.html") + '">Competition Results</a></li>' +
             '</ul>' +
           '</div>' +
           profileNav +
