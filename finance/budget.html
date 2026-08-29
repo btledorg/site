@@ -252,31 +252,25 @@
     </div>
 
     <script src="../resources/js/login.js"></script>
-
-    <!-- DYNAMIC IFRAME LOADER SCRIPT -->
     <script>
       (function updateIframeSource() {
         const BASE_URL = "https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec";
         const iframe = document.getElementById("btled-frame");
         if (!iframe) return;
 
-        // 1. Read existing parameters from browser URL
         const pageParams = new URLSearchParams(window.location.search);
         const params = new URLSearchParams();
 
-        // Copy and clean all URL params (e.g. page, eventID, term, sem)
         for (const [key, value] of pageParams.entries()) {
           const cleanKey = key.replace(/[^a-zA-Z0-9_-]/g, "").trim();
           const cleanVal = value.replace(/\?+$/, "").trim();
           if (cleanKey) params.set(cleanKey, cleanVal);
         }
 
-        // Default fallbacks if not present in URL
         if (!params.has("page")) params.set("page", "Budget");
         if (!params.has("term")) params.set("term", "2627");
         if (!params.has("sem")) params.set("sem", "1");
 
-        // 2. Append student details from localStorage
         try {
           const rawData = localStorage.getItem("btled_student");
           if (rawData) {
@@ -298,7 +292,6 @@
           console.warn("Could not load btled_student from localStorage:", e);
         }
 
-        // 3. Update iframe src
         iframe.src = `${BASE_URL}?${params.toString()}`;
       })();
     </script>

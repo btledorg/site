@@ -11,12 +11,10 @@
   function joinPath(root, path) {
     return normalizeRoot(root) + String(path || "").replace(/^\/+/, "");
   }
-
-  // Helper to smart-link: if we are already on the target page, make it just an anchor (#)
+  
   function smartLink(ROOT, targetPath) {
     var fullUrl = joinPath(ROOT, targetPath);
     
-    // Split target path into pathname and hash (e.g., "about/index.html#history-constitution")
     var parts = targetPath.split("#");
     var targetFile = parts[0];
     var targetHash = parts[1] ? "#" + parts[1] : "";
@@ -25,17 +23,14 @@
       return targetHash || fullUrl;
     }
 
-    // Get current clean pathname
+
     var currentPath = window.location.pathname;
     
-    // Check if the current URL ends with or includes the target file
-    // Handles cases like "/about/index.html" vs "about/index.html" or root index
     var isSamePage = false;
     if (currentPath.endsWith(targetFile) || (targetFile === "index.html" && (currentPath.endsWith("/") || currentPath === ""))) {
       isSamePage = true;
     }
 
-    // If it's the same page and has a hash, return only the hash
     if (isSamePage && targetHash) {
       return targetHash;
     }

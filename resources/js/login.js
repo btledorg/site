@@ -3,14 +3,12 @@
   document.addEventListener("DOMContentLoaded", () => {
     checkUserSession();
 
-    // Helper to show alert cards nicely on top
     function showAlert(type, elementId, message) {
       const alertEl = document.getElementById(elementId);
       alertEl.className = `auth-alert ${type}`;
       alertEl.textContent = message;
     }
 
-    // Handle "Continue" submit (identify / look up existing record)
     document
       .getElementById("login-form")
       .addEventListener("submit", async (e) => {
@@ -46,7 +44,6 @@
             btn.classList.remove("loading");
             btn.disabled = false;
           } else {
-            // Switch to the "get to know you" registration view if not found
             document.getElementById("reg-id").value = id;
             document.getElementById("reg-name").value = name;
             document.getElementById("reg-surname").value = surname;
@@ -68,7 +65,6 @@
         }
       });
 
-    // Handle Registration Submit
     document
       .getElementById("register-form")
       .addEventListener("submit", async (e) => {

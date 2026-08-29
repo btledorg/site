@@ -54,16 +54,19 @@
   <header class="navbar" id="site-navbar" data-root="../"></header>
   <script src="../resources/js/navbar.js"></script>
 
+    <!-- Fullscreen Iframe Container -->
     <div class="iframe-viewport">
       <iframe
         id="btled-frame"
-        src="https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec?page=FinancialForm&term=2627&sem=1"
+        src="https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec?page=Gallery&term=2627&sem=1"
         class="fullscreen-frame"
         title="BTLED Workspace Frame"
       ></iframe>
     </div>
 
+    <!-- LOGIN & REGISTRATION COMPONENT -->
     <div id="auth-modal-wrapper" class="auth-modal-overlay hidden">
+      <!-- INTRO / IDENTIFY VIEW -->
       <div id="login-view" class="auth-modal-card">
         <h3>Let's Get to Know You</h3>
         <p>
@@ -249,14 +252,11 @@
     </div>
 
     <script src="../resources/js/login.js"></script>
-
     <script>
       (function updateIframeSource() {
         const BASE_URL = "https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec";
         const iframe = document.getElementById("btled-frame");
         if (!iframe) return;
-
-        const ALLOWED_STUDENTS = ["C2026-0154", "C2025-0119"];
 
         const pageParams = new URLSearchParams(window.location.search);
         const params = new URLSearchParams();
@@ -267,7 +267,7 @@
           if (cleanKey) params.set(cleanKey, cleanVal);
         }
 
-        if (!params.has("page")) params.set("page", "FinancialForm");
+        if (!params.has("page")) params.set("page", "Gallery");
         if (!params.has("term")) params.set("term", "2627");
         if (!params.has("sem")) params.set("sem", "1");
 
@@ -275,20 +275,7 @@
           const rawData = localStorage.getItem("btled_student");
           if (rawData) {
             const student = JSON.parse(rawData);
-            const currentId = student["Student No."] || student.id;
-
-
-            if (currentId) {
-              const normalizedId = currentId.toUpperCase().trim(); 
-
-              if (!ALLOWED_STUDENTS.includes(normalizedId)) {
-                alert("Access Denied: You do not have the required permissions to view this workspace.");
-                window.location.href = "../index.html"; 
-                return; 
-              }
-            }
-
-            if (currentId) params.set("studentid", currentId);
+            if (student["Student No."] || student.id) params.set("studentid", student["Student No."] || student.id);
             if (student["Surname"] || student.surname) params.set("surname", student["Surname"] || student.surname);
             if (student["First Name"] || student.name) params.set("name", student["First Name"] || student.name);
             if (student["Middle Name"]) params.set("middleName", student["Middle Name"]);

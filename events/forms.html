@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="../resources/css/landing.css" />
     <link rel="stylesheet" href="../resources/css/form.css" />
     <style>
-      /* --- FULLSCREEN IFRAME SPECIFIC STYLES --- */
 
       * {
         box-sizing: border-box;
@@ -22,11 +21,9 @@
         height: 100%;
       }
 
-      /* Assuming standard navbar height is ~70px or 80px. 
-         Adjust calc() if your navbar height is different. */
       .iframe-viewport {
         position: absolute;
-        top: 70px; /* Distance from top matching your navbar height */
+        top: 70px;
         left: 0;
         width: 100%;
         height: calc(100vh - 70px);
@@ -40,7 +37,6 @@
         display: block;
       }
 
-      /* Responsive adjustment for mobile screens if menu toggle drops down */
       @media (max-width: 850px) {
         .iframe-viewport {
           top: 70px;
@@ -49,7 +45,7 @@
       }
 
       .table-wrapper {
-        max-height: 500px; /* or whatever height fits your layout */
+        max-height: 500px;
         overflow-y: auto;
       }
     </style>
@@ -66,8 +62,6 @@
       ></iframe>
     </div>
 
-    <!-- LOGIN & REGISTRATION COMPONENT -->
-
     <div id="auth-modal-wrapper" class="auth-modal-overlay hidden">
       <!-- INTRO / IDENTIFY VIEW -->
       <div id="login-view" class="auth-modal-card">
@@ -78,7 +72,6 @@
           Enter your details below to continue.
         </p>
 
-        <!-- Top Alert Box -->
         <div id="login-alert" class="auth-alert"></div>
 
         <form id="login-form">
@@ -225,7 +218,6 @@
               placeholder="email@example.com"
             />
           </div>
-          <!-- Add this hidden field inside your <form id="register-form"> -->
           <div style="display: none">
             <label>Leave this field empty</label>
             <input
@@ -260,18 +252,14 @@
         const BASE_URL =
           "https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec";
 
-        // Default page or fallback parameters
         const params = new URLSearchParams({
           page: "Form",
         });
 
         try {
-          // 1. Read student JSON from localStorage
           const rawData = localStorage.getItem("btled_student");
           if (rawData) {
             const student = JSON.parse(rawData);
-
-            // 2. Map JSON fields to URL query parameters
             if (student["Student No."] || student.id)
               params.set("studentid", student["Student No."] || student.id);
             if (student["Surname"] || student.surname)
@@ -299,7 +287,6 @@
           console.error("Error reading btled_student from localStorage:", err);
         }
 
-        // 3. Set the constructed URL into the iframe
         const iframe = document.getElementById("btled-frame");
         if (iframe) {
           iframe.src = `${BASE_URL}?${params.toString()}`;

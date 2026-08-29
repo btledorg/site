@@ -912,7 +912,7 @@
       let MAX_TEAM_SIZE = teamRange.max;
       let QUESTIONS = [];
       let FILE_REQUIRED = false;
-      let uploadedFile = null; // { name, mimeType, data (base64, no prefix) }
+      let uploadedFile = null;
       let STEP_SEQUENCE = ["1", "2", "mech"];
 
       const STEP_LABELS = {
@@ -989,7 +989,6 @@
           bgPoster.style.backgroundImage = `url('https://github.com/AstraMarky/Connect/blob/main/resources/img/3.png?raw=true')`;
       }
 
-      // ---- Dynamic color scheme from poster (enforces darker tones) ----
       function extractColorsFromImage(url) {
         return new Promise((resolve) => {
           try {
@@ -1015,8 +1014,6 @@
 
                   const brightness = (r + g + b) / 3;
 
-                  // RESTRICTED BRIGHTNESS FOR DARKER COLORS:
-                  // Keeps colors darker than 130 average brightness while avoiding pitch black (< 25)
                   if (brightness < 25 || brightness > 130) continue;
 
                   const key = `${Math.round(r / 24)}-${Math.round(g / 24)}-${Math.round(b / 24)}`;
@@ -1056,7 +1053,7 @@
       }
 
       function applyColorScheme(colors) {
-        if (!colors || colors.length < 2) return; // keep default theme
+        if (!colors || colors.length < 2) return;
         document.documentElement.style.setProperty("--accent-blue", colors[0]);
         document.documentElement.style.setProperty(
           "--accent-yellow",
@@ -1107,7 +1104,7 @@ async function populateHeaderAndForm() {
             if (status === "ended" || String(eventData.formLink).trim().toLowerCase() === "ended") {
               document.getElementById("ended-overlay").classList.add("show");
               hideLoader();
-              return; // stop building the wizard entirely
+              return;
             }
 
             // 2. Already-Submitted check
@@ -1119,7 +1116,7 @@ async function populateHeaderAndForm() {
                 if (subJson.ok && subJson.submitted) {
                   document.getElementById("submitted-overlay").classList.add("show");
                   hideLoader();
-                  return; // stop building the wizard entirely
+                  return;
                 }
               } catch (e) {
                 console.warn("Could not check prior submissions", e);
@@ -1171,7 +1168,6 @@ async function populateHeaderAndForm() {
           console.error("Failed to fetch event data:", err);
         }
 
-        // Finally, build the steps if not blocked
         buildStepSequence();
         setupCollaborators();
         setupUpload();
@@ -1250,7 +1246,6 @@ async function populateHeaderAndForm() {
         return true;
       }
 
-      // ---- Collaborators (Program removed; all-or-nothing per optional card) ----
       function setupCollaborators() {
         if (MAX_TEAM_SIZE <= 1) return;
         const container = document.getElementById("collaborators-container");
@@ -1358,11 +1353,8 @@ async function populateHeaderAndForm() {
       let isUploadVerified = false;
       let verifiedUploads = null;
 
-      // Intercepts the Next click, checks the server, and advances automatically if valid
       async function handleUploadNext() {
         const nextBtn = document.getElementById("btn-upload-next");
-
-        // If already verified previously, just skip server check and go to next step
         if (isUploadVerified) {
           nextStepDirect("upload");
           return;
@@ -1377,7 +1369,7 @@ async function populateHeaderAndForm() {
           isUploadVerified = true;
           nextBtn.textContent = "Next";
           nextBtn.disabled = false;
-          nextStepDirect("upload"); // Automatically advances to the next step!
+          nextStepDirect("upload");
         } else {
           nextBtn.textContent = "Next";
           nextBtn.disabled = false;
@@ -1408,7 +1400,7 @@ async function populateHeaderAndForm() {
           const json = await res.json();
 
           if (json.ok && json.slots && json.slots.slot1) {
-            verifiedUploads = json.slots; // keep for the submit payload below
+            verifiedUploads = json.slots;
             return true;
           } else {
             alert(
