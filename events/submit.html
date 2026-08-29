@@ -650,13 +650,41 @@
         </div>
         <div class="button-row">
           <div></div>
-          <button id="btn-to-step2" class="btn btn-primary" disabled>
+          <button id="btn-step1-next" class="btn btn-primary" disabled>
             Accept & Proceed
           </button>
         </div>
       </div>
 
-      <!-- STEP 2: USER DATA -->
+      <!-- STEP 2: MECHANICS (Moved from bottom) -->
+      <div id="step-page-mech" class="step-content">
+        <h3 class="section-title">Event Mechanics & Guidelines</h3>
+        <div class="canva-container skeleton-dark" id="canva-wrapper">
+          <iframe
+            id="canva-iframe"
+            src=""
+            allowfullscreen="allowfullscreen"
+            allow="fullscreen"
+          ></iframe>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="mechanics-check" />
+          <label for="mechanics-check"
+            >I have thoroughly read and agree to follow all event
+            mechanics.</label
+          >
+        </div>
+        <div class="button-row">
+          <button class="btn btn-secondary" onclick="prevStep('mech')">
+            Back
+          </button>
+          <button id="btn-mech-next" class="btn btn-primary" disabled onclick="nextStep('mech', null)">
+            Next
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: USER DATA -->
       <div id="step-page-2" class="step-content">
         <h3 class="section-title">Submitter Information</h3>
         <div class="form-grid">
@@ -797,7 +825,6 @@
           <button class="btn btn-secondary" onclick="prevStep('upload')">
             Back
           </button>
-          <!-- Notice it calls handleUploadNext instead of nextStep directly -->
           <button
             id="btn-upload-next"
             class="btn btn-primary"
@@ -825,33 +852,22 @@
         </div>
       </div>
 
-      <!-- STEP: MECHANICS & SUBMIT -->
-      <div id="step-page-mech" class="step-content">
-        <h3 class="section-title">Event Mechanics & Guidelines</h3>
-        <div class="canva-container skeleton-dark" id="canva-wrapper">
-          <iframe
-            id="canva-iframe"
-            src=""
-            allowfullscreen="allowfullscreen"
-            allow="fullscreen"
-          ></iframe>
-        </div>
-        <div class="checkbox-group">
-          <input type="checkbox" id="mechanics-check" />
-          <label for="mechanics-check"
-            >I have thoroughly read and agree to follow all event
-            mechanics.</label
-          >
-        </div>
+      <!-- FINAL STEP: SUBMIT -->
+      <div id="step-page-submit" class="step-content">
+        <h3 class="section-title">Final Review & Submit</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+          You have completed all required steps. Please click the button below to finalize your registration.
+        </p>
         <div class="button-row">
-          <button class="btn btn-secondary" onclick="prevStep('mech')">
+          <button class="btn btn-secondary" onclick="prevStep('submit')">
             Back
           </button>
-          <button id="btn-submit" class="btn btn-primary" disabled>
+          <button id="btn-submit" class="btn btn-primary">
             Submit Form
           </button>
         </div>
       </div>
+
     </div>
 
     <footer class="footer">
@@ -913,15 +929,16 @@
       let QUESTIONS = [];
       let FILE_REQUIRED = false;
       let uploadedFile = null;
-      let STEP_SEQUENCE = ["1", "2", "mech"];
+      let STEP_SEQUENCE = ["1", "mech", "2"];
 
       const STEP_LABELS = {
         1: "Privacy",
+        mech: "Mechanics",
         2: "User Data",
-        collab: "Collaborators",
+        collab: "Team",
         upload: "Upload",
         questions: "Questions",
-        mech: "Mechanics",
+        submit: "Submit"
       };
 
       function getLocalStorageData() {
@@ -1066,7 +1083,7 @@
           );
       }
 
-async function populateHeaderAndForm() {
+      async function populateHeaderAndForm() {
         const localData = getLocalStorageData();
         const surname = getParam("surname") || localData["Surname"] || localData["surname"] || "";
         const firstName = getParam("firstName") || getParam("name") || localData["First Name"] || localData["name"] || "";
@@ -1097,7 +1114,7 @@ async function populateHeaderAndForm() {
           const json = await response.json();
 
           if (json.ok && json.found && json.data) {
-            const eventData = json.data; // eventData is defined HERE
+            const eventData = json.data;
 
             // 1. Registration-closed check
             const status = String(eventData.formStatus || "").trim().toLowerCase();
@@ -1181,11 +1198,11 @@ async function populateHeaderAndForm() {
 
       // ---- Dynamic step sequence + indicator ----
       function buildStepSequence() {
-        STEP_SEQUENCE = ["1", "2"];
+        STEP_SEQUENCE = ["1", "mech", "2"];
         if (MAX_TEAM_SIZE > 1) STEP_SEQUENCE.push("collab");
         if (FILE_REQUIRED) STEP_SEQUENCE.push("upload");
         if (QUESTIONS.length) STEP_SEQUENCE.push("questions");
-        STEP_SEQUENCE.push("mech");
+        STEP_SEQUENCE.push("submit");
         renderStepIndicator();
         goToStep(STEP_SEQUENCE[0]);
       }
@@ -1474,19 +1491,23 @@ async function populateHeaderAndForm() {
             closeOrGoBack();
           });
 
+        // Step 1 Checkbox & Next Button
         const termsCheck = document.getElementById("terms-check");
-        const btnToStep2 = document.getElementById("btn-to-step2");
+        const btnStep1Next = document.getElementById("btn-step1-next");
         termsCheck.addEventListener("change", () => {
-          btnToStep2.disabled = !termsCheck.checked;
+          btnStep1Next.disabled = !termsCheck.checked;
         });
-        btnToStep2.addEventListener("click", () => nextStep("1", null));
+        btnStep1Next.addEventListener("click", () => nextStep("1", null));
 
+        // Mechanics Checkbox & Next Button
         const mechanicsCheck = document.getElementById("mechanics-check");
-        const btnSubmit = document.getElementById("btn-submit");
+        const btnMechNext = document.getElementById("btn-mech-next");
         mechanicsCheck.addEventListener("change", () => {
-          btnSubmit.disabled = !mechanicsCheck.checked;
+          btnMechNext.disabled = !mechanicsCheck.checked;
         });
 
+        // Submit Button Action
+        const btnSubmit = document.getElementById("btn-submit");
         btnSubmit.addEventListener("click", async () => {
           btnSubmit.disabled = true;
           btnSubmit.textContent = "Submitting...";
