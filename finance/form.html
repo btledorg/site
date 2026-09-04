@@ -57,7 +57,7 @@
     <div class="iframe-viewport">
       <iframe
         id="btled-frame"
-        src="https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec?page=FinancialForm&term=2627&sem=1"
+        src="${APPS_SCRIPT_URL}?page=FinancialForm&term=2627&sem=1"
         class="fullscreen-frame"
         title="BTLED Workspace Frame"
       ></iframe>
@@ -249,14 +249,14 @@
     </div>
 
     <script src="../resources/js/login.js"></script>
-
+    <script src="../resources/js/config.js"></script>
     <script>
       (function updateIframeSource() {
-        const BASE_URL = "https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec";
+        const BASE_URL = APPS_SCRIPT_URL;
         const iframe = document.getElementById("btled-frame");
         if (!iframe) return;
 
-        const ALLOWED_STUDENTS = ["C2026-0154", "C2025-0119"];
+        const ALLOWED_STUDENTS = ["C2026-0154", "C2025-0119", "C2026-0162"];
 
         const pageParams = new URLSearchParams(window.location.search);
         const params = new URLSearchParams();

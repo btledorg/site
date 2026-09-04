@@ -247,10 +247,11 @@
     </div>
 
     <script src="../resources/js/login.js"></script>
+    <script src="../resources/js/config.js"></script>
     <script>
+
       (function () {
-        const BASE_URL =
-          "https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec";
+        const BASE_URL = APPS_SCRIPT_URL
 
         const params = new URLSearchParams({
           page: "Form",
@@ -289,7 +290,7 @@
 
         const iframe = document.getElementById("btled-frame");
         if (iframe) {
-          iframe.src = `${BASE_URL}?${params.toString()}`;
+          iframe.src = `${APPS_SCRIPT_URL}?${params.toString()}`;
         }
       })();
     </script>

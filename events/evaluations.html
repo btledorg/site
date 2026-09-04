@@ -315,6 +315,8 @@
         </div>
       </div>
     </footer>
+
+    <script src="../resources/js/config.js"></script>
     <script>
       function getParam(key) {
         try { const urlParams = new URLSearchParams(window.location.search); if (urlParams.has(key)) return urlParams.get(key); } catch (e) {}
@@ -322,7 +324,7 @@
       }
 
       const EVENT_ID = getParam("eventID") || getParam("eventId") || getParam("event") || "BTLED Event";
-      const BASE_URL = getParam("baseUrl") || "https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec";
+      const BASE_URL = getParam("baseUrl") || APPS_SCRIPT_URL;
 
       // 1. ALL POSSIBLE QUESTIONS & CATEGORIES (Expanded for depth)
       const CRITERIA = [

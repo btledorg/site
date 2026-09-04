@@ -885,6 +885,7 @@
       </div>
     </footer>
 
+    <script src="../resources/js/config.js"></script>
     <script>
       function getParam(key) {
         try {
@@ -918,8 +919,7 @@
         getParam("event") ||
         "BTLED Event";
       const BASE_URL =
-        getParam("baseUrl") ||
-        "https://script.google.com/macros/s/AKfycbxJC99DYaLixoLzLlTcs52uXfXRhtHY88Joqc3CNF4tpQVOZABIM8sNyJ8zuSi3OUI/exec";
+        getParam("baseUrl") || APPS_SCRIPT_URL;
 
       let teamRange = parseTeamSize(
         getParam("teamSize") || getParam("k") || "1",

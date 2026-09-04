@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .container {
+            display: flex;
+            gap: 30px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            max-width: 1000px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .controls {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .preview-container {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-left: 2px solid #eee;
+            padding-left: 30px;
+        }
+        label {
+            font-weight: bold;
+            font-size: 14px;
+            color: #555;
+        }
+        input[type="file"], textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        input[type="number"], input[type="color"], select {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .output-list {
+            margin-top: 20px;
+            width: 100%;
+            max-height: 150px;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        .output-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            font-size: 14px;
+        }
+        .output-item button {
+            padding: 4px 8px;
+            font-size: 12px;
+            background-color: #28a745;
+        }
+        .output-item button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Certificate Generator</h2>
+    <p style="color: #666; margin-top: 0;">Upload your background, input your names, adjust styling, and generate!</p>
+
+    <div class="container">
+        <!-- Controls Column -->
+        <div class="controls">
+            <div>
+                <label for="bgImage">1. Upload Background Image</label>
+                <input type="file" id="bgImage" accept="image/*">
+            </div>
+
+            <div>
+                <label for="namesInput">2. Enter Names (one per line)</label>
+                <textarea id="namesInput" placeholder="Juan Dela Cruz&#10;Maria Santos&#10;Pedro Reyes"></textarea>
+            </div>
+
+            <div class="settings-grid">
+                <div>
+                    <label for="fontSize">Font Size (px)</label>
+                    <input type="number" id="fontSize" value="50">
+                </div>
+                <div>
+                    <label for="fontColor">Font Color</label>
+                    <input type="color" id="fontColor" value="#1a1a1a">
+                </div>
+                <div>
+                    <label for="fontFamily">Font Family</label>
+                    <select id="fontFamily">
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Courier New">Courier New</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="textY">Vertical Position (Y)</label>
+                    <input type="number" id="textY" value="350">
+                </div>
+            </div>
+
+            <button id="generateBtn">Generate Certificates</button>
+        </div>
+
+        <!-- Preview Column -->
+        <div class="preview-container">
+            <label>Live Preview</label>
+            <canvas id="canvas" width="800" height="600"></canvas>
+            
+            <div class="output-list" id="outputList">
+                <!-- Generated download links will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const bgImageInput = document.getElementById('bgImage');
+        const namesInput = document.getElementById('namesInput');
+        const fontSizeInput = document.getElementById('fontSize');
+        const fontColorInput = document.getElementById('fontColor');
+        const fontFamilyInput = document.getElementById('fontFamily');
+        const textYInput = document.getElementById('textY');
+        const generateBtn = document.getElementById('generateBtn');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const outputList = document.getElementById('outputList');
+
+        let backgroundImage = null;
+
+        // Load background image
+        bgImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        backgroundImage = img;
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        drawPreview();
+                    }
+                    img.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Trigger preview update on input changes
+        [fontSizeInput, fontColorInput, fontFamilyInput, textYInput, namesInput].forEach(element => {
+            element.addEventListener('input', drawPreview);
+        });
+
+        function drawPreview() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (backgroundImage) {
+                ctx.drawImage(backgroundImage, 0, 0);
+            } else {
+                // Placeholder background if none uploaded
+                ctx.fillStyle = "#fafafa";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#999";
+                ctx.font = "24px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("Upload a background image to preview", canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            const names = namesInput.value.split('\n').filter(n => n.trim() !== '');
+            const sampleName = names.length > 0 ? names[0] : "Sample Name";
+
+            // Draw sample name
+            const fontSize = fontSizeInput.value;
+            const fontFamily = fontFamilyInput.value;
+            ctx.font = `bold ${fontSize}px ${fontFamily}`;
+            ctx.fillStyle = fontColorInput.value;
+            ctx.textAlign = "center";
+            ctx.fillText(sampleName, canvas.width / 2, parseInt(textYInput.value));
+        }
+
+        // Batch Generation
+        generateBtn.addEventListener('click', function() {
+            if (!backgroundImage) {
+                alert("Please upload a background image first.");
+                return;
+            }
+
+            const names = namesInput.value.split('\n').filter(n => n.trim() !== '');
+            if (names.length === 0) {
+                alert("Please enter at least one name.");
+                return;
+            }
+
+            outputList.innerHTML = '<strong>Generated Downloads:</strong>';
+
+            names.forEach((name, index) => {
+                // Create an offscreen canvas for each certificate
+                const offscreenCanvas = document.createElement('canvas');
+                offscreenCanvas.width = backgroundImage.width;
+                offscreenCanvas.height = backgroundImage.height;
+                const oCtx = offscreenCanvas.getContext('2d');
+
+                // Draw background and text
+                oCtx.drawImage(backgroundImage, 0, 0);
+                oCtx.font = `bold ${fontSizeInput.value}px ${fontFamilyInput.value}`;
+                oCtx.fillStyle = fontColorInput.value;
+                oCtx.textAlign = "center";
+                oCtx.fillText(name.trim(), offscreenCanvas.width / 2, parseInt(textYInput.value));
+
+                // Create download link element
+                const dataUrl = offscreenCanvas.toDataURL('image/png');
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'output-item';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = `${index + 1}. ${name.trim()}`;
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = 'Download PNG';
+                downloadBtn.onclick = function() {
+                    const link = document.createElement('a');
+                    link.download = `Certificate_${name.trim().replace(/\s+/g, '_')}.png`;
+                    link.href = dataUrl;
+                    link.click();
+                };
+
+                itemDiv.appendChild(nameSpan);
+                itemDiv.appendChild(downloadBtn);
+                outputList.appendChild(itemDiv);
+            });
+        });
+    </script>
+</body>
+</html>

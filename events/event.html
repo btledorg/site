@@ -61,7 +61,7 @@
     <!-- Fullscreen Iframe Container -->
     <div class="iframe-viewport">
       <iframe
-        src="https://script.google.com/macros/s/AKfycbzbO-QtvI2uymag7jSjghfFR-wlzgLojTb7BYhzyvpjnwMd3hblv1rmEnpGysyRGVA/exec?page=Events"
+        id="event-iframe"
         class="fullscreen-frame"
         title="BTLED Workspace Frame"
       ></iframe>
@@ -256,6 +256,10 @@
     </div>
 
     <script src="../resources/js/login.js"></script>
-
+    <script src="../resources/js/config.js"></script>
+    <script>
+      const iframe = document.getElementById("event-iframe");
+      iframe.src = `${APPS_SCRIPT_URL}?page=Events`;
+    </script>
   </body>
 </html>

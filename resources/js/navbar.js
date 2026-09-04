@@ -60,7 +60,7 @@
           '<li><a href="' + link("profile/card.html") + '">BTLED Card</a></li>' +
           '<li><a href="' + link("profile/participations.html") + '">Participations</a></li>' +
           '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' + 
-          '<li><a href="' + link("events/certificates.html") + '">Certificates</a></li>' +
+          '<li><a href="' + link("profile/certificate.html") + '">Certificates</a></li>' +
           '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
           '<li><a href="' + link("profile/index.html") + '">My Profile</a></li>' +
           '<li><a href="' + link("profile/index.html") + '">Logout</a></li>' +

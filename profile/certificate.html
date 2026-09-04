@@ -252,10 +252,9 @@
     </div>
 
     <script src="../resources/js/login.js"></script>
-    <script src="../resources/js/config.js"></script>
     <script>
       (function updateIframeSource() {
-        const BASE_URL = APPS_SCRIPT_URL;
+        const BASE_URL = "https://script.google.com/macros/s/AKfycbxJC99DYaLixoLzLlTcs52uXfXRhtHY88Joqc3CNF4tpQVOZABIM8sNyJ8zuSi3OUI/exec";
         const iframe = document.getElementById("btled-frame");
         if (!iframe) return;
 
@@ -268,7 +267,7 @@
           if (cleanKey) params.set(cleanKey, cleanVal);
         }
 
-        if (!params.has("page")) params.set("page", "Submissions");
+        if (!params.has("page")) params.set("page", "Certificate");
         if (!params.has("term")) params.set("term", "2627");
         if (!params.has("sem")) params.set("sem", "1");
 
