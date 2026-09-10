@@ -7,7 +7,8 @@
     <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
     <link rel="stylesheet" href="../resources/css/landing.css" />
     <link rel="stylesheet" href="../resources/css/form.css" />
-    <!-- Include JsBarcode Library for generating real barcodes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
       :root {
@@ -348,7 +349,7 @@
         left: 52%;
         display: flex;
         flex-direction: column;
-        gap: 0.2rem;
+        gap: 0.4rem;
         font-weight: bold;
         color: #0f172a;
         font-size: 1.9cqw;
@@ -360,7 +361,7 @@
         left: 52%;
         display: flex;
         flex-direction: column;
-        gap: 0.38rem;
+        gap: 0.5rem;
         font-weight: bold;
         color: #0f172a;
         font-size: 2.3cqw;
@@ -774,6 +775,23 @@
       .skeleton-pulse {
         animation: skeletonPulse 1.5s infinite ease-in-out;
       }
+
+      .protect-image {
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        pointer-events: auto;
+      }
+
+      body.is-exporting .clear-badge,
+      body.is-exporting .id-photo-upload {
+        display: none !important;
+      }
+      body.is-exporting .id-photo-container {
+        border: none !important;
+        background: transparent !important;
+      }
+
     </style>
   </head>
   <body>
@@ -810,6 +828,38 @@
                 </svg>
                 Digital ID Card
               </h2>
+              <button
+                id="exportIdBtn"
+                onclick="exportIDToPDF()"
+                style="
+                  background: var(--btled-primary);
+                  color: white;
+                  border: none;
+                  padding: 0.4rem 0.8rem;
+                  border-radius: 6px;
+                  cursor: pointer;
+                  font-size: 0.8rem;
+                  font-weight: bold;
+                  display: flex;
+                  align-items: center;
+                  gap: 0.4rem;
+                  transition: background 0.2s;
+                "
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export PDF
+              </button>
             </div>
 
             <!-- Front ID Card Preview -->
@@ -1591,24 +1641,41 @@
           `${studentNameObj.firstName} ${studentNameObj.middleName ? studentNameObj.middleName + " " : ""}${studentNameObj.surname}`.trim();
 
         container.innerHTML = list
-          .map(
-            (cert) => `
-          <div class="cert-card" onclick="openCertificateModal('${cert.certificateUrl}', '${escapeHtml(cert.event)}', '${escapeHtml(fullName)}')">
-            <div class="cert-thumbnail" style="position: relative; background-image: url('${cert.certificateUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
-              <div class="cert-grid-name" style="position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%); font-family: 'Segoe UI', Arial, sans-serif; font-weight: bold; color: #1e3a8a; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); pointer-events: none; width: 85%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;">
-                ${escapeHtml(fullName)}
-              </div>
-            </div>
-            <div class="cert-info">
-              <h4>${escapeHtml(cert.event)}</h4>
-              <p>Issued: ${escapeHtml(cert.date)}</p>
-            </div>
-          </div>
-        `,
-          )
+          .map((cert) => {
+            const eventTitle = cert.event || "Certificate";
+
+            // 1. Grab the first word of the event name (e.g., "Abanikewl")
+            const firstWord = eventTitle.trim().split(/[\s:-]+/)[0];
+
+            // 2. Use version from backend or parse it from status
+            const version =
+              cert.version ||
+              (() => {
+                const match = (cert.status || "").match(/,\s*(\d+)/);
+                return match ? match[1] : "1";
+              })();
+
+            // 3. Build the local filename (e.g., Certificates/Abanikewl1.png)
+            const localCertUrl = `Certificates/${firstWord}${version}.png`;
+
+            return `
+  <div class="cert-card" onclick="openCertificateModal('${localCertUrl}', '${escapeHtml(eventTitle)}', '${escapeHtml(fullName)}')">
+    <div class="cert-thumbnail" style="position: relative; background-image: url('${localCertUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3;" class="protect-image"></div>
+      
+      <div class="cert-grid-name" style="position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%); font-family: 'Segoe UI', Arial, sans-serif; font-weight: bold; color: #1e3a8a; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); pointer-events: none; width: 85%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; z-index: 2;">
+        ${escapeHtml(fullName)}
+      </div>
+    </div>
+    <div class="cert-info">
+      <h4>${escapeHtml(eventTitle)}</h4>
+      <p>Issued: ${escapeHtml(cert.date)}</p>
+    </div>
+  </div>
+`;
+          })
           .join("");
       }
-
       function openCertificateModal(certUrl, eventName, studentFullName) {
         let modalOverlay = document.getElementById("certModalOverlay");
         if (!modalOverlay) {
@@ -1617,12 +1684,18 @@
           modalOverlay.className = "modal-overlay";
           modalOverlay.innerHTML = `
             <button class="modal-close" onclick="closeCertificateModal()" aria-label="Close modal">&times;</button>
-            <div style="position: relative; max-width: 90vw; max-height: 90vh; text-align: center;">
+            <div style="position: relative; max-width: 90vw; max-height: 90vh; text-align: center; display: flex; flex-direction: column; align-items: center;">
               <div id="certPreviewContainer" style="position: relative; display: inline-block; max-width: 100%;">
-                <img id="certModalImg" src="" alt="Certificate Preview" style="max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);" />
+                <img id="certModalImg" src="" alt="Certificate Preview" style="max-width: 100%; max-height: 75vh; box-shadow: 0 25px 50px rgba(0,0,0,0.5); display: block;" />
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3;" class="protect-image"></div>
                 <div id="certOverlayName" class="cert-modal-name" style="position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%); font-family: 'Segoe UI', Arial, sans-serif; font-weight: bold; color: #1e3a8a; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); pointer-events: none; width: 80%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;"></div>
               </div>
               <p id="certModalTitle" style="color: #fbbf24; margin-top: 1rem; font-size: 1.1rem; font-weight: bold;"></p>
+              
+              <button id="exportCertBtn" onclick="exportCertToPDF()" style="margin-top: 0.5rem; background: #2563eb; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Download PDF
+              </button>
             </div>
           `;
           document.body.appendChild(modalOverlay);
@@ -1631,7 +1704,9 @@
           };
         }
 
-        document.getElementById("certModalImg").src = certUrl;
+        const imgEl = document.getElementById("certModalImg");
+        imgEl.src = certUrl;
+
         document.getElementById("certOverlayName").innerText = studentFullName;
         document.getElementById("certModalTitle").innerText = eventName;
         modalOverlay.classList.add("active");
@@ -1641,6 +1716,197 @@
         const modalOverlay = document.getElementById("certModalOverlay");
         if (modalOverlay) {
           modalOverlay.classList.remove("active");
+        }
+      }
+
+      // --- CLIENT-SIDE LOCAL PDF EXPORTER ---
+      async function exportCertToPDF() {
+        const { jsPDF } = window.jspdf;
+        const container = document.getElementById("certPreviewContainer");
+        const studentName =
+          document.getElementById("certOverlayName").innerText;
+        const eventName = document.getElementById("certModalTitle").innerText;
+
+        const btn = document.getElementById("exportCertBtn");
+        const originalText = btn.innerHTML;
+        btn.innerText = "Generating PDF...";
+        btn.disabled = true;
+
+        try {
+          // Captures local image and overlay name seamlessly with zero CORS issues
+          const canvas = await html2canvas(container, {
+            scale: 2,
+            useCORS: true,
+          });
+
+          const imgData = canvas.toDataURL("image/png");
+
+          const orientation =
+            canvas.width > canvas.height ? "landscape" : "portrait";
+          const doc = new jsPDF({ orientation, unit: "mm", format: "a4" });
+
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const imgRatio = canvas.width / canvas.height;
+          const pageRatio = pageWidth / pageHeight;
+
+          let finalWidth, finalHeight;
+          if (imgRatio > pageRatio) {
+            finalWidth = pageWidth;
+            finalHeight = pageWidth / imgRatio;
+          } else {
+            finalHeight = pageHeight;
+            finalWidth = pageHeight * imgRatio;
+          }
+
+          const x = (pageWidth - finalWidth) / 2;
+          const y = (pageHeight - finalHeight) / 2;
+
+          doc.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
+
+          const safeStudentName = studentName.replace(/[^a-z0-9]/gi, "_");
+          const safeEventName = eventName.replace(/[^a-z0-9]/gi, "_");
+
+          doc.save(`${safeStudentName}_${safeEventName}_Certificate.pdf`);
+        } catch (err) {
+          console.error("Certificate Export failed:", err);
+          alert(
+            "Failed to export Certificate. Please check local image paths.",
+          );
+        } finally {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      }
+
+async function exportIDToPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+        });
+        const btn = document.getElementById("exportIdBtn");
+        const originalText = btn.innerHTML;
+
+        btn.innerText = "Exporting...";
+        btn.disabled = true;
+        document.body.classList.add("is-exporting");
+
+        try {
+          const student = getStudentData() || {};
+          const studentName =
+            `${student["First Name"] || ""} ${student["Surname"] || ""}`.trim() ||
+            "Guest User";
+          const studentNo = student["Student No."] || student.id || "N/A";
+          const dateGenerated = new Date().toLocaleString();
+
+          // 1. Temporarily activate the modal structure or grab the inner flip card faces directly
+          const flipCard = document.querySelector(".flip-card");
+          const frontFace = flipCard.querySelector(".id-front-bg");
+          const backFace = flipCard.querySelector(".id-back-bg");
+
+          // 2. Create a high-res staging container outside the viewport
+          const tempDiv = document.createElement("div");
+          tempDiv.style.position = "absolute";
+          tempDiv.style.top = "-9999px";
+          tempDiv.style.left = "0";
+          tempDiv.style.width = "900px"; // High resolution width buffer
+          document.body.appendChild(tempDiv);
+
+          const cloneFront = frontFace.cloneNode(true);
+          const cloneBack = backFace.cloneNode(true);
+
+          // Clean up cloneBack styling so it renders flat, unmirrored, and clean
+          cloneBack.style.transform = "none";
+          cloneBack.style.scale = "1";
+          cloneBack.style.position = "relative";
+          cloneBack.style.backfaceVisibility = "visible";
+
+          // Remove any stray close badges or interactive UI artifacts from the clones
+          cloneFront.querySelectorAll(".clear-badge, .id-photo-upload").forEach(el => el.remove());
+          cloneBack.querySelectorAll(".clear-badge").forEach(el => el.remove());
+
+          tempDiv.appendChild(cloneFront);
+          tempDiv.appendChild(cloneBack);
+
+          // 3. High quality canvas options
+          const canvasOptions = {
+            scale: 3,
+            useCORS: true,
+            backgroundColor: null,
+            logging: false,
+          };
+          const canvasFront = await html2canvas(cloneFront, canvasOptions);
+          const canvasBack = await html2canvas(cloneBack, canvasOptions);
+
+          document.body.removeChild(tempDiv);
+
+          const imgFront = canvasFront.toDataURL("image/png", 1.0);
+          const imgBack = canvasBack.toDataURL("image/png", 1.0);
+
+          const pageWidth = doc.internal.pageSize.getWidth();
+
+          // 4. Header Layout
+          doc.setFontSize(18);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(30, 58, 138);
+          doc.text("BTLED CARD", pageWidth / 2, 20, {
+            align: "center",
+          });
+
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(50, 50, 50);
+          doc.text(`Name: ${studentName}`, 20, 30);
+          doc.text(`Student No: ${studentNo}`, 20, 36);
+          doc.text(`Date Generated: ${dateGenerated}`, 20, 42);
+          doc.text(
+            `Issuer: The BTLED Organization, URS Cainta Campus`,
+            20,
+            48,
+          );
+
+          doc.setDrawColor(200, 200, 200);
+          doc.line(20, 53, pageWidth - 20, 53);
+
+          // 5. Render Front & Back Cards
+          const imgWidth = 110;
+          const imgHeight = imgWidth / 1.59;
+          const centerX = (pageWidth - imgWidth) / 2;
+
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.text("Front View:", 20, 62);
+          doc.addImage(imgFront, "PNG", centerX, 65, imgWidth, imgHeight);
+
+          const backY = 65 + imgHeight + 12;
+          doc.text("Back View:", 20, backY - 3);
+          doc.addImage(imgBack, "PNG", centerX, backY, imgWidth, imgHeight);
+
+          // 6. Footer Disclaimer
+          const footerY = backY + imgHeight + 15;
+          doc.line(20, footerY - 5, pageWidth - 20, footerY - 5);
+
+          doc.setFontSize(7.5);
+          doc.setTextColor(120, 120, 120);
+          const disclaimerText =
+            "DISCLAIMER: This document is a system-generated export of the student's digital ID profile. It serves as secondary proof of membership for the BTLED organization. For official transactions, present the live digital ID or the printed physical card. If found, please surrender to the BTLED Office at URS Cainta Campus.";
+
+          const splitDisclaimer = doc.splitTextToSize(
+            disclaimerText,
+            pageWidth - 40,
+          );
+          doc.text(splitDisclaimer, 20, footerY);
+
+          doc.save(`BTLED_ID_${studentNo}.pdf`);
+        } catch (err) {
+          console.error("ID Export failed:", err);
+          alert("Failed to export ID. Please try again.");
+        } finally {
+          document.body.classList.remove("is-exporting");
+          btn.innerHTML = originalText;
+          btn.disabled = false;
         }
       }
 
@@ -2040,6 +2306,16 @@
         e.stopPropagation();
         flipContainer.classList.toggle("flipped");
       }
+
+      document.addEventListener("contextmenu", function (e) {
+        // Target certificate thumbnails and modal certificate image
+        if (e.target.closest(".cert-thumbnail, #certModalImg")) {
+          e.preventDefault();
+          alert(
+            'Direct image saving is disabled. Please use the "Download PDF" button below!',
+          );
+        }
+      });
     </script>
   </body>
 </html>
