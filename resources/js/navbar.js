@@ -66,7 +66,7 @@
       '<div class="dropdown">' +
         '<a href="' + link("profile/index.html") + '" class="nav-link">My Profile ' + notifBadge + ' &#9662;</a>' +
         '<ul class="dropdown-menu">' +
-          '<li><a href="' + link("profile/attendance.html") + '">Attendance</a></li>' +
+          '<li style="display: none;"><a href="' + link("profile/attendance.html") + '">Attendance</a></li>' +
           '<li style="border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
           '<li><a href="' + link("profile/index.html") + '">View Profile</a></li>' +
           '<li><a href="#" id="logout-link">Logout</a></li>' +
