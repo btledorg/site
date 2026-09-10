@@ -494,7 +494,7 @@
       }
       .id-face {
         position: absolute;
-        width: 100%;
+        width: 99%;
         height: 100%;
         backface-visibility: hidden;
         border-radius: 12px;
@@ -791,7 +791,6 @@
         border: none !important;
         background: transparent !important;
       }
-
     </style>
   </head>
   <body>
@@ -886,6 +885,20 @@
                 </div>
               </div>
             </div>
+            <p
+              style="
+                font-size: 0.8rem;
+                color: #64748b;
+                margin-top: 0.75rem;
+                text-align: center;
+                line-height: 1.4;
+              "
+            >
+              For your safety and privacy, profile pictures and signatures are
+              saved <strong>locally</strong> on your current device. If you
+              switch devices, you will need to re-upload your photo and
+              signature.
+            </p>
           </div>
 
           <!-- DYNAMIC WARNING BANNER -->
@@ -1305,6 +1318,7 @@
 
     <script src="../resources/js/login.js"></script>
     <script src="../resources/js/config.js"></script>
+    <script src="../resources/js/birthday.js"></script>
     <script>
       function getStudentData() {
         try {
@@ -1533,7 +1547,6 @@
             e.stopPropagation();
           };
         } else {
-          sigContainer.innerHTML = `<span style="font-size: 0.7rem; color: #64748b;">Click to sign</span>`;
           sigBoxModal.onclick = openSigModal;
         }
 
@@ -1779,7 +1792,7 @@
         }
       }
 
-async function exportIDToPDF() {
+      async function exportIDToPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({
           orientation: "portrait",
@@ -1824,8 +1837,12 @@ async function exportIDToPDF() {
           cloneBack.style.backfaceVisibility = "visible";
 
           // Remove any stray close badges or interactive UI artifacts from the clones
-          cloneFront.querySelectorAll(".clear-badge, .id-photo-upload").forEach(el => el.remove());
-          cloneBack.querySelectorAll(".clear-badge").forEach(el => el.remove());
+          cloneFront
+            .querySelectorAll(".clear-badge, .id-photo-upload")
+            .forEach((el) => el.remove());
+          cloneBack
+            .querySelectorAll(".clear-badge")
+            .forEach((el) => el.remove());
 
           tempDiv.appendChild(cloneFront);
           tempDiv.appendChild(cloneBack);
@@ -1861,11 +1878,7 @@ async function exportIDToPDF() {
           doc.text(`Name: ${studentName}`, 20, 30);
           doc.text(`Student No: ${studentNo}`, 20, 36);
           doc.text(`Date Generated: ${dateGenerated}`, 20, 42);
-          doc.text(
-            `Issuer: The BTLED Organization, URS Cainta Campus`,
-            20,
-            48,
-          );
+          doc.text(`Issuer: The BTLED Organization, URS Cainta Campus`, 20, 48);
 
           doc.setDrawColor(200, 200, 200);
           doc.line(20, 53, pageWidth - 20, 53);

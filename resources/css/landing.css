@@ -808,4 +808,19 @@ body {
 
   .hidden { display: none !important; }
 
-  
+  /* Active Page Styles */
+.nav-menu a.active-page {
+  font-weight: 600;
+  color: var(--primary-color, #0056b3);
+}
+
+/* Notification Dot */
+.badge-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #ff4d4f;
+  border-radius: 50%;
+  margin-left: 4px;
+  vertical-align: middle;
+}
