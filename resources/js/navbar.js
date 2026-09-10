@@ -98,7 +98,7 @@
               '<li><a href="' + link("events/gallery.html") + '">Event Gallery</a></li>' +
               '<li><a href="' + link("events/result.html") + '">Competition Results</a></li>' +
               '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
-              '<li><a href="' + link("events/gallery.html") + '">Hallway Monitoring</a></li>' +
+              '<li><a href="' + link("events/gallery.html?page=Viewer&FolderID=1fsj9LVTFptG3KDaQt9RF5_WSlVIoG2P_&Name=BTLED%20MAINTENANCE%20MONITORING") + '">Hallway Monitoring</a></li>' +
             '</ul>' +
           '</div>' +
           profileNav +
