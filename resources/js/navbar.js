@@ -57,11 +57,6 @@
       '<div class="dropdown">' +
         '<a href="' + link("profile/index.html") + '" class="nav-link">My Profile &#9662;</a>' +
         '<ul class="dropdown-menu">' +
-          '<li><a href="' + link("profile/card.html") + '">BTLED Card</a></li>' +
-          '<li><a href="' + link("profile/participations.html") + '">Participations</a></li>' +
-          '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' + 
-          '<li><a href="' + link("profile/certificate.html") + '">Certificates</a></li>' +
-          '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
           '<li><a href="' + link("profile/index.html") + '">My Profile</a></li>' +
           '<li><a href="' + link("profile/index.html") + '">Logout</a></li>' +
         '</ul>' +
@@ -102,6 +97,8 @@
               '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
               '<li><a href="' + link("events/gallery.html") + '">Event Gallery</a></li>' +
               '<li><a href="' + link("events/result.html") + '">Competition Results</a></li>' +
+              '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
+              '<li><a href="' + link("events/gallery.html") + '">Hallway Monitoring</a></li>' +
             '</ul>' +
           '</div>' +
           profileNav +

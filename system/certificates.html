@@ -3,171 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Certificate Generator</title>
+    <title>Bulk Certificate Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://db.onlinewebfonts.com/c/89d9dff8a40ef63d7bb2002d9030d109?family=SymphonyPro-Regular" rel="stylesheet">
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #16a34a;
+            --success-hover: #15803d;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 30px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        h2 {
-            color: #333;
-            margin-bottom: 5px;
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
         }
+
+        h2 { margin: 0 0 10px 0; font-size: 28px; }
+        p { margin: 0; color: var(--text-muted); }
+
         .container {
             display: flex;
             gap: 30px;
-            background: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            max-width: 1000px;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            max-width: 1100px;
             width: 100%;
             box-sizing: border-box;
         }
+
         .controls {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
         }
+
         .preview-container {
             flex: 1.5;
             display: flex;
             flex-direction: column;
             align-items: center;
-            border-left: 2px solid #eee;
+            border-left: 1px solid var(--border);
             padding-left: 30px;
         }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
         label {
-            font-weight: bold;
+            font-weight: 600;
             font-size: 14px;
-            color: #555;
+            color: var(--text-main);
         }
-        input[type="file"], textarea {
+
+        input[type="file"], textarea, input[type="number"], input[type="color"], select {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
             box-sizing: border-box;
+            font-family: inherit;
+            transition: border-color 0.2s;
         }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
         textarea {
-            height: 120px;
+            height: 140px;
             resize: vertical;
+            line-height: 1.5;
         }
-        .settings-grid {
+
+        .settings-grid, .range-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .button-group {
+            display: flex;
             gap: 10px;
+            margin-top: 10px;
         }
-        input[type="number"], input[type="color"], select {
-            width: 100%;
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
+
         button {
-            background-color: #007BFF;
+            background-color: var(--primary);
             color: white;
             border: none;
-            padding: 10px 15px;
-            font-size: 16px;
-            border-radius: 4px;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            flex: 1;
         }
-        button:hover {
-            background-color: #0056b3;
-        }
+
+        button:hover { background-color: var(--primary-hover); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover { background-color: var(--success-hover); }
+
         canvas {
             max-width: 100%;
             height: auto;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+            background-color: #f1f5f9;
         }
+
+        .preview-nav {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .preview-nav button {
+            padding: 8px 15px;
+            flex: none;
+            background-color: var(--border);
+            color: var(--text-main);
+        }
+
+        .preview-nav button:hover:not(:disabled) {
+            background-color: #cbd5e1;
+        }
+
+        .preview-nav span {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
         .output-list {
-            margin-top: 20px;
             width: 100%;
-            max-height: 150px;
+            max-height: 180px;
             overflow-y: auto;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
         }
+
         .output-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 5px 0;
+            padding: 8px 10px;
             font-size: 14px;
+            border-radius: 6px;
         }
+        
+        .output-item:nth-child(even) { background-color: #f1f5f9; }
+
         .output-item button {
-            padding: 4px 8px;
+            padding: 6px 12px;
             font-size: 12px;
-            background-color: #28a745;
-        }
-        .output-item button:hover {
-            background-color: #218838;
+            flex: none;
+            background-color: var(--success);
         }
     </style>
 </head>
 <body>
 
-    <h2>Certificate Generator</h2>
-    <p style="color: #666; margin-top: 0;">Upload your background, input your names, adjust styling, and generate!</p>
+    <div class="header">
+        <h2>Certificate Generator</h2>
+        <p>Upload background, set paper size, preview layout, and batch download.</p>
+    </div>
 
     <div class="container">
         <!-- Controls Column -->
         <div class="controls">
-            <div>
-                <label for="bgImage">1. Upload Background Image</label>
+            <div class="input-group">
+                <label for="bgImage">1. Upload Background Image (Landscape)</label>
                 <input type="file" id="bgImage" accept="image/*">
             </div>
 
-            <div>
+            <div class="input-group">
                 <label for="namesInput">2. Enter Names (one per line)</label>
-                <textarea id="namesInput" placeholder="Juan Dela Cruz&#10;Maria Santos&#10;Pedro Reyes"></textarea>
+                <textarea id="namesInput" placeholder="juan dela cruz&#10;MARIA SANTOS&#10;pedro reyes"></textarea>
+            </div>
+            
+            <div class="input-group">
+                <label for="paperSize">3. Paper Size (Landscape - 300 DPI)</label>
+                <select id="paperSize">
+                    <option value="auto">Auto (Match Image Upload)</option>
+                    <option value="short">Short / Letter (11" x 8.5")</option>
+                    <option value="long">Long / Folio (13" x 8.5")</option>
+                    <option value="a4">A4 (11.69" x 8.27")</option>
+                    <option value="a5">A5 (8.27" x 5.83")</option>
+                </select>
             </div>
 
             <div class="settings-grid">
-                <div>
+                <div class="input-group">
                     <label for="fontSize">Font Size (px)</label>
-                    <input type="number" id="fontSize" value="50">
+                    <input type="number" id="fontSize" value="120">
                 </div>
-                <div>
+                <div class="input-group">
                     <label for="fontColor">Font Color</label>
                     <input type="color" id="fontColor" value="#1a1a1a">
                 </div>
-                <div>
+                <div class="input-group">
                     <label for="fontFamily">Font Family</label>
                     <select id="fontFamily">
+                        <option value="SymphonyPro-Regular">Symphony Pro</option>
                         <option value="Arial">Arial</option>
                         <option value="Times New Roman">Times New Roman</option>
                         <option value="Georgia">Georgia</option>
                         <option value="Courier New">Courier New</option>
                     </select>
                 </div>
-                <div>
-                    <label for="textY">Vertical Position (Y)</label>
-                    <input type="number" id="textY" value="350">
+                <div class="input-group">
+                    <label for="textY">Vertical Position (Y px)</label>
+                    <input type="number" id="textY" value="1200">
                 </div>
             </div>
 
-            <button id="generateBtn">Generate Certificates</button>
+            <div class="range-grid">
+                <div class="input-group">
+                    <label for="rangeStart">PDF Start Range</label>
+                    <input type="number" id="rangeStart" placeholder="e.g. 1" min="1">
+                </div>
+                <div class="input-group">
+                    <label for="rangeEnd">PDF End Range</label>
+                    <input type="number" id="rangeEnd" placeholder="e.g. 10" min="1">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="generateBtn">List PNGs</button>
+                <button id="downloadPdfBtn" class="btn-success">Download PDF Batch</button>
+            </div>
         </div>
 
         <!-- Preview Column -->
         <div class="preview-container">
-            <label>Live Preview</label>
+            <label style="margin-bottom: 10px;">Live Preview</label>
             <canvas id="canvas" width="800" height="600"></canvas>
             
+            <!-- Preview Navigation -->
+            <div class="preview-nav">
+                <button id="prevBtn" disabled>◄ Prev</button>
+                <span id="previewCounter">0 / 0</span>
+                <button id="nextBtn" disabled>Next ►</button>
+            </div>
+            
             <div class="output-list" id="outputList">
-                <!-- Generated download links will appear here -->
+                <!-- Generated PNG links will appear here -->
             </div>
         </div>
     </div>
@@ -175,16 +284,62 @@
     <script>
         const bgImageInput = document.getElementById('bgImage');
         const namesInput = document.getElementById('namesInput');
+        const paperSizeInput = document.getElementById('paperSize');
         const fontSizeInput = document.getElementById('fontSize');
         const fontColorInput = document.getElementById('fontColor');
         const fontFamilyInput = document.getElementById('fontFamily');
         const textYInput = document.getElementById('textY');
+        
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const previewCounter = document.getElementById('previewCounter');
+        
         const generateBtn = document.getElementById('generateBtn');
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const outputList = document.getElementById('outputList');
 
         let backgroundImage = null;
+        let currentPreviewIndex = 0;
+        let namesList = [];
+
+        // Print resolutions (Landscape at 300 DPI)
+        const dimensions = {
+            short: { width: 3300, height: 2550 },
+            long: { width: 3900, height: 2550 },
+            a4: { width: 3508, height: 2480 },
+            a5: { width: 2480, height: 1748 }
+        };
+
+        // Helper function to convert text to Title Case
+        function toTitleCase(str) {
+            return str.toLowerCase().split(' ').map(function(word) {
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join(' ');
+        }
+
+        // Get the active paper dimensions
+        function getActiveDimensions() {
+            if (!backgroundImage) return { width: 800, height: 600 };
+            const sizeKey = paperSizeInput.value;
+            if (sizeKey === 'auto') {
+                return { width: backgroundImage.width, height: backgroundImage.height };
+            }
+            return dimensions[sizeKey];
+        }
+
+        // Update name list array when typing and apply Title Case
+        namesInput.addEventListener('input', () => {
+            namesList = namesInput.value.split('\n')
+                .filter(n => n.trim() !== '')
+                .map(n => toTitleCase(n.trim()));
+                
+            currentPreviewIndex = 0;
+            updatePreviewNav();
+            drawPreview();
+        });
 
         // Load background image
         bgImageInput.addEventListener('change', function(e) {
@@ -195,8 +350,6 @@
                     const img = new Image();
                     img.onload = function() {
                         backgroundImage = img;
-                        canvas.width = img.width;
-                        canvas.height = img.height;
                         drawPreview();
                     }
                     img.src = event.target.result;
@@ -205,70 +358,97 @@
             }
         });
 
-        // Trigger preview update on input changes
-        [fontSizeInput, fontColorInput, fontFamilyInput, textYInput, namesInput].forEach(element => {
+        // Trigger preview update on settings changes
+        [paperSizeInput, fontSizeInput, fontColorInput, fontFamilyInput, textYInput].forEach(element => {
             element.addEventListener('input', drawPreview);
         });
 
+        // Preview Navigation Logic
+        function updatePreviewNav() {
+            if (namesList.length === 0) {
+                previewCounter.textContent = `0 / 0`;
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+            } else {
+                previewCounter.textContent = `${currentPreviewIndex + 1} / ${namesList.length}`;
+                prevBtn.disabled = currentPreviewIndex === 0;
+                nextBtn.disabled = currentPreviewIndex === namesList.length - 1;
+            }
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentPreviewIndex > 0) {
+                currentPreviewIndex--;
+                updatePreviewNav();
+                drawPreview();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentPreviewIndex < namesList.length - 1) {
+                currentPreviewIndex++;
+                updatePreviewNav();
+                drawPreview();
+            }
+        });
+
         function drawPreview() {
+            const dims = getActiveDimensions();
+            canvas.width = dims.width;
+            canvas.height = dims.height;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (backgroundImage) {
-                ctx.drawImage(backgroundImage, 0, 0);
-            } else {
-                // Placeholder background if none uploaded
-                ctx.fillStyle = "#fafafa";
+            if (!backgroundImage) {
+                ctx.fillStyle = "#f1f5f9";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = "#999";
+                ctx.fillStyle = "#94a3b8";
                 ctx.font = "24px Arial";
                 ctx.textAlign = "center";
                 ctx.fillText("Upload a background image to preview", canvas.width / 2, canvas.height / 2);
                 return;
             }
 
-            const names = namesInput.value.split('\n').filter(n => n.trim() !== '');
-            const sampleName = names.length > 0 ? names[0] : "Sample Name";
+            // Draw image stretched to chosen dimensions
+            ctx.drawImage(backgroundImage, 0, 0, dims.width, dims.height);
 
-            // Draw sample name
+            const displayName = namesList.length > 0 ? namesList[currentPreviewIndex] : "Sample Name";
+
             const fontSize = fontSizeInput.value;
             const fontFamily = fontFamilyInput.value;
             ctx.font = `bold ${fontSize}px ${fontFamily}`;
             ctx.fillStyle = fontColorInput.value;
             ctx.textAlign = "center";
-            ctx.fillText(sampleName, canvas.width / 2, parseInt(textYInput.value));
+            ctx.fillText(displayName, canvas.width / 2, parseInt(textYInput.value));
         }
 
-        // Batch Generation
+        // Helper function to draw on an offscreen canvas for export
+        function createCertificateCanvas(name) {
+            const dims = getActiveDimensions();
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = dims.width;
+            offscreenCanvas.height = dims.height;
+            const oCtx = offscreenCanvas.getContext('2d');
+
+            oCtx.drawImage(backgroundImage, 0, 0, dims.width, dims.height);
+            oCtx.font = `bold ${fontSizeInput.value}px ${fontFamilyInput.value}`;
+            oCtx.fillStyle = fontColorInput.value;
+            oCtx.textAlign = "center";
+            oCtx.fillText(name.trim(), dims.width / 2, parseInt(textYInput.value));
+            
+            return offscreenCanvas;
+        }
+
+        // Generate PNG List
         generateBtn.addEventListener('click', function() {
-            if (!backgroundImage) {
-                alert("Please upload a background image first.");
-                return;
-            }
+            if (!backgroundImage || namesList.length === 0) return alert("Please upload an image and enter names.");
 
-            const names = namesInput.value.split('\n').filter(n => n.trim() !== '');
-            if (names.length === 0) {
-                alert("Please enter at least one name.");
-                return;
-            }
+            outputList.innerHTML = '<strong style="display:block; margin-bottom:10px;">Individual PNGs:</strong>';
 
-            outputList.innerHTML = '<strong>Generated Downloads:</strong>';
-
-            names.forEach((name, index) => {
-                // Create an offscreen canvas for each certificate
-                const offscreenCanvas = document.createElement('canvas');
-                offscreenCanvas.width = backgroundImage.width;
-                offscreenCanvas.height = backgroundImage.height;
-                const oCtx = offscreenCanvas.getContext('2d');
-
-                // Draw background and text
-                oCtx.drawImage(backgroundImage, 0, 0);
-                oCtx.font = `bold ${fontSizeInput.value}px ${fontFamilyInput.value}`;
-                oCtx.fillStyle = fontColorInput.value;
-                oCtx.textAlign = "center";
-                oCtx.fillText(name.trim(), offscreenCanvas.width / 2, parseInt(textYInput.value));
-
-                // Create download link element
-                const dataUrl = offscreenCanvas.toDataURL('image/png');
+            namesList.forEach((name, index) => {
+                const certCanvas = createCertificateCanvas(name);
+                const dataUrl = certCanvas.toDataURL('image/png');
+                
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'output-item';
                 
@@ -288,6 +468,51 @@
                 itemDiv.appendChild(downloadBtn);
                 outputList.appendChild(itemDiv);
             });
+        });
+
+        // Batch Download as PDF
+        downloadPdfBtn.addEventListener('click', function() {
+            if (!backgroundImage || namesList.length === 0) return alert("Please upload an image and enter names.");
+
+            const { jsPDF } = window.jspdf;
+            
+            let start = parseInt(document.getElementById('rangeStart').value) || 1;
+            let end = parseInt(document.getElementById('rangeEnd').value) || namesList.length;
+            
+            start = Math.max(1, start) - 1; 
+            end = Math.min(namesList.length, end) - 1; 
+
+            if (start > end) return alert("Invalid range selected.");
+
+            const dims = getActiveDimensions();
+            const orientation = dims.width > dims.height ? 'l' : 'p';
+            const pdf = new jsPDF({
+                orientation: orientation,
+                unit: 'px',
+                format: [dims.width, dims.height]
+            });
+
+            downloadPdfBtn.textContent = "Generating...";
+            downloadPdfBtn.disabled = true;
+
+            setTimeout(() => {
+                for (let i = start; i <= end; i++) {
+                    const name = namesList[i];
+                    const certCanvas = createCertificateCanvas(name);
+                    
+                    const imgData = certCanvas.toDataURL('image/jpeg', 0.95);
+                    
+                    if (i > start) {
+                        pdf.addPage([dims.width, dims.height], orientation);
+                    }
+                    pdf.addImage(imgData, 'JPEG', 0, 0, dims.width, dims.height);
+                }
+
+                pdf.save(`Certificates_${start + 1}_to_${end + 1}.pdf`);
+                
+                downloadPdfBtn.textContent = "Download PDF Batch";
+                downloadPdfBtn.disabled = false;
+            }, 100);
         });
     </script>
 </body>

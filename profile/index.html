@@ -1,0 +1,2045 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BTLED | Student Profile</title>
+    <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
+    <link rel="stylesheet" href="../resources/css/landing.css" />
+    <link rel="stylesheet" href="../resources/css/form.css" />
+    <!-- Include JsBarcode Library for generating real barcodes -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+      :root {
+        --btled-primary: #1e3a8a;
+        --btled-secondary: #3b82f6;
+        --btled-accent: #fbbf24;
+        --btled-dark: #0f172a;
+        --btled-bg: #f8fafc;
+      }
+
+      body {
+        background-color: var(--btled-bg);
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        color: #334155;
+      }
+
+      .profile-container {
+        padding: 2.5rem 1rem 4rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      /* --- ENHANCED PROFILE HEADER WITH BLUE THEME --- */
+      .profile-header {
+        background: linear-gradient(
+          135deg,
+          #1e3a8a 0%,
+          #1e40af 50%,
+          #2563eb 100%
+        );
+        border-radius: 16px;
+        padding: 2.5rem;
+        display: flex;
+        align-items: center;
+        gap: 2.5rem;
+        box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 2.5rem;
+        position: relative;
+        overflow: hidden;
+        color: #ffffff;
+      }
+      .profile-header::before {
+        content: "";
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+      }
+      @media (max-width: 640px) {
+        .profile-header {
+          flex-direction: column;
+          text-align: center;
+          gap: 1.25rem;
+          padding: 2rem 1rem;
+        }
+      }
+      .profile-avatar {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        background-color: var(--btled-accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.8rem;
+        color: #1e3a8a;
+        font-weight: 800;
+        border: 4px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .profile-info h1 {
+        margin: 0 0 0.35rem 0;
+        font-size: 2.2rem;
+        color: #ffffff;
+        letter-spacing: -0.5px;
+        word-break: break-word;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      }
+      @media (max-width: 640px) {
+        .profile-info h1 {
+          font-size: 1.5rem;
+        }
+      }
+      .profile-info p {
+        margin: 0;
+        color: #bfdbfe;
+        font-size: 1.05rem;
+        font-weight: 500;
+      }
+      @media (max-width: 640px) {
+        .profile-info p {
+          font-size: 0.95rem;
+        }
+      }
+      .profile-info .student-id {
+        font-family: monospace;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(4px);
+        padding: 0.3rem 0.8rem;
+        border-radius: 6px;
+        margin-top: 0.75rem;
+        display: inline-block;
+        color: #f8fafc;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 2rem;
+      }
+      @media (max-width: 900px) {
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        transition: box-shadow 0.3s ease;
+      }
+      .panel:hover {
+        box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.08);
+      }
+      @media (max-width: 640px) {
+        .panel {
+          padding: 1.25rem;
+        }
+      }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 1rem;
+      }
+      .panel-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: var(--btled-primary);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      /* --- WARNING BANNER STYLES --- */
+      .warning-banner {
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        border-left: 5px solid #ef4444;
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        margin-top: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+      }
+      .warning-content {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #991b1b;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+      .warning-content svg {
+        width: 20px;
+        height: 20px;
+        fill: #ef4444;
+        flex-shrink: 0;
+      }
+      .warning-action-btn {
+        background-color: #ef4444;
+        color: white;
+        border: none;
+        padding: 0.45rem 0.9rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s;
+        white-space: nowrap;
+      }
+      .warning-action-btn:hover {
+        background-color: #dc2626;
+      }
+
+      /* --- ID CARD STYLES --- */
+      .id-card-base {
+        aspect-ratio: 1.59;
+        width: 100%;
+        max-width: 450px;
+        margin: 0 auto;
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        container-type: inline-size;
+      }
+
+      .id-card-preview {
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+      .id-card-preview:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 15px 25px -5px rgba(30, 58, 138, 0.2);
+      }
+      .id-card-preview::after {
+        content: "Click to view full ID card & options";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: linear-gradient(90deg, #1e3a8a, #2563eb);
+        color: #ffffff;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-align: center;
+        padding: 0.5rem 0;
+        transform: translateY(100%);
+        transition: transform 0.3s;
+        z-index: 10;
+      }
+      .id-card-preview:hover::after {
+        transform: translateY(0);
+      }
+
+      .id-front-bg {
+        background-image: url("1.png");
+      }
+      .id-back-bg {
+        background-image: url("2.png");
+      }
+
+      /* Upload Picture Overlay */
+      .id-photo-container {
+        position: absolute;
+        top: 36%;
+        left: 5%;
+        width: 23%;
+        height: 48%;
+        border-radius: 6px;
+        overflow: hidden;
+        z-index: 2;
+      }
+      .id-photo-upload {
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        border: 2px dashed #3b82f6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: #1e3a8a;
+        font-size: 2.1cqw;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .id-photo-upload:hover {
+        background-color: rgba(255, 255, 255, 0.95);
+      }
+      .id-photo-upload span {
+        font-size: 4.3cqw;
+        margin-bottom: 0.1rem;
+      }
+      .id-photo-filled {
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+      .id-photo-filled img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .clear-badge {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .clear-badge:hover {
+        background: rgba(239, 68, 68, 0.9);
+      }
+
+      .id-info-preview {
+        position: absolute;
+        top: 48.5%;
+        left: 52%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        font-weight: bold;
+        color: #0f172a;
+        font-size: 1.9cqw;
+        max-width: 44%;
+      }
+      .id-info-modal {
+        position: absolute;
+        top: 48.5%;
+        left: 52%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.38rem;
+        font-weight: bold;
+        color: #0f172a;
+        font-size: 2.3cqw;
+        max-width: 44%;
+      }
+      .id-info-preview div,
+      .id-info-modal div {
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Barcode Area */
+      .id-barcode-container {
+        position: absolute;
+        bottom: 5%;
+        left: 33.5%;
+        width: 63%;
+        height: 20%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .id-barcode-container svg {
+        width: 95% !important;
+        height: 65% !important;
+      }
+      .barcode-number-preview {
+        font-family: monospace;
+        font-size: 1.5cqw;
+        letter-spacing: 1px;
+        margin-top: 1px;
+        font-weight: bold;
+      }
+      .barcode-number-modal {
+        font-family: monospace;
+        font-size: 2cqw;
+        letter-spacing: 2px;
+        margin-top: 1px;
+        font-weight: bold;
+      }
+
+      /* Signature Area */
+      .id-signature-box {
+        position: absolute;
+        background: #ffffff82;
+        bottom: 27%;
+        right: 8%;
+        width: 28%;
+        text-align: center;
+        cursor: pointer;
+        z-index: 2;
+      }
+      .signature-line {
+        border-bottom: 2px solid #1e293b;
+        height: 40px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        font-family: "Brush Script MT", cursive;
+        font-size: 1.2rem;
+        color: #0f172a;
+        padding-bottom: 2px;
+        overflow: hidden;
+        position: relative;
+      }
+      .signature-line img {
+        max-height: 100%;
+        object-fit: contain;
+      }
+      .signature-label {
+        font-size: 0.55rem;
+        color: #64748b;
+        text-transform: uppercase;
+        margin-top: 3px;
+        font-weight: bold;
+      }
+
+      /* Modal & Flip Styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(6px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        padding: 1rem;
+      }
+      .modal-overlay.active {
+        display: flex;
+        opacity: 1;
+      }
+      .modal-close {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        color: white;
+        font-size: 2rem;
+        cursor: pointer;
+        background: none;
+        border: none;
+        z-index: 1010;
+      }
+      .flip-container {
+        perspective: 1000px;
+        width: 95vw;
+        max-width: 550px;
+        aspect-ratio: 1.59;
+        cursor: pointer;
+      }
+      .flip-card {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transition: transform 0.8s;
+        transform-style: preserve-3d;
+      }
+      .flip-container.flipped .flip-card {
+        transform: rotateY(180deg);
+      }
+      .id-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 12px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+      .id-face.id-back-bg {
+        transform: rotateY(180deg);
+      }
+      .flip-hint {
+        color: var(--btled-accent);
+        margin-top: 1.5rem;
+        font-size: 0.95rem;
+        text-align: center;
+        font-weight: 600;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      /* --- Signature Pad Modal Styles --- */
+      .sig-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        padding: 1rem;
+      }
+      .sig-modal-overlay.active {
+        display: flex;
+      }
+      .sig-modal-content {
+        background: white;
+        padding: 1.75rem;
+        border-radius: 16px;
+        text-align: center;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+      }
+      .sig-modal-content h3 {
+        margin-top: 0;
+        color: var(--btled-primary);
+        font-weight: 700;
+      }
+      .sig-canvas-container {
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
+        background: #f8fafc;
+        margin: 1rem 0;
+        cursor: crosshair;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 140px;
+        touch-action: none;
+      }
+      .sig-btn-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+      }
+      .sig-btn {
+        padding: 0.55rem 1.25rem;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+      }
+      .sig-btn-clear {
+        background: #e2e8f0;
+        color: #334155;
+      }
+      .sig-btn-save {
+        background: var(--btled-secondary);
+        color: #ffffff;
+      }
+      .sig-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      /* --- Photo Crop Modal Styles --- */
+      .crop-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2100;
+        padding: 1rem;
+      }
+      .crop-modal-overlay.active {
+        display: flex;
+      }
+      .crop-modal-content {
+        background: white;
+        padding: 1.75rem;
+        border-radius: 16px;
+        text-align: center;
+        width: 100%;
+        max-width: 380px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+      }
+      .crop-modal-content h3 {
+        margin: 0 0 0.25rem 0;
+        color: var(--btled-primary);
+        font-weight: 700;
+      }
+      .crop-hint {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin: 0 0 1rem;
+      }
+      .crop-frame-wrapper {
+        position: relative;
+        width: 220px;
+        height: 289px;
+        margin: 0 auto;
+        overflow: hidden;
+        border-radius: 8px;
+        border: 2px solid var(--btled-secondary);
+        background: #0f172a;
+        cursor: grab;
+        touch-action: none;
+      }
+      .crop-frame-wrapper.grabbing {
+        cursor: grabbing;
+      }
+      .crop-frame-wrapper img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: 0 0;
+        user-select: none;
+        -webkit-user-drag: none;
+        pointer-events: none;
+        max-width: none;
+      }
+      .crop-zoom-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 1rem 0;
+        color: #475569;
+        font-weight: bold;
+      }
+      .crop-zoom-row input[type="range"] {
+        flex: 1;
+        accent-color: var(--btled-secondary);
+      }
+
+      /* --- Timeline & Certificates Styling --- */
+      .timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .timeline-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1.1rem;
+        background: #f8fafc;
+        border-radius: 10px;
+        border-left: 4px solid var(--btled-secondary);
+        border: 1px solid #e2e8f0;
+        border-left-width: 4px;
+      }
+      .timeline-date {
+        min-width: 90px;
+        font-weight: 700;
+        color: var(--btled-primary);
+        font-size: 0.9rem;
+      }
+      .timeline-content h4 {
+        margin: 0 0 0.25rem 0;
+        color: #1e293b;
+        font-size: 1rem;
+        font-weight: 700;
+      }
+      .timeline-content p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #64748b;
+      }
+
+      .cert-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+      }
+      .cert-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+        cursor: pointer;
+      }
+      .cert-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.1);
+      }
+      .cert-thumbnail {
+        height: 140px;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid #e2e8f0;
+        color: #9ca3af;
+      }
+      .cert-info {
+        padding: 1rem;
+        text-align: center;
+      }
+      .cert-info h4 {
+        margin: 0;
+        font-size: 0.95rem;
+        color: #1e293b;
+        font-weight: 700;
+      }
+      .cert-info p {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.8rem;
+        color: #64748b;
+      }
+
+      .cert-grid-name {
+        font-size: 3.4vw;
+      }
+      @media (min-width: 768px) {
+        .cert-grid-name {
+          font-size: 0.6rem;
+        }
+      }
+      .cert-modal-name {
+        font-size: 4vw;
+      }
+      @media (min-width: 768px) {
+        .cert-modal-name {
+          font-size: 2.2rem;
+        }
+      }
+
+      @keyframes skeletonPulse {
+        0% {
+          opacity: 0.6;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.6;
+        }
+      }
+      .skeleton-pulse {
+        animation: skeletonPulse 1.5s infinite ease-in-out;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="navbar" id="site-navbar" data-root="../"></header>
+    <script src="../resources/js/navbar.js"></script>
+
+    <main class="profile-container">
+      <!-- Profile Header -->
+      <div class="profile-header animate-on-scroll">
+        <div class="profile-avatar" id="headerAvatar">MA</div>
+        <div class="profile-info">
+          <h1 id="headerName">Loading...</h1>
+          <p id="headerProgram">Loading...</p>
+          <span class="student-id" id="headerStudentId">ID: ...</span>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Left Column: BTLED Card & Warning Banner -->
+        <div style="display: flex; flex-direction: column">
+          <div class="panel animate-on-scroll delay-1" style="flex-grow: 1">
+            <div class="panel-header">
+              <h2>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <rect x="2" y="5" width="20" height="14" rx="2" />
+                  <line x1="2" y1="10" x2="22" y2="10" />
+                </svg>
+                Digital ID Card
+              </h2>
+            </div>
+
+            <!-- Front ID Card Preview -->
+            <div
+              class="id-card-base id-front-bg id-card-preview"
+              onclick="openIdModal()"
+            >
+              <!-- Picture Upload Container -->
+              <div class="id-photo-container" id="photoContainerPreview"></div>
+
+              <!-- Mapped Information -->
+              <div class="id-info-preview">
+                <div id="cardNamePreview">--</div>
+                <div id="cardIdPreview">--</div>
+                <div id="cardBirthdatePreview">--</div>
+                <div id="cardSectionPreview">--</div>
+              </div>
+
+              <!-- Barcode Area -->
+              <div class="id-barcode-container">
+                <svg class="barcode-preview-svg"></svg>
+                <div class="barcode-number-preview" id="cardBarcodeNumPreview">
+                  --
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DYNAMIC WARNING BANNER -->
+          <div id="warningBanner" class="warning-banner" style="display: none">
+            <div class="warning-content">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                />
+              </svg>
+              <span id="warningText">Warning message</span>
+            </div>
+            <button
+              class="warning-action-btn"
+              id="warningActionBtn"
+              onclick="handleWarningAction()"
+            >
+              Action
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Column: Participations & Certificates -->
+        <div style="display: flex; flex-direction: column; gap: 2rem">
+          <!-- Participations Viewer -->
+          <div class="panel animate-on-scroll delay-2">
+            <div class="panel-header">
+              <h2>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                Recent Participations
+              </h2>
+              <a
+                href="#"
+                style="
+                  font-size: 0.9rem;
+                  color: #2563eb;
+                  text-decoration: none;
+                  font-weight: 600;
+                "
+                >View All</a
+              >
+            </div>
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-date">Sep 2026</div>
+                <div class="timeline-content">
+                  <h4>BTLED General Assembly</h4>
+                  <p>Venue: Main Gymnasium</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Certificates Viewer -->
+          <div class="panel animate-on-scroll delay-3">
+            <div class="panel-header">
+              <h2>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <circle cx="12" cy="8" r="7" />
+                  <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+                </svg>
+                Earned Certificates
+              </h2>
+            </div>
+            <div class="cert-grid">
+              <div class="cert-card">
+                <div class="cert-thumbnail"></div>
+                <div class="cert-info">
+                  <h4>Drafting Workshop</h4>
+                  <p>Issued: Aug 15, 2026</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Hidden file input for uploading profile pictures -->
+    <input
+      type="file"
+      id="fileInput"
+      accept="image/*"
+      style="display: none"
+      onchange="handleFileSelected(event)"
+    />
+
+    <!-- --- ID CARD MODAL OVERLAY --- -->
+    <div class="modal-overlay" id="idModal" onclick="closeIdModal(event)">
+      <button
+        class="modal-close"
+        onclick="closeIdModal(event)"
+        aria-label="Close ID card view"
+      >
+        &times;
+      </button>
+
+      <div
+        class="flip-container"
+        id="flipContainer"
+        onclick="toggleFlip(event)"
+      >
+        <div class="flip-card">
+          <!-- MODAL: FRONT OF ID (1.png) -->
+          <div class="id-face id-card-base id-front-bg" style="max-width: none">
+            <div class="id-photo-container" id="photoContainerModal"></div>
+            <div class="id-info-modal">
+              <div id="cardNameModal">--</div>
+              <div id="cardIdModal">--</div>
+              <div id="cardBirthdateModal">--</div>
+              <div id="cardSectionModal">--</div>
+            </div>
+            <div class="id-barcode-container">
+              <svg class="barcode-modal-svg"></svg>
+              <div class="barcode-number-modal" id="cardBarcodeNumModal">
+                --
+              </div>
+            </div>
+          </div>
+
+          <!-- MODAL: BACK OF ID (2.png) -->
+          <div class="id-face id-card-base id-back-bg" style="max-width: none">
+            <div class="id-signature-box" id="signatureBoxModal">
+              <div class="signature-line" id="signatureContainer">
+                <span style="font-size: 0.7rem; color: #64748b"
+                  >Click to sign</span
+                >
+              </div>
+              <div class="signature-label">Student Signature</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="flip-hint">Tap the card to flip it around</p>
+    </div>
+
+    <!-- --- SIGNATURE PAD MODAL --- -->
+    <div class="sig-modal-overlay" id="sigModal">
+      <div class="sig-modal-content" onclick="event.stopPropagation()">
+        <h3>Draw Your Signature</h3>
+        <p style="font-size: 0.85rem; color: #6b7280; margin-top: 0">
+          Use your mouse or finger to sign inside the box below.
+        </p>
+        <div class="sig-canvas-container">
+          <canvas id="sigCanvas" width="360" height="150"></canvas>
+        </div>
+        <div class="sig-btn-group">
+          <button class="sig-btn sig-btn-clear" onclick="clearSignaturePad()">
+            Clear
+          </button>
+          <button class="sig-btn sig-btn-save" onclick="saveSignaturePad()">
+            Save Signature
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- --- PHOTO CROP MODAL --- -->
+    <div class="crop-modal-overlay" id="cropModal">
+      <div class="crop-modal-content" onclick="event.stopPropagation()">
+        <h3>Adjust Your Photo</h3>
+        <p class="crop-hint">
+          Drag to reposition, use the slider (or scroll) to zoom.
+        </p>
+        <div class="crop-frame-wrapper" id="cropFrame">
+          <img
+            id="cropImage"
+            src=""
+            alt="Photo crop preview"
+            draggable="false"
+          />
+        </div>
+        <div class="crop-zoom-row">
+          <span aria-hidden="true">−</span>
+          <input
+            type="range"
+            id="cropZoomSlider"
+            min="1"
+            max="3"
+            step="0.01"
+            value="1"
+            oninput="handleZoomChange(this.value)"
+            aria-label="Zoom photo"
+          />
+          <span aria-hidden="true">+</span>
+        </div>
+        <div class="sig-btn-group">
+          <button class="sig-btn sig-btn-clear" onclick="closeCropModal()">
+            Cancel
+          </button>
+          <button class="sig-btn sig-btn-save" onclick="saveCroppedPhoto()">
+            Save Photo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGIN & REGISTRATION COMPONENT -->
+    <div id="auth-modal-wrapper" class="auth-modal-overlay hidden">
+      <!-- INTRO / IDENTIFY VIEW -->
+      <div id="login-view" class="auth-modal-card">
+        <h3>Let's Get to Know You</h3>
+        <p>
+          This is a public site open to everyone — no login required. We'd just
+          like to know who's visiting so we can personalize your experience.
+          Enter your details below to continue.
+        </p>
+
+        <!-- Top Alert Box -->
+        <div id="login-alert" class="auth-alert"></div>
+
+        <form id="login-form">
+          <div class="auth-form-group">
+            <label>Student No.</label>
+            <input
+              type="text"
+              id="login-id"
+              required
+              placeholder="e.g., C2025-00001"
+            />
+          </div>
+          <div class="auth-form-group">
+            <label>First Name</label>
+            <input
+              type="text"
+              id="login-name"
+              required
+              placeholder="First Name"
+            />
+          </div>
+          <div class="auth-form-group">
+            <label>Surname</label>
+            <input
+              type="text"
+              id="login-surname"
+              required
+              placeholder="Surname"
+            />
+          </div>
+
+          <div class="auth-checkbox-row">
+            <input type="checkbox" id="login-privacy" required />
+            <label for="login-privacy">
+              I have read and agree that my personal information will be
+              collected and processed in accordance with the
+              <strong>Data Privacy Act of 2012 (RA 10173)</strong>.
+            </label>
+          </div>
+
+          <button type="submit" id="login-btn" class="auth-btn">
+            <span class="btn-text">Continue</span>
+            <span class="spinner"></span>
+          </button>
+        </form>
+      </div>
+
+      <!-- REGISTRATION VIEW -->
+      <div id="register-view" class="auth-modal-card hidden">
+        <h3>Just a Few More Details</h3>
+        <p>
+          We don't have your information on file yet. Fill out the short form
+          below so we can get to know you better.
+        </p>
+
+        <!-- Top Alert Box -->
+        <div id="reg-alert" class="auth-alert"></div>
+
+        <form id="register-form">
+          <div class="auth-row">
+            <div class="auth-form-group">
+              <label>Student No.</label
+              ><input type="text" id="reg-id" required readonly />
+            </div>
+            <div class="auth-form-group">
+              <label>Program</label
+              ><input
+                type="text"
+                id="reg-program"
+                required
+                placeholder="e.g., BTLED-IA"
+              />
+            </div>
+          </div>
+          <div class="auth-row">
+            <div class="auth-form-group">
+              <label>Surname</label
+              ><input type="text" id="reg-surname" required readonly />
+            </div>
+            <div class="auth-form-group">
+              <label>First Name</label
+              ><input type="text" id="reg-name" required readonly />
+            </div>
+          </div>
+          <div class="auth-row">
+            <div class="auth-form-group">
+              <label>Middle Name</label
+              ><input type="text" id="reg-mname" placeholder="Middle Name" />
+            </div>
+            <div class="auth-form-group">
+              <label>Sex</label>
+              <select id="reg-sex" required>
+                <option value="">Select Sex</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+          </div>
+          <div class="auth-form-group">
+            <label>Birthdate</label
+            ><input type="date" id="reg-bdate" required />
+          </div>
+          <div class="auth-row">
+            <div class="auth-form-group">
+              <label>Street / Barangay</label
+              ><input
+                type="text"
+                id="reg-street"
+                required
+                placeholder="Street / Brgy"
+              />
+            </div>
+            <div class="auth-form-group">
+              <label>Municipality / City</label
+              ><input type="text" id="reg-city" required placeholder="City" />
+            </div>
+          </div>
+          <div class="auth-row">
+            <div class="auth-form-group">
+              <label>Province</label
+              ><input
+                type="text"
+                id="reg-prov"
+                required
+                placeholder="Province"
+              />
+            </div>
+            <div class="auth-form-group">
+              <label>Contact Number</label
+              ><input
+                type="tel"
+                id="reg-contact"
+                required
+                placeholder="09XXXXXXXXX"
+              />
+            </div>
+          </div>
+          <div class="auth-form-group">
+            <label>E-mail Address</label
+            ><input
+              type="email"
+              id="reg-email"
+              required
+              placeholder="email@example.com"
+            />
+          </div>
+          <!-- Honeypot anti-spam field -->
+          <div style="display: none">
+            <label>Leave this field empty</label>
+            <input
+              type="text"
+              id="reg-website"
+              name="website"
+              value=""
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="auth-checkbox-row">
+            <input type="checkbox" id="reg-privacy" required />
+            <label for="reg-privacy">
+              I have read and agree that my personal information will be
+              collected and processed in accordance with the
+              <strong>Data Privacy Act of 2012 (RA 10173)</strong>.
+            </label>
+          </div>
+
+          <button type="submit" id="reg-btn" class="auth-btn">
+            <span class="btn-text">Save My Details</span>
+            <span class="spinner"></span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="container footer-grid">
+        <div class="footer-brand-section">
+          <strong class="footer-brand">BTLED Organization</strong>
+          <p style="color: #999">
+            One of the official student-led organizations at URS Cainta Campus,
+            the BTLEd - IA Program Organization.
+          </p>
+        </div>
+        <div class="footer-right">
+          <p>&copy; 2026 BTLED. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="../resources/js/login.js"></script>
+    <script src="../resources/js/config.js"></script>
+    <script>
+      function getStudentData() {
+        try {
+          return JSON.parse(localStorage.getItem("btled_student"));
+        } catch (err) {
+          console.error("Could not read student data:", err);
+          return null;
+        }
+      }
+
+      function saveStudentData(data) {
+        return safeSetItem("btled_student", JSON.stringify(data));
+      }
+
+      function safeSetItem(key, value) {
+        try {
+          localStorage.setItem(key, value);
+          window.dispatchEvent(new Event("storage"));
+          return true;
+        } catch (err) {
+          console.error(`localStorage write failed for "${key}":`, err);
+          return false;
+        }
+      }
+
+      function studentKeyId(student) {
+        return (student && (student["Student No."] || student.id)) || "default";
+      }
+      function photoStorageKey(student) {
+        return `btled_photo_${studentKeyId(student)}`;
+      }
+      function signatureStorageKey(student) {
+        return `btled_signature_${studentKeyId(student)}`;
+      }
+
+      function getStudentPhoto(student) {
+        student = student || getStudentData();
+        if (!student) return null;
+        return localStorage.getItem(photoStorageKey(student));
+      }
+      function saveStudentPhoto(dataUrl, student) {
+        student = student || getStudentData();
+        if (!student) return false;
+        return safeSetItem(photoStorageKey(student), dataUrl);
+      }
+      function removeStudentPhoto(student) {
+        student = student || getStudentData();
+        if (!student) return;
+        localStorage.removeItem(photoStorageKey(student));
+      }
+
+      function getStudentSignature(student) {
+        student = student || getStudentData();
+        if (!student) return null;
+        return localStorage.getItem(signatureStorageKey(student));
+      }
+      function saveStudentSignature(dataUrl, student) {
+        student = student || getStudentData();
+        if (!student) return false;
+        return safeSetItem(signatureStorageKey(student), dataUrl);
+      }
+      function removeStudentSignature(student) {
+        student = student || getStudentData();
+        if (!student) return;
+        localStorage.removeItem(signatureStorageKey(student));
+      }
+
+      function migrateLegacyMedia() {
+        const student = getStudentData();
+        if (!student) return;
+        let changed = false;
+        if (student["Photo"]) {
+          saveStudentPhoto(student["Photo"], student);
+          delete student["Photo"];
+          changed = true;
+        }
+        if (student["Signature"]) {
+          saveStudentSignature(student["Signature"], student);
+          delete student["Signature"];
+          changed = true;
+        }
+        if (changed) saveStudentData(student);
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr) return "";
+        const date = new Date(dateStr);
+        if (isNaN(date)) return dateStr;
+        return date
+          .toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+          .toUpperCase();
+      }
+
+      let currentWarningState = null;
+      let lastSerializedData = null;
+
+      function renderProfileData() {
+        const student = getStudentData();
+
+        const currentSerialized =
+          JSON.stringify(student) +
+          "_" +
+          getStudentPhoto(student) +
+          "_" +
+          getStudentSignature(student);
+        if (
+          currentSerialized === lastSerializedData &&
+          document.getElementById("headerName").innerText !== "Loading..."
+        ) {
+          return;
+        }
+        lastSerializedData = currentSerialized;
+
+        const warningBanner = document.getElementById("warningBanner");
+        const warningText = document.getElementById("warningText");
+        const warningActionBtn = document.getElementById("warningActionBtn");
+
+        if (!student) {
+          warningBanner.style.display = "flex";
+          warningText.innerText = "No data found";
+          warningActionBtn.innerText = "Initialize Data";
+          currentWarningState = "no_data";
+
+          document.getElementById("headerName").innerText = "GUEST USER";
+          document.getElementById("headerProgram").innerText =
+            "Please log in or register";
+          document.getElementById("headerStudentId").innerText = "ID: --";
+          return;
+        }
+
+        const photo = getStudentPhoto(student);
+        const signature = getStudentSignature(student);
+        const hasPhoto = !!photo;
+        const hasSig = !!signature;
+
+        if (!hasPhoto && !hasSig) {
+          warningBanner.style.display = "flex";
+          warningText.innerText = "Picture and signature is required";
+          warningActionBtn.innerText = "Upload Photo";
+          currentWarningState = "missing_both";
+        } else if (!hasPhoto) {
+          warningBanner.style.display = "flex";
+          warningText.innerText = "Picture is required";
+          warningActionBtn.innerText = "Upload Photo";
+          currentWarningState = "missing_photo";
+        } else if (!hasSig) {
+          warningBanner.style.display = "flex";
+          warningText.innerText = "Signature is required";
+          warningActionBtn.innerText = "Add Signature";
+          currentWarningState = "missing_signature";
+        } else {
+          warningBanner.style.display = "none";
+          currentWarningState = null;
+        }
+
+        const shortName =
+          `${student["First Name"] || student.name || ""} ${student["Surname"] || student.surname || ""}`
+            .trim()
+            .toUpperCase();
+        const studentNo = student["Student No."] || student.id || "c2025-0119";
+        const program = student["Program"] || "BTLED-2A";
+        const birthdateFormatted = formatDate(student["Birthdate"]);
+
+        document.getElementById("headerName").innerText = shortName;
+        document.getElementById("headerProgram").innerText = program;
+        document.getElementById("headerStudentId").innerText =
+          `ID: ${studentNo}`;
+
+        const initials = `${(student["First Name"] || "M")[0]}`;
+        document.getElementById("headerAvatar").innerText = initials;
+
+        document.getElementById("cardNamePreview").innerText = shortName;
+        document.getElementById("cardIdPreview").innerText = studentNo;
+        document.getElementById("cardBirthdatePreview").innerText =
+          birthdateFormatted;
+        document.getElementById("cardSectionPreview").innerText = program;
+        document.getElementById("cardBarcodeNumPreview").innerText = studentNo;
+
+        document.getElementById("cardNameModal").innerText = shortName;
+        document.getElementById("cardIdModal").innerText = studentNo;
+        document.getElementById("cardBirthdateModal").innerText =
+          birthdateFormatted;
+        document.getElementById("cardSectionModal").innerText = program;
+        document.getElementById("cardBarcodeNumModal").innerText = studentNo;
+
+        const photoContainers = [
+          document.getElementById("photoContainerPreview"),
+          document.getElementById("photoContainerModal"),
+        ];
+        photoContainers.forEach((container) => {
+          if (photo) {
+            container.innerHTML = `
+              <div class="id-photo-filled">
+                <img src="${photo}" alt="Student Photo" />
+                <button class="clear-badge" onclick="clearPhoto(event)" title="Remove Photo" aria-label="Remove photo">×</button>
+              </div>
+            `;
+          } else {
+            container.innerHTML = `
+              <div class="id-photo-upload" onclick="triggerPhotoUpload(event)">
+                <span aria-hidden="true">+</span>Upload<br/>Photo
+              </div>
+            `;
+          }
+        });
+
+        if (photo) {
+          document.getElementById("headerAvatar").innerHTML =
+            `<img src="${photo}" alt="Avatar" />`;
+        } else {
+          document.getElementById("headerAvatar").innerText = initials;
+        }
+
+        const sigContainer = document.getElementById("signatureContainer");
+        const sigBoxModal = document.getElementById("signatureBoxModal");
+        if (signature) {
+          sigContainer.innerHTML = `
+            <img src="${signature}" alt="Student Signature" />
+            <button class="clear-badge" onclick="clearSignature(event)" title="Remove Signature" aria-label="Remove signature">×</button>
+          `;
+          sigBoxModal.onclick = (e) => {
+            e.stopPropagation();
+          };
+        } else {
+          sigContainer.innerHTML = `<span style="font-size: 0.7rem; color: #64748b;">Click to sign</span>`;
+          sigBoxModal.onclick = openSigModal;
+        }
+
+        try {
+          document
+            .querySelectorAll(".barcode-preview-svg, .barcode-modal-svg")
+            .forEach((svg) => {
+              JsBarcode(svg, studentNo, {
+                format: "CODE39",
+                displayValue: false,
+                background: "transparent",
+                lineColor: "#0f172a",
+                height: 50,
+                width: 2.5,
+              });
+            });
+        } catch (e) {
+          console.error("Barcode generation error:", e);
+        }
+
+        showSkeletons();
+        fetchAttendanceData(student);
+      }
+
+      function showSkeletons() {
+        const timelineContainer = document.querySelector(".timeline");
+        const certContainer = document.querySelector(".cert-grid");
+
+        if (timelineContainer) {
+          timelineContainer.innerHTML = `
+            <div class="timeline-item skeleton-pulse" style="background: #e2e8f0; height: 60px; border-left-color: #94a3b8;"></div>
+            <div class="timeline-item skeleton-pulse" style="background: #e2e8f0; height: 60px; border-left-color: #94a3b8;"></div>
+          `;
+        }
+        if (certContainer) {
+          certContainer.innerHTML = `
+            <div class="cert-card skeleton-pulse" style="height: 190px; background: #e2e8f0;"></div>
+          `;
+        }
+      }
+
+      async function fetchAttendanceData(student) {
+        if (!student) return;
+
+        const studentId = student["Student No."] || student.id;
+        const firstName = student["First Name"] || student.name;
+        const middleName = student["Middle Name"] || "";
+        const surname = student["Surname"] || student.surname;
+
+        const url = `${APPS_SCRIPT_URL}?module=attendance&id=${encodeURIComponent(studentId)}&firstName=${encodeURIComponent(firstName)}&surname=${encodeURIComponent(surname)}`;
+
+        try {
+          const response = await fetch(url);
+          const result = await response.json();
+
+          if (result.ok) {
+            renderParticipations(result.participations);
+            renderCertificates(result.certificates, {
+              firstName,
+              middleName,
+              surname,
+            });
+          } else {
+            console.error("Failed to load attendance records:", result.error);
+          }
+        } catch (err) {
+          console.error("Attendance API fetch error:", err);
+        }
+      }
+
+      function renderParticipations(list) {
+        const container = document.querySelector(".timeline");
+        if (!container) return;
+
+        if (!list || list.length === 0) {
+          container.innerHTML = `<div style="padding: 0.5rem; color: #64748b; font-size: 0.85rem;">No participation records found.</div>`;
+          return;
+        }
+
+        container.innerHTML = list
+          .map(
+            (item) => `
+          <div class="timeline-item">
+            <div class="timeline-date">${escapeHtml(item.date)}</div>
+            <div class="timeline-content">
+              <h4>${escapeHtml(item.event)}</h4>
+              <p>Venue: ${escapeHtml(item.venue || "URS Cainta Campus")}</p>
+            </div>
+          </div>
+        `,
+          )
+          .join("");
+      }
+
+      function renderCertificates(list, studentNameObj) {
+        const container = document.querySelector(".cert-grid");
+        if (!container) return;
+
+        if (!list || list.length === 0) {
+          container.innerHTML = `<div style="padding: 0.5rem; color: #64748b; font-size: 0.85rem;">No earned certificates available yet.</div>`;
+          return;
+        }
+
+        const fullName =
+          `${studentNameObj.firstName} ${studentNameObj.middleName ? studentNameObj.middleName + " " : ""}${studentNameObj.surname}`.trim();
+
+        container.innerHTML = list
+          .map(
+            (cert) => `
+          <div class="cert-card" onclick="openCertificateModal('${cert.certificateUrl}', '${escapeHtml(cert.event)}', '${escapeHtml(fullName)}')">
+            <div class="cert-thumbnail" style="position: relative; background-image: url('${cert.certificateUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+              <div class="cert-grid-name" style="position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%); font-family: 'Segoe UI', Arial, sans-serif; font-weight: bold; color: #1e3a8a; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); pointer-events: none; width: 85%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;">
+                ${escapeHtml(fullName)}
+              </div>
+            </div>
+            <div class="cert-info">
+              <h4>${escapeHtml(cert.event)}</h4>
+              <p>Issued: ${escapeHtml(cert.date)}</p>
+            </div>
+          </div>
+        `,
+          )
+          .join("");
+      }
+
+      function openCertificateModal(certUrl, eventName, studentFullName) {
+        let modalOverlay = document.getElementById("certModalOverlay");
+        if (!modalOverlay) {
+          modalOverlay = document.createElement("div");
+          modalOverlay.id = "certModalOverlay";
+          modalOverlay.className = "modal-overlay";
+          modalOverlay.innerHTML = `
+            <button class="modal-close" onclick="closeCertificateModal()" aria-label="Close modal">&times;</button>
+            <div style="position: relative; max-width: 90vw; max-height: 90vh; text-align: center;">
+              <div id="certPreviewContainer" style="position: relative; display: inline-block; max-width: 100%;">
+                <img id="certModalImg" src="" alt="Certificate Preview" style="max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);" />
+                <div id="certOverlayName" class="cert-modal-name" style="position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%); font-family: 'Segoe UI', Arial, sans-serif; font-weight: bold; color: #1e3a8a; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); pointer-events: none; width: 80%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;"></div>
+              </div>
+              <p id="certModalTitle" style="color: #fbbf24; margin-top: 1rem; font-size: 1.1rem; font-weight: bold;"></p>
+            </div>
+          `;
+          document.body.appendChild(modalOverlay);
+          modalOverlay.onclick = (e) => {
+            if (e.target === modalOverlay) closeCertificateModal();
+          };
+        }
+
+        document.getElementById("certModalImg").src = certUrl;
+        document.getElementById("certOverlayName").innerText = studentFullName;
+        document.getElementById("certModalTitle").innerText = eventName;
+        modalOverlay.classList.add("active");
+      }
+
+      function closeCertificateModal() {
+        const modalOverlay = document.getElementById("certModalOverlay");
+        if (modalOverlay) {
+          modalOverlay.classList.remove("active");
+        }
+      }
+
+      function escapeHtml(str) {
+        return String(str == null ? "" : str).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+
+      function handleWarningAction() {
+        if (currentWarningState === "no_data") {
+          const authWrapper = document.getElementById("auth-modal-wrapper");
+          if (authWrapper && typeof window.openAuthModal === "function") {
+            window.openAuthModal();
+          }
+        } else if (
+          currentWarningState === "missing_photo" ||
+          currentWarningState === "missing_both"
+        ) {
+          document.getElementById("fileInput").click();
+        } else if (currentWarningState === "missing_signature") {
+          openSigModal(new Event("click"));
+        }
+      }
+
+      function triggerPhotoUpload(e) {
+        e.stopPropagation();
+        document.getElementById("fileInput").click();
+      }
+
+      const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+
+      function handleFileSelected(event) {
+        const file = event.target.files[0];
+        event.target.value = "";
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+          alert("Please select a valid image file.");
+          return;
+        }
+        if (file.size > MAX_UPLOAD_BYTES) {
+          alert("That image is too large. Please choose a file under 8MB.");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => openCropModal(e.target.result);
+        reader.onerror = () =>
+          alert("Could not read the selected file. Please try again.");
+        reader.readAsDataURL(file);
+      }
+
+      function clearPhoto(e) {
+        e.stopPropagation();
+        if (
+          !confirm(
+            "Remove your uploaded photo? You'll need to upload it again.",
+          )
+        )
+          return;
+        removeStudentPhoto();
+        renderProfileData();
+      }
+
+      function clearSignature(e) {
+        e.stopPropagation();
+        if (!confirm("Remove your saved signature? You'll need to sign again."))
+          return;
+        removeStudentSignature();
+        renderProfileData();
+      }
+
+      const CROP_FRAME_W = 220;
+      const CROP_FRAME_H = 289;
+      const CROP_OUTPUT_W = 440;
+      const CROP_OUTPUT_H = 578;
+
+      const cropModal = document.getElementById("cropModal");
+      const cropFrame = document.getElementById("cropFrame");
+      const cropImage = document.getElementById("cropImage");
+      const cropZoomSlider = document.getElementById("cropZoomSlider");
+
+      let cropState = {
+        naturalW: 0,
+        naturalH: 0,
+        baseScale: 1,
+        zoom: 1,
+        offsetX: 0,
+        offsetY: 0,
+        dragging: false,
+        startX: 0,
+        startY: 0,
+        startOffsetX: 0,
+        startOffsetY: 0,
+      };
+
+      function openCropModal(dataUrl) {
+        const img = new Image();
+        img.onload = () => {
+          cropState.naturalW = img.naturalWidth;
+          cropState.naturalH = img.naturalHeight;
+          cropState.baseScale = Math.max(
+            CROP_FRAME_W / img.naturalWidth,
+            CROP_FRAME_H / img.naturalHeight,
+          );
+          cropState.zoom = 1;
+          cropZoomSlider.value = 1;
+
+          const dispW = img.naturalWidth * cropState.baseScale;
+          const dispH = img.naturalHeight * cropState.baseScale;
+          cropState.offsetX = (CROP_FRAME_W - dispW) / 2;
+          cropState.offsetY = (CROP_FRAME_H - dispH) / 2;
+
+          cropImage.src = dataUrl;
+          applyCropTransform();
+          cropModal.classList.add("active");
+        };
+        img.onerror = () =>
+          alert("Could not load that image. Please try a different file.");
+        img.src = dataUrl;
+      }
+
+      function closeCropModal() {
+        cropModal.classList.remove("active");
+        cropImage.src = "";
+      }
+
+      function currentDisplayScale() {
+        return cropState.baseScale * cropState.zoom;
+      }
+
+      function clampCropOffsets() {
+        const scale = currentDisplayScale();
+        const dispW = cropState.naturalW * scale;
+        const dispH = cropState.naturalH * scale;
+        cropState.offsetX = Math.min(
+          0,
+          Math.max(CROP_FRAME_W - dispW, cropState.offsetX),
+        );
+        cropState.offsetY = Math.min(
+          0,
+          Math.max(CROP_FRAME_H - dispH, cropState.offsetY),
+        );
+      }
+
+      function applyCropTransform() {
+        clampCropOffsets();
+        const scale = currentDisplayScale();
+        cropImage.style.width = `${cropState.naturalW * scale}px`;
+        cropImage.style.height = `${cropState.naturalH * scale}px`;
+        cropImage.style.transform = `translate(${cropState.offsetX}px, ${cropState.offsetY}px)`;
+      }
+
+      function handleZoomChange(value) {
+        cropState.zoom = parseFloat(value);
+        applyCropTransform();
+      }
+
+      cropFrame.addEventListener("pointerdown", (e) => {
+        if (!cropImage.src) return;
+        cropState.dragging = true;
+        cropFrame.classList.add("grabbing");
+        cropState.startX = e.clientX;
+        cropState.startY = e.clientY;
+        cropState.startOffsetX = cropState.offsetX;
+        cropState.startOffsetY = cropState.offsetY;
+        cropFrame.setPointerCapture(e.pointerId);
+      });
+      cropFrame.addEventListener("pointermove", (e) => {
+        if (!cropState.dragging) return;
+        cropState.offsetX =
+          cropState.startOffsetX + (e.clientX - cropState.startX);
+        cropState.offsetY =
+          cropState.startOffsetY + (e.clientY - cropState.startY);
+        applyCropTransform();
+      });
+      ["pointerup", "pointercancel", "pointerleave"].forEach((evt) => {
+        cropFrame.addEventListener(evt, () => {
+          cropState.dragging = false;
+          cropFrame.classList.remove("grabbing");
+        });
+      });
+      cropFrame.addEventListener(
+        "wheel",
+        (e) => {
+          if (!cropImage.src) return;
+          e.preventDefault();
+          const delta = e.deltaY < 0 ? 0.05 : -0.05;
+          const newZoom = Math.min(3, Math.max(1, cropState.zoom + delta));
+          cropState.zoom = newZoom;
+          cropZoomSlider.value = newZoom;
+          applyCropTransform();
+        },
+        { passive: false },
+      );
+
+      function saveCroppedPhoto() {
+        if (!cropImage.src) return;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = CROP_OUTPUT_W;
+        canvas.height = CROP_OUTPUT_H;
+        const ctx = canvas.getContext("2d");
+        const canvasScale = CROP_OUTPUT_W / CROP_FRAME_W;
+        const scale = currentDisplayScale();
+
+        ctx.save();
+        ctx.scale(canvasScale, canvasScale);
+        ctx.translate(cropState.offsetX, cropState.offsetY);
+        ctx.scale(scale, scale);
+        ctx.drawImage(cropImage, 0, 0, cropState.naturalW, cropState.naturalH);
+        ctx.restore();
+
+        let dataUrl;
+        try {
+          dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+        } catch (err) {
+          console.error("Crop export failed:", err);
+          alert(
+            "Something went wrong while processing your photo. Please try again.",
+          );
+          return;
+        }
+
+        const success = saveStudentPhoto(dataUrl);
+        if (!success) {
+          alert(
+            "Could not save your photo — your browser storage may be full.",
+          );
+          return;
+        }
+
+        closeCropModal();
+        renderProfileData();
+      }
+
+      const sigModal = document.getElementById("sigModal");
+      const canvas = document.getElementById("sigCanvas");
+      const ctx = canvas.getContext("2d");
+      let isDrawing = false;
+
+      function openSigModal(e) {
+        e.stopPropagation();
+        sigModal.classList.add("active");
+        setupCanvas();
+      }
+
+      function setupCanvas() {
+        ctx.strokeStyle = "#0f172a";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        clearSignaturePad();
+      }
+
+      function clearSignaturePad() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function isCanvasBlank(cnv) {
+        const cnvCtx = cnv.getContext("2d");
+        const pixels = new Uint32Array(
+          cnvCtx.getImageData(0, 0, cnv.width, cnv.height).data.buffer,
+        );
+        return !pixels.some((pixel) => pixel !== 0);
+      }
+
+      function saveSignaturePad() {
+        if (isCanvasBlank(canvas)) {
+          alert("Please draw your signature before saving.");
+          return;
+        }
+        const dataUrl = canvas.toDataURL("image/png");
+        const success = saveStudentSignature(dataUrl);
+        if (!success) {
+          alert(
+            "Could not save your signature — your browser storage may be full.",
+          );
+          return;
+        }
+        renderProfileData();
+        sigModal.classList.remove("active");
+      }
+
+      function getMousePos(canvas, evt) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (evt.clientX - rect.left) * (canvas.width / rect.width),
+          y: (evt.clientY - rect.top) * (canvas.height / rect.height),
+        };
+      }
+
+      function getTouchPos(canvas, evt) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (evt.touches[0].clientX - rect.left) * (canvas.width / rect.width),
+          y:
+            (evt.touches[0].clientY - rect.top) * (canvas.height / rect.height),
+        };
+      }
+
+      canvas.addEventListener("mousedown", (e) => {
+        isDrawing = true;
+        const pos = getMousePos(canvas, e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      });
+
+      canvas.addEventListener("mousemove", (e) => {
+        if (!isDrawing) return;
+        const pos = getMousePos(canvas, e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+      });
+
+      window.addEventListener("mouseup", () => {
+        isDrawing = false;
+      });
+
+      canvas.addEventListener("touchstart", (e) => {
+        isDrawing = true;
+        const pos = getTouchPos(canvas, e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        e.preventDefault();
+      });
+
+      canvas.addEventListener("touchmove", (e) => {
+        if (!isDrawing) return;
+        const pos = getTouchPos(canvas, e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        e.preventDefault();
+      });
+
+      canvas.addEventListener("touchend", () => {
+        isDrawing = false;
+      });
+
+      sigModal.addEventListener("click", () => {
+        sigModal.classList.remove("active");
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        migrateLegacyMedia();
+        renderProfileData();
+
+        window.addEventListener("storage", () => {
+          renderProfileData();
+        });
+
+        setInterval(() => {
+          renderProfileData();
+        }, 800);
+
+        const observerOptions = {
+          root: null,
+          rootMargin: "0px",
+          threshold: 0.15,
+        };
+        const observer = new IntersectionObserver((entries, obs) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              obs.unobserve(entry.target);
+            }
+          });
+        }, observerOptions);
+        document
+          .querySelectorAll(".animate-on-scroll")
+          .forEach((el) => observer.observe(el));
+      });
+
+      const modal = document.getElementById("idModal");
+      const flipContainer = document.getElementById("flipContainer");
+
+      function openIdModal() {
+        modal.classList.add("active");
+        flipContainer.classList.remove("flipped");
+      }
+
+      function closeIdModal(e) {
+        if (e.target === modal || e.target.classList.contains("modal-close")) {
+          modal.classList.remove("active");
+        }
+      }
+
+      function toggleFlip(e) {
+        e.stopPropagation();
+        flipContainer.classList.toggle("flipped");
+      }
+    </script>
+  </body>
+</html>
