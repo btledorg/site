@@ -7,18 +7,36 @@
     <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
     <link rel="stylesheet" href="../resources/css/landing.css" />
     <link rel="stylesheet" href="../resources/css/form.css" />
-        <!-- Open Graph / Facebook / Messenger / LinkedIn Meta Tags -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://btledorg.github.io/">
-    <meta property="og:title" content="BTLED Organization | Transparency Report">
-    <meta property="og:description" content="Official website of the Bachelor of Technology and Livelihood Education - Industrial Arts Student Organization. Stay updated on events, announcements, and resources.">
-    <meta property="og:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true">
+    <!-- Open Graph / Facebook / Messenger / LinkedIn Meta Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://btledorg.github.io/" />
+    <meta
+      property="og:title"
+      content="BTLED Organization | Transparency Report"
+    />
+    <meta
+      property="og:description"
+      content="Official website of the Bachelor of Technology and Livelihood Education - Industrial Arts Student Organization. Stay updated on events, announcements, and resources."
+    />
+    <meta
+      property="og:image"
+      content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true"
+    />
 
     <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="BTLED Organization | Transparency Report">
-    <meta name="twitter:description" content="Official website of the BTLED Industrial Arts Student Organization.">
-    <meta name="twitter:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="BTLED Organization | Transparency Report"
+    />
+    <meta
+      name="twitter:description"
+      content="Official website of the BTLED Industrial Arts Student Organization."
+    />
+    <meta
+      name="twitter:image"
+      content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true"
+    />
 
     <style>
       * {
@@ -63,9 +81,19 @@
     </style>
   </head>
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript
+      ><iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-NQZHH3RH"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+      ></iframe
+    ></noscript>
+    <!-- End Google Tag Manager (noscript) -->
 
-  <header class="navbar" id="site-navbar" data-root="../"></header>
-  <script src="../resources/js/navbar.js"></script>
+    <header class="navbar" id="site-navbar" data-root="../"></header>
+    <script src="../resources/js/navbar.js"></script>
 
     <!-- Fullscreen Iframe Container -->
     <div class="iframe-viewport">
@@ -290,18 +318,28 @@
           const rawData = localStorage.getItem("btled_student");
           if (rawData) {
             const student = JSON.parse(rawData);
-            if (student["Student No."] || student.id) params.set("studentid", student["Student No."] || student.id);
-            if (student["Surname"] || student.surname) params.set("surname", student["Surname"] || student.surname);
-            if (student["First Name"] || student.name) params.set("name", student["First Name"] || student.name);
-            if (student["Middle Name"]) params.set("middleName", student["Middle Name"]);
+            if (student["Student No."] || student.id)
+              params.set("studentid", student["Student No."] || student.id);
+            if (student["Surname"] || student.surname)
+              params.set("surname", student["Surname"] || student.surname);
+            if (student["First Name"] || student.name)
+              params.set("name", student["First Name"] || student.name);
+            if (student["Middle Name"])
+              params.set("middleName", student["Middle Name"]);
             if (student["Program"]) params.set("program", student["Program"]);
             if (student["Sex"]) params.set("sex", student["Sex"]);
-            if (student["Birthdate"]) params.set("birthdate", student["Birthdate"]);
-            if (student["Street / Barangay"]) params.set("street", student["Street / Barangay"]);
-            if (student["Municipality / City"]) params.set("municipality", student["Municipality / City"]);
-            if (student["Province"]) params.set("province", student["Province"]);
-            if (student["Contact Number"]) params.set("contact", student["Contact Number"]);
-            if (student["E-mail Address"]) params.set("email", student["E-mail Address"]);
+            if (student["Birthdate"])
+              params.set("birthdate", student["Birthdate"]);
+            if (student["Street / Barangay"])
+              params.set("street", student["Street / Barangay"]);
+            if (student["Municipality / City"])
+              params.set("municipality", student["Municipality / City"]);
+            if (student["Province"])
+              params.set("province", student["Province"]);
+            if (student["Contact Number"])
+              params.set("contact", student["Contact Number"]);
+            if (student["E-mail Address"])
+              params.set("email", student["E-mail Address"]);
           }
         } catch (e) {
           console.warn("Could not load btled_student from localStorage:", e);
