@@ -62,16 +62,18 @@
     }
     var notifBadge = hasUnreadNotifs ? '<span class="badge-dot" title="Unread notifications"></span>' : '';
 
+    // Dynamically switches between Profile Dropdown (if logged in) and Login Link (if logged out)
     var profileNav = hasStudentProfile ?
       '<div class="dropdown">' +
         '<a href="' + link("profile/index.html") + '" class="nav-link">My Profile ' + notifBadge + ' &#9662;</a>' +
         '<ul class="dropdown-menu">' +
           '<li style="display: none;"><a href="' + link("profile/attendance.html") + '">Attendance</a></li>' +
-          '<li style="border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
+          '<li style="display: none; border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
           '<li><a href="' + link("profile/index.html") + '">View Profile</a></li>' +
           '<li><a href="#" id="logout-link">Logout</a></li>' +
         '</ul>' +
-      '</div>' : "";
+      '</div>' :
+      '<a href="' + link("profile/index.html") + '" class="nav-link">Login</a>';
 
     header.innerHTML =
       '<div class="container nav-container">' +
@@ -159,13 +161,11 @@
       }
     });
 
-// Feature 2 Added: Active Page Highlighting (Fixed)
+    // Active Page Highlighting (Skipping #, mailto, and tel links)
     var currentHref = window.location.href.split("#")[0];
     var navLinks = header.querySelectorAll(".nav-menu a");
     navLinks.forEach(function (linkEl) {
       var rawHref = linkEl.getAttribute("href");
-      
-      // Skip links that don't exist, are just "#", or are mailto/tel protocols
       if (!rawHref || rawHref === "#" || rawHref.startsWith("mailto:") || rawHref.startsWith("tel:")) {
         return;
       }
@@ -173,21 +173,10 @@
       var linkBase = linkEl.href ? linkEl.href.split("#")[0] : "";
       if (linkBase && linkBase === currentHref) {
         linkEl.classList.add("active-page");
-        
-        // Optional: If you want the parent dropdown title highlighted ONLY IF 
-        // you are on an actual sub-page, you can keep or adjust this logic. 
-        // Usually, it's better to only highlight the exact dropdown child item:
-        var parentDropdown = linkEl.closest(".dropdown");
-        if (parentDropdown && !linkEl.classList.contains("nav-link")) {
-          var dropdownLink = parentDropdown.querySelector(".nav-link");
-          // Uncomment below line only if you want the main dropdown title to highlight too:
-          // if (dropdownLink) dropdownLink.classList.add("active-page");
-        }
       }
     });
   }
 
-  // Feature 3 Added: Global Click-Outside-to-Close Handler
   document.addEventListener("click", function (e) {
     var header = document.getElementById("site-navbar");
     if (!header) return;
@@ -202,7 +191,6 @@
     }
   });
 
-  // Feature 1 Added: Real-Time Multi-Tab Session & State Synchronization
   window.addEventListener("storage", function (e) {
     if (!e.key || e.key === "btled_student" || e.key === "btled_notifications") {
       renderNavbar();
