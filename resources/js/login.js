@@ -1,4 +1,4 @@
-  const baseURL ="https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
+const baseURL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
 
   document.addEventListener("DOMContentLoaded", () => {
     checkUserSession();
@@ -98,6 +98,7 @@
           const result = await response.json();
 
           if (result && result.ok) {
+            // Saves the full payload (including birthdate) directly to localStorage
             localStorage.setItem("btled_student", JSON.stringify(payload));
             closeAuthModal();
             updateParentNav(payload);
@@ -132,7 +133,6 @@
     }
   }
 
-  // Fades/slides the overlay + card in, matching the site's scroll-animation feel
   function openAuthModal() {
     const wrapper = document.getElementById("auth-modal-wrapper");
     wrapper.classList.remove("hidden");
@@ -145,7 +145,6 @@
     setTimeout(() => wrapper.classList.add("hidden"), 320);
   }
 
-  // Cross-fades between the "get to know you" view and the registration view
   function switchView(hideEl, showEl) {
     hideEl.style.opacity = "0";
     hideEl.style.transform = "translateY(-10px)";

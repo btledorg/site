@@ -10,18 +10,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-        <!-- Open Graph / Facebook / Messenger / LinkedIn Meta Tags -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://btledorg.github.io/">
-    <meta property="og:title" content="BTLED Organization | Member Profile">
-    <meta property="og:description" content="Official website of the Bachelor of Technology and Livelihood Education - Industrial Arts Student Organization. Stay updated on events, announcements, and resources.">
-    <meta property="og:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true">
+    <!-- Open Graph / Facebook / Messenger / LinkedIn Meta Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://btledorg.github.io/" />
+    <meta property="og:title" content="BTLED Organization | Member Profile" />
+    <meta
+      property="og:description"
+      content="Official website of the Bachelor of Technology and Livelihood Education - Industrial Arts Student Organization. Stay updated on events, announcements, and resources."
+    />
+    <meta
+      property="og:image"
+      content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true"
+    />
 
     <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="BTLED Organization | Member Profile">
-    <meta name="twitter:description" content="Official website of the BTLED Industrial Arts Student Organization.">
-    <meta name="twitter:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BTLED Organization | Member Profile" />
+    <meta
+      name="twitter:description"
+      content="Official website of the BTLED Industrial Arts Student Organization."
+    />
+    <meta
+      name="twitter:image"
+      content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true"
+    />
 
     <style>
       :root {
@@ -286,10 +298,10 @@
       }
 
       .id-front-bg {
-        background-image: url("1.png");
+        background-image: url("1.svg");
       }
       .id-back-bg {
-        background-image: url("2.png");
+        background-image: url("2.svg");
       }
 
       /* Upload Picture Overlay */
@@ -1497,7 +1509,10 @@
             .toUpperCase();
         const studentNo = student["Student No."] || student.id || "c2025-0119";
         const program = student["Program"] || "BTLED-2A";
-        const birthdateFormatted = formatDate(student["Birthdate"]);
+        const rawBirthdate = student["birthdate"] || student["Birthdate"] || "";
+        const birthdateFormatted = rawBirthdate
+          ? formatDate(rawBirthdate)
+          : "N/A";
 
         document.getElementById("headerName").innerText = shortName;
         document.getElementById("headerProgram").innerText = program;
