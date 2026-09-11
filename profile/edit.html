@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BTLED | Edit Profile</title>
+    <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
+    <link rel="stylesheet" href="../resources/css/landing.css" />
+    <link rel="stylesheet" href="../resources/css/form.css" />
+
+    <style>
+      :root {
+        --btled-primary: #1e3a8a;
+        --btled-secondary: #3b82f6;
+        --btled-bg: #f8fafc;
+      }
+      body {
+        background-color: var(--btled-bg);
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        color: #334155;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+      }
+      .edit-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1rem;
+      }
+      .edit-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 600px;
+        box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.08);
+        border: 1px solid #e2e8f0;
+      }
+      .edit-header h2 { color: var(--btled-primary); margin: 0 0 0.5rem 0; font-size: 1.8rem; }
+      .edit-header p { color: #64748b; margin: 0 0 2rem 0; font-size: 0.95rem; }
+
+      /* Profile Photo Preview Section in Editor */
+      .edit-photo-section {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        background: #f1f5f9;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+      }
+      .edit-avatar-preview {
+        width: 80px;
+        height: 105px;
+        border-radius: 6px;
+        background: #cbd5e1;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #cbd5e1;
+        flex-shrink: 0;
+      }
+      .edit-avatar-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .photo-action-col h4 { margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--btled-primary); }
+      .photo-action-col p { margin: 0 0 0.75rem 0; font-size: 0.8rem; color: #64748b; }
+      .btn-upload-trigger {
+        background: var(--btled-primary);
+        color: white;
+        border: none;
+        padding: 0.45rem 0.9rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-upload-trigger:hover { background: #1e40af; }
+
+      .auth-row { display: flex; gap: 1rem; margin-bottom: 1rem; }
+      .auth-row > .auth-form-group { flex: 1; }
+      .auth-form-group { margin-bottom: 1.25rem; display: flex; flex-direction: column; }
+      .auth-form-group label { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 0.4rem; }
+      .auth-form-group input { padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; }
+      .auth-form-group input:focus { border-color: var(--btled-secondary); }
+      .auth-form-group input[readonly] { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+      .btn-group { display: flex; gap: 1rem; margin-top: 2rem; }
+      .btn-save { flex: 2; background: var(--btled-secondary); color: white; border: none; padding: 0.85rem; border-radius: 8px; font-weight: bold; cursor: pointer; }
+      .btn-save:hover { background: #2563eb; }
+      .btn-cancel { flex: 1; background: #e2e8f0; color: #334155; padding: 0.85rem; border-radius: 8px; font-weight: bold; text-align: center; text-decoration: none; }
+
+      /* Crop Modal Styles */
+      .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(15, 23, 42, 0.75); display: flex; align-items: center; justify-content: center;
+        z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+      }
+      .modal-overlay.active { opacity: 1; pointer-events: auto; }
+      .crop-card { background: white; padding: 2rem; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; }
+      .crop-frame {
+        width: 220px; height: 289px; margin: 0 auto 1rem auto; position: relative;
+        overflow: hidden; border: 2px dashed var(--btled-secondary); border-radius: 8px; background: #000;
+        touch-action: none; cursor: grab;
+      }
+      .crop-frame.grabbing { cursor: grabbing; }
+      .crop-frame img { position: absolute; top: 0; left: 0; transform-origin: top left; user-select: none; -webkit-user-drag: none; pointer-events: none; max-width: none; }
+    </style>
+  </head>
+  <body>
+    <header class="navbar" id="site-navbar" data-root="../"></header>
+    <script src="../resources/js/navbar.js"></script>
+
+    <main class="edit-container">
+      <div class="edit-card">
+        <div class="edit-header">
+          <h2>Update Profile Details</h2>
+          <p>Keep your profile photo, contact, and program information up to date.</p>
+        </div>
+
+        <!-- Photo Selection Preview Box -->
+        <div class="edit-photo-section">
+          <div class="edit-avatar-preview" id="previewAvatarContainer">
+            <span style="font-size: 0.8rem; color: #64748b;">No Photo</span>
+          </div>
+          <div class="photo-action-col">
+            <h4>Profile Photo</h4>
+            <p>Upload a formal ID picture (Max 8MB).</p>
+            <button type="button" class="btn-upload-trigger" onclick="document.getElementById('hiddenFileInput').click()">Change Photo</button>
+            <input type="file" id="hiddenFileInput" accept="image/*" style="display: none;" onchange="handleFileSelected(event)" />
+          </div>
+        </div>
+
+        <form id="editForm">
+          <div class="auth-row">
+            <div class="auth-form-group">
+              <label>Name</label>
+              <input type="text" id="display-name" readonly />
+            </div>
+            <div class="auth-form-group">
+              <label>Student No.</label>
+              <input type="text" id="display-id" readonly />
+            </div>
+          </div>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 1.5rem 0;" />
+          <div class="auth-row">
+            <div class="auth-form-group">
+              <label>Program / Section</label>
+              <input type="text" id="edit-program" list="programSuggestions" placeholder="e.g. BTLED - Industrial Arts 3A" autocomplete="off" required />
+              <datalist id="programSuggestions"></datalist>
+            </div>
+            <div class="auth-form-group">
+              <label>Contact Number</label>
+              <input type="tel" id="edit-contact" required />
+            </div>
+          </div>
+          <div class="auth-form-group">
+            <label>E-mail Address</label>
+            <input type="email" id="edit-email" required />
+          </div>
+          <div class="auth-form-group">
+            <label>Street / Barangay</label>
+            <input type="text" id="edit-street" required />
+          </div>
+          <div class="auth-row">
+            <div class="auth-form-group">
+              <label>Municipality / City</label>
+              <input type="text" id="edit-city" required />
+            </div>
+            <div class="auth-form-group">
+              <label>Province</label>
+              <input type="text" id="edit-prov" required />
+            </div>
+          </div>
+          <div class="btn-group">
+            <a href="profile.html" class="btn-cancel">Cancel</a>
+            <button type="submit" class="btn-save" id="saveBtn">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <!-- CROP MODAL -->
+    <div class="modal-overlay" id="cropModal">
+      <div class="crop-card">
+        <h3 style="margin-top: 0; color: var(--btled-primary);">Crop Photo</h3>
+        <p style="font-size: 0.85rem; color: #64748b;">Drag to reposition or use slider to zoom.</p>
+        <div class="crop-frame" id="cropFrame">
+          <img id="cropImage" alt="To crop" />
+        </div>
+        <input type="range" id="cropZoomSlider" min="1" max="3" step="0.01" value="1" style="width: 100%; margin-bottom: 1.5rem;" oninput="handleZoomChange(this.value)" />
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" onclick="closeCropModal()" style="flex: 1; background: #e2e8f0; border: none; padding: 0.6rem; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
+          <button type="button" onclick="saveCroppedPhoto()" style="flex: 1; background: var(--btled-secondary); color: white; border: none; padding: 0.6rem; border-radius: 6px; font-weight: bold; cursor: pointer;">Crop & Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../resources/js/config.js"></script>
+    <script>
+      function getStudentData() {
+        try { return JSON.parse(localStorage.getItem("btled_student")); }
+        catch (err) { return null; }
+      }
+
+      function studentKeyId(student) {
+        return (student && (student["Student No."] || student.id)) || "default";
+      }
+      function photoStorageKey(student) {
+        return `btled_photo_${studentKeyId(student)}`;
+      }
+
+      function getStudentPhoto(student) {
+        student = student || getStudentData();
+        if (!student) return null;
+        return localStorage.getItem(photoStorageKey(student));
+      }
+
+      let temporaryNewPhotoDataUrl = null; // Holds the cropped result before hitting main save
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const student = getStudentData();
+        if (!student) {
+          alert("No profile data found. Redirecting...");
+          window.location.href = "profile.html";
+          return;
+        }
+
+        // Populate Identifiers & Fields
+        document.getElementById("display-name").value = `${student["First Name"] || ""} ${student["Surname"] || ""}`.trim();
+        document.getElementById("display-id").value = student["Student No."] || student.id || "";
+        document.getElementById("edit-program").value = student["Program"] || "";
+        document.getElementById("edit-contact").value = student["Contact Number"] || "";
+        document.getElementById("edit-email").value = student["E-mail Address"] || "";
+        document.getElementById("edit-street").value = student["Street / Barangay"] || "";
+        document.getElementById("edit-city").value = student["Municipality / City"] || "";
+        document.getElementById("edit-prov").value = student["Province"] || "";
+
+        refreshPhotoPreview();
+        populateProgramSuggestions();
+      });
+
+      function refreshPhotoPreview() {
+        const student = getStudentData();
+        const photo = temporaryNewPhotoDataUrl || getStudentPhoto(student);
+        const container = document.getElementById("previewAvatarContainer");
+        if (photo) {
+          container.innerHTML = `<img src="${photo}" alt="Preview" />`;
+        } else {
+          container.innerHTML = `<span style="font-size: 0.8rem; color: #64748b;">No Photo</span>`;
+        }
+      }
+
+const PROGRAM_MAJORS = [
+        "BAJ",
+        "BSHM",
+        "BSTM",
+        "BAELS",
+        "BAVCM",
+        "BMEF",
+        "BMEE",
+        "BEED",
+        "BSEE",
+        "BSEF",
+        "BSEM",
+        "BSESW",
+        "BSES",
+        "BSESS",
+        "BSBAHRM",
+        "BSBAMM",
+        "BSBAFM",
+        "BSBAHRDM",
+        "BSOA",
+        "BSOAM",
+        "BSCE",
+        "BSCpE",
+        "BSEE-Eng",
+        "BSEcE",
+        "BSME",
+        "BSPsy",
+        "BSHS",
+        "BSMath",
+        "BSAcc",
+        "BSIS",
+        "BSIT",
+        "BTLED-IA",
+        "BTLED-HE",
+        "BTLED-ICT",
+        "BSFAS",
+        "BSBMIC",
+        "BSBAN",
+        "BTTVTE-CT",
+        "BTTVTE-DT",
+        "BTTVTE-ElcT",
+        "BTTVTE-EleT",
+        "BTT-AT",
+        "BTT-EcT",
+        "BTT-ElT",
+        "BTT-CCT",
+        "BTT-DT",
+        "BTT-MT",
+        "BTT-HVACT",
+        "BAPS",
+        "BSABE",
+        "BSAAS",
+        "BSACS",
+        "BSBio",
+        "BSSW",
+        "BSAgri",
+        "BSN"
+      ];
+      const PROGRAM_YEARS = ["1", "2", "3", "4"];
+      const PROGRAM_SECTIONS = ["A", "B", "C", "D"];
+
+      function populateProgramSuggestions() {
+        const datalist = document.getElementById("programSuggestions");
+        if (!datalist) return;
+        datalist.innerHTML = "";
+        const frag = document.createDocumentFragment();
+
+        // Plain major names (in case the user just wants to pick the major)
+        PROGRAM_MAJORS.forEach((major) => {
+          const opt = document.createElement("option");
+          opt.value = major;
+          frag.appendChild(opt);
+        });
+
+        // Major + Year/Section combos, e.g. "BTLED - Industrial Arts 3A"
+        PROGRAM_MAJORS.forEach((major) => {
+          PROGRAM_YEARS.forEach((year) => {
+            PROGRAM_SECTIONS.forEach((section) => {
+              const opt = document.createElement("option");
+              opt.value = `${major} ${year}${section}`;
+              frag.appendChild(opt);
+            });
+          });
+        });
+
+        datalist.appendChild(frag);
+      }
+
+      // --- CROPPER LOGIC ---
+      const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+      const CROP_FRAME_W = 220;
+      const CROP_FRAME_H = 289;
+      const CROP_OUTPUT_W = 440;
+      const CROP_OUTPUT_H = 578;
+
+      const cropModal = document.getElementById("cropModal");
+      const cropFrame = document.getElementById("cropFrame");
+      const cropImage = document.getElementById("cropImage");
+      const cropZoomSlider = document.getElementById("cropZoomSlider");
+
+      let cropState = {
+        naturalW: 0,
+        naturalH: 0,
+        baseScale: 1,
+        zoom: 1,
+        offsetX: 0,
+        offsetY: 0,
+        dragging: false,
+        startX: 0,
+        startY: 0,
+        startOffsetX: 0,
+        startOffsetY: 0,
+      };
+
+      function handleFileSelected(event) {
+        const file = event.target.files[0];
+        event.target.value = "";
+        if (!file) return;
+        if (!file.type.startsWith("image/")) { alert("Please select a valid image file."); return; }
+        if (file.size > MAX_UPLOAD_BYTES) { alert("File is too large. Choose a file under 8MB."); return; }
+
+        const reader = new FileReader();
+        reader.onload = (e) => openCropModal(e.target.result);
+        reader.readAsDataURL(file);
+      }
+
+      function openCropModal(dataUrl) {
+        const img = new Image();
+        img.onload = () => {
+          cropState.naturalW = img.naturalWidth;
+          cropState.naturalH = img.naturalHeight;
+          cropState.baseScale = Math.max(CROP_FRAME_W / img.naturalWidth, CROP_FRAME_H / img.naturalHeight);
+          cropState.zoom = 1;
+          cropZoomSlider.value = 1;
+
+          // FIX: previously used img.naturalH (undefined) which produced NaN
+          // and silently broke the transform, so dragging never visibly moved the image.
+          const dispW = cropState.naturalW * cropState.baseScale;
+          const dispH = cropState.naturalH * cropState.baseScale;
+          cropState.offsetX = (CROP_FRAME_W - dispW) / 2;
+          cropState.offsetY = (CROP_FRAME_H - dispH) / 2;
+
+          cropImage.src = dataUrl;
+          applyCropTransform();
+          cropModal.classList.add("active");
+        };
+        img.src = dataUrl;
+      }
+
+      function closeCropModal() { cropModal.classList.remove("active"); cropImage.src = ""; }
+      function currentDisplayScale() { return cropState.baseScale * cropState.zoom; }
+      function clampCropOffsets() {
+        const scale = currentDisplayScale();
+        const dispW = cropState.naturalW * scale;
+        const dispH = cropState.naturalH * scale;
+        cropState.offsetX = Math.min(0, Math.max(CROP_FRAME_W - dispW, cropState.offsetX));
+        cropState.offsetY = Math.min(0, Math.max(CROP_FRAME_H - dispH, cropState.offsetY));
+      }
+      function applyCropTransform() {
+        clampCropOffsets();
+        const scale = currentDisplayScale();
+        cropImage.style.width = `${cropState.naturalW * scale}px`;
+        cropImage.style.height = `${cropState.naturalH * scale}px`;
+        cropImage.style.transform = `translate(${cropState.offsetX}px, ${cropState.offsetY}px)`;
+      }
+      function handleZoomChange(val) { cropState.zoom = parseFloat(val); applyCropTransform(); }
+
+      // Single set of drag listeners (previously registered twice, which was harmless
+      // but redundant — consolidated here).
+      cropFrame.addEventListener("pointerdown", (e) => {
+        if (!cropImage.src) return;
+        cropState.dragging = true;
+        cropFrame.classList.add("grabbing");
+        cropState.startX = e.clientX;
+        cropState.startY = e.clientY;
+        cropState.startOffsetX = cropState.offsetX;
+        cropState.startOffsetY = cropState.offsetY;
+        cropFrame.setPointerCapture(e.pointerId);
+      });
+      cropFrame.addEventListener("pointermove", (e) => {
+        if (!cropState.dragging) return;
+        cropState.offsetX = cropState.startOffsetX + (e.clientX - cropState.startX);
+        cropState.offsetY = cropState.startOffsetY + (e.clientY - cropState.startY);
+        applyCropTransform();
+      });
+      ["pointerup", "pointercancel", "pointerleave"].forEach((evt) => {
+        cropFrame.addEventListener(evt, () => {
+          cropState.dragging = false;
+          cropFrame.classList.remove("grabbing");
+        });
+      });
+
+      function saveCroppedPhoto() {
+        if (!cropImage.src) return;
+        const canvas = document.createElement("canvas");
+        canvas.width = CROP_OUTPUT_W; canvas.height = CROP_OUTPUT_H;
+        const ctx = canvas.getContext("2d");
+        const canvasScale = CROP_OUTPUT_W / CROP_FRAME_W;
+        const scale = currentDisplayScale();
+
+        ctx.save();
+        ctx.scale(canvasScale, canvasScale);
+        ctx.translate(cropState.offsetX, cropState.offsetY);
+        ctx.scale(scale, scale);
+        ctx.drawImage(cropImage, 0, 0, cropState.naturalW, cropState.naturalH);
+        ctx.restore();
+
+        temporaryNewPhotoDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+        closeCropModal();
+        refreshPhotoPreview();
+      }
+
+      // --- SUBMIT & SYNC ---
+      document.getElementById("editForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const student = getStudentData();
+        if (!student) return;
+
+        const btn = document.getElementById("saveBtn");
+        const originalText = btn.innerText;
+        btn.innerText = "Syncing Profile...";
+        btn.disabled = true;
+
+        const updatedData = {
+          action: "updateProfile",
+          studentNo: student["Student No."] || student.id,
+          program: document.getElementById("edit-program").value.trim(),
+          contact: document.getElementById("edit-contact").value.trim(),
+          email: document.getElementById("edit-email").value.trim(),
+          street: document.getElementById("edit-street").value.trim(),
+          municipality: document.getElementById("edit-city").value.trim(),
+          province: document.getElementById("edit-prov").value.trim()
+        };
+
+        try {
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify(updatedData)
+          });
+          const result = await response.json();
+
+          if (result.ok) {
+            // Update Local Data details
+            student["Program"] = updatedData.program;
+            student["Contact Number"] = updatedData.contact;
+            student["E-mail Address"] = updatedData.email;
+            student["Street / Barangay"] = updatedData.street;
+            student["Municipality / City"] = updatedData.municipality;
+            student["Province"] = updatedData.province;
+
+            localStorage.setItem("btled_student", JSON.stringify(student));
+
+            // If a new photo was cropped, save it locally to its unique student storage key
+            if (temporaryNewPhotoDataUrl) {
+              localStorage.setItem(photoStorageKey(student), temporaryNewPhotoDataUrl);
+            }
+
+            alert("Profile and photo successfully updated and synced!");
+            window.location.href = "index.html";
+          } else {
+            alert("Server Error: " + result.error);
+          }
+        } catch (error) {
+          console.error("Sync failed:", error);
+          alert("Network error. Could not sync with database.");
+        } finally {
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

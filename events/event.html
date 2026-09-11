@@ -157,15 +157,18 @@
               <label>Student No.</label
               ><input type="text" id="reg-id" required readonly />
             </div>
-            <div class="auth-form-group">
-              <label>Program</label
-              ><input
-                type="text"
-                id="reg-program"
-                required
-                placeholder="e.g., BTLED-IA"
-              />
-            </div>
+<div class="auth-form-group">
+  <label>Program</label
+  ><input
+    type="text"
+    id="reg-program"
+    list="programSuggestions"
+    autocomplete="off"
+    required
+    placeholder="e.g., BTLED-IA"
+  />
+  <datalist id="programSuggestions"></datalist>
+</div>
           </div>
           <div class="auth-row">
             <div class="auth-form-group">

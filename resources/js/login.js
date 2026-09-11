@@ -2,6 +2,7 @@ const baseURL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HR
 
   document.addEventListener("DOMContentLoaded", () => {
     checkUserSession();
+    populateProgramSuggestions();
 
     function showAlert(type, elementId, message) {
       const alertEl = document.getElementById(elementId);
@@ -170,3 +171,94 @@ const baseURL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HR
       navHubLink.textContent = `Hello, ${user.name}`;
     }
   }
+
+  // Edit these to change what shows up as suggestions.
+// The field stays fully editable — this just offers hints via <datalist>.
+
+const PROGRAM_CODES = [
+        "BAJ",
+        "BSHM",
+        "BSTM",
+        "BAELS",
+        "BAVCM",
+        "BMEF",
+        "BMEE",
+        "BEED",
+        "BSEE",
+        "BSEF",
+        "BSEM",
+        "BSESW",
+        "BSES",
+        "BSESS",
+        "BSBAHRM",
+        "BSBAMM",
+        "BSBAFM",
+        "BSBAHRDM",
+        "BSOA",
+        "BSOAM",
+        "BSCE",
+        "BSCpE",
+        "BSEE-Eng",
+        "BSEcE",
+        "BSME",
+        "BSPsy",
+        "BSHS",
+        "BSMath",
+        "BSAcc",
+        "BSIS",
+        "BSIT",
+        "BTLED-IA",
+        "BTLED-HE",
+        "BTLED-ICT",
+        "BSFAS",
+        "BSBMIC",
+        "BSBAN",
+        "BTTVTE-CT",
+        "BTTVTE-DT",
+        "BTTVTE-ElcT",
+        "BTTVTE-EleT",
+        "BTT-AT",
+        "BTT-EcT",
+        "BTT-ElT",
+        "BTT-CCT",
+        "BTT-DT",
+        "BTT-MT",
+        "BTT-HVACT",
+        "BAPS",
+        "BSABE",
+        "BSAAS",
+        "BSACS",
+        "BSBio",
+        "BSSW",
+        "BSAgri",
+        "BSN"
+      ];
+const PROGRAM_YEARS = ["1", "2", "3", "4"];
+const PROGRAM_SECTIONS = ["A", "B", "C", "D"];
+
+function populateProgramSuggestions() {
+  const datalist = document.getElementById("programSuggestions");
+  if (!datalist) return;
+  datalist.innerHTML = "";
+  const frag = document.createDocumentFragment();
+
+  // Bare codes, in case someone just wants the program without year/section
+  PROGRAM_CODES.forEach((code) => {
+    const opt = document.createElement("option");
+    opt.value = code;
+    frag.appendChild(opt);
+  });
+
+  // Code + Year/Section combos, e.g. "BTLED-IA 1A"
+  PROGRAM_CODES.forEach((code) => {
+    PROGRAM_YEARS.forEach((year) => {
+      PROGRAM_SECTIONS.forEach((section) => {
+        const opt = document.createElement("option");
+        opt.value = `${code} ${year}${section}`;
+        frag.appendChild(opt);
+      });
+    });
+  });
+
+  datalist.appendChild(frag);
+}

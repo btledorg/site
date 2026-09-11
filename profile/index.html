@@ -1215,15 +1215,18 @@
               <label>Student No.</label
               ><input type="text" id="reg-id" required readonly />
             </div>
-            <div class="auth-form-group">
-              <label>Program</label
-              ><input
-                type="text"
-                id="reg-program"
-                required
-                placeholder="e.g., BTLED-IA"
-              />
-            </div>
+<div class="auth-form-group">
+  <label>Program</label
+  ><input
+    type="text"
+    id="reg-program"
+    list="programSuggestions"
+    autocomplete="off"
+    required
+    placeholder="e.g., BTLED-IA"
+  />
+  <datalist id="programSuggestions"></datalist>
+</div>
           </div>
           <div class="auth-row">
             <div class="auth-form-group">
@@ -1819,14 +1822,52 @@
           btn.disabled = false;
         }
       }
+async function exportIDToPDF() {
+        // 1. Messenger/In-App Browser Detection
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        if (ua.indexOf("FBAN") > -1 || ua.indexOf("FBAV") > -1 || ua.indexOf("Messenger") > -1) {
+          alert("PDF downloads are restricted inside the Messenger app. Please tap the 3 dots in the corner and select 'Open in Chrome' or 'Open in Safari' to export your ID.");
+          return;
+        }
 
-      async function exportIDToPDF() {
+        // 2. Data Validation Checks
+        const student = getStudentData();
+        if (!student) {
+          alert("No profile data found. Please log in or register first.");
+          return;
+        }
+
+        const firstName = student["First Name"] || student.name;
+        const surname = student["Surname"] || student.surname;
+        const studentNo = student["Student No."] || student.id;
+        const program = student["Program"];
+        const photo = getStudentPhoto(student);
+        const signature = getStudentSignature(student);
+
+        if (!firstName || !surname || !studentNo || !program) {
+          alert("Incomplete profile information. Please ensure your Name, Student No., and Section/Program are complete before exporting.");
+          return;
+        }
+
+        if (!photo) {
+          alert("Missing Profile Picture. Please upload your photo before exporting your ID.");
+          return;
+        }
+
+        if (!signature) {
+          alert("Missing Signature. Please draw your signature before exporting your ID.");
+          return;
+        }
+
+        // 3. Proceed with PDF Generation
         const { jsPDF } = window.jspdf;
+        // Create an A4 document in portrait mode
         const doc = new jsPDF({
           orientation: "portrait",
           unit: "mm",
           format: "a4",
         });
+        
         const btn = document.getElementById("exportIdBtn");
         const originalText = btn.innerHTML;
 
@@ -1835,36 +1876,30 @@
         document.body.classList.add("is-exporting");
 
         try {
-          const student = getStudentData() || {};
-          const studentName =
-            `${student["First Name"] || ""} ${student["Surname"] || ""}`.trim() ||
-            "Guest User";
-          const studentNo = student["Student No."] || student.id || "N/A";
+          const studentName = `${firstName} ${surname}`.trim();
           const dateGenerated = new Date().toLocaleString();
 
-          // 1. Temporarily activate the modal structure or grab the inner flip card faces directly
+          // Grab the front and back faces directly from the flip card
           const flipCard = document.querySelector(".flip-card");
           const frontFace = flipCard.querySelector(".id-front-bg");
           const backFace = flipCard.querySelector(".id-back-bg");
 
-          // 2. Create a high-res staging container outside the viewport
+          // Create a high-res staging container outside the viewport
           const tempDiv = document.createElement("div");
           tempDiv.style.position = "absolute";
           tempDiv.style.top = "-9999px";
           tempDiv.style.left = "0";
-          tempDiv.style.width = "900px"; // High resolution width buffer
+          tempDiv.style.width = "900px"; 
           document.body.appendChild(tempDiv);
 
           const cloneFront = frontFace.cloneNode(true);
           const cloneBack = backFace.cloneNode(true);
 
-          // Clean up cloneBack styling so it renders flat, unmirrored, and clean
           cloneBack.style.transform = "none";
           cloneBack.style.scale = "1";
           cloneBack.style.position = "relative";
           cloneBack.style.backfaceVisibility = "visible";
 
-          // Remove any stray close badges or interactive UI artifacts from the clones
           cloneFront
             .querySelectorAll(".clear-badge, .id-photo-upload")
             .forEach((el) => el.remove());
@@ -1875,7 +1910,7 @@
           tempDiv.appendChild(cloneFront);
           tempDiv.appendChild(cloneBack);
 
-          // 3. High quality canvas options
+          // High quality canvas options
           const canvasOptions = {
             scale: 3,
             useCORS: true,
@@ -1892,44 +1927,42 @@
 
           const pageWidth = doc.internal.pageSize.getWidth();
 
-          // 4. Header Layout
-          doc.setFontSize(18);
+          // Clean Header Layout
+          doc.setFontSize(14);
           doc.setFont("helvetica", "bold");
           doc.setTextColor(30, 58, 138);
-          doc.text("BTLED CARD", pageWidth / 2, 20, {
+          doc.text("BTLED DIGITAL ID CARD", pageWidth / 2, 15, {
             align: "center",
           });
 
-          doc.setFontSize(10);
+          doc.setFontSize(9);
           doc.setFont("helvetica", "normal");
-          doc.setTextColor(50, 50, 50);
-          doc.text(`Name: ${studentName}`, 20, 30);
-          doc.text(`Student No: ${studentNo}`, 20, 36);
-          doc.text(`Date Generated: ${dateGenerated}`, 20, 42);
-          doc.text(`Issuer: The BTLED Organization, URS Cainta Campus`, 20, 48);
+          doc.setTextColor(80, 80, 80);
+          doc.text(`Name: ${studentName}  |  Student No: ${studentNo}`, pageWidth / 2, 21, { align: "center" });
 
-          doc.setDrawColor(200, 200, 200);
-          doc.line(20, 53, pageWidth - 20, 53);
+          // Standard ID Card Dimensions (CR80 Standard: 85.6 mm width x 53.98 mm height)
+          const idWidth = 85.6; 
+          const idHeight = 53.98;
+          const centerX = (pageWidth - idWidth) / 2;
 
-          // 5. Render Front & Back Cards
-          const imgWidth = 110;
-          const imgHeight = imgWidth / 1.59;
-          const centerX = (pageWidth - imgWidth) / 2;
-
-          doc.setFontSize(11);
+          // Render Front Card
+          doc.setFontSize(10);
           doc.setFont("helvetica", "bold");
-          doc.text("Front View:", 20, 62);
-          doc.addImage(imgFront, "PNG", centerX, 65, imgWidth, imgHeight);
+          doc.setTextColor(30, 30, 30);
+          doc.text("Front View:", 20, 31);
+          doc.addImage(imgFront, "PNG", centerX, 34, idWidth, idHeight);
 
-          const backY = 65 + imgHeight + 12;
+          // Render Back Card
+          const backY = 34 + idHeight + 10;
           doc.text("Back View:", 20, backY - 3);
-          doc.addImage(imgBack, "PNG", centerX, backY, imgWidth, imgHeight);
+          doc.addImage(imgBack, "PNG", centerX, backY, idWidth, idHeight);
 
-          // 6. Footer Disclaimer
-          const footerY = backY + imgHeight + 15;
-          doc.line(20, footerY - 5, pageWidth - 20, footerY - 5);
+          // Footer Disclaimer
+          const footerY = backY + idHeight + 10;
+          doc.setDrawColor(200, 200, 200);
+          doc.line(20, footerY - 4, pageWidth - 20, footerY - 4);
 
-          doc.setFontSize(7.5);
+          doc.setFontSize(7);
           doc.setTextColor(120, 120, 120);
           const disclaimerText =
             "DISCLAIMER: This document is a system-generated export of the student's digital ID profile. It serves as secondary proof of membership for the BTLED organization. For official transactions, present the live digital ID or the printed physical card. If found, please surrender to the BTLED Office at URS Cainta Campus.";
