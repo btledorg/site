@@ -509,6 +509,13 @@ document.addEventListener("DOMContentLoaded", () => {
         background: #374151 !important;
         color: #f9fafb !important;
       }
+        html[data-theme="dark"] .pillar-cell.active-cell {
+  background-color: #1e1e1e;
+}
+html[data-theme="dark"] .pillar-cell.active-cell h3,
+html[data-theme="dark"] .pillar-cell.active-cell p {
+  color: #f9fafb;
+}
     `;
     document.head.appendChild(alertStyles);
   }

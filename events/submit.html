@@ -779,12 +779,10 @@
         <button class="btn btn-secondary" onclick="prevStep('2')">
           Back
         </button>
-        <button
-        class="btn btn-primary"
-        onclick="nextStep('2', validateStep2)"
-        >
-        Next
-      </button>
+<!-- TO THIS -->
+<button id="btn-step2-next" class="btn btn-primary">
+  Next
+</button>
     </div>
   </div>
   
@@ -1627,6 +1625,17 @@
     mechanicsCheck.addEventListener("change", () => {
       btnMechNext.disabled = !mechanicsCheck.checked;
     });
+
+    // Step 2 Next Button Handler
+  const btnStep2Next = document.getElementById("btn-step2-next");
+  if (btnStep2Next) {
+    btnStep2Next.addEventListener("click", async () => {
+      const isValid = await validateStep2();
+      if (isValid) {
+        nextStep('2', null);
+      }
+    });
+  }
     
     // Submit Button Action
     const btnSubmit = document.getElementById("btn-submit");
