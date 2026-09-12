@@ -1282,27 +1282,44 @@
   }
   
   // ---- Step 2 validation ----
+// ---- Step 2 validation ----
   async function validateStep2() {
     const requiredFields = [
-    "field-surname",
-    "field-firstname",
-    "field-studentid",
-    "field-program",
-    "field-phone",
-    "field-email",
-    "field-address",
-    "field-fblink",
+      "field-surname",
+      "field-firstname",
+      "field-studentid",
+      "field-program",
+      "field-phone",
+      "field-email",
+      "field-address",
+      "field-fblink",
     ];
     for (const fieldId of requiredFields) {
-      const val = document.getElementById(fieldId).value.trim();
+      const el = document.getElementById(fieldId);
+      const val = el.value.trim();
       if (!val) {
         await window.showCustomAlert(
-        "Please fill out all required submitter fields before proceeding.",
+          "Please fill out all required submitter fields before proceeding."
         );
-        document.getElementById(fieldId).focus();
+        el.focus();
         return false;
       }
     }
+
+    // Explicit Facebook Link Validation
+    const fbInput = document.getElementById("field-fblink");
+    const fbVal = fbInput.value.trim();
+    // Regex checks for standard facebook.com or fb.com profile/page structures
+    const fbPattern = /^https?:\/\/(www\.)?(facebook|fb)\.com\/.+/i;
+    
+    if (!fbPattern.test(fbVal)) {
+      await window.showCustomAlert(
+        "Please enter a valid Facebook profile or page link (e.g., https://facebook.com/username) before proceeding."
+      );
+      fbInput.focus();
+      return false;
+    }
+
     return true;
   }
   
