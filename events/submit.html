@@ -1182,7 +1182,7 @@
               canvaWrapper.classList.remove("skeleton-dark");
               const embedUrl = canvaLink.endsWith("/view?embed")
                 ? canvaLink
-                : `${canvaLink.replace(/\/view.*$/, "")}/view?embed`;
+                : `${canvaLink.replace(/\/view.*$/, "")}`;
               canvaIframe.src = embedUrl;
             } else {
               canvaWrapper.style.display = "none";
