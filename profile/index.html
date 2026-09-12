@@ -1819,6 +1819,7 @@
           btn.disabled = false;
         }
       }
+
       async function exportIDToPDF() {
         // 1. Messenger/In-App Browser Detection
         const ua = navigator.userAgent || navigator.vendor || window.opera;
@@ -1862,7 +1863,6 @@
 
         // 3. Proceed with PDF Generation
         const { jsPDF } = window.jspdf;
-        // Create an A4 document in portrait mode
         const doc = new jsPDF({
           orientation: "portrait",
           unit: "mm",
@@ -1878,19 +1878,17 @@
 
         try {
           const studentName = `${firstName} ${surname}`.trim();
-          const dateGenerated = new Date().toLocaleString();
 
-          // Grab the front and back faces directly from the flip card
           const flipCard = document.querySelector(".flip-card");
           const frontFace = flipCard.querySelector(".id-front-bg");
           const backFace = flipCard.querySelector(".id-back-bg");
 
-          // Create a high-res staging container outside the viewport
           const tempDiv = document.createElement("div");
           tempDiv.style.position = "absolute";
           tempDiv.style.top = "-9999px";
           tempDiv.style.left = "0";
-          tempDiv.style.width = "900px";
+          const exportWidth = 900;
+          tempDiv.style.width = exportWidth + "px";
           document.body.appendChild(tempDiv);
 
           const cloneFront = frontFace.cloneNode(true);
@@ -1900,6 +1898,32 @@
           cloneBack.style.scale = "1";
           cloneBack.style.position = "relative";
           cloneBack.style.backfaceVisibility = "visible";
+
+          // --- FIX HTML2CANVAS ALIGNMENT & SIZING BUGS ---
+          // Convert unsupported cqw and rem values to explicit pixels for the export clone
+          const infoModal = cloneFront.querySelector('.id-info-modal');
+          if (infoModal) {
+            infoModal.style.fontSize = (exportWidth * 0.023) + 'px'; // Scales 2.3cqw
+            infoModal.style.gap = (exportWidth * 0.017) + 'px';      // Scales 0.5rem gap to align perfectly with SVG labels
+          }
+          
+          const barcodeNum = cloneFront.querySelector('.barcode-number-modal');
+          if (barcodeNum) {
+            barcodeNum.style.fontSize = (exportWidth * 0.02) + 'px'; // Scales 2cqw
+          }
+
+          // Fix the tiny signature by dynamically scaling its height instead of relying on the fixed 40px CSS
+          const sigLine = cloneBack.querySelector('.signature-line');
+          if (sigLine) {
+            sigLine.style.height = (exportWidth * 0.085) + 'px';
+          }
+          
+          const sigLabel = cloneBack.querySelector('.signature-label');
+          if (sigLabel) {
+            sigLabel.style.fontSize = (exportWidth * 0.012) + 'px';
+            sigLabel.style.marginTop = (exportWidth * 0.005) + 'px';
+          }
+          // ----------------------------------------------
 
           cloneFront
             .querySelectorAll(".clear-badge, .id-photo-upload")
@@ -1911,7 +1935,6 @@
           tempDiv.appendChild(cloneFront);
           tempDiv.appendChild(cloneBack);
 
-          // High quality canvas options
           const canvasOptions = {
             scale: 3,
             useCORS: true,
@@ -1928,7 +1951,6 @@
 
           const pageWidth = doc.internal.pageSize.getWidth();
 
-          // Clean Header Layout
           doc.setFontSize(14);
           doc.setFont("helvetica", "bold");
           doc.setTextColor(30, 58, 138);
@@ -1946,24 +1968,20 @@
             { align: "center" },
           );
 
-          // Standard ID Card Dimensions (CR80 Standard: 85.6 mm width x 53.98 mm height)
           const idWidth = 85.6;
           const idHeight = 53.98;
           const centerX = (pageWidth - idWidth) / 2;
 
-          // Render Front Card
           doc.setFontSize(10);
           doc.setFont("helvetica", "bold");
           doc.setTextColor(30, 30, 30);
           doc.text("Front View:", 20, 31);
           doc.addImage(imgFront, "PNG", centerX, 34, idWidth, idHeight);
 
-          // Render Back Card
           const backY = 34 + idHeight + 10;
           doc.text("Back View:", 20, backY - 3);
           doc.addImage(imgBack, "PNG", centerX, backY, idWidth, idHeight);
 
-          // Footer Disclaimer
           const footerY = backY + idHeight + 10;
           doc.setDrawColor(200, 200, 200);
           doc.line(20, footerY - 4, pageWidth - 20, footerY - 4);
@@ -1993,7 +2011,7 @@
           btn.disabled = false;
         }
       }
-
+      
       function escapeHtml(str) {
         return String(str == null ? "" : str).replace(
           /[&<>"']/g,
