@@ -1,21 +1,21 @@
 (function () {
   "use strict";
-
+  
   // --- 1. DYNAMICALLY INJECT REMIX ICONS ---
   function loadRemixIcons() {
     if (!document.querySelector('link[href*="remixicon.css"]')) {
       var link = document.createElement("link");
       link.rel = "stylesheet";
       link.href =
-        "https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css";
+      "https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css";
       document.head.appendChild(link);
     }
   }
   loadRemixIcons();
-
+  
   function initSystemDarkMode() {
     if (document.getElementById("btled-dark-mode-styles")) return;
-
+    
     var style = document.createElement("style");
     style.id = "btled-dark-mode-styles";
     style.innerHTML = `
@@ -70,13 +70,13 @@
       }
     `;
     document.head.appendChild(style);
-
+    
     // Check saved preference or OS preference
     var savedTheme = localStorage.getItem("btled_theme");
     var systemDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+    
     if (savedTheme === "dark" || (!savedTheme && systemDark)) {
       document.documentElement.setAttribute("data-theme", "dark");
     } else {
@@ -84,7 +84,7 @@
     }
   }
   initSystemDarkMode();
-
+  
   // --- 3. SAME-TAB LOCALSTORAGE OBSERVER ---
   var originalSetItem = localStorage.setItem;
   localStorage.setItem = function (key, value) {
@@ -99,7 +99,7 @@
       );
     }
   };
-
+  
   var originalRemoveItem = localStorage.removeItem;
   localStorage.removeItem = function (key) {
     originalRemoveItem.apply(this, arguments);
@@ -109,91 +109,91 @@
       );
     }
   };
-
+  
   function normalizeRoot(root) {
     if (!root) return "./";
     var cleaned = String(root).replace(/\/{2,}/g, "/");
     if (!/\/$/.test(cleaned)) cleaned += "/";
     return cleaned;
   }
-
+  
   function joinPath(root, path) {
     return normalizeRoot(root) + String(path || "").replace(/^\/+/, "");
   }
-
+  
   function smartLink(ROOT, targetPath) {
     var fullUrl = joinPath(ROOT, targetPath);
     var parts = targetPath.split("#");
     var targetFile = parts[0];
     var targetHash = parts[1] ? "#" + parts[1] : "";
     if (!targetFile || targetFile === "") return targetHash || fullUrl;
-
+    
     var currentPath = window.location.pathname;
     var isSamePage =
-      currentPath.endsWith(targetFile) ||
-      (targetFile === "index.html" &&
-        (currentPath.endsWith("/") || currentPath === ""));
-    return isSamePage && targetHash ? targetHash : fullUrl;
-  }
-
-  // --- 4. RENDER NAVBAR ---
-  function renderNavbar() {
-    var header = document.getElementById("site-navbar");
-    if (!header) return;
-
-    var ROOT = normalizeRoot(header.getAttribute("data-root") || "./");
-    function link(path) {
-      return joinPath(ROOT, path);
+    currentPath.endsWith(targetFile) ||
+    (targetFile === "index.html" &&
+      (currentPath.endsWith("/") || currentPath === ""));
+      return isSamePage && targetHash ? targetHash : fullUrl;
     }
-    function slink(path) {
-      return smartLink(ROOT, path);
-    }
-
-    var hasStudentProfile = false;
-    try {
-      hasStudentProfile = !!localStorage.getItem("btled_student");
-    } catch (e) {}
-
-    var hasUnreadNotifs = false;
-    try {
-      var notifs = JSON.parse(localStorage.getItem("btled_notifications"));
-      hasUnreadNotifs =
+    
+    // --- 4. RENDER NAVBAR ---
+    function renderNavbar() {
+      var header = document.getElementById("site-navbar");
+      if (!header) return;
+      
+      var ROOT = normalizeRoot(header.getAttribute("data-root") || "./");
+      function link(path) {
+        return joinPath(ROOT, path);
+      }
+      function slink(path) {
+        return smartLink(ROOT, path);
+      }
+      
+      var hasStudentProfile = false;
+      try {
+        hasStudentProfile = !!localStorage.getItem("btled_student");
+      } catch (e) {}
+      
+      var hasUnreadNotifs = false;
+      try {
+        var notifs = JSON.parse(localStorage.getItem("btled_notifications"));
+        hasUnreadNotifs =
         notifs &&
         notifs.some(function (n) {
           return !n.read;
         });
-    } catch (e) {}
-    var notifBadge = hasUnreadNotifs
+      } catch (e) {}
+      var notifBadge = hasUnreadNotifs
       ? '<span class="badge-dot" title="Unread notifications"></span>'
       : "";
-
-    var profileNav = hasStudentProfile
+      
+      var profileNav = hasStudentProfile
       ? '<div class="dropdown">' +
-        '<a href="' +
-        link("profile/index.html") +
-        '" class="nav-link">Profile ' +
-        notifBadge +
-        ' <i class="ri-arrow-down-s-line nav-arrow"></i></a>' +
-        '<ul class="dropdown-menu">' +
-        '<li><a href="' +
-        link("profile/edit.html") +
-        '"><i class="ri-edit-box-line"></i> Edit Profile</a></li>' +
-        '<li style=" border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
-        '<li><a href="' +
-        link("profile/index.html") +
-        '"><i class="ri-profile-line"></i> View Profile</a></li>' +
-        '<li><a href="#" id="logout-link"><i class="ri-logout-box-r-line"></i> Logout</a></li>' +
-        "</ul>" +
-        "</div>"
+      '<a href="' +
+      link("profile/index.html") +
+      '" class="nav-link">Profile ' +
+      notifBadge +
+      ' <i class="ri-arrow-down-s-line nav-arrow"></i></a>' +
+      '<ul class="dropdown-menu">' +
+      '<li><a href="' +
+      link("profile/edit.html") +
+      '"><i class="ri-edit-box-line"></i> Edit Profile</a></li>' +
+      '<li style=" border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
+      '<li><a href="' +
+      link("profile/index.html") +
+      '"><i class="ri-profile-line"></i> View Profile</a></li>' +
+      '<li><a href="#" id="logout-link"><i class="ri-logout-box-r-line"></i> Logout</a></li>' +
+      "</ul>" +
+      "</div>"
       : '<a href="' +
-        link("profile/index.html") +
-        '" class="nav-link">Login</a>';
-
-    // Current Theme Icon
-    var isDark = document.documentElement.getAttribute("data-theme") === "dark";
-    var themeIcon = isDark ? "ri-sun-line" : "ri-moon-line";
-
-    header.innerHTML =
+      link("profile/index.html") +
+      '" class="nav-link">Login</a>';
+      
+      // Current Theme Icon
+      var isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      var themeIcon = isDark ? "ri-sun-line" : "ri-moon-line";
+      
+      header.innerHTML =
       '<div class="container nav-container">' +
       '<a href="' +
       link("index.html") +
@@ -260,7 +260,7 @@
       '<li><a href="' +
       link("events/result.html") +
       '"><i class="ri-award-line"></i> Competition Results</a></li>' +
-      '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
+      '<li style="border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
       '<li><a href="' +
       link(
         "events/gallery.html?page=Viewer&FolderID=1fsj9LVTFptG3KDaQt9RF5_WSlVIoG2P_&Name=BTLED%20MAINTENANCE%20MONITORING",
@@ -274,9 +274,9 @@
       '<ul class="dropdown-menu">' +
       '<li><a href="mailto:urscbtledorg@gmail.com"><i class="ri-mail-send-line"></i> Email</a></li>' +
       '<li><a href="tel:+639700337672"><i class="ri-phone-line"></i> Phone</a></li>' +
-      '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
+      '<li style="border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
       '<li><a href="https://btledorganization.tawk.help" target="_blank"><i class="ri-customer-service-2-line"></i> Help Center</a></li>' +
-      '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
+      '<li style="border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
       '<li><a href="https://www.facebook.com/share/1H2gZ3VW9P/" target="_blank"><i class="ri-facebook-circle-line"></i> Facebook</a></li>' +
       "</ul>" +
       "</div>" +
@@ -289,132 +289,132 @@
       "</div>" +
       "</nav>" +
       "</div>";
-
-    var toggleBtn = header.querySelector(".menu-toggle");
-    var navMenu = header.querySelector(".nav-menu");
-    var dropdowns = header.querySelectorAll(".dropdown");
-    var logoutLink = header.querySelector("#logout-link");
-    var themeToggleBtn = header.querySelector("#theme-toggle");
-
-    // Theme Toggle Logic with e.preventDefault() to stop page jumping
-    if (themeToggleBtn) {
-      themeToggleBtn.addEventListener("click", function (e) {
-        e.preventDefault(); // <--- Stops the page from jumping to top on click
-
-        var current = document.documentElement.getAttribute("data-theme");
-        var newTheme = current === "dark" ? "light" : "dark";
-
-        document.documentElement.setAttribute("data-theme", newTheme);
-        localStorage.setItem("btled_theme", newTheme);
-
-        var icon = themeToggleBtn.querySelector("i");
-        if (newTheme === "dark") {
-          icon.classList.replace("ri-moon-line", "ri-sun-line");
-        } else {
-          icon.classList.replace("ri-sun-line", "ri-moon-line");
-        }
-      });
-    }
-
-    if (toggleBtn && navMenu) {
-      toggleBtn.addEventListener("click", function () {
-        toggleBtn.classList.toggle("active");
-        navMenu.classList.toggle("active");
-      });
-    }
-
-    if (logoutLink) {
-      logoutLink.addEventListener("click", function (e) {
-        e.preventDefault();
-        if (logoutLink) {
-          logoutLink.addEventListener("click", async function (e) {
-            e.preventDefault();
-            const confirmed = await window.showCustomConfirm(
-              "Are you sure you want to log out?",
-            );
-            if (confirmed) {
-              localStorage.removeItem("btled_student");
-              window.location.href = link("index.html");
+      
+      var toggleBtn = header.querySelector(".menu-toggle");
+      var navMenu = header.querySelector(".nav-menu");
+      var dropdowns = header.querySelectorAll(".dropdown");
+      var logoutLink = header.querySelector("#logout-link");
+      var themeToggleBtn = header.querySelector("#theme-toggle");
+      
+      // Theme Toggle Logic with e.preventDefault() to stop page jumping
+      if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("click", function (e) {
+          e.preventDefault(); // <--- Stops the page from jumping to top on click
+          
+          var current = document.documentElement.getAttribute("data-theme");
+          var newTheme = current === "dark" ? "light" : "dark";
+          
+          document.documentElement.setAttribute("data-theme", newTheme);
+          localStorage.setItem("btled_theme", newTheme);
+          
+          var icon = themeToggleBtn.querySelector("i");
+          if (newTheme === "dark") {
+            icon.classList.replace("ri-moon-line", "ri-sun-line");
+          } else {
+            icon.classList.replace("ri-sun-line", "ri-moon-line");
+          }
+        });
+      }
+      
+      if (toggleBtn && navMenu) {
+        toggleBtn.addEventListener("click", function () {
+          toggleBtn.classList.toggle("active");
+          navMenu.classList.toggle("active");
+        });
+      }
+      
+      if (logoutLink) {
+        logoutLink.addEventListener("click", function (e) {
+          e.preventDefault();
+          if (logoutLink) {
+            logoutLink.addEventListener("click", async function (e) {
+              e.preventDefault();
+              const confirmed = await window.showCustomConfirm(
+                "Are you sure you want to log out?",
+              );
+              if (confirmed) {
+                localStorage.removeItem("btled_student");
+                window.location.href = link("index.html");
+              }
+            });
+          }
+        });
+      }
+      
+      dropdowns.forEach(function (dropdown) {
+        var navLink = dropdown.querySelector(".nav-link");
+        if (navLink) {
+          navLink.addEventListener("click", function (e) {
+            if (window.innerWidth <= 850) {
+              e.preventDefault();
+              dropdown.classList.toggle("active");
             }
           });
         }
       });
+      
+      var currentHref = window.location.href.split("#")[0];
+      var navLinks = header.querySelectorAll(".nav-menu a");
+      navLinks.forEach(function (linkEl) {
+        var rawHref = linkEl.getAttribute("href");
+        if (
+          !rawHref ||
+          rawHref === "#" ||
+          rawHref.startsWith("mailto:") ||
+          rawHref.startsWith("tel:")
+        )
+        return;
+        var linkBase = linkEl.href ? linkEl.href.split("#")[0] : "";
+        if (linkBase && linkBase === currentHref)
+          linkEl.classList.add("active-page");
+      });
     }
-
-    dropdowns.forEach(function (dropdown) {
-      var navLink = dropdown.querySelector(".nav-link");
-      if (navLink) {
-        navLink.addEventListener("click", function (e) {
-          if (window.innerWidth <= 850) {
-            e.preventDefault();
-            dropdown.classList.toggle("active");
-          }
-        });
+    
+    window.addEventListener("storage", function (e) {
+      if (
+        !e.key ||
+        e.key === "btled_student" ||
+        e.key === "btled_notifications" ||
+        e.key === "btled_theme"
+      ) {
+        if (e.key === "btled_theme") initSystemDarkMode();
+        renderNavbar();
       }
     });
-
-    var currentHref = window.location.href.split("#")[0];
-    var navLinks = header.querySelectorAll(".nav-menu a");
-    navLinks.forEach(function (linkEl) {
-      var rawHref = linkEl.getAttribute("href");
+    
+    window.addEventListener("local-storage-changed", function (e) {
       if (
-        !rawHref ||
-        rawHref === "#" ||
-        rawHref.startsWith("mailto:") ||
-        rawHref.startsWith("tel:")
-      )
-        return;
-      var linkBase = linkEl.href ? linkEl.href.split("#")[0] : "";
-      if (linkBase && linkBase === currentHref)
-        linkEl.classList.add("active-page");
+        !e.detail ||
+        e.detail.key === "btled_student" ||
+        e.detail.key === "btled_notifications" ||
+        e.detail.key === "btled_theme"
+      ) {
+        renderNavbar();
+      }
     });
-  }
-
-  window.addEventListener("storage", function (e) {
-    if (
-      !e.key ||
-      e.key === "btled_student" ||
-      e.key === "btled_notifications" ||
-      e.key === "btled_theme"
-    ) {
-      if (e.key === "btled_theme") initSystemDarkMode();
+    
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", renderNavbar);
+    } else {
       renderNavbar();
     }
+  })();
+  
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("form, input").forEach((el) => {
+      el.setAttribute("autocomplete", "off");
+    });
   });
-
-  window.addEventListener("local-storage-changed", function (e) {
-    if (
-      !e.detail ||
-      e.detail.key === "btled_student" ||
-      e.detail.key === "btled_notifications" ||
-      e.detail.key === "btled_theme"
-    ) {
-      renderNavbar();
-    }
-  });
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", renderNavbar);
-  } else {
-    renderNavbar();
-  }
-})();
-
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("form, input").forEach((el) => {
-    el.setAttribute("autocomplete", "off");
-  });
-});
-
-
-// alert and confirmation modal helpers
-(function () {
-  "use strict";
-
-  if (!document.getElementById("btled-global-alert-styles")) {
-    var alertStyles = document.createElement("style");
-    alertStyles.id = "btled-global-alert-styles";
-    alertStyles.innerHTML = `
+  
+  
+  // alert and confirmation modal helpers
+  (function () {
+    "use strict";
+    
+    if (!document.getElementById("btled-global-alert-styles")) {
+      var alertStyles = document.createElement("style");
+      alertStyles.id = "btled-global-alert-styles";
+      alertStyles.innerHTML = `
       .custom-alert-overlay {
         position: fixed;
         top: 0;
@@ -492,7 +492,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .custom-alert-btn-cancel:hover {
         background: #cbd5e1;
       }
-
+      
       /* Dark Mode Overrides for Alert Modal */
       html[data-theme="dark"] .custom-alert-card {
         background-color: #1e1e1e !important;
@@ -517,96 +517,96 @@ html[data-theme="dark"] .pillar-cell.active-cell p {
   color: #f9fafb;
 }
     `;
-    document.head.appendChild(alertStyles);
-  }
-
-window.showCustomAlert = function(message, options = {}) {
-    return new Promise((resolve) => {
-      let overlay = document.getElementById("customAlertOverlay");
-      if (!overlay) {
-        overlay = document.createElement("div");
-        overlay.id = "customAlertOverlay";
-        overlay.className = "custom-alert-overlay";
-        overlay.innerHTML = `
+      document.head.appendChild(alertStyles);
+    }
+    
+    window.showCustomAlert = function(message, options = {}) {
+      return new Promise((resolve) => {
+        let overlay = document.getElementById("customAlertOverlay");
+        if (!overlay) {
+          overlay = document.createElement("div");
+          overlay.id = "customAlertOverlay";
+          overlay.className = "custom-alert-overlay";
+          overlay.innerHTML = `
           <div class="custom-alert-card">
             <h3 id="customAlertTitle"></h3>
             <p id="customAlertMessage"></p>
             <div class="custom-alert-btn-group" id="customAlertBtnGroup"></div>
           </div>
         `;
-        document.body.appendChild(overlay);
-      }
-
-      // Handle if 'options' is passed as a string (legacy support) or an object
-      const alertTitle = typeof options === "string" ? options : (options.title || "Attention");
-
-      const titleEl = overlay.querySelector("#customAlertTitle");
-      const msgEl = overlay.querySelector("#customAlertMessage");
-      const btnGroup = overlay.querySelector("#customAlertBtnGroup");
-
-      titleEl.innerText = alertTitle;
-      msgEl.innerText = message;
-      btnGroup.innerHTML = `<button class="custom-alert-btn custom-alert-btn-ok" id="customAlertOkBtn">OK</button>`;
-
-      overlay.classList.add("active");
-
-      const okBtn = overlay.querySelector("#customAlertOkBtn");
-      
-      // Optional auto-dismiss if 'duration' is provided in options
-      let timer = null;
-      if (typeof options === "object" && options.duration) {
-        timer = setTimeout(() => {
+          document.body.appendChild(overlay);
+        }
+        
+        // Handle if 'options' is passed as a string (legacy support) or an object
+        const alertTitle = typeof options === "string" ? options : (options.title || "Attention");
+        
+        const titleEl = overlay.querySelector("#customAlertTitle");
+        const msgEl = overlay.querySelector("#customAlertMessage");
+        const btnGroup = overlay.querySelector("#customAlertBtnGroup");
+        
+        titleEl.innerText = alertTitle;
+        msgEl.innerText = message;
+        btnGroup.innerHTML = `<button class="custom-alert-btn custom-alert-btn-ok" id="customAlertOkBtn">OK</button>`;
+        
+        overlay.classList.add("active");
+        
+        const okBtn = overlay.querySelector("#customAlertOkBtn");
+        
+        // Optional auto-dismiss if 'duration' is provided in options
+        let timer = null;
+        if (typeof options === "object" && options.duration) {
+          timer = setTimeout(() => {
+            overlay.classList.remove("active");
+            resolve(true);
+          }, options.duration);
+        }
+        
+        okBtn.onclick = () => {
+          if (timer) clearTimeout(timer);
           overlay.classList.remove("active");
           resolve(true);
-        }, options.duration);
-      }
-
-      okBtn.onclick = () => {
-        if (timer) clearTimeout(timer);
-        overlay.classList.remove("active");
-        resolve(true);
-      };
-    });
-  };
-
-  window.showCustomConfirm = function(message, title = "Confirmation Required") {
-    return new Promise((resolve) => {
-      let overlay = document.getElementById("customAlertOverlay");
-      if (!overlay) {
-        overlay = document.createElement("div");
-        overlay.id = "customAlertOverlay";
-        overlay.className = "custom-alert-overlay";
-        overlay.innerHTML = `
+        };
+      });
+    };
+    
+    window.showCustomConfirm = function(message, title = "Confirmation Required") {
+      return new Promise((resolve) => {
+        let overlay = document.getElementById("customAlertOverlay");
+        if (!overlay) {
+          overlay = document.createElement("div");
+          overlay.id = "customAlertOverlay";
+          overlay.className = "custom-alert-overlay";
+          overlay.innerHTML = `
           <div class="custom-alert-card">
             <h3 id="customAlertTitle"></h3>
             <p id="customAlertMessage"></p>
             <div class="custom-alert-btn-group" id="customAlertBtnGroup"></div>
           </div>
         `;
-        document.body.appendChild(overlay);
-      }
-
-      const titleEl = overlay.querySelector("#customAlertTitle");
-      const msgEl = overlay.querySelector("#customAlertMessage");
-      const btnGroup = overlay.querySelector("#customAlertBtnGroup");
-
-      titleEl.innerText = title;
-      msgEl.innerText = message;
-      btnGroup.innerHTML = `
+          document.body.appendChild(overlay);
+        }
+        
+        const titleEl = overlay.querySelector("#customAlertTitle");
+        const msgEl = overlay.querySelector("#customAlertMessage");
+        const btnGroup = overlay.querySelector("#customAlertBtnGroup");
+        
+        titleEl.innerText = title;
+        msgEl.innerText = message;
+        btnGroup.innerHTML = `
         <button class="custom-alert-btn custom-alert-btn-cancel" id="customAlertCancelBtn">Cancel</button>
         <button class="custom-alert-btn custom-alert-btn-ok" id="customAlertOkBtn">Confirm</button>
       `;
-
-      overlay.classList.add("active");
-
-      overlay.querySelector("#customAlertOkBtn").onclick = () => {
-        overlay.classList.remove("active");
-        resolve(true);
-      };
-      overlay.querySelector("#customAlertCancelBtn").onclick = () => {
-        overlay.classList.remove("active");
-        resolve(false);
-      };
-    });
-  };
-})();
+        
+        overlay.classList.add("active");
+        
+        overlay.querySelector("#customAlertOkBtn").onclick = () => {
+          overlay.classList.remove("active");
+          resolve(true);
+        };
+        overlay.querySelector("#customAlertCancelBtn").onclick = () => {
+          overlay.classList.remove("active");
+          resolve(false);
+        };
+      });
+    };
+  })();
