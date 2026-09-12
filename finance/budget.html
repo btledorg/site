@@ -303,8 +303,14 @@
           }
 
           if (!params.has("page")) params.set("page", "Budget");
-          if (!params.has("term")) params.set("term", "2627");
-          if (!params.has("sem")) params.set("sem", "1");
+          if (!params.has("term")) {
+              params.set("term", TERM);
+              updated = true;
+            }
+          if (!params.has("sem")) {
+            params.set("sem", SEMESTER);
+            updated = true;
+          }
           params.set("theme", localStorage.getItem("btled_theme") || "light");
 
           try {
