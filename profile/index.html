@@ -801,11 +801,10 @@
       }
 
       /* Smooth color transition on theme change */
-  html, body, .panel, .cert-card, .table-section, .desc-card, .summary-card, .profile-header {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-  }
+      html, body, .panel, .cert-card, .table-section, .desc-card, .summary-card, .profile-header {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      }
     </style>
-    
   </head>
   <body>
     <header class="navbar" id="site-navbar" data-root="../"></header>
@@ -1329,7 +1328,7 @@
 
       <!-- Middle Column: Legal & Compliance links -->
       <div class="footer-legal-section">
-        <strong style="color:#fff; font-size: 0.95rem; display: block; margin-bottom: 0.5rem;">Legal &amp; Compliance</strong>
+        <strong style="color: var(--text-main, #fff); font-size: 0.95rem; display: block; margin-bottom: 0.5rem;">Legal &amp; Compliance</strong>
         <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem;">
           <li><a href="../legal/privacy.html" style="color: #999; text-decoration: none;">Privacy Policy</a></li>
           <li><a href="../legal/terms.html" style="color: #999; text-decoration: none;">Terms &amp; Conditions</a></li>
@@ -1815,9 +1814,7 @@
           doc.save(`${safeStudentName}_${safeEventName}_Certificate.pdf`);
         } catch (err) {
           console.error("Certificate Export failed:", err);
-          alert(
-            "Failed to export Certificate. Please check local image paths.",
-          );
+          await window.showCustomAlert("Failed to export Certificate. Please check local image paths.");
         } finally {
           btn.innerHTML = originalText;
           btn.disabled = false;
@@ -1831,16 +1828,14 @@
           ua.indexOf("FBAV") > -1 ||
           ua.indexOf("Messenger") > -1
         ) {
-          alert(
-            "PDF downloads are restricted inside the Messenger app. Please tap the 3 dots in the corner and select 'Open in Chrome' or 'Open in Safari' to export your ID.",
-          );
+          await window.showCustomAlert("PDF downloads are restricted inside the Messenger app. Please tap the 3 dots in the corner and select 'Open in Chrome' or 'Open in Safari' to export your ID.");
           return;
         }
 
         // 2. Data Validation Checks
         const student = getStudentData();
         if (!student) {
-          alert("No profile data found. Please log in or register first.");
+          await window.showCustomAlert("No profile data found. Please log in or register first.");
           return;
         }
 
@@ -1852,23 +1847,17 @@
         const signature = getStudentSignature(student);
 
         if (!firstName || !surname || !studentNo || !program) {
-          alert(
-            "Incomplete profile information. Please ensure your Name, Student No., and Section/Program are complete before exporting.",
-          );
+          await window.showCustomAlert("Incomplete profile information. Please ensure your Name, Student No., and Section/Program are complete before exporting.");
           return;
         }
 
         if (!photo) {
-          alert(
-            "Missing Profile Picture. Please upload your photo before exporting your ID.",
-          );
+          await window.showCustomAlert("Missing Profile Picture. Please upload your photo before exporting your ID.");
           return;
         }
 
         if (!signature) {
-          alert(
-            "Missing Signature. Please draw your signature before exporting your ID.",
-          );
+          await window.showCustomAlert("Missing Signature. Please draw your signature before exporting your ID.");
           return;
         }
 
@@ -1994,7 +1983,11 @@
           doc.save(`BTLED_ID_${studentNo}.pdf`);
         } catch (err) {
           console.error("ID Export failed:", err);
-          alert("Failed to export ID. Please try again.");
+          await window.showCustomAlert("Failed to export ID. Please try again.", {
+            title: "Error",
+            type: "error",
+            duration: 5000,
+          });
         } finally {
           document.body.classList.remove("is-exporting");
           btn.innerHTML = originalText;
@@ -2039,45 +2032,77 @@
 
       const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
-      function handleFileSelected(event) {
+      async function handleFileSelected(event) {
         const file = event.target.files[0];
         event.target.value = "";
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
-          alert("Please select a valid image file.");
+          await window.showCustomAlert("Please select a valid image file.", {
+            title: "Error",
+            type: "error",
+            duration: 5000,
+          });
           return;
         }
         if (file.size > MAX_UPLOAD_BYTES) {
-          alert("That image is too large. Please choose a file under 8MB.");
+          await window.showCustomAlert("That image is too large. Please choose a file under 8MB.", {
+            title: "Error",
+            type: "error",
+            duration: 5000,
+          });
           return;
         }
 
         const reader = new FileReader();
         reader.onload = (e) => openCropModal(e.target.result);
-        reader.onerror = () =>
-          alert("Could not read the selected file. Please try again.");
+        reader.onerror = async () =>
+          await window.showCustomAlert("Could not read the selected file. Please try again.", {
+            title: "Error",
+            type: "error",
+            duration: 5000,
+          });
         reader.readAsDataURL(file);
       }
 
-      function clearPhoto(e) {
+    async function clearPhoto(e) {
         e.stopPropagation();
-        if (
-          !confirm(
-            "Remove your uploaded photo? You'll need to upload it again.",
-          )
-        )
-          return;
+    
+    
+        const confirmed = await window.showCustomConfirm(
+          "Remove your uploaded photo? You'll need to upload it again."
+        );
+        
+        if (!confirmed) return;
+
         removeStudentPhoto();
         renderProfileData();
+        
+        await window.showCustomAlert("Photo removed successfully.", {
+          title: "Success",
+          type: "success",
+          duration: 3000,
+        });
       }
 
-      function clearSignature(e) {
+    async function clearSignature(e) {
         e.stopPropagation();
-        if (!confirm("Remove your saved signature? You'll need to sign again."))
-          return;
+            
+    
+        const confirmed = await window.showCustomConfirm(
+          "Remove your saved signature? You'll need to sign again."
+        );
+        
+        if (!confirmed) return;
+
         removeStudentSignature();
         renderProfileData();
+        
+        await window.showCustomAlert("Signature removed successfully.", {
+          title: "Success",
+          type: "success",
+          duration: 3000,
+        });
       }
 
       const CROP_FRAME_W = 220;
@@ -2125,8 +2150,12 @@
           applyCropTransform();
           cropModal.classList.add("active");
         };
-        img.onerror = () =>
-          alert("Could not load that image. Please try a different file.");
+        img.onerror = async () =>
+          await window.showCustomAlert("Could not load that image. Please try a different file.", {
+            title: "Error",
+            type: "error",
+            duration: 5000,
+          });
         img.src = dataUrl;
       }
 
@@ -2204,7 +2233,7 @@
         { passive: false },
       );
 
-      function saveCroppedPhoto() {
+async function saveCroppedPhoto() {
         if (!cropImage.src) return;
 
         const canvas = document.createElement("canvas");
@@ -2226,24 +2255,28 @@
           dataUrl = canvas.toDataURL("image/jpeg", 0.9);
         } catch (err) {
           console.error("Crop export failed:", err);
-          alert(
-            "Something went wrong while processing your photo. Please try again.",
-          );
+          await window.showCustomAlert("Something went wrong while processing your photo. Please try again.", {
+            title: "Error",
+            type: "error",
+            duration: 5000,
+          });
           return;
         }
 
         const success = saveStudentPhoto(dataUrl);
         if (!success) {
-          alert(
-            "Could not save your photo — your browser storage may be full.",
-          );
+          await window.showCustomAlert("Could not save your photo — your browser storage may be full.", {
+            title: "Error",
+            type: "error",
+            duration: 5000,
+          });
           return;
         }
 
         closeCropModal();
         renderProfileData();
       }
-
+      
       const sigModal = document.getElementById("sigModal");
       const canvas = document.getElementById("sigCanvas");
       const ctx = canvas.getContext("2d");
@@ -2274,17 +2307,15 @@
         return !pixels.some((pixel) => pixel !== 0);
       }
 
-      function saveSignaturePad() {
+      async function saveSignaturePad() {
         if (isCanvasBlank(canvas)) {
-          alert("Please draw your signature before saving.");
+          await window.showCustomAlert("Please draw your signature before saving.");
           return;
         }
         const dataUrl = canvas.toDataURL("image/png");
         const success = saveStudentSignature(dataUrl);
         if (!success) {
-          alert(
-            "Could not save your signature — your browser storage may be full.",
-          );
+          await window.showCustomAlert("Could not save your signature — your browser storage may be full.");
           return;
         }
         renderProfileData();
@@ -2399,13 +2430,15 @@
         flipContainer.classList.toggle("flipped");
       }
 
-      document.addEventListener("contextmenu", function (e) {
-        // Target certificate thumbnails and modal certificate image
+      document.addEventListener("contextmenu", async function (e) {
         if (e.target.closest(".cert-thumbnail, #certModalImg")) {
           e.preventDefault();
-          alert(
-            'Direct image saving is disabled. Please use the "Download PDF" button below!',
-          );
+
+          await window.showCustomAlert('Direct image saving is disabled. Please use the "Download PDF" button below!', {
+            title: "Notice",
+            type: "info",
+            duration: 5000,
+          });
         }
       });
     </script>

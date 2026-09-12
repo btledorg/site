@@ -474,11 +474,11 @@
         window.scrollTo({ top: 100, behavior: "smooth" });
       }
       
-      function validateAndGoToEval() {
+      async function validateAndGoToEval() {
         const fields = ["field-surname", "field-firstname", "field-studentid", "field-program", "field-email"];
         for (const f of fields) {
           if (!document.getElementById(f).value.trim()) {
-            alert("Please fill in all required student details.");
+            await window.showCustomAlert("Please fill in all required student details.");
             document.getElementById(f).focus();
             return;
           }
@@ -565,7 +565,7 @@
       async function submitEvaluation() {
         const eventType = document.getElementById("field-eventtype").value;
         if (!eventType) {
-          alert("Please select the Type of Event.");
+          await window.showCustomAlert("Please select the Type of Event.");
           document.getElementById("field-eventtype").focus();
           return;
         }
@@ -583,7 +583,7 @@
               const found = cat.questions.find(q => q.id === name);
               if (found) { questionText = found.text; break; }
             }
-            alert(`Please rate: "${questionText}"`);
+            await window.showCustomAlert(`Please rate: "${questionText}"`);
             return; 
           }
           ratings[name] = parseInt(selected.value, 10);
@@ -615,13 +615,13 @@
           });
           const json = await res.json();
           if (json.ok) {
-            alert("Evaluation submitted successfully! Thank you for your feedback.");
+            await window.showCustomAlert("Evaluation submitted successfully! Thank you for your feedback.");
             window.location.assign("https://btledorg.github.io/site/events/forms.html");
           } else {
             throw new Error(json.error || "Submission failed.");
           }
         } catch (err) {
-          alert("Error submitting form: " + err.message);
+          await window.showCustomAlert("Error submitting form: " + err.message);
           btnSubmit.disabled = false;
           btnSubmit.textContent = "Submit Evaluation";
         }
