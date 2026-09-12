@@ -10,31 +10,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    <!-- Open Graph / Facebook / Messenger / LinkedIn Meta Tags -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://btledorg.github.io/" />
     <meta property="og:title" content="BTLED Organization | Member Profile" />
-    <meta
-      property="og:description"
-      content="Official website of the Bachelor of Technology and Livelihood Education - Industrial Arts Student Organization. Stay updated on events, announcements, and resources."
-    />
-    <meta
-      property="og:image"
-      content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true"
-    />
-
-    <!-- Twitter Card Meta Tags -->
+    <meta property="og:description" content="Official website of the Bachelor of Technology and Livelihood Education - Industrial Arts Student Organization. Stay updated on events, announcements, and resources."/>
+    <meta property="og:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true"/>
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="BTLED Organization | Member Profile" />
-    <meta
-      name="twitter:description"
-      content="Official website of the BTLED Industrial Arts Student Organization."
-    />
-    <meta
-      name="twitter:image"
-      content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true"
-    />
-
+    <meta name="twitter:description" content="Official website of the BTLED Industrial Arts Student Organization."/>
+    <meta name="twitter:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true"/>
     <style>
       :root {
         --btled-primary: #1e3a8a;
@@ -60,7 +44,6 @@
         margin: 0 auto;
       }
 
-      /* --- ENHANCED PROFILE HEADER WITH BLUE THEME --- */
       .profile-header {
         background: linear-gradient(
           135deg,
@@ -816,14 +799,19 @@
         border: none !important;
         background: transparent !important;
       }
+
+      /* Smooth color transition on theme change */
+  html, body, .panel, .cert-card, .table-section, .desc-card, .summary-card, .profile-header {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
     </style>
+    
   </head>
   <body>
     <header class="navbar" id="site-navbar" data-root="../"></header>
     <script src="../resources/js/navbar.js"></script>
 
     <main class="profile-container">
-      <!-- Profile Header -->
       <div class="profile-header animate-on-scroll">
         <div class="profile-avatar" id="headerAvatar">MA</div>
         <div class="profile-info">
@@ -834,7 +822,6 @@
       </div>
 
       <div class="dashboard-grid">
-        <!-- Left Column: BTLED Card & Warning Banner -->
         <div style="display: flex; flex-direction: column">
           <div class="panel animate-on-scroll delay-1" style="flex-grow: 1">
             <div class="panel-header">
@@ -1215,18 +1202,18 @@
               <label>Student No.</label
               ><input type="text" id="reg-id" required readonly />
             </div>
-<div class="auth-form-group">
-  <label>Program</label
-  ><input
-    type="text"
-    id="reg-program"
-    list="programSuggestions"
-    autocomplete="off"
-    required
-    placeholder="e.g., BTLED-IA"
-  />
-  <datalist id="programSuggestions"></datalist>
-</div>
+            <div class="auth-form-group">
+              <label>Program</label
+              ><input
+                type="text"
+                id="reg-program"
+                list="programSuggestions"
+                autocomplete="off"
+                required
+                placeholder="e.g., BTLED-IA"
+              />
+              <datalist id="programSuggestions"></datalist>
+            </div>
           </div>
           <div class="auth-row">
             <div class="auth-form-group">
@@ -1822,11 +1809,17 @@
           btn.disabled = false;
         }
       }
-async function exportIDToPDF() {
+      async function exportIDToPDF() {
         // 1. Messenger/In-App Browser Detection
         const ua = navigator.userAgent || navigator.vendor || window.opera;
-        if (ua.indexOf("FBAN") > -1 || ua.indexOf("FBAV") > -1 || ua.indexOf("Messenger") > -1) {
-          alert("PDF downloads are restricted inside the Messenger app. Please tap the 3 dots in the corner and select 'Open in Chrome' or 'Open in Safari' to export your ID.");
+        if (
+          ua.indexOf("FBAN") > -1 ||
+          ua.indexOf("FBAV") > -1 ||
+          ua.indexOf("Messenger") > -1
+        ) {
+          alert(
+            "PDF downloads are restricted inside the Messenger app. Please tap the 3 dots in the corner and select 'Open in Chrome' or 'Open in Safari' to export your ID.",
+          );
           return;
         }
 
@@ -1845,17 +1838,23 @@ async function exportIDToPDF() {
         const signature = getStudentSignature(student);
 
         if (!firstName || !surname || !studentNo || !program) {
-          alert("Incomplete profile information. Please ensure your Name, Student No., and Section/Program are complete before exporting.");
+          alert(
+            "Incomplete profile information. Please ensure your Name, Student No., and Section/Program are complete before exporting.",
+          );
           return;
         }
 
         if (!photo) {
-          alert("Missing Profile Picture. Please upload your photo before exporting your ID.");
+          alert(
+            "Missing Profile Picture. Please upload your photo before exporting your ID.",
+          );
           return;
         }
 
         if (!signature) {
-          alert("Missing Signature. Please draw your signature before exporting your ID.");
+          alert(
+            "Missing Signature. Please draw your signature before exporting your ID.",
+          );
           return;
         }
 
@@ -1867,7 +1866,7 @@ async function exportIDToPDF() {
           unit: "mm",
           format: "a4",
         });
-        
+
         const btn = document.getElementById("exportIdBtn");
         const originalText = btn.innerHTML;
 
@@ -1889,7 +1888,7 @@ async function exportIDToPDF() {
           tempDiv.style.position = "absolute";
           tempDiv.style.top = "-9999px";
           tempDiv.style.left = "0";
-          tempDiv.style.width = "900px"; 
+          tempDiv.style.width = "900px";
           document.body.appendChild(tempDiv);
 
           const cloneFront = frontFace.cloneNode(true);
@@ -1938,10 +1937,15 @@ async function exportIDToPDF() {
           doc.setFontSize(9);
           doc.setFont("helvetica", "normal");
           doc.setTextColor(80, 80, 80);
-          doc.text(`Name: ${studentName}  |  Student No: ${studentNo}`, pageWidth / 2, 21, { align: "center" });
+          doc.text(
+            `Name: ${studentName}  |  Student No: ${studentNo}`,
+            pageWidth / 2,
+            21,
+            { align: "center" },
+          );
 
           // Standard ID Card Dimensions (CR80 Standard: 85.6 mm width x 53.98 mm height)
-          const idWidth = 85.6; 
+          const idWidth = 85.6;
           const idHeight = 53.98;
           const centerX = (pageWidth - idWidth) / 2;
 

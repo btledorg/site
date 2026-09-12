@@ -6,27 +6,19 @@
     <title>BTLED | ABOUT</title>
     <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
     <link rel="stylesheet" href="../resources/css/landing.css" />
-        <!-- Open Graph / Facebook / Messenger / LinkedIn Meta Tags -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://btledorg.github.io/">
     <meta property="og:title" content="BTLED Organization | About us">
     <meta property="og:description" content="Official website of the Bachelor of Technology and Livelihood Education - Industrial Arts Student Organization. Stay updated on events, announcements, and resources.">
     <meta property="og:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true">
-
-    <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="BTLED Organization | About us">
     <meta name="twitter:description" content="Official website of the BTLED Industrial Arts Student Organization.">
     <meta name="twitter:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true">
-
   </head>
   <body>
-
-    <!-- Navigation -->
-  <header class="navbar" id="site-navbar" data-root="../"></header>
-  <script src="../resources/js/navbar.js"></script>
-
-    <!-- 1. Hero Section -->
+    <header class="navbar" id="site-navbar" data-root="../"></header>
+    <script src="../resources/js/navbar.js"></script>
     <section id="hero" style="min-height: 60vh" class="hero-bg">
       <div
         class="hero-image"
@@ -527,28 +519,6 @@
     </footer>
 
     <script src="../resources/js/birthday.js"></script>
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        // Scroll animations
-        const observerOptions = {
-          root: null,
-          rootMargin: "0px",
-          threshold: 0.15,
-        };
- 
-        const observer = new IntersectionObserver((entries, observer) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("is-visible");
-              observer.unobserve(entry.target);
-            }
-          });
-        }, observerOptions);
- 
-        const animatedElements =
-          document.querySelectorAll(".animate-on-scroll");
-        animatedElements.forEach((el) => observer.observe(el));
-      });
-    </script>
+    <script src="../resources/js/index.js"></script>
   </body>
 </html>

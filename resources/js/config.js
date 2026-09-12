@@ -1,4 +1,6 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
+const TERM = "2627";;
+const SEMESTER = "1";
 
 var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
 (function(){

@@ -81,7 +81,6 @@
     </style>
   </head>
   <body>
-
     <header class="navbar" id="site-navbar" data-root="../"></header>
     <script src="../resources/js/navbar.js"></script>
 
@@ -171,18 +170,18 @@
               <label>Student No.</label
               ><input type="text" id="reg-id" required readonly />
             </div>
-<div class="auth-form-group">
-  <label>Program</label
-  ><input
-    type="text"
-    id="reg-program"
-    list="programSuggestions"
-    autocomplete="off"
-    required
-    placeholder="e.g., BTLED-IA"
-  />
-  <datalist id="programSuggestions"></datalist>
-</div>
+            <div class="auth-form-group">
+              <label>Program</label
+              ><input
+                type="text"
+                id="reg-program"
+                list="programSuggestions"
+                autocomplete="off"
+                required
+                placeholder="e.g., BTLED-IA"
+              />
+              <datalist id="programSuggestions"></datalist>
+            </div>
           </div>
           <div class="auth-row">
             <div class="auth-form-group">
@@ -289,56 +288,87 @@
     <script src="../resources/js/config.js"></script>
     <script src="../resources/js/birthday.js"></script>
     <script>
-      (function updateIframeSource() {
-        const BASE_URL = APPS_SCRIPT_URL;
-        const iframe = document.getElementById("btled-frame");
-        if (!iframe) return;
+      (function () {
+        function updateIframeSource() {
+          const BASE_URL = APPS_SCRIPT_URL;
+          const iframe = document.getElementById("btled-frame");
+          if (!iframe) return;
 
-        const pageParams = new URLSearchParams(window.location.search);
-        const params = new URLSearchParams();
+          const pageParams = new URLSearchParams(window.location.search);
+          const params = new URLSearchParams();
 
-        for (const [key, value] of pageParams.entries()) {
-          const cleanKey = key.replace(/[^a-zA-Z0-9_-]/g, "").trim();
-          const cleanVal = value.replace(/\?+$/, "").trim();
-          if (cleanKey) params.set(cleanKey, cleanVal);
-        }
-
-        if (!params.has("page")) params.set("page", "Budget");
-        if (!params.has("term")) params.set("term", "2627");
-        if (!params.has("sem")) params.set("sem", "1");
-
-        try {
-          const rawData = localStorage.getItem("btled_student");
-          if (rawData) {
-            const student = JSON.parse(rawData);
-            if (student["Student No."] || student.id)
-              params.set("studentid", student["Student No."] || student.id);
-            if (student["Surname"] || student.surname)
-              params.set("surname", student["Surname"] || student.surname);
-            if (student["First Name"] || student.name)
-              params.set("name", student["First Name"] || student.name);
-            if (student["Middle Name"])
-              params.set("middleName", student["Middle Name"]);
-            if (student["Program"]) params.set("program", student["Program"]);
-            if (student["Sex"]) params.set("sex", student["Sex"]);
-            if (student["Birthdate"])
-              params.set("birthdate", student["Birthdate"]);
-            if (student["Street / Barangay"])
-              params.set("street", student["Street / Barangay"]);
-            if (student["Municipality / City"])
-              params.set("municipality", student["Municipality / City"]);
-            if (student["Province"])
-              params.set("province", student["Province"]);
-            if (student["Contact Number"])
-              params.set("contact", student["Contact Number"]);
-            if (student["E-mail Address"])
-              params.set("email", student["E-mail Address"]);
+          for (const [key, value] of pageParams.entries()) {
+            const cleanKey = key.replace(/[^a-zA-Z0-9_-]/g, "").trim();
+            const cleanVal = value.replace(/\?+$/, "").trim();
+            if (cleanKey) params.set(cleanKey, cleanVal);
           }
-        } catch (e) {
-          console.warn("Could not load btled_student from localStorage:", e);
+
+          if (!params.has("page")) params.set("page", "Budget");
+          if (!params.has("term")) params.set("term", "2627");
+          if (!params.has("sem")) params.set("sem", "1");
+          params.set("theme", localStorage.getItem("btled_theme") || "light");
+
+          try {
+            const rawData = localStorage.getItem("btled_student");
+            if (rawData) {
+              const student = JSON.parse(rawData);
+              if (student["Student No."] || student.id)
+                params.set("studentid", student["Student No."] || student.id);
+              if (student["Surname"] || student.surname)
+                params.set("surname", student["Surname"] || student.surname);
+              if (student["First Name"] || student.name)
+                params.set("name", student["First Name"] || student.name);
+              if (student["Middle Name"])
+                params.set("middleName", student["Middle Name"]);
+              if (student["Program"]) params.set("program", student["Program"]);
+              if (student["Sex"]) params.set("sex", student["Sex"]);
+              if (student["Birthdate"])
+                params.set("birthdate", student["Birthdate"]);
+              if (student["Street / Barangay"])
+                params.set("street", student["Street / Barangay"]);
+              if (student["Municipality / City"])
+                params.set("municipality", student["Municipality / City"]);
+              if (student["Province"])
+                params.set("province", student["Province"]);
+              if (student["Contact Number"])
+                params.set("contact", student["Contact Number"]);
+              if (student["E-mail Address"])
+                params.set("email", student["E-mail Address"]);
+            }
+          } catch (e) {
+            console.warn("Could not load btled_student from localStorage:", e);
+          }
+
+          const targetSrc = `${BASE_URL}?${params.toString()}`;
+          // Only update iframe source if it changed to prevent infinite loops
+          if (iframe.src !== targetSrc) {
+            iframe.src = targetSrc;
+          }
         }
 
-        iframe.src = `${BASE_URL}?${params.toString()}`;
+        // Run on initial load
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", updateIframeSource);
+        } else {
+          updateIframeSource();
+        }
+
+        // Instantly sync when theme or student state changes in localStorage
+        window.addEventListener("local-storage-changed", function (e) {
+          if (
+            !e.detail ||
+            e.detail.key === "btled_theme" ||
+            e.detail.key === "btled_student"
+          ) {
+            updateIframeSource();
+          }
+        });
+
+        window.addEventListener("storage", function (e) {
+          if (!e.key || e.key === "btled_theme" || e.key === "btled_student") {
+            updateIframeSource();
+          }
+        });
       })();
     </script>
   </body>

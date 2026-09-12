@@ -253,63 +253,90 @@
 
     <script src="../resources/js/login.js"></script>
     <script src="../resources/js/config.js"></script>
-    <script>
-      (function updateIframeSource() {
-        const BASE_URL = APPS_SCRIPT_URL;
-        const iframe = document.getElementById("btled-frame");
-        if (!iframe) return;
+<script>
+  (function () {
+    function updateIframeSource() {
+      const BASE_URL = APPS_SCRIPT_URL;
+      const iframe = document.getElementById("btled-frame");
+      if (!iframe) return;
 
-        const ALLOWED_STUDENTS = ["C2026-0154", "C2025-0119", "C2026-0162"];
+      const ALLOWED_STUDENTS = ["C2026-0154", "C2025-0119", "C2026-0162"];
 
-        const pageParams = new URLSearchParams(window.location.search);
-        const params = new URLSearchParams();
+      const pageParams = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams();
 
-        for (const [key, value] of pageParams.entries()) {
-          const cleanKey = key.replace(/[^a-zA-Z0-9_-]/g, "").trim();
-          const cleanVal = value.replace(/\?+$/, "").trim();
-          if (cleanKey) params.set(cleanKey, cleanVal);
-        }
+      for (const [key, value] of pageParams.entries()) {
+        const cleanKey = key.replace(/[^a-zA-Z0-9_-]/g, "").trim();
+        const cleanVal = value.replace(/\?+$/, "").trim();
+        if (cleanKey) params.set(cleanKey, cleanVal);
+      }
 
-        if (!params.has("page")) params.set("page", "FinancialForm");
-        if (!params.has("term")) params.set("term", "2627");
-        if (!params.has("sem")) params.set("sem", "1");
+      if (!params.has("page")) params.set("page", "FinancialForm");
+      if (!params.has("term")) params.set("term", "2627");
+      if (!params.has("sem")) params.set("sem", "1");
+      
+      // Dynamic theme sync update
+      params.set("theme", localStorage.getItem("btled_theme") || "light");
 
-        try {
-          const rawData = localStorage.getItem("btled_student");
-          if (rawData) {
-            const student = JSON.parse(rawData);
-            const currentId = student["Student No."] || student.id;
+      try {
+        const rawData = localStorage.getItem("btled_student");
+        if (rawData) {
+          const student = JSON.parse(rawData);
+          const currentId = student["Student No."] || student.id;
 
+          if (currentId) {
+            const normalizedId = currentId.toUpperCase().trim(); 
 
-            if (currentId) {
-              const normalizedId = currentId.toUpperCase().trim(); 
-
-              if (!ALLOWED_STUDENTS.includes(normalizedId)) {
-                alert("Access Denied: You do not have the required permissions to view this workspace.");
-                window.location.href = "../index.html"; 
-                return; 
-              }
+            if (!ALLOWED_STUDENTS.includes(normalizedId)) {
+              alert("Access Denied: You do not have the required permissions to view this workspace.");
+              window.location.href = "../index.html"; 
+              return; 
             }
-
-            if (currentId) params.set("studentid", currentId);
-            if (student["Surname"] || student.surname) params.set("surname", student["Surname"] || student.surname);
-            if (student["First Name"] || student.name) params.set("name", student["First Name"] || student.name);
-            if (student["Middle Name"]) params.set("middleName", student["Middle Name"]);
-            if (student["Program"]) params.set("program", student["Program"]);
-            if (student["Sex"]) params.set("sex", student["Sex"]);
-            if (student["Birthdate"]) params.set("birthdate", student["Birthdate"]);
-            if (student["Street / Barangay"]) params.set("street", student["Street / Barangay"]);
-            if (student["Municipality / City"]) params.set("municipality", student["Municipality / City"]);
-            if (student["Province"]) params.set("province", student["Province"]);
-            if (student["Contact Number"]) params.set("contact", student["Contact Number"]);
-            if (student["E-mail Address"]) params.set("email", student["E-mail Address"]);
           }
-        } catch (e) {
-          console.warn("Could not load btled_student from localStorage:", e);
-        }
 
-        iframe.src = `${BASE_URL}?${params.toString()}`;
-      })();
-    </script>
+          if (currentId) params.set("studentid", currentId);
+          if (student["Surname"] || student.surname) params.set("surname", student["Surname"] || student.surname);
+          if (student["First Name"] || student.name) params.set("name", student["First Name"] || student.name);
+          if (student["Middle Name"]) params.set("middleName", student["Middle Name"]);
+          if (student["Program"]) params.set("program", student["Program"]);
+          if (student["Sex"]) params.set("sex", student["Sex"]);
+          if (student["Birthdate"]) params.set("birthdate", student["Birthdate"]);
+          if (student["Street / Barangay"]) params.set("street", student["Street / Barangay"]);
+          if (student["Municipality / City"]) params.set("municipality", student["Municipality / City"]);
+          if (student["Province"]) params.set("province", student["Province"]);
+          if (student["Contact Number"]) params.set("contact", student["Contact Number"]);
+          if (student["E-mail Address"]) params.set("email", student["E-mail Address"]);
+        }
+      } catch (e) {
+        console.warn("Could not load btled_student from localStorage:", e);
+      }
+
+      const targetSrc = `${BASE_URL}?${params.toString()}`;
+      if (iframe.src !== targetSrc) {
+        iframe.src = targetSrc;
+      }
+    }
+
+    // Initial run
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", updateIframeSource);
+    } else {
+      updateIframeSource();
+    }
+
+    // Auto-update listeners for theme switches and storage changes
+    window.addEventListener("local-storage-changed", function (e) {
+      if (!e.detail || e.detail.key === "btled_theme" || e.detail.key === "btled_student") {
+        updateIframeSource();
+      }
+    });
+
+    window.addEventListener("storage", function (e) {
+      if (!e.key || e.key === "btled_theme" || e.key === "btled_student") {
+        updateIframeSource();
+      }
+    });
+  })();
+</script>
   </body>
 </html>

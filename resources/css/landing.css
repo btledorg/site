@@ -824,3 +824,23 @@ body {
   margin-left: 4px;
   vertical-align: middle;
 }
+
+/* Dropdown toggle icons */
+.nav-link .nav-arrow {
+    font-size: 0.95rem;
+    margin-left: 6px;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+/* Rotate ONLY the nav-arrow when active (mobile) */
+.dropdown.active > .nav-link .nav-arrow {
+    transform: rotate(-180deg);
+}
+
+/* Rotate ONLY the nav-arrow on hover (desktop) */
+@media (min-width: 851px) {
+    .dropdown:hover > .nav-link .nav-arrow {
+        transform: rotate(-180deg);
+    }
+}

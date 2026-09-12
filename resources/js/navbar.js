@@ -1,11 +1,95 @@
 (function () {
   "use strict";
 
-  // --- SAME-TAB LOCALSTORAGE OBSERVER ---
+  // --- 1. DYNAMICALLY INJECT REMIX ICONS ---
+  function loadRemixIcons() {
+    if (!document.querySelector('link[href*="remixicon.css"]')) {
+      var link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css";
+      document.head.appendChild(link);
+    }
+  }
+  loadRemixIcons();
+
+  // --- 2. SYSTEMATIC DARK MODE (ZERO CSS FILE EDITS) ---
+  function initSystemDarkMode() {
+    if (document.getElementById("btled-dark-mode-styles")) return;
+
+    // Inject variable overrides systematically 
+    var style = document.createElement("style");
+    style.id = "btled-dark-mode-styles";
+    style.innerHTML = `
+      /* Smooth color transition on theme change */
+      html, body, .panel, .cert-card, .table-section, .desc-card, .summary-card, .profile-header, .edit-card, .edit-photo-section {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      }
+      html[data-theme="dark"] {
+        --btled-bg: #121212 !important;
+        --btled-dark: #f9fafb !important;
+        --bg-page: #121212 !important;
+        --bg-subtle: #1e1e1e !important;
+        --text-main: #f9fafb !important;
+        --text-muted: #9ca3af !important;
+        --border-dark: #374151 !important;
+        --border-light: #1f2937 !important;
+        --accent-blue: #60a5fa !important;
+        color-scheme: dark;
+      }
+      /* Override dropdowns and page containers in dark mode */
+      html[data-theme="dark"] .dropdown-menu {
+        background-color: #1e1e1e !important;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.5) !important;
+        border-color: #374151 !important;
+      }
+      html[data-theme="dark"] .panel,
+      html[data-theme="dark"] .edit-card,
+      html[data-theme="dark"] .cert-card {
+        background-color: #1e1e1e !important;
+        border-color: #374151 !important;
+        color: #f9fafb !important;
+      }
+      html[data-theme="dark"] .edit-photo-section {
+        background-color: #252526 !important;
+        border-color: #374151 !important;
+      }
+      html[data-theme="dark"] input:not([type="submit"]):not([type="button"]), 
+      html[data-theme="dark"] select {
+        background-color: #121212 !important;
+        color: #f9fafb !important;
+        border-color: #374151 !important;
+      }
+      html[data-theme="dark"] .navbar,
+      html[data-theme="dark"] header.navbar {
+        background-color: #1e1e1e !important;
+        border-bottom: 1px solid #374151 !important;
+        color: #f9fafb !important;
+      }
+      html[data-theme="dark"] .navbar a,
+      html[data-theme="dark"] .navbar span,
+      html[data-theme="dark"] .navbar button {
+        color: #f9fafb !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Check saved preference or OS preference
+    var savedTheme = localStorage.getItem("btled_theme");
+    var systemDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    
+    if (savedTheme === "dark" || (!savedTheme && systemDark)) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  }
+  initSystemDarkMode();
+
+  // --- 3. SAME-TAB LOCALSTORAGE OBSERVER ---
   var originalSetItem = localStorage.setItem;
   localStorage.setItem = function (key, value) {
     originalSetItem.apply(this, arguments);
-    if (key === "btled_student" || key === "btled_notifications") {
+    if (key === "btled_student" || key === "btled_notifications" || key === "btled_theme") {
       window.dispatchEvent(new CustomEvent("local-storage-changed", { detail: { key: key } }));
     }
   };
@@ -34,24 +118,14 @@
     var parts = targetPath.split("#");
     var targetFile = parts[0];
     var targetHash = parts[1] ? "#" + parts[1] : "";
-
-    if (!targetFile || targetFile === "") {
-      return targetHash || fullUrl;
-    }
+    if (!targetFile || targetFile === "") return targetHash || fullUrl;
 
     var currentPath = window.location.pathname;
-    var isSamePage = false;
-    if (currentPath.endsWith(targetFile) || (targetFile === "index.html" && (currentPath.endsWith("/") || currentPath === ""))) {
-      isSamePage = true;
-    }
-
-    if (isSamePage && targetHash) {
-      return targetHash;
-    }
-
-    return fullUrl;
+    var isSamePage = currentPath.endsWith(targetFile) || (targetFile === "index.html" && (currentPath.endsWith("/") || currentPath === ""));
+    return (isSamePage && targetHash) ? targetHash : fullUrl;
   }
 
+  // --- 4. RENDER NAVBAR ---
   function renderNavbar() {
     var header = document.getElementById("site-navbar");
     if (!header) return;
@@ -61,34 +135,30 @@
     function slink(path) { return smartLink(ROOT, path); }
 
     var hasStudentProfile = false;
-    try {
-      hasStudentProfile = !!localStorage.getItem("btled_student");
-    } catch (e) {
-      hasStudentProfile = false;
-    }
+    try { hasStudentProfile = !!localStorage.getItem("btled_student"); } catch (e) {}
 
-    // Dynamic Notification Badge Check
     var hasUnreadNotifs = false;
     try {
       var notifs = JSON.parse(localStorage.getItem("btled_notifications"));
       hasUnreadNotifs = notifs && notifs.some(function(n) { return !n.read; });
-    } catch (e) {
-      hasUnreadNotifs = false;
-    }
+    } catch (e) {}
     var notifBadge = hasUnreadNotifs ? '<span class="badge-dot" title="Unread notifications"></span>' : '';
 
-    // Compact Profile button instead of long "Hello, Name" text to fit mobile & desktop layouts neatly
     var profileNav = hasStudentProfile ?
       '<div class="dropdown">' +
-        '<a href="' + link("profile/index.html") + '" class="nav-link">Profile ' + notifBadge + ' &#9662;</a>' +
+        '<a href="' + link("profile/index.html") + '" class="nav-link">Profile ' + notifBadge + ' <i class="ri-arrow-down-s-line nav-arrow"></i></a>' +
         '<ul class="dropdown-menu">' +
-          '<li style="display: none;"><a href="' + link("profile/attendance.html") + '">Attendance</a></li>' +
-          '<li style="display: none; border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
-          '<li><a href="' + link("profile/index.html") + '">View Profile</a></li>' +
-          '<li><a href="#" id="logout-link">Logout</a></li>' +
+          '<li><a href="' + link("profile/edit.html") + '"><i class="ri-edit-box-line"></i> Edit Profile</a></li>' +
+          '<li style=" border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
+          '<li><a href="' + link("profile/index.html") + '"><i class="ri-profile-line"></i> View Profile</a></li>' +
+          '<li><a href="#" id="logout-link"><i class="ri-logout-box-r-line"></i> Logout</a></li>' +
         '</ul>' +
       '</div>' :
       '<a href="' + link("profile/index.html") + '" class="nav-link">Login</a>';
+
+    // Current Theme Icon
+    var isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    var themeIcon = isDark ? "ri-sun-line" : "ri-moon-line";
 
     header.innerHTML =
       '<div class="container nav-container">' +
@@ -100,43 +170,51 @@
           '</div>' +
         '</a>' +
         '<button class="menu-toggle" aria-label="Toggle Navigation">' +
-          '<span class="hamburger"></span>' +
+          '<span class="hamburger"></span>' + 
         '</button>' +
         '<nav class="nav-menu">' +
           '<div class="dropdown">' +
-            '<a href="' + link("about/index.html") + '" class="nav-link">About Us &#9662;</a>' +
+            '<a href="' + link("about/index.html") + '" class="nav-link">About Us <i class="ri-arrow-down-s-line nav-arrow"></i></a>' +
             '<ul class="dropdown-menu">' +
-              '<li><a href="' + slink("about/index.html#history-constitution") + '">History &amp; Constitution</a></li>' +
-              '<li><a href="' + slink("about/index.html#spotlight") + '">Vision &amp; Mission</a></li>' +
-              '<li><a href="' + link("about/logo.html") + '">BTLED LOGO</a></li>' +
-              '<li><a href="' + slink("about/index.html#officers") + '">Executive Officers</a></li>' +
+              '<li><a href="' + slink("about/index.html#history-constitution") + '"><i class="ri-article-line"></i> History &amp; Constitution</a></li>' +
+              '<li><a href="' + slink("about/index.html#spotlight") + '"><i class="ri-focus-3-line"></i> Vision &amp; Mission</a></li>' +
+              '<li><a href="' + link("about/logo.html") + '"><i class="ri-image-line"></i> BTLED LOGO</a></li>' +
+              '<li><a href="' + slink("about/index.html#officers") + '"><i class="ri-team-line"></i> Executive Officers</a></li>' +
               '<li style="border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
-              '<li><a href="' + link("about/documents.html#achievements") + '">Achievements &amp; Awards</a></li>' +
-              '<li><a href="' + link("about/documents.html#permits") + '">Permits &amp; Certifications</a></li>' +
+              '<li><a href="' + link("about/documents.html#achievements") + '"><i class="ri-trophy-line"></i> Achievements &amp; Awards</a></li>' +
+              '<li><a href="' + link("about/documents.html#permits") + '"><i class="ri-file-paper-2-line"></i> Permits &amp; Certifications</a></li>' +
             '</ul>' +
           '</div>' +
           '<a href="' + link("finance/budget.html") + '" class="nav-link">Finance</a>' +
           '<div class="dropdown">' +
-            '<a href="' + link("events/event.html") + '" class="nav-link">Events &#9662;</a>' +
+            '<a href="' + link("events/event.html") + '" class="nav-link">Events <i class="ri-arrow-down-s-line nav-arrow"></i></a>' +
             '<ul class="dropdown-menu">' +
-              '<li><a href="' + link("events/event.html") + '">Calendar</a></li>' +
-              '<li><a href="' + link("events/forms.html") + '">Forms</a></li>' +
-              '<li><a href="' + link("events/validate.html") + '">Check Status</a></li>' +
+              '<li><a href="' + link("events/event.html") + '"><i class="ri-calendar-event-line"></i> Calendar</a></li>' +
+              '<li><a href="' + link("events/forms.html") + '"><i class="ri-file-list-3-line"></i> Forms</a></li>' +
+              '<li><a href="' + link("events/validate.html") + '"><i class="ri-checkbox-circle-line"></i> Check Status</a></li>' +
               '<li style="border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
-              '<li><a href="' + link("events/gallery.html") + '">Event Gallery</a></li>' +
-              '<li><a href="' + link("events/result.html") + '">Competition Results</a></li>' +
+              '<li><a href="' + link("events/gallery.html") + '"><i class="ri-gallery-line"></i> Event Gallery</a></li>' +
+              '<li><a href="' + link("events/result.html") + '"><i class="ri-award-line"></i> Competition Results</a></li>' +
               '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
-              '<li><a href="' + link("events/gallery.html?page=Viewer&FolderID=1fsj9LVTFptG3KDaQt9RF5_WSlVIoG2P_&Name=BTLED%20MAINTENANCE%20MONITORING") + '">Hallway Monitoring</a></li>' +
+              '<li><a href="' + link("events/gallery.html?page=Viewer&FolderID=1fsj9LVTFptG3KDaQt9RF5_WSlVIoG2P_&Name=BTLED%20MAINTENANCE%20MONITORING") + '"><i class="ri-shield-check-line"></i> Hallway Monitoring</a></li>' +
             '</ul>' +
           '</div>' +
           profileNav +
           '<div class="dropdown">' +
-            '<a href="#" class="nav-link">Contact Us &#9662;</a>' +
+            '<a href="#" class="nav-link">Contact Us <i class="ri-arrow-down-s-line nav-arrow"></i></a>' +
             '<ul class="dropdown-menu">' +
-              '<li><a href="mailto:urscbtledorg@gmail.com">Email</a></li>' +
-              '<li><a href="tel:+639700337672">Phone</a></li>' +
-              '<li><a href="https://www.facebook.com/share/1H2gZ3VW9P/" target="_blank">Facebook</a></li>' +
+              '<li><a href="mailto:urscbtledorg@gmail.com"><i class="ri-mail-send-line"></i> Email</a></li>' +
+              '<li><a href="tel:+639700337672"><i class="ri-phone-line"></i> Phone</a></li>' +
+              '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
+              '<li><a href="https://btledorganization.tawk.help" target="_blank"><i class="ri-customer-service-2-line"></i> Help Center</a></li>' +
+              '<li style="border-bottom: 1px solid #eee; margin: 4px 0;"></li>' +
+              '<li><a href="https://www.facebook.com/share/1H2gZ3VW9P/" target="_blank"><i class="ri-facebook-circle-line"></i> Facebook</a></li>' +
             '</ul>' +
+          '</div>' +
+          '<div class="dropdown">' +
+            '<a href="#" id="theme-toggle" class="nav-link" aria-label="Toggle Dark Mode">Theme ' +
+              '<i class="' + themeIcon + '" style="font-size:1.15rem; margin-left:6px; vertical-align:middle;"></i>' +
+            '</a>' +
           '</div>' +
         '</nav>' +
       '</div>';
@@ -145,6 +223,27 @@
     var navMenu = header.querySelector(".nav-menu");
     var dropdowns = header.querySelectorAll(".dropdown");
     var logoutLink = header.querySelector("#logout-link");
+    var themeToggleBtn = header.querySelector("#theme-toggle");
+
+    // Theme Toggle Logic with e.preventDefault() to stop page jumping
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener("click", function (e) {
+        e.preventDefault(); // <--- Stops the page from jumping to top on click
+        
+        var current = document.documentElement.getAttribute("data-theme");
+        var newTheme = current === "dark" ? "light" : "dark";
+        
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("btled_theme", newTheme);
+        
+        var icon = themeToggleBtn.querySelector("i");
+        if (newTheme === "dark") {
+          icon.classList.replace("ri-moon-line", "ri-sun-line");
+        } else {
+          icon.classList.replace("ri-sun-line", "ri-moon-line");
+        }
+      });
+    }
 
     if (toggleBtn && navMenu) {
       toggleBtn.addEventListener("click", function () {
@@ -175,29 +274,25 @@
       }
     });
 
-    // Active Page Highlighting
     var currentHref = window.location.href.split("#")[0];
     var navLinks = header.querySelectorAll(".nav-menu a");
     navLinks.forEach(function (linkEl) {
       var rawHref = linkEl.getAttribute("href");
-      if (!rawHref || rawHref === "#" || rawHref.startsWith("mailto:") || rawHref.startsWith("tel:")) {
-        return;
-      }
+      if (!rawHref || rawHref === "#" || rawHref.startsWith("mailto:") || rawHref.startsWith("tel:")) return;
       var linkBase = linkEl.href ? linkEl.href.split("#")[0] : "";
-      if (linkBase && linkBase === currentHref) {
-        linkEl.classList.add("active-page");
-      }
+      if (linkBase && linkBase === currentHref) linkEl.classList.add("active-page");
     });
   }
 
   window.addEventListener("storage", function (e) {
-    if (!e.key || e.key === "btled_student" || e.key === "btled_notifications") {
+    if (!e.key || e.key === "btled_student" || e.key === "btled_notifications" || e.key === "btled_theme") {
+      if (e.key === "btled_theme") initSystemDarkMode();
       renderNavbar();
     }
   });
 
   window.addEventListener("local-storage-changed", function (e) {
-    if (!e.detail || e.detail.key === "btled_student" || e.detail.key === "btled_notifications") {
+    if (!e.detail || e.detail.key === "btled_student" || e.detail.key === "btled_notifications" || e.detail.key === "btled_theme") {
       renderNavbar();
     }
   });
@@ -210,7 +305,6 @@
 })();
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Disable autocomplete on all forms and input elements globally
   document.querySelectorAll("form, input").forEach((el) => {
     el.setAttribute("autocomplete", "off");
   });
