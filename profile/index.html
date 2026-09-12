@@ -1841,7 +1841,7 @@
         const firstName = student["First Name"] || student.name;
         const surname = student["Surname"] || student.surname;
         const studentNo = student["Student No."] || student.id;
-        const program = student["Program"];
+        const program = student["Program"] || student.program;
         const photo = getStudentPhoto(student);
         const signature = getStudentSignature(student);
 

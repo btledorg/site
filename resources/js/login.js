@@ -1,6 +1,11 @@
 const baseURL =
   "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
 
+// Helper function to convert text to Title Case
+function toTitleCase(str) {
+  return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   checkUserSession();
   populateProgramSuggestions();
@@ -10,6 +15,14 @@ document.addEventListener("DOMContentLoaded", () => {
   idInputs.forEach((input) => {
     input.addEventListener("input", function () {
       this.value = this.value.toUpperCase();
+    });
+  });
+
+  // Auto-titlecase name fields upon blur/change for clean formatting
+  const nameInputs = document.querySelectorAll("#login-name, #login-surname, #reg-name, #reg-surname, #reg-mname");
+  nameInputs.forEach((input) => {
+    input.addEventListener("blur", function () {
+      this.value = toTitleCase(this.value.trim());
     });
   });
 
@@ -23,10 +36,9 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("login-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
-      // Ensures ID is uppercase upon submission
       const id = document.getElementById("login-id").value.trim().toUpperCase();
-      const name = document.getElementById("login-name").value.trim();
-      const surname = document.getElementById("login-surname").value.trim();
+      const name = toTitleCase(document.getElementById("login-name").value.trim());
+      const surname = toTitleCase(document.getElementById("login-surname").value.trim());
       const btn = document.getElementById("login-btn");
 
       btn.classList.add("loading");
@@ -85,11 +97,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const payload = {
         module: "register",
-        // Ensures registered ID is uppercase
         id: document.getElementById("reg-id").value.trim().toUpperCase(),
-        surname: document.getElementById("reg-surname").value.trim(),
-        name: document.getElementById("reg-name").value.trim(),
-        middleName: document.getElementById("reg-mname").value.trim(),
+        surname: toTitleCase(document.getElementById("reg-surname").value.trim()),
+        name: toTitleCase(document.getElementById("reg-name").value.trim()),
+        middleName: toTitleCase(document.getElementById("reg-mname").value.trim()),
         program: document.getElementById("reg-program").value.trim(),
         sex: document.getElementById("reg-sex").value.trim(),
         birthdate: document.getElementById("reg-bdate").value.trim(),
@@ -108,7 +119,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const result = await response.json();
 
         if (result && result.ok) {
-          // Saves the full payload (including birthdate) directly to localStorage
           localStorage.setItem("btled_student", JSON.stringify(payload));
           closeAuthModal();
           updateParentNav(payload);
@@ -181,9 +191,6 @@ function updateParentNav(user) {
   }
 }
 
-// Edit these to change what shows up as suggestions.
-// The field stays fully editable — this just offers hints via <datalist>.
-
 const PROGRAM_CODES = [
   "BAJ",
   "BSHM",
@@ -252,14 +259,12 @@ function populateProgramSuggestions() {
   datalist.innerHTML = "";
   const frag = document.createDocumentFragment();
 
-  // Bare codes, in case someone just wants the program without year/section
   PROGRAM_CODES.forEach((code) => {
     const opt = document.createElement("option");
     opt.value = code;
     frag.appendChild(opt);
   });
 
-  // Code + Year/Section combos, e.g. "BTLED-IA 1A"
   PROGRAM_CODES.forEach((code) => {
     PROGRAM_YEARS.forEach((year) => {
       PROGRAM_SECTIONS.forEach((section) => {
