@@ -1,6 +1,23 @@
 (function () {
   "use strict";
 
+  // --- SAME-TAB LOCALSTORAGE OBSERVER ---
+  var originalSetItem = localStorage.setItem;
+  localStorage.setItem = function (key, value) {
+    originalSetItem.apply(this, arguments);
+    if (key === "btled_student" || key === "btled_notifications") {
+      window.dispatchEvent(new CustomEvent("local-storage-changed", { detail: { key: key } }));
+    }
+  };
+
+  var originalRemoveItem = localStorage.removeItem;
+  localStorage.removeItem = function (key) {
+    originalRemoveItem.apply(this, arguments);
+    if (key === "btled_student" || key === "btled_notifications") {
+      window.dispatchEvent(new CustomEvent("local-storage-changed", { detail: { key: key } }));
+    }
+  };
+
   function normalizeRoot(root) {
     if (!root) return "./";
     var cleaned = String(root).replace(/\/{2,}/g, "/");
@@ -14,7 +31,6 @@
   
   function smartLink(ROOT, targetPath) {
     var fullUrl = joinPath(ROOT, targetPath);
-    
     var parts = targetPath.split("#");
     var targetFile = parts[0];
     var targetHash = parts[1] ? "#" + parts[1] : "";
@@ -24,7 +40,6 @@
     }
 
     var currentPath = window.location.pathname;
-    
     var isSamePage = false;
     if (currentPath.endsWith(targetFile) || (targetFile === "index.html" && (currentPath.endsWith("/") || currentPath === ""))) {
       isSamePage = true;
@@ -47,12 +62,12 @@
 
     var hasStudentProfile = false;
     try {
-      hasStudentProfile = !!JSON.parse(localStorage.getItem("btled_student"));
+      hasStudentProfile = !!localStorage.getItem("btled_student");
     } catch (e) {
       hasStudentProfile = false;
     }
 
-    // Feature 4 Added: Dynamic Notification Badge Check
+    // Dynamic Notification Badge Check
     var hasUnreadNotifs = false;
     try {
       var notifs = JSON.parse(localStorage.getItem("btled_notifications"));
@@ -62,10 +77,10 @@
     }
     var notifBadge = hasUnreadNotifs ? '<span class="badge-dot" title="Unread notifications"></span>' : '';
 
-    // Dynamically switches between Profile Dropdown (if logged in) and Login Link (if logged out)
+    // Compact Profile button instead of long "Hello, Name" text to fit mobile & desktop layouts neatly
     var profileNav = hasStudentProfile ?
       '<div class="dropdown">' +
-        '<a href="' + link("profile/index.html") + '" class="nav-link">My Profile ' + notifBadge + ' &#9662;</a>' +
+        '<a href="' + link("profile/index.html") + '" class="nav-link">Profile ' + notifBadge + ' &#9662;</a>' +
         '<ul class="dropdown-menu">' +
           '<li style="display: none;"><a href="' + link("profile/attendance.html") + '">Attendance</a></li>' +
           '<li style="display: none; border-bottom: 1px solid var(--border-light); margin: 4px 0;"></li>' +
@@ -143,7 +158,6 @@
         e.preventDefault();
         if (confirm("Are you sure you want to log out?")) {
           localStorage.removeItem("btled_student");
-          window.dispatchEvent(new Event("storage"));
           window.location.href = link("index.html");
         }
       });
@@ -161,7 +175,7 @@
       }
     });
 
-    // Active Page Highlighting (Skipping #, mailto, and tel links)
+    // Active Page Highlighting
     var currentHref = window.location.href.split("#")[0];
     var navLinks = header.querySelectorAll(".nav-menu a");
     navLinks.forEach(function (linkEl) {
@@ -169,7 +183,6 @@
       if (!rawHref || rawHref === "#" || rawHref.startsWith("mailto:") || rawHref.startsWith("tel:")) {
         return;
       }
-
       var linkBase = linkEl.href ? linkEl.href.split("#")[0] : "";
       if (linkBase && linkBase === currentHref) {
         linkEl.classList.add("active-page");
@@ -177,22 +190,14 @@
     });
   }
 
-  document.addEventListener("click", function (e) {
-    var header = document.getElementById("site-navbar");
-    if (!header) return;
-    if (!header.contains(e.target)) {
-      var navMenu = header.querySelector(".nav-menu");
-      var toggleBtn = header.querySelector(".menu-toggle");
-      var dropdowns = header.querySelectorAll(".dropdown");
-      
-      if (navMenu) navMenu.classList.remove("active");
-      if (toggleBtn) toggleBtn.classList.remove("active");
-      dropdowns.forEach(function (d) { d.classList.remove("active"); });
+  window.addEventListener("storage", function (e) {
+    if (!e.key || e.key === "btled_student" || e.key === "btled_notifications") {
+      renderNavbar();
     }
   });
 
-  window.addEventListener("storage", function (e) {
-    if (!e.key || e.key === "btled_student" || e.key === "btled_notifications") {
+  window.addEventListener("local-storage-changed", function (e) {
+    if (!e.detail || e.detail.key === "btled_student" || e.detail.key === "btled_notifications") {
       renderNavbar();
     }
   });
@@ -203,3 +208,10 @@
     renderNavbar();
   }
 })();
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Disable autocomplete on all forms and input elements globally
+  document.querySelectorAll("form, input").forEach((el) => {
+    el.setAttribute("autocomplete", "off");
+  });
+});

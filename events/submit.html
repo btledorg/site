@@ -865,22 +865,32 @@
         </div>
       </div>
 
-      <!-- FINAL STEP: SUBMIT -->
+<!-- FINAL STEP: SUBMIT -->
       <div id="step-page-submit" class="step-content">
         <h3 class="section-title">Final Review & Submit</h3>
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
-          You have completed all required steps. Please click the button below to finalize your registration.
+          Please review your details below carefully. Once submitted, changes cannot be made.
         </p>
+
+        <!-- Dynamic Summary Card container -->
+        <div id="review-summary-container" style="background: var(--bg-subtle); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 1.5rem; margin-bottom: 1.5rem; font-size: 0.85rem;">
+          <!-- Populated dynamically by script -->
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="confirm-accuracy-check" />
+          <label for="confirm-accuracy-check">I certify that all information provided above is correct and true to the best of my knowledge.</label>
+        </div>
+
         <div class="button-row">
           <button class="btn btn-secondary" onclick="prevStep('submit')">
             Back
           </button>
-          <button id="btn-submit" class="btn btn-primary">
-            Submit Form
+          <button id="btn-submit" class="btn btn-primary" disabled>
+            Confirm &amp; Submit Form
           </button>
         </div>
       </div>
-
     </div>
 
     <footer class="footer">
@@ -1229,7 +1239,7 @@
         ).join("");
       }
 
-      function goToStep(id) {
+function goToStep(id) {
         document
           .querySelectorAll(".step-content")
           .forEach((p) => p.classList.remove("active"));
@@ -1239,6 +1249,12 @@
         document.getElementById(`step-page-${id}`).classList.add("active");
         const tab = document.getElementById(`step-tab-${id}`);
         if (tab) tab.classList.add("active");
+
+        // If arriving at the submit page, generate the live review summary
+        if (id === "submit") {
+          generateReviewSummary();
+        }
+
         window.scrollTo({ top: 100, behavior: "smooth" });
       }
 
@@ -1473,6 +1489,70 @@
         return true;
       }
 
+      function generateReviewSummary() {
+        const container = document.getElementById("review-summary-container");
+        if (!container) return;
+
+        const surname = document.getElementById("field-surname").value.trim();
+        const firstname = document.getElementById("field-firstname").value.trim();
+        const middlename = document.getElementById("field-middlename").value.trim();
+        const studentId = document.getElementById("field-studentid").value.trim();
+        const program = document.getElementById("field-program").value.trim();
+        const phone = document.getElementById("field-phone").value.trim();
+        const email = document.getElementById("field-email").value.trim();
+        const address = document.getElementById("field-address").value.trim();
+        const fblink = document.getElementById("field-fblink").value.trim();
+
+        let html = `
+        <div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">1. Submitter Information</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+        <div><strong>Name:</strong> ${firstname} ${middlename ? middlename + ' ' : ''}${surname}</div>
+        <div><strong>Student ID:</strong> ${studentId}</div>
+        <div><strong>Program:</strong> ${program}</div>
+        <div><strong>Phone:</strong> ${phone}</div>
+        <div style="grid-column: span 2;"><strong>Email:</strong> ${email}</div>
+        <div style="grid-column: span 2;"><strong>Address:</strong> ${address}</div>
+        <div style="grid-column: span 2;"><strong>Facebook:</strong> <a href="${fblink}" target="_blank" style="color: var(--accent-blue);">${fblink}</a></div>
+        </div>`;
+
+        if (MAX_TEAM_SIZE > 1) {
+          html += `<div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">2. Team Members</div>`;
+          html += `<div style="margin-bottom: 1rem;"><strong>Member 1 (Primary):</strong> ${firstname} ${surname} (${studentId})</div>`;
+          for (let i = 2; i <= MAX_TEAM_SIZE; i++) {
+            const cId = document.getElementById(`collab-id-${i}`)?.value.trim();
+          	const cName = document.getElementById(`collab-name-${i}`)?.value.trim();
+          	if (cId || cName) {
+          	  html += `<div style="margin-bottom: 0.3rem;"><strong>Member ${i}:</strong> ${cName || 'N/A'} (ID: ${cId || 'N/A'})</div>`;
+          	}
+          }
+        }
+
+        if (FILE_REQUIRED && verifiedUploads && verifiedUploads.slot1) {
+          html += `
+          <div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">3. Uploaded Requirements</div>
+          <div style="margin-bottom: 1rem;">📎 ${verifiedUploads.slot1.name}</div>`;
+        }
+
+        if (QUESTIONS.length > 0) {
+          html += `<div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">4. Questionnaire Answers</div>`;
+          QUESTIONS.forEach((q, i) => {
+          	const ans = document.getElementById(`question-${i}`)?.value.trim() || "No answer provided";
+          	html += `<div style="margin-bottom: 0.5rem;"><strong>Q${i+1}: ${q}</strong><br><span style="color: var(--text-muted);">${ans}</span></div>`;
+          });
+        }
+
+      	container.innerHTML = html;
+      }
+
+      // Review Accuracy Confirmation Checkbox
+      	const accuracyCheck = document.getElementById("confirm-accuracy-check");
+      	const btnSubmit = document.getElementById("btn-submit");
+      	if (accuracyCheck && btnSubmit) {
+      	  accuracyCheck.addEventListener("change", () => {
+      	    btnSubmit.disabled = !accuracyCheck.checked;
+      	  });
+      	}
+
       document.addEventListener("DOMContentLoaded", () => {
         populateHeaderAndForm();
 
@@ -1567,6 +1647,8 @@
             }
             return uploads;
           }
+
+          
 
           const payload = {
             action: "submitForm",
