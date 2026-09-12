@@ -5,6 +5,14 @@ document.addEventListener("DOMContentLoaded", () => {
   checkUserSession();
   populateProgramSuggestions();
 
+  // Auto-uppercase student ID fields as the user types
+  const idInputs = document.querySelectorAll("#login-id, #reg-id");
+  idInputs.forEach((input) => {
+    input.addEventListener("input", function () {
+      this.value = this.value.toUpperCase();
+    });
+  });
+
   function showAlert(type, elementId, message) {
     const alertEl = document.getElementById(elementId);
     alertEl.className = `auth-alert ${type}`;
@@ -15,7 +23,8 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("login-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
-      const id = document.getElementById("login-id").value.trim();
+      // Ensures ID is uppercase upon submission
+      const id = document.getElementById("login-id").value.trim().toUpperCase();
       const name = document.getElementById("login-name").value.trim();
       const surname = document.getElementById("login-surname").value.trim();
       const btn = document.getElementById("login-btn");
@@ -35,14 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("btled_student", JSON.stringify(userData));
           closeAuthModal();
           updateParentNav(userData);
-        } else if (result && result.ok === false) {
-          showAlert(
-            "error",
-            "login-alert",
-            result.error || "Something went wrong on our end.",
-          );
-          btn.classList.remove("loading");
-          btn.disabled = false;
         } else if (result && result.ok === false) {
           showAlert(
             "error",
@@ -84,19 +85,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const payload = {
         module: "register",
-        id: document.getElementById("reg-id").value,
-        surname: document.getElementById("reg-surname").value,
-        name: document.getElementById("reg-name").value,
-        middleName: document.getElementById("reg-mname").value,
-        program: document.getElementById("reg-program").value,
-        sex: document.getElementById("reg-sex").value,
-        birthdate: document.getElementById("reg-bdate").value,
-        street: document.getElementById("reg-street").value,
-        municipality: document.getElementById("reg-city").value,
-        province: document.getElementById("reg-prov").value,
-        contact: document.getElementById("reg-contact").value,
-        email: document.getElementById("reg-email").value,
-        website: document.getElementById("reg-website").value,
+        // Ensures registered ID is uppercase
+        id: document.getElementById("reg-id").value.trim().toUpperCase(),
+        surname: document.getElementById("reg-surname").value.trim(),
+        name: document.getElementById("reg-name").value.trim(),
+        middleName: document.getElementById("reg-mname").value.trim(),
+        program: document.getElementById("reg-program").value.trim(),
+        sex: document.getElementById("reg-sex").value.trim(),
+        birthdate: document.getElementById("reg-bdate").value.trim(),
+        street: document.getElementById("reg-street").value.trim(),
+        municipality: document.getElementById("reg-city").value.trim(),
+        province: document.getElementById("reg-prov").value.trim(),
+        contact: document.getElementById("reg-contact").value.trim(),
+        email: document.getElementById("reg-email").value.trim(),
+        website: document.getElementById("reg-website").value.trim(),
       };
 
       const targetUrl = `${baseURL}?${new URLSearchParams(payload).toString()}`;
