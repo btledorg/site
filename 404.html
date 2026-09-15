@@ -3,18 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BTLED | Under Construction</title>
+  <title>BTLED | Coming Soon</title>
   <link rel="icon" type="image/png" href="resources/image/logo/2.png" />
-  <!-- Use absolute paths starting with '/' to ensure styles load from any URL -->
   <link rel="stylesheet" href="resources/css/landing.css" />
   
   <style>
+    /* --- Theme Variables --- */
+    :root {
+      --bg-page-uc: #fafafa;
+      --bg-card-uc: #ffffff;
+      --text-title-uc: #111111;
+      --text-desc-uc: #666666;
+      --border-uc: #eaeaea;
+      --accent-uc: #0D8ABC; /* Blue to match your logo/avatar theme */
+    }
+
+    /* Dark Mode Support (Matches your navbar JS) */
+    html[data-theme="dark"] {
+      --bg-page-uc: #121212;
+      --bg-card-uc: #1e1e1e;
+      --text-title-uc: #f9fafb;
+      --text-desc-uc: #9ca3af;
+      --border-uc: #374151;
+      --accent-uc: #60a5fa;
+    }
+
     /* --- Under Construction Page Styles --- */
     body {
-      background-color: #fafafa;
+      background-color: var(--bg-page-uc);
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      transition: background-color 0.3s ease;
+      margin: 0;
+      font-family: sans-serif;
     }
 
     /* Pushes footer to the bottom */
@@ -28,14 +50,15 @@
 
     .construction-container {
       text-align: center;
-      max-width: 600px;
+      max-width: 500px;
       padding: 3rem 2rem;
-      background: #ffffff;
-      border: 1px solid #eaeaea;
-      border-radius: 20px;
+      background: var(--bg-card-uc);
+      border: 1px solid var(--border-uc);
+      border-radius: 12px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.05);
       position: relative;
       overflow: hidden;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     /* Decorative top accent */
@@ -46,82 +69,83 @@
       left: 0;
       width: 100%;
       height: 6px;
-      background: linear-gradient(90deg, #f39c12, #f1c40f);
+      background: var(--accent-uc);
+      transition: background-color 0.3s ease;
     }
 
     .icon-wrapper {
-      font-size: 4.5rem;
+      font-size: 4rem;
       margin-bottom: 1rem;
       display: inline-block;
-      animation: pulse 2.5s ease-in-out infinite;
+      animation: bounce 2s ease-in-out infinite;
     }
 
     .construction-title {
-      font-size: 3rem;
-      font-weight: 900;
-      color: #f39c12;
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--text-title-uc);
       margin-bottom: 0.5rem;
-      line-height: 1.2;
+      transition: color 0.3s ease;
     }
 
     .construction-subtitle {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #333;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--accent-uc);
       margin-bottom: 1rem;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
     .construction-desc {
-      font-size: 1.1rem;
-      color: #666;
+      font-size: 1.05rem;
+      color: var(--text-desc-uc);
       line-height: 1.6;
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
+      transition: color 0.3s ease;
     }
 
     .btn-return {
       display: inline-block;
-      background: #111;
-      color: #fff;
+      background: var(--accent-uc);
+      color: #ffffff;
       padding: 0.8rem 2rem;
       border-radius: 30px;
       text-decoration: none;
       font-weight: 600;
-      transition: background 0.3s ease, transform 0.2s ease;
+      transition: opacity 0.2s ease, transform 0.2s ease;
     }
 
     .btn-return:hover {
-      background: #f1c40f;
-      color: #111;
-      transform: translateY(-3px);
+      opacity: 0.85;
+      transform: translateY(-2px);
     }
 
-    /* A subtle pulse animation for the construction icon */
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.08); }
+    /* A gentle up and down animation */
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
   </style>
 </head>
 <body>
   
   <!-- Standard Navbar -->
-  <header class="navbar" id="site-navbar" data-root="/"></header>
+  <header class="navbar" id="site-navbar" data-root=""></header>
   <script src="resources/js/navbar.js"></script>
 
-  <!-- Main Content centered on the screen -->
+  <!-- Main Content -->
   <main>
-    <div class="construction-container animate-on-scroll">
+    <div class="construction-container">
       <div class="icon-wrapper">
         🚧
       </div>
-      <h1 class="construction-title">Under Construction</h1>
-      <h2 class="construction-subtitle">We're Working On It!</h2>
+      <h1 class="construction-title">Coming Soon!</h1>
+      <h2 class="construction-subtitle">We are building this page</h2>
       <p class="construction-desc">
-        Pardon our dust! We are currently working hard behind the scenes to build and refine this section of our website. Thank you for your patience and understanding, and please check back soon for updates.
+        This page is not ready yet because we are still working on it. Please visit us again later. Thank you for waiting!
       </p>
-      <a href="index.html" class="btn-return">← Return to Homepage</a>
+      <a href="index.html" class="btn-return">← Go Back Home</a>
     </div>
   </main>
 
@@ -141,10 +165,10 @@
       <div class="footer-legal-section">
         <strong style="color:#fff; font-size: 0.95rem; display: block; margin-bottom: 0.5rem;">Legal &amp; Compliance</strong>
         <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem;">
-          <li><a href="/about/privacy.html" style="color: #999; text-decoration: none;">Privacy Policy</a></li>
-          <li><a href="/about/terms.html" style="color: #999; text-decoration: none;">Terms &amp; Conditions</a></li>
-          <li><a href="/about/compliance.html" style="color: #999; text-decoration: none;">Data Compliance (RA 10173)</a></li>
-          <li><a href="/about/guidelines.html" style="color: #999; text-decoration: none;">Organization Guidelines</a></li>
+          <li><a href="about/privacy.html" style="color: #999; text-decoration: none;">Privacy Policy</a></li>
+          <li><a href="about/terms.html" style="color: #999; text-decoration: none;">Terms &amp; Conditions</a></li>
+          <li><a href="about/compliance.html" style="color: #999; text-decoration: none;">Data Compliance (RA 10173)</a></li>
+          <li><a href="about/guidelines.html" style="color: #999; text-decoration: none;">Organization Guidelines</a></li>
         </ul>
       </div>
 
