@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTLED | Birthdays</title>
+  <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
+  <link rel="stylesheet" href="../resources/css/landing.css" />
+  <meta property="og:title" content="BTLED Birthdays">
+  <meta property="og:description" content="Celebrating the birthdays of our BTLED Bravehearts!">
+  
+  <style>
+    /* --- Dedicated Birthday Page Styles --- */
+    body {
+      background-color: #fafafa;
+    }
+    
+    .birthday-hero {
+      background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+      padding: 8rem 1rem 4rem;
+      text-align: center;
+      color: #333;
+      border-bottom: 4px solid #fff;
+    }
+    
+    .birthday-hero h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: #b81d4b;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    .birthday-hero p {
+      font-size: 1.2rem;
+      color: #555;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .birthday-section {
+      padding: 4rem 1rem;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2rem;
+      color: #333;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+
+    .section-title::after {
+      content: "";
+      display: block;
+      width: 60px;
+      height: 4px;
+      background: #ff6b6b;
+      margin: 0.8rem auto 0;
+      border-radius: 2px;
+    }
+
+    .celebrants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .celebrant-card {
+      background: #ffffff;
+      border: 1px solid #eaeaea;
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .celebrant-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    }
+
+    .celebrant-img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 1rem;
+      border: 4px solid #f8f9fa;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+
+    .celebrant-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #222;
+      margin-bottom: 0.25rem;
+    }
+
+    .celebrant-program {
+      font-size: 0.9rem;
+      color: #777;
+      margin-bottom: 1rem;
+    }
+
+    .celebrant-date {
+      display: inline-block;
+      background: #f1f3f5;
+      color: #495057;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* --- "Today" Highlight Styles --- */
+    .celebrant-card.today {
+      border: 2px solid #ff6b6b;
+      background: linear-gradient(to bottom, #fffdfd, #fff0f0);
+      transform: scale(1.05);
+      box-shadow: 0 15px 30px rgba(255, 107, 107, 0.2);
+    }
+
+    .celebrant-card.today:hover {
+      transform: scale(1.05) translateY(-8px);
+    }
+
+    .celebrant-card.today .celebrant-img {
+      border-color: #ff6b6b;
+    }
+
+    .celebrant-card.today .celebrant-date {
+      background: #ff6b6b;
+      color: #fff;
+    }
+
+    .today-badge {
+      position: absolute;
+      top: 15px;
+      right: -35px;
+      background: #ff6b6b;
+      color: white;
+      padding: 0.3rem 3rem;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      transform: rotate(45deg);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.6); }
+      70% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Standard Navbar -->
+  <header class="navbar" id="site-navbar" data-root="../"></header>
+  <script src="../resources/js/navbar.js"></script>
+
+  <!-- Festive Hero Section -->
+  <section class="birthday-hero animate-on-scroll">
+    <h1>🎉 Happy Birthday! 🎉</h1>
+    <p>Celebrating the incredible members of the BTLED Organization born this month. Wishing you all success, joy, and a fantastic year ahead!</p>
+  </section>
+
+  <!-- Birthday Grid Section -->
+  <section class="birthday-section container">
+    <h2 class="section-title animate-on-scroll">This Month's Celebrants</h2>
+    
+    <!-- JS will populate this container. I left one "Today" card and one "Regular" card as examples so you can see the layout. -->
+    <div class="celebrants-grid" id="celebrants-container">
+      
+      <!-- EXAMPLE: TODAY'S CELEBRANT (Has the 'today' class and badge) -->
+      <div class="celebrant-card today animate-on-scroll">
+        <div class="today-badge">Today!</div>
+        <img src="resources/image/default-avatar.png" alt="Student Photo" class="celebrant-img" />
+        <h3 class="celebrant-name">Juan Dela Cruz</h3>
+        <p class="celebrant-program">BTLED - IA</p>
+        <span class="celebrant-date">🎂 September 15</span>
+      </div>
+
+      <!-- EXAMPLE: REGULAR CELEBRANT THIS MONTH -->
+      <div class="celebrant-card animate-on-scroll delay-1">
+        <img src="resources/image/default-avatar.png" alt="Student Photo" class="celebrant-img" />
+        <h3 class="celebrant-name">Maria Santos</h3>
+        <p class="celebrant-program">BTLED - IA</p>
+        <span class="celebrant-date">🎈 September 22</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Standard Footer -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <!-- Left Column: Brand info -->
+      <div class="footer-brand-section">
+        <strong class="footer-brand">BTLED Organization</strong>
+        <p style="color: #999; font-size: 0.9rem; margin-top: 0.5rem;">
+          One of the official student-led organizations at URS Cainta Campus,
+          the BTLEd - IA Program Organization.
+        </p>
+      </div>
+
+      <!-- Middle Column: Legal & Compliance links -->
+      <div class="footer-legal-section">
+        <strong style="color:#fff; font-size: 0.95rem; display: block; margin-bottom: 0.5rem;">Legal &amp; Compliance</strong>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem;">
+          <li><a href="../about/privacy.html" style="color: #999; text-decoration: none;">Privacy Policy</a></li>
+          <li><a href="../about/terms.html" style="color: #999; text-decoration: none;">Terms &amp; Conditions</a></li>
+          <li><a href="../about/compliance.html" style="color: #999; text-decoration: none;">Data Compliance (RA 10173)</a></li>
+          <li><a href="../about/guidelines.html" style="color: #999; text-decoration: none;">Organization Guidelines</a></li>
+        </ul>
+      </div>
+
+      <!-- Right Column: Copyright -->
+      <div class="footer-right">
+        <p style="color: #999; font-size: 0.85rem;">&copy; 2026 BTLED. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="../resources/js/birthday.js"></script>
+  <script src="../resources/js/index.js"></script>
+</body>
+</html>

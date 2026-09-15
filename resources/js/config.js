@@ -6,7 +6,7 @@ const SEMESTER = "1";
 (function () {
   "use strict";
 
-  const APPS_SCRIPT_URL_LOGGING = "https://script.google.com/macros/s/AKfycbzKbuWzST_psh8vfyTM9a8ynK4h8vyLBEf1MhCfZjstigaHOpPKA_3IpkovgJZqHHfw/exec"; // <--- Paste your /exec link here
+  const APPS_SCRIPT_URL_LOGGING = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
   const STORAGE_KEY_SESSION = "btled_session_meta";
   const STORAGE_KEY_STUDENT = "btled_student";
   const STORAGE_KEY_LAST_PAGE = "btled_last_logged_page";
