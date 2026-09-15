@@ -117,19 +117,45 @@ const SEMESTER = "1";
   });
 })();
 
-// tawk.to live chat integration
-var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-(function(){
-var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-s1.async=true;
-s1.src='https://embed.tawk.to/6aa375751e12513447b8045a/1k2785lfv';
-s1.charset='UTF-8';
-s1.setAttribute('crossorigin','*');
-s0.parentNode.insertBefore(s1,s0);
-})();
-
 (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-NQZHH3RH');
+
+var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
+
+try {
+  var studentData = JSON.parse(localStorage.getItem("btled_student"));
+
+  if (studentData) {
+    Tawk_API.visitor = {
+      name: ((studentData.name || "") + " " + (studentData.surname || "")).trim(),
+      email: studentData.email || ""
+    };
+
+    Tawk_API.onLoad = function() {
+      Tawk_API.setAttributes({
+        'Student ID': studentData.id || studentData['Student No.'],
+        'Program': studentData.program || studentData['Program'],
+        'Contact Number': studentData.contact || studentData['Contact Number'],
+        'Address': (studentData.street || "") + ", " + (studentData.municipality || "")
+      }, function (error) {
+        if (error) console.warn("Tawk.to attributes error:", error);
+      });
+    };
+  }
+} catch (err) {
+  console.warn("Could not load student data into Tawk.to:", err);
+}
+
+(function(){
+  var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
+  s1.async = true;
+  s1.src = 'https://embed.tawk.to/6aa375751e12513447b8045a/1k2785lfv';
+  s1.charset = 'UTF-8';
+  s1.setAttribute('crossorigin', '*');
+  if (s0 && s0.parentNode) {
+    s0.parentNode.insertBefore(s1, s0);
+  }
+})();
