@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BTLED | 404 Not Found</title>
+  <title>BTLED | Under Construction</title>
   <link rel="icon" type="image/png" href="resources/image/logo/2.png" />
-  <!-- Use absolute paths starting with '/' for 404 pages to ensure styles load from any broken URL -->
+  <!-- Use absolute paths starting with '/' to ensure styles load from any URL -->
   <link rel="stylesheet" href="resources/css/landing.css" />
   
   <style>
-    /* --- 404 Error Page Styles --- */
+    /* --- Under Construction Page Styles --- */
     body {
       background-color: #fafafa;
       display: flex;
@@ -26,7 +26,7 @@
       padding: 4rem 1rem;
     }
 
-    .error-container {
+    .construction-container {
       text-align: center;
       max-width: 600px;
       padding: 3rem 2rem;
@@ -39,32 +39,32 @@
     }
 
     /* Decorative top accent */
-    .error-container::before {
+    .construction-container::before {
       content: "";
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 6px;
-      background: linear-gradient(90deg, #ff6b6b, #b81d4b);
+      background: linear-gradient(90deg, #f39c12, #f1c40f);
     }
 
     .icon-wrapper {
       font-size: 4.5rem;
       margin-bottom: 1rem;
       display: inline-block;
-      animation: shake 4s ease-in-out infinite;
+      animation: pulse 2.5s ease-in-out infinite;
     }
 
-    .error-title {
-      font-size: 4rem;
+    .construction-title {
+      font-size: 3rem;
       font-weight: 900;
-      color: #ff6b6b;
+      color: #f39c12;
       margin-bottom: 0.5rem;
-      line-height: 1;
+      line-height: 1.2;
     }
 
-    .error-subtitle {
+    .construction-subtitle {
       font-size: 1.5rem;
       font-weight: 700;
       color: #333;
@@ -73,7 +73,7 @@
       letter-spacing: 1px;
     }
 
-    .error-desc {
+    .construction-desc {
       font-size: 1.1rem;
       color: #666;
       line-height: 1.6;
@@ -92,39 +92,36 @@
     }
 
     .btn-return:hover {
-      background: #ffcc00;
+      background: #f1c40f;
       color: #111;
       transform: translateY(-3px);
     }
 
-    /* A subtle "broken/wobble" animation for the missing page icon */
-    @keyframes shake {
-      0%, 100% { transform: rotate(0deg); }
-      25% { transform: rotate(-10deg); }
-      50% { transform: rotate(10deg); }
-      75% { transform: rotate(-5deg); }
+    /* A subtle pulse animation for the construction icon */
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
     }
   </style>
 </head>
 <body>
   
   <!-- Standard Navbar -->
-  <!-- Ensure navbar.js can handle root-relative paths if necessary -->
   <header class="navbar" id="site-navbar" data-root="/"></header>
   <script src="resources/js/navbar.js"></script>
 
   <!-- Main Content centered on the screen -->
   <main>
-    <div class="error-container animate-on-scroll">
+    <div class="construction-container animate-on-scroll">
       <div class="icon-wrapper">
-        🛠️
+        🚧
       </div>
-      <h1 class="error-title">404</h1>
-      <h2 class="error-subtitle">Page Not Found</h2>
-      <p class="error-desc">
-        Oops! It looks like this page is missing from the workshop. The link might be broken, or the blueprint may have been moved.
+      <h1 class="construction-title">Under Construction</h1>
+      <h2 class="construction-subtitle">We're Working On It!</h2>
+      <p class="construction-desc">
+        Pardon our dust! We are currently working hard behind the scenes to build and refine this section of our website. Thank you for your patience and understanding, and please check back soon for updates.
       </p>
-      <a href="index.html" class="btn-return">← Back to Basecamp</a>
+      <a href="index.html" class="btn-return">← Return to Homepage</a>
     </div>
   </main>
 
