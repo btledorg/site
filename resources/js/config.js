@@ -116,31 +116,39 @@ const SEMESTER = "1";
     checkSessionAndLogActivity();
   });
 })();
+
+// Google Tag Manager
 (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-NQZHH3RH');
 
-var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
+// Initialize Tawk_API safely
+window.Tawk_API = window.Tawk_API || {};
+window.Tawk_LoadStart = new Date();
 
 try {
   var studentData = JSON.parse(localStorage.getItem("btled_student"));
 
   if (studentData) {
-    Tawk_API.visitor = {
+    // Set default visitor details
+    window.Tawk_API.visitor = {
       name: ((studentData.name || "") + " " + (studentData.surname || "")).trim(),
       email: studentData.email || ""
     };
 
-    Tawk_API.onLoad = function() {
-      Tawk_API.setAttributes({
-        'Student ID': studentData.id || studentData['Student No.'],
-        'Program': studentData.program || studentData['Program'],
-        'Contact Number': studentData.contact || studentData['Contact Number'],
-        'Address': (studentData.street || "") + ", " + (studentData.municipality || "")
-      }, function (error) {
-        if (error) console.warn("Tawk.to attributes error:", error);
+    // Pass custom attributes via onLoad
+    window.Tawk_API.onLoad = function() {
+      window.Tawk_API.setAttributes({
+        'Student ID': studentData.id || studentData['Student No.'] || "",
+        'Program': studentData.program || studentData['Program'] || "",
+        'Contact Number': studentData.contact || studentData['Contact Number'] || "",
+        'Address': ((studentData.street || "") + ", " + (studentData.municipality || "")).replace(/^,\s*|,\s*$/g, '')
+      }, function(error) {
+        if (error) {
+          console.warn("Tawk.to attributes error:", error);
+        }
       });
     };
   }
@@ -148,6 +156,7 @@ try {
   console.warn("Could not load student data into Tawk.to:", err);
 }
 
+// Load Tawk.to Widget Script asynchronously
 (function(){
   var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
   s1.async = true;
