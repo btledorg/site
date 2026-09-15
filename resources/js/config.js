@@ -116,34 +116,29 @@ const SEMESTER = "1";
     checkSessionAndLogActivity();
   });
 })();
-
-
 (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-NQZHH3RH');
 
-// Tawk.to Integration with Student Details
 var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
 
 try {
-  // Retrieve and parse the student data from local storage
   var studentData = JSON.parse(localStorage.getItem("btled_student"));
-  
+
   if (studentData) {
-    // 1. Set the standard name and email for the Tawk dashboard
     Tawk_API.visitor = {
-      name: (studentData.name + " " + studentData.surname).trim(),
+      name: ((studentData.name || "") + " " + (studentData.surname || "")).trim(),
       email: studentData.email || ""
     };
 
-    // 2. Pass details using keys without spaces
     Tawk_API.onLoad = function() {
       Tawk_API.setAttributes({
-        'StudentID': studentData.id || studentData['Student No.'],
+        'Student ID': studentData.id || studentData['Student No.'],
         'Program': studentData.program || studentData['Program'],
-        'ContactNumber': studentData.contact || studentData['Contact Number']
+        'Contact Number': studentData.contact || studentData['Contact Number'],
+        'Address': (studentData.street || "") + ", " + (studentData.municipality || "")
       }, function (error) {
         if (error) console.warn("Tawk.to attributes error:", error);
       });
@@ -154,10 +149,12 @@ try {
 }
 
 (function(){
-  var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-  s1.async=true;
-  s1.src='https://embed.tawk.to/6aa375751e12513447b8045a/1k2785lfv';
-  s1.charset='UTF-8';
-  s1.setAttribute('crossorigin','*');
-  s0.parentNode.insertBefore(s1,s0);
+  var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
+  s1.async = true;
+  s1.src = 'https://embed.tawk.to/6aa375751e12513447b8045a/1k2785lfv';
+  s1.charset = 'UTF-8';
+  s1.setAttribute('crossorigin', '*');
+  if (s0 && s0.parentNode) {
+    s0.parentNode.insertBefore(s1, s0);
+  }
 })();
