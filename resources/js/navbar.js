@@ -258,7 +258,7 @@
         } else {
             // Fallback: Generate Initial Avatar based on First Name
             var initial = fName ? fName.charAt(0).toUpperCase() : "S";
-            studentPhoto = "https://ui-avatars.com/api/?name=" + initial + "&background=0D8ABC&color=fff&rounded=true&bold=true";
+            studentPhoto = "https://ui-avatars.com/api/?name=" + initial + "&background=0D8ABC&color=fff&&bold=true";
         }
       }
     } catch (e) {}
