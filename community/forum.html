@@ -17,33 +17,26 @@
   <meta name="twitter:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true">
   
   <style>
-    /* Reset and set body to flex column for full-screen layout */
     body {
       margin: 0;
       padding: 0;
       display: flex;
       flex-direction: column;
-      min-height: 100vh; /* Forces body to be at least the height of the screen */
+      min-height: 100vh;
       background-color: #f9f9f9;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
-    /* Navbar styling remains controlled by your landing.css */
-    
-    /* Main container flexes to fill all space between header and footer */
     .chat-main-container {
-      flex: 1; /* This makes the chat stretch to fill empty screen space */
+      flex: 1;
       display: flex;
       width: 100%;
-      /* Optional: Add a slight top margin if your navbar is fixed/absolute */
-      /* margin-top: 70px; */ 
     }
 
-    /* Iframe takes up 100% of the flexed container */
     #chat {
       width: 100%;
       height: 100%;
-      min-height: 600px; /* Fallback for very short screens */
+      min-height: 600px;
       border: none;
       display: block;
     }
@@ -59,7 +52,7 @@
   <main class="chat-main-container">
     <iframe 
       id="chat" 
-      src="https://organizations.minnit.chat/180847841454251/c/Main?embed" 
+      src="" 
       allowTransparency="true" 
       allow="microphone; camera; geolocation; display-capture; fullscreen">
     </iframe>
@@ -68,7 +61,6 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="container footer-grid">
-      <!-- Left Column: Brand info -->
       <div class="footer-brand-section">
         <strong class="footer-brand">BTLED Organization</strong>
         <p style="color: #999; font-size: 0.9rem; margin-top: 0.5rem;">
@@ -77,7 +69,6 @@
         </p>
       </div>
 
-      <!-- Middle Column: Legal & Compliance links -->
       <div class="footer-legal-section">
         <strong style="color:#fff; font-size: 0.95rem; display: block; margin-bottom: 0.5rem;">Legal &amp; Compliance</strong>
         <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem;">
@@ -88,21 +79,46 @@
         </ul>
       </div>
 
-      <!-- Right Column: Copyright -->
       <div class="footer-right">
         <p style="color: #999; font-size: 0.85rem;">&copy; 2026 BTLED. All rights reserved.</p>
       </div>
     </div>
   </footer>
 
-  <!-- Minnit Chat SDK Integration -->
+  <!-- Minnit Chat SDK & Auto-Nickname Integration -->
   <script src="https://minnit.chat/js/chatsdk.js?c=1772345196" defer></script>
   <script>
     let minnit;
 
     document.addEventListener("DOMContentLoaded", function() {
+      // Base Minnit Chat embed URL
+      let chatUrl = "https://organizations.minnit.chat/180847841454251/c/Main?embed";
+
+      try {
+        // Read local storage data (matches your btled_student configuration)
+        const studentDataStr = localStorage.getItem("btled_student");
+        if (studentDataStr) {
+          const student = JSON.parse(studentDataStr);
+          
+          // Construct name cleanly (e.g., "Espora, Mark Anthony" or fallback to generic name)
+          const surname = student.surname || student.Surname || "";
+          const firstName = student.name || student["First Name"] || student.firstName || "";
+          
+          if (surname && firstName) {
+            const fullName = `${firstName} ${surname}`.trim(); // Change to `${surname}, ${firstName}` if you prefer last-name first
+            chatUrl += `&nickname=${encodeURIComponent(fullName)}`;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load student profile into chat nickname:", err);
+      }
+
+      // Dynamically assign the populated URL to the iframe
+      const chatIframe = document.getElementById("chat");
+      chatIframe.src = chatUrl;
+
       // Initialize Minnit SDK targeting the iframe #chat
-      minnit = new MinnitChat({"iframe": document.getElementById("chat")});
+      minnit = new MinnitChat({"iframe": chatIframe});
       minnit.connect();
 
       minnit.on("messageHistory", function(data) {
