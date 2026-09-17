@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTLED | Community Chat</title>
+  <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
+  <link rel="stylesheet" href="../resources/css/landing.css" />
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://btledorg.github.io/">
+  <meta property="og:title" content="BTLED Organization | Community Chat">
+  <meta property="og:description" content="Connect with fellow BTLED students in our official community chat.">
+  <meta property="og:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="BTLED Organization | Community Chat">
+  <meta name="twitter:description" content="Official website of the BTLED Industrial Arts Student Organization.">
+  <meta name="twitter:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true">
+  
+  <style>
+    /* Reset and set body to flex column for full-screen layout */
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh; /* Forces body to be at least the height of the screen */
+      background-color: #f9f9f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* Navbar styling remains controlled by your landing.css */
+    
+    /* Main container flexes to fill all space between header and footer */
+    .chat-main-container {
+      flex: 1; /* This makes the chat stretch to fill empty screen space */
+      display: flex;
+      width: 100%;
+      /* Optional: Add a slight top margin if your navbar is fixed/absolute */
+      /* margin-top: 70px; */ 
+    }
+
+    /* Iframe takes up 100% of the flexed container */
+    #chat {
+      width: 100%;
+      height: 100%;
+      min-height: 600px; /* Fallback for very short screens */
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Header Navbar -->
+  <header class="navbar" id="site-navbar" data-root="../"></header>
+  <script src="../resources/js/navbar.js"></script>
+
+  <!-- Full-Screen Chat Section -->
+  <main class="chat-main-container">
+    <iframe 
+      id="chat" 
+      src="https://organizations.minnit.chat/180847841454251/c/Main?embed" 
+      allowTransparency="true" 
+      allow="microphone; camera; geolocation; display-capture; fullscreen">
+    </iframe>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <!-- Left Column: Brand info -->
+      <div class="footer-brand-section">
+        <strong class="footer-brand">BTLED Organization</strong>
+        <p style="color: #999; font-size: 0.9rem; margin-top: 0.5rem;">
+          One of the official student-led organizations at URS Cainta Campus,
+          the BTLEd - IA Program Organization.
+        </p>
+      </div>
+
+      <!-- Middle Column: Legal & Compliance links -->
+      <div class="footer-legal-section">
+        <strong style="color:#fff; font-size: 0.95rem; display: block; margin-bottom: 0.5rem;">Legal &amp; Compliance</strong>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem;">
+          <li><a href="../about/privacy.html" style="color: #999; text-decoration: none;">Privacy Policy</a></li>
+          <li><a href="../about/terms.html" style="color: #999; text-decoration: none;">Terms &amp; Conditions</a></li>
+          <li><a href="../about/compliance.html" style="color: #999; text-decoration: none;">Data Compliance (RA 10173)</a></li>
+          <li><a href="../about/guidelines.html" style="color: #999; text-decoration: none;">Organization Guidelines</a></li>
+        </ul>
+      </div>
+
+      <!-- Right Column: Copyright -->
+      <div class="footer-right">
+        <p style="color: #999; font-size: 0.85rem;">&copy; 2026 BTLED. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Minnit Chat SDK Integration -->
+  <script src="https://minnit.chat/js/chatsdk.js?c=1772345196" defer></script>
+  <script>
+    let minnit;
+
+    document.addEventListener("DOMContentLoaded", function() {
+      // Initialize Minnit SDK targeting the iframe #chat
+      minnit = new MinnitChat({"iframe": document.getElementById("chat")});
+      minnit.connect();
+
+      minnit.on("messageHistory", function(data) {
+        console.log("received new message history:", data);
+      });
+
+      minnit.on("message", function(data) {
+        console.log("received message:", data);
+      });
+    });
+  </script>
+</body>
+</html>

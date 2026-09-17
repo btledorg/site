@@ -16,6 +16,8 @@
   <meta name="twitter:description" content="Official website of the BTLED Industrial Arts Student Organization.">
   <meta name="twitter:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/banner.png?raw=true">
   
+  <!-- Free Client-Side OCR Engine (Tesseract.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   
   <style>
     :root {
@@ -539,6 +541,80 @@
       resize: vertical;
     }
     
+    /* ---- Payment Cards & Scanner Styles ---- */
+    .payment-options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .payment-card {
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--bg-page);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .payment-card:hover {
+      border-color: var(--accent-blue);
+      background: var(--bg-subtle);
+    }
+    .payment-card.selected {
+      border-color: var(--accent-blue);
+      background: #eef2ff;
+    }
+    .payment-card input[type="radio"] {
+      accent-color: var(--accent-blue);
+      transform: scale(1.2);
+    }
+    .payment-card-info strong {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-main);
+    }
+    .payment-card-info span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .payment-details-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .ocr-status-badge {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-top: 1rem;
+      display: none;
+    }
+    .ocr-status-badge.info {
+      display: block;
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+    .ocr-status-badge.success {
+      display: block;
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+    .ocr-status-badge.error {
+      display: block;
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
     /* ---- Registration Closed & Already Submitted Overlays ---- */
     #ended-overlay, #submitted-overlay {
       position: fixed;
@@ -555,7 +631,7 @@
     }
     
     @media (max-width: 600px) {
-      .form-grid {
+      .form-grid, .payment-options-grid {
         grid-template-columns: 1fr;
       }
       .full-width {
@@ -666,7 +742,7 @@
       </div>
     </div>
     
-    <!-- STEP 2: MECHANICS (Moved from bottom) -->
+    <!-- STEP 2: MECHANICS -->
     <div id="step-page-mech" class="step-content">
       <h3 class="section-title">Event Mechanics & Guidelines</h3>
       <div class="canva-container skeleton-dark" id="canva-wrapper">
@@ -779,953 +855,1272 @@
         <button class="btn btn-secondary" onclick="prevStep('2')">
           Back
         </button>
-<!-- TO THIS -->
-<button id="btn-step2-next" class="btn btn-primary">
-  Next
-</button>
+        <button id="btn-step2-next" class="btn btn-primary">
+          Next
+        </button>
+      </div>
     </div>
-  </div>
-  
-  <!-- STEP: COLLABORATORS -->
-  <div id="step-page-collab" class="step-content">
-    <h3 class="section-title">Team / Collaborators Details</h3>
-    <p
-    id="collab-instructions"
-    style="
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 1.5rem;
-    "
-    ></p>
-    <div id="collaborators-container"></div>
-    <div class="button-row">
-      <button class="btn btn-secondary" onclick="prevStep('collab')">
-        Back
-      </button>
-      <button
-      class="btn btn-primary"
-      onclick="nextStep('collab', validateCollab)"
-      >
-      Next
-    </button>
-  </div>
-</div>
-
-<!-- STEP: UPLOAD -->
-<div id="step-page-upload" class="step-content">
-  <h3 class="section-title">Requirement Upload</h3>
-  <p
-  style="
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 1.5rem;
-  "
-  >
-  Please complete your file upload via the secure module above before
-  proceeding.
-</p>
-<div style="width: 100%; height: 140px; border: none">
-  <iframe
-  id="upload-iframe"
-  src=""
-  style="width: 100%; height: 100%; border: none"
-  ></iframe>
-</div>
-<div class="button-row">
-  <button class="btn btn-secondary" onclick="prevStep('upload')">
-    Back
-  </button>
-  <button
-  id="btn-upload-next"
-  class="btn btn-primary"
-  onclick="handleUploadNext()"
-  >
-  Next
-</button>
-</div>
-</div>
-
-<!-- STEP: QUESTIONS -->
-<div id="step-page-questions" class="step-content">
-  <h3 class="section-title">Additional Questions</h3>
-  <div id="questions-container"></div>
-  <div class="button-row">
-    <button class="btn btn-secondary" onclick="prevStep('questions')">
-      Back
-    </button>
-    <button
-    class="btn btn-primary"
-    onclick="nextStep('questions', validateQuestions)"
-    >
-    Next
-  </button>
-</div>
-</div>
-
-<!-- FINAL STEP: SUBMIT -->
-<div id="step-page-submit" class="step-content">
-  <h3 class="section-title">Final Review & Submit</h3>
-  <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
-    Please review your details below carefully. Once submitted, changes cannot be made.
-  </p>
-  
-  <!-- Dynamic Summary Card container -->
-  <div id="review-summary-container" style="background: var(--bg-subtle); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 1.5rem; margin-bottom: 1.5rem; font-size: 0.85rem;">
-    <!-- Populated dynamically by script -->
-  </div>
-  
-  <div class="checkbox-group">
-    <input type="checkbox" id="confirm-accuracy-check" />
-    <label for="confirm-accuracy-check">I certify that all information provided above is correct and true to the best of my knowledge.</label>
-  </div>
-  
-  <div class="button-row">
-    <button class="btn btn-secondary" onclick="prevStep('submit')">
-      Back
-    </button>
-    <button id="btn-submit" class="btn btn-primary" disabled>
-      Confirm &amp; Submit Form
-    </button>
-  </div>
-</div>
-</div>
-
-<footer class="footer">
-  <div class="container footer-grid">
-    <!-- Left Column: Brand info -->
-    <div class="footer-brand-section">
-      <strong class="footer-brand">BTLED Organization</strong>
-      <p style="color: #999; font-size: 0.9rem; margin-top: 0.5rem;">
-        One of the official student-led organizations at URS Cainta Campus,
-        the BTLEd - IA Program Organization.
+    
+    <!-- STEP: PAYMENT & FREE TESSERACT SCANNER -->
+    <div id="step-page-payment" class="step-content">
+      <h3 class="section-title">Registration Fee & Payment</h3>
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+        <span style="font-size: 0.85rem; color: #1e40af; font-weight: 700;">REQUIRED REGISTRATION FEE:</span>
+        <div style="font-size: 1.6rem; font-weight: 900; color: #1e3a8a;" id="payment-fee-display">₱0.00</div>
+      </div>
+      
+      <p style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.75rem;">
+        Choose Payment Method <span style="color:red;">*</span>
       </p>
+      
+      <div class="payment-options-grid">
+        <label class="payment-card" id="card-pay-online">
+          <input type="radio" name="payment_method" value="online" id="radio-pay-online">
+          <div class="payment-card-info">
+            <strong>Online E-Wallet / Bank</strong>
+            <span>GCash / Maya Receipt</span>
+          </div>
+        </label>
+        
+        <label class="payment-card" id="card-pay-cash">
+          <input type="radio" name="payment_method" value="cash" id="radio-pay-cash">
+          <div class="payment-card-info">
+            <strong>Cash Onsite</strong>
+            <span>Pay directly to BTLED Officers</span>
+          </div>
+        </label>
+      </div>
+
+<!-- Online Payment Instructions & Scanner Receipt Reader -->
+      <div id="online-payment-box" style="display: none;">
+        <div class="payment-details-box">
+          <h4 style="font-size: 0.95rem; font-weight: 800; text-transform: uppercase; color: var(--accent-blue); margin-bottom: 0.5rem;">
+            📱 Online Payment Instructions
+          </h4>
+          
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Please transfer the exact amount of <strong id="instruction-fee-text" style="color:var(--text-main);">₱0.00</strong> to any of the official BTLED organization channels below:
+          </p>
+
+          <!-- Payment Methods Grid with Individual QRs -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; text-align: center;">
+            
+            <!-- GCash -->
+            <div style="background: #fff; padding: 1rem 0.5rem; border: 1px solid var(--border-light); border-radius: var(--radius-sm);">
+              <strong style="display:block; color: #0052FE; font-size: 0.9rem; margin-bottom: 0.5rem;">GCash</strong>
+              <img src="../resources/image/qr/gcash.jpg" alt="GCash QR" style="width: 100px; height: 100px; object-fit: cover; display: block; margin: 0 auto 0.5rem; background: #eee;">
+              <span style="font-size: 0.8rem; font-weight: 800; display: block; color: var(--text-main);">0970 033 7672</span>
+              <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Mark Anthony Espora</span>
+            </div>
+            
+            <!-- Maya -->
+            <div style="background: #fff; padding: 1rem 0.5rem; border: 1px solid var(--border-light); border-radius: var(--radius-sm);">
+              <strong style="display:block; color: #151515; font-size: 0.9rem; margin-bottom: 0.5rem;">Maya</strong>
+              <img src="../resources/image/qr/maya.jpg" alt="Maya QR" style="width: 100px; height: 100px; object-fit: cover; display: block; margin: 0 auto 0.5rem; background: #eee;">
+              <span style="font-size: 0.8rem; font-weight: 800; display: block; color: var(--text-main);">0970 033 7672</span>
+              <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Mark Anthony Espora</span>
+            </div>
+            
+            <!-- Maribank -->
+            <div style="background: #fff; padding: 1rem 0.5rem; border: 1px solid var(--border-light); border-radius: var(--radius-sm);">
+              <strong style="display:block; color: #ff5e00; font-size: 0.9rem; margin-bottom: 0.5rem;">Maribank</strong>
+              <img src="../resources/image/qr/maribank.png" alt="Maribank QR" style="width: 100px; height: 100px; object-fit: cover; display: block; margin: 0 auto 0.5rem; background: #eee;">
+              <span style="font-size: 0.8rem; font-weight: 800; display: block; color: var(--text-main);">0970 033 7672</span>
+              <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Mark Anthony Espora</span>
+            </div>
+            
+            <!-- BDO -->
+            <div style="background: #fff; padding: 1rem 0.5rem; border: 1px solid var(--border-light); border-radius: var(--radius-sm);">
+              <strong style="display:block; color: #002366; font-size: 0.9rem; margin-bottom: 0.5rem;">BDO</strong>
+              <img src="../resources/image/qr/bdo.png" alt="BDO QR" style="width: 100px; height: 100px; object-fit: cover; display: block; margin: 0 auto 0.5rem; background: #eee;">
+              <span style="font-size: 0.8rem; font-weight: 800; display: block; color: var(--text-main);">002491052411</span>
+              <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Mark Anthony Espora</span>
+            </div>
+            
+          </div>
+          
+          <p style="font-size: 0.8rem; color: var(--text-muted);">
+            After payment, upload your e-receipt screenshot below to automatically verify your transaction.
+          </p>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Upload Payment E-Receipt Screenshot <span style="color: red">*</span></label>
+          <input type="file" id="receipt-file-input" class="form-control" accept="image/*" />
+        </div>
+
+        <div id="ocr-status-message" class="ocr-status-badge"></div>
+      </div>
+
+      <!-- Cash Payment Instructions -->
+      <div id="cash-payment-box" style="display: none;">
+        <div class="payment-details-box">
+          <h4 style="font-size: 0.95rem; font-weight: 800; text-transform: uppercase; color: var(--accent-blue); margin-bottom: 0.5rem;">
+            💵 Cash Payment Instructions
+          </h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">
+            You have selected to pay cash onsite. Please settle your payment with any authorized BTLED Organization Officer or Treasurer before or during the event venue entry.
+          </p>
+        </div>
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="payment-agree-check" disabled />
+        <label for="payment-agree-check" id="payment-agree-label">
+          I confirm my payment selection and agree to settle the required registration fee.
+        </label>
+      </div>
+
+      <div class="button-row">
+        <button class="btn btn-secondary" onclick="prevStep('payment')">
+          Back
+        </button>
+        <button id="btn-payment-next" class="btn btn-primary" disabled onclick="nextStep('payment', validatePayment)">
+          Next
+        </button>
+      </div>
     </div>
-    
-    <!-- Middle Column: Legal & Compliance links -->
-    <div class="footer-legal-section">
-      <strong style="color: #fff; font-size: 0.95rem; display: block; margin-bottom: 0.5rem;">Legal &amp; Compliance</strong>
-      <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem;">
-        <li><a href="../about/privacy.html" style="color: #999; text-decoration: none;">Privacy Policy</a></li>
-        <li><a href="../about/terms.html" style="color: #999; text-decoration: none;">Terms &amp; Conditions</a></li>
-        <li><a href="../about/compliance.html" style="color: #999; text-decoration: none;">Data Compliance (RA 10173)</a></li>
-        <li><a href="../about/guidelines.html" style="color: #999; text-decoration: none;">Organization Guidelines</a></li>
-      </ul>
+
+    <!-- STEP: COLLABORATORS -->
+    <div id="step-page-collab" class="step-content">
+      <h3 class="section-title">Team / Collaborators Details</h3>
+      <p
+      id="collab-instructions"
+      style="
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      "
+      ></p>
+      <div id="collaborators-container"></div>
+      <div class="button-row">
+        <button class="btn btn-secondary" onclick="prevStep('collab')">
+          Back
+        </button>
+        <button
+        class="btn btn-primary"
+        onclick="nextStep('collab', validateCollab)"
+        >
+          Next
+        </button>
+      </div>
     </div>
-    
-    <!-- Right Column: Copyright -->
-    <div class="footer-right">
-      <p style="color: #999; font-size: 0.85rem;">&copy; 2026 BTLED. All rights reserved.</p>
+
+    <!-- STEP: UPLOAD -->
+    <div id="step-page-upload" class="step-content">
+      <h3 class="section-title">Requirement Upload</h3>
+      <p
+      style="
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      "
+      >
+        Please complete your file upload via the secure module above before
+        proceeding.
+      </p>
+      <div style="width: 100%; height: 140px; border: none">
+        <iframe
+        id="upload-iframe"
+        src=""
+        style="width: 100%; height: 100%; border: none"
+        ></iframe>
+      </div>
+      <div class="button-row">
+        <button class="btn btn-secondary" onclick="prevStep('upload')">
+          Back
+        </button>
+        <button
+        id="btn-upload-next"
+        class="btn btn-primary"
+        onclick="handleUploadNext()"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP: QUESTIONS -->
+    <div id="step-page-questions" class="step-content">
+      <h3 class="section-title">Additional Questions</h3>
+      <div id="questions-container"></div>
+      <div class="button-row">
+        <button class="btn btn-secondary" onclick="prevStep('questions')">
+          Back
+        </button>
+        <button
+        class="btn btn-primary"
+        onclick="nextStep('questions', validateQuestions)"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+
+    <!-- FINAL STEP: SUBMIT -->
+    <div id="step-page-submit" class="step-content">
+      <h3 class="section-title">Final Review & Submit</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+        Please review your details below carefully. Once submitted, changes cannot be made.
+      </p>
+      
+      <!-- Dynamic Summary Card container -->
+      <div id="review-summary-container" style="background: var(--bg-subtle); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 1.5rem; margin-bottom: 1.5rem; font-size: 0.85rem;">
+        <!-- Populated dynamically by script -->
+      </div>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="confirm-accuracy-check" />
+        <label for="confirm-accuracy-check">I certify that all information provided above is correct and true to the best of my knowledge.</label>
+      </div>
+      
+      <div class="button-row">
+        <button class="btn btn-secondary" onclick="prevStep('submit')">
+          Back
+        </button>
+        <button id="btn-submit" class="btn btn-primary" disabled>
+          Confirm &amp; Submit Form
+        </button>
+      </div>
     </div>
   </div>
-</footer>
 
-<script src="../resources/js/config.js"></script>
-<script src="../resources/js/birthday.js"></script>
-<script>
-  function getParam(key) {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has(key)) return urlParams.get(key);
-    } catch (e) {}
-    return "";
-  }
-  
-  function parseTeamSize(sizeStr) {
-    if (!sizeStr) return { min: 1, max: 1 };
-    const parts = String(sizeStr).trim().split("-");
-    if (parts.length === 2) {
-      return {
-        min: parseInt(parts[0], 10) || 1,
-        max: parseInt(parts[1], 10) || 1,
-      };
+  <footer class="footer">
+    <div class="container footer-grid">
+      <!-- Left Column: Brand info -->
+      <div class="footer-brand-section">
+        <strong class="footer-brand">BTLED Organization</strong>
+        <p style="color: #999; font-size: 0.9rem; margin-top: 0.5rem;">
+          One of the official student-led organizations at URS Cainta Campus,
+          the BTLEd - IA Program Organization.
+        </p>
+      </div>
+      
+      <!-- Middle Column: Legal & Compliance links -->
+      <div class="footer-legal-section">
+        <strong style="color: #fff; font-size: 0.95rem; display: block; margin-bottom: 0.5rem;">Legal &amp; Compliance</strong>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem;">
+          <li><a href="../about/privacy.html" style="color: #999; text-decoration: none;">Privacy Policy</a></li>
+          <li><a href="../about/terms.html" style="color: #999; text-decoration: none;">Terms &amp; Conditions</a></li>
+          <li><a href="../about/compliance.html" style="color: #999; text-decoration: none;">Data Compliance (RA 10173)</a></li>
+          <li><a href="../about/guidelines.html" style="color: #999; text-decoration: none;">Organization Guidelines</a></li>
+        </ul>
+      </div>
+      
+      <!-- Right Column: Copyright -->
+      <div class="footer-right">
+        <p style="color: #999; font-size: 0.85rem;">&copy; 2026 BTLED. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../resources/js/config.js"></script>
+  <script src="../resources/js/birthday.js"></script>
+  <script>
+    function getParam(key) {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has(key)) return urlParams.get(key);
+      } catch (e) {}
+      return "";
     }
-    const val = parseInt(parts[0], 10) || 1;
-    return { min: val, max: val };
-  }
-  
-  const FORM_TYPE =
-  getParam("formType") ||
-  getParam("form") ||
-  getParam("type") ||
-  "register";
-  const EVENT_ID =
-  getParam("eventID") ||
-  getParam("eventId") ||
-  getParam("event") ||
-  "BTLED Event";
-  const BASE_URL =
-  getParam("baseUrl") || APPS_SCRIPT_URL;
-  
-  let teamRange = parseTeamSize(
-  getParam("teamSize") || getParam("k") || "1",
-  );
-  let MIN_TEAM_SIZE = teamRange.min;
-  let MAX_TEAM_SIZE = teamRange.max;
-  let QUESTIONS = [];
-  let FILE_REQUIRED = false;
-  let uploadedFile = null;
-  let STEP_SEQUENCE = ["1", "mech", "2"];
-  
-  const STEP_LABELS = {
-    1: "Privacy",
-    mech: "Mechanics",
-    2: "User Data",
-    collab: "Team",
-    upload: "Upload",
-    questions: "Questions",
-    submit: "Submit"
-  };
-  
-  function getLocalStorageData() {
-    try {
-      const stored = localStorage.getItem("btled_student");
-      if (stored) return JSON.parse(stored);
-    } catch (e) {
-      console.warn("Could not read btled_student from localStorage:", e);
+    
+    function parseTeamSize(sizeStr) {
+      if (!sizeStr) return { min: 1, max: 1 };
+      const parts = String(sizeStr).trim().split("-");
+      if (parts.length === 2) {
+        return {
+          min: parseInt(parts[0], 10) || 1,
+          max: parseInt(parts[1], 10) || 1,
+        };
+      }
+      const val = parseInt(parts[0], 10) || 1;
+      return { min: val, max: val };
     }
-    return {};
-  }
-  
-  function formatTime(t) {
-    if (!t) return "";
-    if (typeof t === "string" && t.includes("T")) {
-      const d = new Date(t);
-      if (!isNaN(d.getTime()))
-      return d.toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
+    
+    const FORM_TYPE =
+    getParam("formType") ||
+    getParam("form") ||
+    getParam("type") ||
+    "register";
+    const EVENT_ID =
+    getParam("eventID") ||
+    getParam("eventId") ||
+    getParam("event") ||
+    "BTLED Event";
+    const BASE_URL =
+    getParam("baseUrl") || (typeof APPS_SCRIPT_URL !== "undefined" ? APPS_SCRIPT_URL : "");
+
+    // Registration Fee Parsing from URL
+    let REGISTRATION_FEE = parseFloat(getParam("fee") || getParam("Registration Fee") || getParam("feeAmount") || "0");
+
+    // Payment state variables
+    let selectedPaymentMethod = "";
+    let isPaymentVerified = false;
+    let scannedRefNumber = "";
+    let scannedAmountText = "";
+
+    let teamRange = parseTeamSize(
+    getParam("teamSize") || getParam("k") || "1",
+    );
+    let MIN_TEAM_SIZE = teamRange.min;
+    let MAX_TEAM_SIZE = teamRange.max;
+    let QUESTIONS = [];
+    let FILE_REQUIRED = false;
+    let uploadedFile = null;
+    let STEP_SEQUENCE = ["1", "mech", "2"];
+    
+    const STEP_LABELS = {
+      1: "Privacy",
+      mech: "Mechanics",
+      2: "User Data",
+      payment: "Payment",
+      collab: "Team",
+      upload: "Upload",
+      questions: "Questions",
+      submit: "Submit"
+    };
+    
+    function getLocalStorageData() {
+      try {
+        const stored = localStorage.getItem("btled_student");
+        if (stored) return JSON.parse(stored);
+      } catch (e) {
+        console.warn("Could not read btled_student from localStorage:", e);
+      }
+      return {};
+    }
+    
+    function formatTime(t) {
+      if (!t) return "";
+      if (typeof t === "string" && t.includes("T")) {
+        const d = new Date(t);
+        if (!isNaN(d.getTime()))
+        return d.toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+      }
+      if (
+      typeof t === "string" &&
+      /^\d{1,2}:\d{2}(:\d{2})?$/.test(t.trim())
+      ) {
+        const parts = t.trim().split(":");
+        let h = parseInt(parts[0], 10);
+        const ampm = h >= 12 ? "PM" : "AM";
+        h = h % 12 || 12;
+        return `${h}:${parts[1]} ${ampm}`;
+      }
+      return t;
+    }
+    
+    function setFieldState(elementId, value) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      const val = String(value || "").trim();
+      el.value = val;
+      if (val !== "") el.setAttribute("readonly", "readonly");
+      else el.removeAttribute("readonly");
+    }
+    
+    function removeSkeletons(title, venue, dateStr, timeStr, posterUrl) {
+      const typeBadge = document.getElementById("form-type-display");
+      const titleDisp = document.getElementById("event-title-display");
+      const venueWrap = document.getElementById("meta-venue-wrap");
+      const dateWrap = document.getElementById("meta-date-wrap");
+      const bgPoster = document.getElementById("header-bg-poster");
+      
+      typeBadge.classList.remove("skeleton");
+      typeBadge.textContent = `${FORM_TYPE.toUpperCase()} FORM`;
+      titleDisp.classList.remove("skeleton");
+      titleDisp.textContent = title.toUpperCase();
+      venueWrap.classList.remove("skeleton");
+      document.getElementById("meta-venue").textContent = venue || "TBA";
+      dateWrap.classList.remove("skeleton");
+      document.getElementById("meta-date").textContent =
+      dateStr + (timeStr ? ` • ${timeStr}` : "");
+      
+      if (posterUrl) bgPoster.style.backgroundImage = `url('${posterUrl}')`;
+      else
+      bgPoster.style.backgroundImage = `url('https://github.com/AstraMarky/Connect/blob/main/resources/img/3.png?raw=true')`;
+    }
+    
+function extractColorsFromImage(url) {
+      return new Promise((resolve) => {
+        try {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            try {
+              const size = 50;
+              const canvas = document.createElement("canvas");
+              canvas.width = size;
+              canvas.height = size;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0, size, size);
+              const data = ctx.getImageData(0, 0, size, size).data;
+              const buckets = {};
+              
+              for (let i = 0; i < data.length; i += 4) {
+                const r = data[i],
+                g = data[i + 1],
+                b = data[i + 2],
+                a = data[i + 3];
+                if (a < 200) continue;
+                
+                const brightness = (r + g + b) / 3;
+                
+                if (brightness < 25 || brightness > 130) continue;
+                
+                const key = `${Math.round(r / 24)}-${Math.round(g / 24)}-${Math.round(b / 24)}`;
+                if (!buckets[key])
+                buckets[key] = { r: 0, g: 0, b: 0, count: 0 };
+                buckets[key].r += r;
+                buckets[key].g += g;
+                buckets[key].b += b;
+                buckets[key].count++;
+              }
+              
+              const sorted = Object.values(buckets).sort(
+              (a, b) => b.count - a.count,
+              );
+              const colors = sorted.slice(0, 3).map((c) => {
+                const r = Math.round(c.r / c.count),
+                g = Math.round(c.g / c.count),
+                b = Math.round(c.b / c.count);
+                return `rgb(${r}, ${g}, ${b})`;
+              });
+              
+              resolve(colors.length ? colors : null);
+            } catch (err) {
+              console.warn(
+              "Color extraction blocked:",
+              err.message,
+              );
+              resolve(null);
+            }
+          };
+          img.onerror = () => resolve(null);
+
+          // FIX: Use a CORS proxy to bypass Google Drive's strict policy
+          if (url && url.startsWith("http")) {
+            img.src = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+          } else {
+            img.src = url;
+          }
+          
+        } catch (err) {
+          resolve(null);
+        }
       });
     }
-    if (
-    typeof t === "string" &&
-    /^\d{1,2}:\d{2}(:\d{2})?$/.test(t.trim())
-    ) {
-      const parts = t.trim().split(":");
-      let h = parseInt(parts[0], 10);
-      const ampm = h >= 12 ? "PM" : "AM";
-      h = h % 12 || 12;
-      return `${h}:${parts[1]} ${ampm}`;
+    
+    function applyColorScheme(colors) {
+      if (!colors || colors.length < 2) return;
+      document.documentElement.style.setProperty("--accent-blue", colors[0]);
+      document.documentElement.style.setProperty(
+      "--accent-yellow",
+      colors[1],
+      );
+      if (colors[2])
+      document.documentElement.style.setProperty(
+      "--border-dark",
+      colors[2],
+      );
     }
-    return t;
-  }
-  
-  function setFieldState(elementId, value) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    const val = String(value || "").trim();
-    el.value = val;
-    if (val !== "") el.setAttribute("readonly", "readonly");
-    else el.removeAttribute("readonly");
-  }
-  
-  function removeSkeletons(title, venue, dateStr, timeStr, posterUrl) {
-    const typeBadge = document.getElementById("form-type-display");
-    const titleDisp = document.getElementById("event-title-display");
-    const venueWrap = document.getElementById("meta-venue-wrap");
-    const dateWrap = document.getElementById("meta-date-wrap");
-    const bgPoster = document.getElementById("header-bg-poster");
     
-    typeBadge.classList.remove("skeleton");
-    typeBadge.textContent = `${FORM_TYPE.toUpperCase()} FORM`;
-    titleDisp.classList.remove("skeleton");
-    titleDisp.textContent = title.toUpperCase();
-    venueWrap.classList.remove("skeleton");
-    document.getElementById("meta-venue").textContent = venue || "TBA";
-    dateWrap.classList.remove("skeleton");
-    document.getElementById("meta-date").textContent =
-    dateStr + (timeStr ? ` • ${timeStr}` : "");
-    
-    if (posterUrl) bgPoster.style.backgroundImage = `url('${posterUrl}')`;
-    else
-    bgPoster.style.backgroundImage = `url('https://github.com/AstraMarky/Connect/blob/main/resources/img/3.png?raw=true')`;
-  }
-  
-  function extractColorsFromImage(url) {
-    return new Promise((resolve) => {
-      try {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
-          try {
-            const size = 50;
-            const canvas = document.createElement("canvas");
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0, size, size);
-            const data = ctx.getImageData(0, 0, size, size).data;
-            const buckets = {};
-            
-            for (let i = 0; i < data.length; i += 4) {
-              const r = data[i],
-              g = data[i + 1],
-              b = data[i + 2],
-              a = data[i + 3];
-              if (a < 200) continue;
-              
-              const brightness = (r + g + b) / 3;
-              
-              if (brightness < 25 || brightness > 130) continue;
-              
-              const key = `${Math.round(r / 24)}-${Math.round(g / 24)}-${Math.round(b / 24)}`;
-              if (!buckets[key])
-              buckets[key] = { r: 0, g: 0, b: 0, count: 0 };
-              buckets[key].r += r;
-              buckets[key].g += g;
-              buckets[key].b += b;
-              buckets[key].count++;
-            }
-            
-            const sorted = Object.values(buckets).sort(
-            (a, b) => b.count - a.count,
-            );
-            const colors = sorted.slice(0, 3).map((c) => {
-              const r = Math.round(c.r / c.count),
-              g = Math.round(c.g / c.count),
-              b = Math.round(c.b / c.count);
-              return `rgb(${r}, ${g}, ${b})`;
-            });
-            
-            resolve(colors.length ? colors : null);
-          } catch (err) {
-            console.warn(
-            "Color extraction blocked (likely CORS on poster host):",
-            err.message,
-            );
-            resolve(null);
-          }
-        };
-        img.onerror = () => resolve(null);
-        img.src = url;
-      } catch (err) {
-        resolve(null);
-      }
-    });
-  }
-  
-  function applyColorScheme(colors) {
-    if (!colors || colors.length < 2) return;
-    document.documentElement.style.setProperty("--accent-blue", colors[0]);
-    document.documentElement.style.setProperty(
-    "--accent-yellow",
-    colors[1],
-    );
-    if (colors[2])
-    document.documentElement.style.setProperty(
-    "--border-dark",
-    colors[2],
-    );
-  }
-  
-  async function populateHeaderAndForm() {
-    const localData = getLocalStorageData();
-    const surname = getParam("surname") || localData["Surname"] || localData["surname"] || "";
-    const firstName = getParam("firstName") || getParam("name") || localData["First Name"] || localData["name"] || "";
-    const middleName = getParam("middleName") || localData["Middle Name"] || localData["middleName"] || "";
-    const studentId = getParam("studentId") || getParam("studentid") || localData["Student No."] || localData["id"] || "";
-    const program = getParam("program") || localData["Program"] || localData["program"] || "";
-    const email = getParam("email") || localData["E-mail Address"] || localData["email"] || "";
-    const phone = getParam("contact") || localData["Contact Number"] || localData["contact"] || "";
-    const street = getParam("street") || localData["Street / Barangay"] || localData["street"] || "";
-    const municipality = getParam("municipality") || localData["Municipality / City"] || localData["municipality"] || "";
-    const province = getParam("province") || localData["Province"] || localData["province"] || "";
-    
-    // Fill out the visual fields immediately
-    setFieldState("field-surname", surname);
-    setFieldState("field-firstname", firstName);
-    setFieldState("field-middlename", middleName);
-    setFieldState("field-studentid", studentId);
-    setFieldState("field-program", program);
-    setFieldState("field-email", email);
-    setFieldState("field-phone", phone);
-    setFieldState("field-address", [street, municipality, province].filter(Boolean).join(", "));
-    
-    // Now fetch the event data
-    const targetUrl = `${BASE_URL}?module=eventinfo&eventID=${encodeURIComponent(EVENT_ID)}`;
-    
-    try {
-      const response = await fetch(targetUrl);
-      const json = await response.json();
+    async function populateHeaderAndForm() {
+      const localData = getLocalStorageData();
+      const surname = getParam("surname") || localData["Surname"] || localData["surname"] || "";
+      const firstName = getParam("firstName") || getParam("name") || localData["First Name"] || localData["name"] || "";
+      const middleName = getParam("middleName") || localData["Middle Name"] || localData["middleName"] || "";
+      const studentId = getParam("studentId") || getParam("studentid") || localData["Student No."] || localData["id"] || "";
+      const program = getParam("program") || localData["Program"] || localData["program"] || "";
+      const email = getParam("email") || localData["E-mail Address"] || localData["email"] || "";
+      const phone = getParam("contact") || localData["Contact Number"] || localData["contact"] || "";
+      const street = getParam("street") || localData["Street / Barangay"] || localData["street"] || "";
+      const municipality = getParam("municipality") || localData["Municipality / City"] || localData["municipality"] || "";
+      const province = getParam("province") || localData["Province"] || localData["province"] || "";
       
-      if (json.ok && json.found && json.data) {
-        const eventData = json.data;
+      // Fill out the visual fields immediately
+      setFieldState("field-surname", surname);
+      setFieldState("field-firstname", firstName);
+      setFieldState("field-middlename", middleName);
+      setFieldState("field-studentid", studentId);
+      setFieldState("field-program", program);
+      setFieldState("field-email", email);
+      setFieldState("field-phone", phone);
+      setFieldState("field-address", [street, municipality, province].filter(Boolean).join(", "));
+      
+      // Now fetch the event data
+      const targetUrl = `${BASE_URL}?module=eventinfo&eventID=${encodeURIComponent(EVENT_ID)}`;
+      
+      try {
+        const response = await fetch(targetUrl);
+        const json = await response.json();
         
-        // 1. Registration-closed check
-        const status = String(eventData.formStatus || "").trim().toLowerCase();
-        if (status === "ended" || String(eventData.formLink).trim().toLowerCase() === "ended") {
-          document.getElementById("ended-overlay").classList.add("show");
-          hideLoader();
-          return;
-        }
-        
-        // 2. Already-Submitted check
-        if (studentId && eventData.allowResubmit !== true) {
-          try {
-            const subRes = await fetch(`${BASE_URL}?module=checksubmission&eventID=${encodeURIComponent(EVENT_ID)}&studentId=${encodeURIComponent(studentId)}`);
-            const subJson = await subRes.json();
-            
-            if (subJson.ok && subJson.submitted) {
-              document.getElementById("submitted-overlay").classList.add("show");
-              hideLoader();
-              return;
-            }
-          } catch (e) {
-            console.warn("Could not check prior submissions", e);
+        if (json.ok && json.found && json.data) {
+          const eventData = json.data;
+          
+          // 1. Registration-closed check
+          const status = String(eventData.formStatus || "").trim().toLowerCase();
+          if (status === "ended" || String(eventData.formLink).trim().toLowerCase() === "ended") {
+            document.getElementById("ended-overlay").classList.add("show");
+            hideLoader();
+            return;
           }
-        }
-        
-        // If we pass the checks, continue building the form UI
-        const title = eventData.name || EVENT_ID;
-        const venue = eventData.venue || "TBA";
-        const dateStr = eventData.dateDisplay || "Date TBA";
-        const timeStr = formatTime(eventData.time);
-        const posterUrl = eventData.poster;
-        
-        removeSkeletons(title, venue, dateStr, timeStr, posterUrl);
-        
-        if (posterUrl) {
-          const colors = await extractColorsFromImage(posterUrl);
-          applyColorScheme(colors);
-        }
-        
-        const canvaLink = eventData.canvaLink;
-        const canvaWrapper = document.getElementById("canva-wrapper");
-        const canvaIframe = document.getElementById("canva-iframe");
-        if (canvaLink && canvaLink.includes("canva.com")) {
-          canvaWrapper.classList.remove("skeleton-dark");
-          const embedUrl = canvaLink.endsWith("/view?embed")
-          ? canvaLink
-          : `${canvaLink.replace(/\/view.*$/, "")}`;
-          canvaIframe.src = embedUrl;
+          
+          // 2. Already-Submitted check
+          if (studentId && eventData.allowResubmit !== true) {
+            try {
+              const subRes = await fetch(`${BASE_URL}?module=checksubmission&eventID=${encodeURIComponent(EVENT_ID)}&studentId=${encodeURIComponent(studentId)}`);
+              const subJson = await subRes.json();
+              
+              if (subJson.ok && subJson.submitted) {
+                document.getElementById("submitted-overlay").classList.add("show");
+                hideLoader();
+                return;
+              }
+            } catch (e) {
+              console.warn("Could not check prior submissions", e);
+            }
+          }
+          
+          // If we pass the checks, continue building the form UI
+          const title = eventData.name || EVENT_ID;
+          const venue = eventData.venue || "TBA";
+          const dateStr = eventData.dateDisplay || "Date TBA";
+          const timeStr = formatTime(eventData.time);
+          const posterUrl = eventData.poster;
+
+          // Check if fee is defined in event data if not set in URL
+          if (!REGISTRATION_FEE && eventData.fee) {
+            REGISTRATION_FEE = parseFloat(eventData.fee) || 0;
+          }
+          
+          removeSkeletons(title, venue, dateStr, timeStr, posterUrl);
+          
+          if (posterUrl) {
+            const colors = await extractColorsFromImage(posterUrl);
+            applyColorScheme(colors);
+          }
+          
+          const canvaLink = eventData.canvaLink;
+          const canvaWrapper = document.getElementById("canva-wrapper");
+          const canvaIframe = document.getElementById("canva-iframe");
+          if (canvaLink && canvaLink.includes("canva.com")) {
+            canvaWrapper.classList.remove("skeleton-dark");
+            const embedUrl = canvaLink.endsWith("/view?embed")
+            ? canvaLink
+            : `${canvaLink.replace(/\/view.*$/, "")}`;
+            canvaIframe.src = embedUrl;
+          } else {
+            canvaWrapper.style.display = "none";
+          }
+          
+          if (eventData.participants) {
+            const parsedSize = parseTeamSize(eventData.participants);
+            MIN_TEAM_SIZE = parsedSize.min;
+            MAX_TEAM_SIZE = parsedSize.max;
+          }
+          
+          FILE_REQUIRED = String(eventData.file || "").trim().toLowerCase() === "yes";
+          QUESTIONS = String(eventData.questions || "").split(",").map((q) => q.trim()).filter(Boolean);
+          
         } else {
-          canvaWrapper.style.display = "none";
+          removeSkeletons(EVENT_ID.toUpperCase(), "Not Found", "Not Found", "", "");
+          if (json.ok && !json.found) console.warn("Event not found:", EVENT_ID);
         }
-        
-        if (eventData.participants) {
-          const parsedSize = parseTeamSize(eventData.participants);
-          MIN_TEAM_SIZE = parsedSize.min;
-          MAX_TEAM_SIZE = parsedSize.max;
-        }
-        
-        FILE_REQUIRED = String(eventData.file || "").trim().toLowerCase() === "yes";
-        QUESTIONS = String(eventData.questions || "").split(",").map((q) => q.trim()).filter(Boolean);
-        
-      } else {
-        removeSkeletons(EVENT_ID.toUpperCase(), "Not Found", "Not Found", "", "");
-        if (json.ok && !json.found) console.warn("Event not found:", EVENT_ID);
+      } catch (err) {
+        removeSkeletons(EVENT_ID.toUpperCase(), "Error Fetching", "Error Fetching", "", "");
+        console.error("Failed to fetch event data:", err);
       }
-    } catch (err) {
-      removeSkeletons(EVENT_ID.toUpperCase(), "Error Fetching", "Error Fetching", "", "");
-      console.error("Failed to fetch event data:", err);
+      
+      setupPaymentUI();
+      buildStepSequence();
+      setupCollaborators();
+      setupUpload();
+      setupQuestions();
+      hideLoader();
     }
     
-    buildStepSequence();
-    setupCollaborators();
-    setupUpload();
-    setupQuestions();
-    hideLoader();
-  }
-  
-  function hideLoader() {
-    document.getElementById("global-loader").classList.add("hidden");
-  }
-  
-  // ---- Dynamic step sequence + indicator ----
-  function buildStepSequence() {
-    STEP_SEQUENCE = ["1", "mech", "2"];
-    if (MAX_TEAM_SIZE > 1) STEP_SEQUENCE.push("collab");
-    if (FILE_REQUIRED) STEP_SEQUENCE.push("upload");
-    if (QUESTIONS.length) STEP_SEQUENCE.push("questions");
-    STEP_SEQUENCE.push("submit");
-    renderStepIndicator();
-    goToStep(STEP_SEQUENCE[0]);
-  }
-  
-  function renderStepIndicator() {
-    const container = document.getElementById("step-indicator");
-    container.innerHTML = STEP_SEQUENCE.map(
-    (id, i) =>
-    `<div id="step-tab-${id}" class="step-item">${i + 1}. ${STEP_LABELS[id]}</div>`,
-    ).join("");
-  }
-  
-  function goToStep(id) {
-    document
-    .querySelectorAll(".step-content")
-    .forEach((p) => p.classList.remove("active"));
-    document
-    .querySelectorAll(".step-item")
-    .forEach((s) => s.classList.remove("active"));
-    document.getElementById(`step-page-${id}`).classList.add("active");
-    const tab = document.getElementById(`step-tab-${id}`);
-    if (tab) tab.classList.add("active");
-    
-    // If arriving at the submit page, generate the live review summary
-    if (id === "submit") {
-      generateReviewSummary();
+    function hideLoader() {
+      document.getElementById("global-loader").classList.add("hidden");
     }
     
-    window.scrollTo({ top: 100, behavior: "smooth" });
-  }
-  
-  function nextStep(currentId, validateFn) {
-    if (validateFn && !validateFn()) return;
-    const idx = STEP_SEQUENCE.indexOf(currentId);
-    if (idx < STEP_SEQUENCE.length - 1) goToStep(STEP_SEQUENCE[idx + 1]);
-  }
-  function prevStep(currentId) {
-    const idx = STEP_SEQUENCE.indexOf(currentId);
-    if (idx > 0) goToStep(STEP_SEQUENCE[idx - 1]);
-  }
-  
-  // ---- Step 2 validation ----
-// ---- Step 2 validation ----
-  async function validateStep2() {
-    const requiredFields = [
-      "field-surname",
-      "field-firstname",
-      "field-studentid",
-      "field-program",
-      "field-phone",
-      "field-email",
-      "field-address",
-      "field-fblink",
-    ];
-    for (const fieldId of requiredFields) {
-      const el = document.getElementById(fieldId);
-      const val = el.value.trim();
-      if (!val) {
-        await window.showCustomAlert(
-          "Please fill out all required submitter fields before proceeding."
-        );
-        el.focus();
+    // ---- Dynamic step sequence + indicator ----
+    function buildStepSequence() {
+      STEP_SEQUENCE = ["1", "mech", "2"];
+      if (MAX_TEAM_SIZE > 1) STEP_SEQUENCE.push("collab");
+      if (REGISTRATION_FEE > 0) STEP_SEQUENCE.push("payment");
+      if (FILE_REQUIRED) STEP_SEQUENCE.push("upload");
+      if (QUESTIONS.length) STEP_SEQUENCE.push("questions");
+      STEP_SEQUENCE.push("submit");
+      renderStepIndicator();
+      goToStep(STEP_SEQUENCE[0]);
+    }
+    
+    function renderStepIndicator() {
+      const container = document.getElementById("step-indicator");
+      container.innerHTML = STEP_SEQUENCE.map(
+      (id, i) =>
+      `<div id="step-tab-${id}" class="step-item">${i + 1}. ${STEP_LABELS[id]}</div>`,
+      ).join("");
+    }
+    
+    function goToStep(id) {
+      document
+      .querySelectorAll(".step-content")
+      .forEach((p) => p.classList.remove("active"));
+      document
+      .querySelectorAll(".step-item")
+      .forEach((s) => s.classList.remove("active"));
+      document.getElementById(`step-page-${id}`).classList.add("active");
+      const tab = document.getElementById(`step-tab-${id}`);
+      if (tab) tab.classList.add("active");
+      
+      // If arriving at the submit page, generate the live review summary
+      if (id === "submit") {
+        generateReviewSummary();
+      }
+      
+      window.scrollTo({ top: 100, behavior: "smooth" });
+    }
+    
+    function nextStep(currentId, validateFn) {
+      if (validateFn && !validateFn()) return;
+      const idx = STEP_SEQUENCE.indexOf(currentId);
+      if (idx < STEP_SEQUENCE.length - 1) goToStep(STEP_SEQUENCE[idx + 1]);
+    }
+    function prevStep(currentId) {
+      const idx = STEP_SEQUENCE.indexOf(currentId);
+      if (idx > 0) goToStep(STEP_SEQUENCE[idx - 1]);
+    }
+    
+    // ---- Step 2 validation ----
+    async function validateStep2() {
+      const requiredFields = [
+        "field-surname",
+        "field-firstname",
+        "field-studentid",
+        "field-program",
+        "field-phone",
+        "field-email",
+        "field-address",
+        "field-fblink",
+      ];
+      for (const fieldId of requiredFields) {
+        const el = document.getElementById(fieldId);
+        const val = el.value.trim();
+        if (!val) {
+          if (window.showCustomAlert) {
+            await window.showCustomAlert(
+              "Please fill out all required submitter fields before proceeding."
+            );
+          } else {
+            alert("Please fill out all required submitter fields before proceeding.");
+          }
+          el.focus();
+          return false;
+        }
+      }
+
+      // Explicit Facebook Link Validation
+      const fbInput = document.getElementById("field-fblink");
+      const fbVal = fbInput.value.trim();
+      const fbPattern = /^https?:\/\/(www\.)?(facebook|fb)\.com\/.+/i;
+      
+      if (!fbPattern.test(fbVal)) {
+        if (window.showCustomAlert) {
+          await window.showCustomAlert(
+            "Please enter a valid Facebook profile or page link (e.g., https://facebook.com/username) before proceeding."
+          );
+        } else {
+          alert("Please enter a valid Facebook profile or page link (e.g., https://facebook.com/username) before proceeding.");
+        }
+        fbInput.focus();
         return false;
       }
+
+      return true;
     }
 
-    // Explicit Facebook Link Validation
-    const fbInput = document.getElementById("field-fblink");
-    const fbVal = fbInput.value.trim();
-    // Regex checks for standard facebook.com or fb.com profile/page structures
-    const fbPattern = /^https?:\/\/(www\.)?(facebook|fb)\.com\/.+/i;
-    
-    if (!fbPattern.test(fbVal)) {
-      await window.showCustomAlert(
-        "Please enter a valid Facebook profile or page link (e.g., https://facebook.com/username) before proceeding."
-      );
-      fbInput.focus();
-      return false;
+    // ---- Payment & Free Tesseract.js Scanner Setup ----
+    function setupPaymentUI() {
+      const feeDisplay = document.getElementById("payment-fee-display");
+      const instructionFee = document.getElementById("instruction-fee-text");
+      if (feeDisplay) feeDisplay.textContent = `₱${REGISTRATION_FEE.toFixed(2)}`;
+      if (instructionFee) instructionFee.textContent = `₱${REGISTRATION_FEE.toFixed(2)}`;
+
+      const radioOnline = document.getElementById("radio-pay-online");
+      const radioCash = document.getElementById("radio-pay-cash");
+      const cardOnline = document.getElementById("card-pay-online");
+      const cardCash = document.getElementById("card-pay-cash");
+      const onlineBox = document.getElementById("online-payment-box");
+      const cashBox = document.getElementById("cash-payment-box");
+      const paymentAgreeCheck = document.getElementById("payment-agree-check");
+      const btnPaymentNext = document.getElementById("btn-payment-next");
+      const receiptInput = document.getElementById("receipt-file-input");
+      const ocrStatus = document.getElementById("ocr-status-message");
+
+      function updatePaymentMethodSelection(method) {
+        selectedPaymentMethod = method;
+        isPaymentVerified = false;
+        paymentAgreeCheck.checked = false;
+        btnPaymentNext.disabled = true;
+
+        if (method === "online") {
+          cardOnline.classList.add("selected");
+          cardCash.classList.remove("selected");
+          onlineBox.style.display = "block";
+          cashBox.style.display = "none";
+          paymentAgreeCheck.disabled = true; // Wait for scanner verification
+        } else if (method === "cash") {
+          cardCash.classList.add("selected");
+          cardOnline.classList.remove("selected");
+          cashBox.style.display = "block";
+          onlineBox.style.display = "none";
+          paymentAgreeCheck.disabled = false; // Cash can be manually agreed
+          isPaymentVerified = true;
+        }
+      }
+
+      radioOnline.addEventListener("change", () => updatePaymentMethodSelection("online"));
+      radioCash.addEventListener("change", () => updatePaymentMethodSelection("cash"));
+
+      paymentAgreeCheck.addEventListener("change", () => {
+        btnPaymentNext.disabled = !paymentAgreeCheck.checked;
+      });
+
+      // Local Client-Side Tesseract Scanner
+      receiptInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        ocrStatus.className = "ocr-status-badge info";
+        ocrStatus.textContent = "🔍 Initializing Scanner... Please wait.";
+        paymentAgreeCheck.disabled = true;
+        paymentAgreeCheck.checked = false;
+        btnPaymentNext.disabled = true;
+
+        try {
+          const result = await Tesseract.recognize(
+            file,
+            'eng',
+            {
+              logger: m => {
+                if (m.status === 'recognizing text') {
+                  const progress = Math.round(m.progress * 100);
+                  ocrStatus.textContent = `⚡ Scanning Receipt... ${progress}%`;
+                }
+              }
+            }
+          );
+
+          const text = result.data.text;
+          console.log("Extracted Text:\n", text);
+
+          // Smart Reference Number Extraction (ignores spaces and new lines accurately)
+const refRegex = /(?:Ref(?:erence)?\s*(?:No\.?|Num(?:ber)?|ID|#)?|Txn\s*(?:ID|No\.?)?|Transaction\s*(?:ID|No\.?)|Control\s*(?:No\.?)|Trace\s*(?:No\.?))[\.\s:]*([A-Z0-9][A-Z0-9 \t-]{4,30})/i;
+          const refMatch = text.match(refRegex);
+
+          if (refMatch) {
+            // Found explicit reference label - strip out horizontal spaces, tabs, and hyphens
+            scannedRefNumber = refMatch[1].replace(/[ \t-]+/g, '');
+          } else {
+            // Fallback: Find the longest number on the receipt that IS NOT a phone number
+            // (Restricted to horizontal spaces to prevent reading across multiple lines)
+            const allNumbers = text.match(/\d[ \t\d]{5,}\d/g) || [];
+            const cleanedNumbers = allNumbers.map(n => n.replace(/[ \t]+/g, ''));
+            
+            // Filter out standard PH mobile numbers (11 digits starting with 09)
+            const potentialRefs = cleanedNumbers.filter(n => !(n.startsWith('09') && n.length === 11));
+            
+            // Sort by length (descending) and grab the longest one
+            scannedRefNumber = potentialRefs.length > 0 
+              ? potentialRefs.sort((a, b) => b.length - a.length)[0] 
+              : "Unknown Ref";
+          }
+
+          // Amount matching: Search for target fee in text
+          const feeStr = REGISTRATION_FEE.toString();
+          const feeIntStr = Math.floor(REGISTRATION_FEE).toString();
+          const cleanText = text.replace(/,/g, '');
+
+          const containsFee = cleanText.includes(feeStr) || cleanText.includes(feeIntStr);
+
+          if (containsFee || REGISTRATION_FEE === 0) {
+            isPaymentVerified = true;
+            scannedAmountText = `₱${REGISTRATION_FEE.toFixed(2)}`;
+            ocrStatus.className = "ocr-status-badge success";
+            ocrStatus.innerHTML = `✅ <strong>Receipt Verified!</strong><br>Scanned Amount: ₱${REGISTRATION_FEE.toFixed(2)} | Reference No: <strong>${scannedRefNumber}</strong>`;
+            paymentAgreeCheck.disabled = false;
+            paymentAgreeCheck.checked = true;
+            btnPaymentNext.disabled = false;
+          } else {
+            isPaymentVerified = false;
+            ocrStatus.className = "ocr-status-badge error";
+            ocrStatus.innerHTML = `⚠️ <strong>Amount Mismatch or Unreadable!</strong><br>Could not automatically find ₱${REGISTRATION_FEE.toFixed(2)} on receipt. Please ensure receipt screenshot is clear.`;
+            paymentAgreeCheck.disabled = false; // Allow manual confirm fallback
+          }
+        } catch (err) {
+          console.error("Scanner Error:", err);
+          ocrStatus.className = "ocr-status-badge error";
+          ocrStatus.textContent = "⚠️ Scanner encountered an error. You may proceed by confirming your payment checkbox manually.";
+          paymentAgreeCheck.disabled = false;
+        }
+      });
     }
 
-    return true;
-  }
-  
-  function setupCollaborators() {
-    if (MAX_TEAM_SIZE <= 1) return;
-    const container = document.getElementById("collaborators-container");
-    const instructions = document.getElementById("collab-instructions");
+    function validatePayment() {
+      if (REGISTRATION_FEE <= 0) return true;
+      if (!selectedPaymentMethod) {
+        alert("Please select a payment method.");
+        return false;
+      }
+      const check = document.getElementById("payment-agree-check");
+      if (!check.checked) {
+        alert("Please confirm your payment agreement checkbox before proceeding.");
+        return false;
+      }
+      return true;
+    }
     
-    instructions.textContent =
-    MIN_TEAM_SIZE === MAX_TEAM_SIZE
-    ? `This event requires a team of exactly ${MAX_TEAM_SIZE} members (including the submitter).`
-    : `This event requires a minimum of ${MIN_TEAM_SIZE} and a maximum of ${MAX_TEAM_SIZE} members (including the submitter). If you start filling a member's details, all of that member's fields become required.`;
-    
-    let html = `
-      <div class="collab-card">
-        <div class="collab-card-title">Member 1 (Submitter / Primary)</div>
-        <p class="collab-card-note">Populated from Submitter Information step.</p>
-        <div class="member1-upload-status" id="member1-upload-status" style="display:none;"></div>
-      </div>
-    `;
-    
-    for (let i = 2; i <= MAX_TEAM_SIZE; i++) {
-      const isRequired = i <= MIN_TEAM_SIZE;
-      const requiredHTML = isRequired
-      ? '<span style="color:red;">*</span>'
-      : '<span style="color:#9ca3af; font-size:0.7rem; margin-left:4px;">(Optional)</span>';
-      html += `
+    function setupCollaborators() {
+      if (MAX_TEAM_SIZE <= 1) return;
+      const container = document.getElementById("collaborators-container");
+      const instructions = document.getElementById("collab-instructions");
+      
+      instructions.textContent =
+      MIN_TEAM_SIZE === MAX_TEAM_SIZE
+      ? `This event requires a team of exactly ${MAX_TEAM_SIZE} members (including the submitter).`
+      : `This event requires a minimum of ${MIN_TEAM_SIZE} and a maximum of ${MAX_TEAM_SIZE} members (including the submitter). If you start filling a member's details, all of that member's fields become required.`;
+      
+      let html = `
         <div class="collab-card">
-          <div class="collab-card-title">Member ${i} Details</div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Student ID ${requiredHTML}</label>
-              <input type="text" id="collab-id-${i}" class="form-control" placeholder="e.g. C2025-00000" />
-            </div>
-            <div class="form-group full-width">
-              <label>Full Name ${requiredHTML}</label>
-              <input type="text" id="collab-name-${i}" class="form-control" placeholder="Last Name, First Name M.I" />
-            </div>
-          </div>
+          <div class="collab-card-title">Member 1 (Submitter / Primary)</div>
+          <p class="collab-card-note">Populated from Submitter Information step.</p>
+          <div class="member1-upload-status" id="member1-upload-status" style="display:none;"></div>
         </div>
       `;
-    }
-    container.innerHTML = html;
-  }
-  
-  async function validateCollab() {
-    if (MAX_TEAM_SIZE <= 1) return true;
-    for (let i = 2; i <= MAX_TEAM_SIZE; i++) {
-      const isRequired = i <= MIN_TEAM_SIZE;
-      const cId = document.getElementById(`collab-id-${i}`).value.trim();
-      const cName = document
-      .getElementById(`collab-name-${i}`)
-      .value.trim();
-      const anyFilled = cId || cName;
-      const allFilled = cId && cName;
-      if (isRequired && !allFilled) {
-        await window.showCustomAlert(`Please fill out all required fields for Member ${i}.`);
-        return false;
-      }
-      if (!isRequired && anyFilled && !allFilled) {
-        await window.showCustomAlert(
-        `Please complete all fields for Member ${i}, or leave them entirely blank.`,
-        );
-        return false;
-      }
-    }
-    return true;
-  }
-  
-  function updateMember1UploadDisplay() {
-    const el = document.getElementById("member1-upload-status");
-    if (!el) return;
-    if (uploadedFile) {
-      el.style.display = "inline-flex";
-      el.textContent = `📎 Uploaded: ${uploadedFile.name}`;
-    } else {
-      el.style.display = "none";
-    }
-  }
-  
-  function setupUpload() {
-    if (!FILE_REQUIRED) return;
-    
-    const localData = getLocalStorageData();
-    const studentId =
-    document.getElementById("field-studentid").value.trim() ||
-    localData["Student No."] ||
-    localData["id"] ||
-    "";
-    const surname =
-    document.getElementById("field-surname").value.trim() ||
-    localData["Surname"] ||
-    localData["surname"] ||
-    "";
-    const firstname =
-    document.getElementById("field-firstname").value.trim() ||
-    localData["First Name"] ||
-    localData["name"] ||
-    "";
-    
-    const iframe = document.getElementById("upload-iframe");
-    
-    if (iframe && studentId) {
-      iframe.src = `${BASE_URL}?page=UploadIframe&studentid=${encodeURIComponent(studentId)}&surname=${encodeURIComponent(surname)}&firstname=${encodeURIComponent(firstname)}&event=${encodeURIComponent(EVENT_ID)}`;
-    }
-  }
-  
-  let isUploadVerified = false;
-  let verifiedUploads = null;
-  
-  async function handleUploadNext() {
-    const nextBtn = document.getElementById("btn-upload-next");
-    if (isUploadVerified) {
-      nextStepDirect("upload");
-      return;
-    }
-    
-    nextBtn.disabled = true;
-    nextBtn.textContent = "Verifying Upload...";
-    
-    const isValid = await validateUpload();
-    
-    if (isValid) {
-      isUploadVerified = true;
-      nextBtn.textContent = "Next";
-      nextBtn.disabled = false;
-      nextStepDirect("upload");
-    } else {
-      nextBtn.textContent = "Next";
-      nextBtn.disabled = false;
-    }
-  }
-  
-  // Helper to execute the actual step transition without running validation loops twice
-  function nextStepDirect(currentId) {
-    const idx = STEP_SEQUENCE.indexOf(currentId);
-    if (idx < STEP_SEQUENCE.length - 1) goToStep(STEP_SEQUENCE[idx + 1]);
-  }
-  
-  async function validateUpload() {
-    if (!FILE_REQUIRED) return true;
-    
-    const studentId = document
-    .getElementById("field-studentid")
-    .value.trim();
-    if (!studentId) {
-      await window.showCustomAlert("Student ID is missing.");
-      return false;
-    }
-    
-    const checkUrl = `${BASE_URL}?module=checkuploadslist&studentId=${encodeURIComponent(studentId)}`;
-    
-    try {
-      const res = await fetch(checkUrl);
-      const json = await res.json();
       
-      if (json.ok && json.slots && json.slots.slot1) {
-        verifiedUploads = json.slots;
-        return true;
-      } else {
-        await window.showCustomAlert(
-        "Upload not found yet. Please wait for your file to finish uploading in the box above, then try clicking Next again.",
-        );
-        return false;
-      }
-    } catch (err) {
-      console.error("Upload validation check failed:", err);
-      await window.showCustomAlert("Unable to verify upload status. Please try again.");
-      return false;
-    }
-  }
-  
-  // ---- Questions step ----
-  function setupQuestions() {
-    if (!QUESTIONS.length) return;
-    const container = document.getElementById("questions-container");
-    container.innerHTML = QUESTIONS.map(
-    (q, i) => `
-      <div class="question-block">
-        <label>${i + 1}. ${q} <span style="color:red;">*</span></label>
-        <textarea id="question-${i}" class="form-control" placeholder="Your answer"></textarea>
-      </div>
-    `,
-    ).join("");
-  }
-  
-  async function validateQuestions() {
-    if (!QUESTIONS.length) return true;
-    for (let i = 0; i < QUESTIONS.length; i++) {
-      const val = document.getElementById(`question-${i}`).value.trim();
-      if (!val) {
-        await window.showCustomAlert(`Please answer question ${i + 1}.`);
-        document.getElementById(`question-${i}`).focus();
-        return false;
-      }
-    }
-    return true;
-  }
-  
-  function generateReviewSummary() {
-    const container = document.getElementById("review-summary-container");
-    if (!container) return;
-    
-    const surname = document.getElementById("field-surname").value.trim();
-    const firstname = document.getElementById("field-firstname").value.trim();
-    const middlename = document.getElementById("field-middlename").value.trim();
-    const studentId = document.getElementById("field-studentid").value.trim();
-    const program = document.getElementById("field-program").value.trim();
-    const phone = document.getElementById("field-phone").value.trim();
-    const email = document.getElementById("field-email").value.trim();
-    const address = document.getElementById("field-address").value.trim();
-    const fblink = document.getElementById("field-fblink").value.trim();
-    
-    let html = `
-        <div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">1. Submitter Information</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
-        <div><strong>Name:</strong> ${firstname} ${middlename ? middlename + ' ' : ''}${surname}</div>
-        <div><strong>Student ID:</strong> ${studentId}</div>
-        <div><strong>Program:</strong> ${program}</div>
-        <div><strong>Phone:</strong> ${phone}</div>
-        <div style="grid-column: span 2;"><strong>Email:</strong> ${email}</div>
-        <div style="grid-column: span 2;"><strong>Address:</strong> ${address}</div>
-        <div style="grid-column: span 2;"><strong>Facebook:</strong> <a href="${fblink}" target="_blank" style="color: var(--accent-blue);">${fblink}</a></div>
-        </div>`;
-    
-    if (MAX_TEAM_SIZE > 1) {
-      html += `<div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">2. Team Members</div>`;
-      html += `<div style="margin-bottom: 1rem;"><strong>Member 1 (Primary):</strong> ${firstname} ${surname} (${studentId})</div>`;
       for (let i = 2; i <= MAX_TEAM_SIZE; i++) {
-        const cId = document.getElementById(`collab-id-${i}`)?.value.trim();
-        const cName = document.getElementById(`collab-name-${i}`)?.value.trim();
-        if (cId || cName) {
-          html += `<div style="margin-bottom: 0.3rem;"><strong>Member ${i}:</strong> ${cName || 'N/A'} (ID: ${cId || 'N/A'})</div>`;
+        const isRequired = i <= MIN_TEAM_SIZE;
+        const requiredHTML = isRequired
+        ? '<span style="color:red;">*</span>'
+        : '<span style="color:#9ca3af; font-size:0.7rem; margin-left:4px;">(Optional)</span>';
+        html += `
+          <div class="collab-card">
+            <div class="collab-card-title">Member ${i} Details</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Student ID ${requiredHTML}</label>
+                <input type="text" id="collab-id-${i}" class="form-control" placeholder="e.g. C2025-00000" />
+              </div>
+              <div class="form-group full-width">
+                <label>Full Name ${requiredHTML}</label>
+                <input type="text" id="collab-name-${i}" class="form-control" placeholder="Last Name, First Name M.I" />
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+    
+    async function validateCollab() {
+      if (MAX_TEAM_SIZE <= 1) return true;
+      for (let i = 2; i <= MAX_TEAM_SIZE; i++) {
+        const isRequired = i <= MIN_TEAM_SIZE;
+        const cId = document.getElementById(`collab-id-${i}`).value.trim();
+        const cName = document
+        .getElementById(`collab-name-${i}`)
+        .value.trim();
+        const anyFilled = cId || cName;
+        const allFilled = cId && cName;
+        if (isRequired && !allFilled) {
+          if (window.showCustomAlert) await window.showCustomAlert(`Please fill out all required fields for Member ${i}.`);
+          else alert(`Please fill out all required fields for Member ${i}.`);
+          return false;
+        }
+        if (!isRequired && anyFilled && !allFilled) {
+          if (window.showCustomAlert) {
+            await window.showCustomAlert(
+              `Please complete all fields for Member ${i}, or leave them entirely blank.`
+            );
+          } else {
+            alert(`Please complete all fields for Member ${i}, or leave them entirely blank.`);
+          }
+          return false;
         }
       }
+      return true;
     }
     
-    if (FILE_REQUIRED && verifiedUploads && verifiedUploads.slot1) {
-      html += `
-          <div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">3. Uploaded Requirements</div>
-          <div style="margin-bottom: 1rem;">📎 ${verifiedUploads.slot1.name}</div>`;
+    function updateMember1UploadDisplay() {
+      const el = document.getElementById("member1-upload-status");
+      if (!el) return;
+      if (uploadedFile) {
+        el.style.display = "inline-flex";
+        el.textContent = `📎 Uploaded: ${uploadedFile.name}`;
+      } else {
+        el.style.display = "none";
+      }
     }
     
-    if (QUESTIONS.length > 0) {
-      html += `<div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">4. Questionnaire Answers</div>`;
-      QUESTIONS.forEach((q, i) => {
-        const ans = document.getElementById(`question-${i}`)?.value.trim() || "No answer provided";
-        html += `<div style="margin-bottom: 0.5rem;"><strong>Q${i+1}: ${q}</strong><br><span style="color: var(--text-muted);">${ans}</span></div>`;
-      });
+    function setupUpload() {
+      if (!FILE_REQUIRED) return;
+      
+      const localData = getLocalStorageData();
+      const studentId =
+      document.getElementById("field-studentid").value.trim() ||
+      localData["Student No."] ||
+      localData["id"] ||
+      "";
+      const surname =
+      document.getElementById("field-surname").value.trim() ||
+      localData["Surname"] ||
+      localData["surname"] ||
+      "";
+      const firstname =
+      document.getElementById("field-firstname").value.trim() ||
+      localData["First Name"] ||
+      localData["name"] ||
+      "";
+      
+      const iframe = document.getElementById("upload-iframe");
+      
+      if (iframe && studentId) {
+        iframe.src = `${BASE_URL}?page=UploadIframe&studentid=${encodeURIComponent(studentId)}&surname=${encodeURIComponent(surname)}&firstname=${encodeURIComponent(firstname)}&event=${encodeURIComponent(EVENT_ID)}`;
+      }
     }
     
-    container.innerHTML = html;
-  }
-  
-  // Review Accuracy Confirmation Checkbox
-  const accuracyCheck = document.getElementById("confirm-accuracy-check");
-  const btnSubmit = document.getElementById("btn-submit");
-  if (accuracyCheck && btnSubmit) {
-    accuracyCheck.addEventListener("change", () => {
-      btnSubmit.disabled = !accuracyCheck.checked;
-    });
-  }
-  
-  document.addEventListener("DOMContentLoaded", () => {
-    populateHeaderAndForm();
+    let isUploadVerified = false;
+    let verifiedUploads = null;
     
-    function closeOrGoBack() {
-      if (window.opener && !window.opener.closed) {
-        window.close();
+    async function handleUploadNext() {
+      const nextBtn = document.getElementById("btn-upload-next");
+      if (isUploadVerified) {
+        nextStepDirect("upload");
         return;
       }
       
-      if (window.history.length > 1) {
-        window.history.back();
+      nextBtn.disabled = true;
+      nextBtn.textContent = "Verifying Upload...";
+      
+      const isValid = await validateUpload();
+      
+      if (isValid) {
+        isUploadVerified = true;
+        nextBtn.textContent = "Next";
+        nextBtn.disabled = false;
+        nextStepDirect("upload");
       } else {
-        window.location.assign("validate.html");
+        nextBtn.textContent = "Next";
+        nextBtn.disabled = false;
       }
     }
     
-    document
-    .getElementById("btn-ended-back")
-    .addEventListener("click", (event) => {
-      event.preventDefault();
-      closeOrGoBack();
-    });
+    function nextStepDirect(currentId) {
+      const idx = STEP_SEQUENCE.indexOf(currentId);
+      if (idx < STEP_SEQUENCE.length - 1) goToStep(STEP_SEQUENCE[idx + 1]);
+    }
     
-    document
-    .getElementById("btn-submitted-back")
-    .addEventListener("click", (event) => {
-      event.preventDefault();
-      closeOrGoBack();
-    });
-    
-    // Step 1 Checkbox & Next Button
-    const termsCheck = document.getElementById("terms-check");
-    const btnStep1Next = document.getElementById("btn-step1-next");
-    termsCheck.addEventListener("change", () => {
-      btnStep1Next.disabled = !termsCheck.checked;
-    });
-    btnStep1Next.addEventListener("click", () => nextStep("1", null));
-    
-    // Mechanics Checkbox & Next Button
-    const mechanicsCheck = document.getElementById("mechanics-check");
-    const btnMechNext = document.getElementById("btn-mech-next");
-    mechanicsCheck.addEventListener("change", () => {
-      btnMechNext.disabled = !mechanicsCheck.checked;
-    });
-
-    // Step 2 Next Button Handler
-  const btnStep2Next = document.getElementById("btn-step2-next");
-  if (btnStep2Next) {
-    btnStep2Next.addEventListener("click", async () => {
-      const isValid = await validateStep2();
-      if (isValid) {
-        nextStep('2', null);
-      }
-    });
-  }
-    
-    // Submit Button Action
-    const btnSubmit = document.getElementById("btn-submit");
-    btnSubmit.addEventListener("click", async () => {
-      btnSubmit.disabled = true;
-      btnSubmit.textContent = "Submitting...";
+    async function validateUpload() {
+      if (!FILE_REQUIRED) return true;
       
-      const collaborators = [];
-      if (MAX_TEAM_SIZE > 1) {
-        for (let i = 2; i <= MAX_TEAM_SIZE; i++) {
-          const cId = document
-          .getElementById(`collab-id-${i}`)
-          .value.trim();
-          const cName = document
-          .getElementById(`collab-name-${i}`)
-          .value.trim();
-          if (cId && cName)
-          collaborators.push({
-            memberIndex: i,
-            studentNo: cId,
-            fullName: cName,
-          });
-        }
+      const studentId = document
+      .getElementById("field-studentid")
+      .value.trim();
+      if (!studentId) {
+        if (window.showCustomAlert) await window.showCustomAlert("Student ID is missing.");
+        else alert("Student ID is missing.");
+        return false;
       }
       
-      const answers = QUESTIONS.map((q, i) => ({
-        question: q,
-        answer: document.getElementById(`question-${i}`).value.trim(),
-      }));
-      
-      function buildUploadsForPayload() {
-        const uploads = [];
-        if (verifiedUploads) {
-          if (verifiedUploads.slot1)
-          uploads.push({
-            slot: 1,
-            name: verifiedUploads.slot1.name,
-            link: verifiedUploads.slot1.link,
-          });
-          if (verifiedUploads.slot2)
-          uploads.push({
-            slot: 2,
-            name: verifiedUploads.slot2.name,
-            link: verifiedUploads.slot2.link,
-          });
-        }
-        return uploads;
-      }
-      
-      const payload = {
-        action: "submitForm",
-        formType: FORM_TYPE,
-        eventName: document.getElementById("event-title-display").textContent.trim(),
-        studentId: document.getElementById("field-studentid").value.trim(),
-        surname: document.getElementById("field-surname").value.trim(),
-        firstName: document.getElementById("field-firstname").value.trim(),
-        middleName: document
-        .getElementById("field-middlename")
-        .value.trim(),
-        studentNo: document.getElementById("field-studentid").value.trim(),
-        program: document.getElementById("field-program").value.trim(),
-        email: document.getElementById("field-email").value.trim(),
-        phone: document.getElementById("field-phone").value.trim(),
-        address: document.getElementById("field-address").value.trim(),
-        facebookLink: document.getElementById("field-fblink").value.trim(),
-        teamSize: collaborators.length + 1,
-        collaborators: collaborators,
-        uploads: buildUploadsForPayload(),
-        answers: answers,
-      };
+      const checkUrl = `${BASE_URL}?module=checkuploadslist&studentId=${encodeURIComponent(studentId)}`;
       
       try {
-        const res = await fetch(BASE_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        const res = await fetch(checkUrl);
         const json = await res.json();
-        if (json.ok) {
-          await window.showCustomAlert("Form submitted successfully!");
-          closeOrGoBack();
+        
+        if (json.ok && json.slots && json.slots.slot1) {
+          verifiedUploads = json.slots;
+          return true;
         } else {
-          throw new Error(json.error || "Submission failed.");
+          if (window.showCustomAlert) {
+            await window.showCustomAlert(
+            "Upload not found yet. Please wait for your file to finish uploading in the box above, then try clicking Next again.",
+            );
+          } else {
+            alert("Upload not found yet. Please wait for your file to finish uploading in the box above, then try clicking Next again.");
+          }
+          return false;
         }
       } catch (err) {
-        await window.showCustomAlert("Error submitting form: " + err.message);
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = "Submit Form";
+        console.error("Upload validation check failed:", err);
+        if (window.showCustomAlert) await window.showCustomAlert("Unable to verify upload status. Please try again.");
+        else alert("Unable to verify upload status. Please try again.");
+        return false;
       }
+    }
+    
+    function setupQuestions() {
+      if (!QUESTIONS.length) return;
+      const container = document.getElementById("questions-container");
+      container.innerHTML = QUESTIONS.map(
+      (q, i) => `
+        <div class="question-block">
+          <label>${i + 1}. ${q} <span style="color:red;">*</span></label>
+          <textarea id="question-${i}" class="form-control" placeholder="Your answer"></textarea>
+        </div>
+      `,
+      ).join("");
+    }
+    
+    async function validateQuestions() {
+      if (!QUESTIONS.length) return true;
+      for (let i = 0; i < QUESTIONS.length; i++) {
+        const val = document.getElementById(`question-${i}`).value.trim();
+        if (!val) {
+          if (window.showCustomAlert) await window.showCustomAlert(`Please answer question ${i + 1}.`);
+          else alert(`Please answer question ${i + 1}.`);
+          document.getElementById(`question-${i}`).focus();
+          return false;
+        }
+      }
+      return true;
+    }
+    
+    function generateReviewSummary() {
+      const container = document.getElementById("review-summary-container");
+      if (!container) return;
+      
+      const surname = document.getElementById("field-surname").value.trim();
+      const firstname = document.getElementById("field-firstname").value.trim();
+      const middlename = document.getElementById("field-middlename").value.trim();
+      const studentId = document.getElementById("field-studentid").value.trim();
+      const program = document.getElementById("field-program").value.trim();
+      const phone = document.getElementById("field-phone").value.trim();
+      const email = document.getElementById("field-email").value.trim();
+      const address = document.getElementById("field-address").value.trim();
+      const fblink = document.getElementById("field-fblink").value.trim();
+      
+      let stepCounter = 1;
+      let html = `
+          <div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">${stepCounter++}. Submitter Information</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+          <div><strong>Name:</strong> ${firstname} ${middlename ? middlename + ' ' : ''}${surname}</div>
+          <div><strong>Student ID:</strong> ${studentId}</div>
+          <div><strong>Program:</strong> ${program}</div>
+          <div><strong>Phone:</strong> ${phone}</div>
+          <div style="grid-column: span 2;"><strong>Email:</strong> ${email}</div>
+          <div style="grid-column: span 2;"><strong>Address:</strong> ${address}</div>
+          <div style="grid-column: span 2;"><strong>Facebook:</strong> <a href="${fblink}" target="_blank" style="color: var(--accent-blue);">${fblink}</a></div>
+          </div>`;
+
+      if (REGISTRATION_FEE > 0) {
+        const methodText = selectedPaymentMethod === "online" ? "Online E-Wallet / Bank" : "Cash Onsite";
+        html += `
+          <div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">${stepCounter++}. Registration Fee & Payment</div>
+          <div style="margin-bottom: 1rem;">
+            <div><strong>Fee Amount:</strong> ₱${REGISTRATION_FEE.toFixed(2)}</div>
+            <div><strong>Payment Method:</strong> ${methodText}</div>
+            ${scannedRefNumber ? `<div><strong>Extracted Reference No:</strong> ${scannedRefNumber}</div>` : ''}
+            <div><strong>Verification Status:</strong> ${isPaymentVerified ? '<span style="color:green; font-weight:bold;">Verified</span>' : 'Pending Onsite Cash Settle'}</div>
+          </div>`;
+      }
+      
+      if (MAX_TEAM_SIZE > 1) {
+        html += `<div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">${stepCounter++}. Team Members</div>`;
+        html += `<div style="margin-bottom: 1rem;"><strong>Member 1 (Primary):</strong> ${firstname} ${surname} (${studentId})</div>`;
+        for (let i = 2; i <= MAX_TEAM_SIZE; i++) {
+          const cId = document.getElementById(`collab-id-${i}`)?.value.trim();
+          const cName = document.getElementById(`collab-name-${i}`)?.value.trim();
+          if (cId || cName) {
+            html += `<div style="margin-bottom: 0.3rem;"><strong>Member ${i}:</strong> ${cName || 'N/A'} (ID: ${cId || 'N/A'})</div>`;
+          }
+        }
+      }
+      
+      if (FILE_REQUIRED && verifiedUploads && verifiedUploads.slot1) {
+        html += `
+            <div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">${stepCounter++}. Uploaded Requirements</div>
+            <div style="margin-bottom: 1rem;">📎 ${verifiedUploads.slot1.name}</div>`;
+      }
+      
+      if (QUESTIONS.length > 0) {
+        html += `<div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.75rem; color: var(--accent-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">${stepCounter++}. Questionnaire Answers</div>`;
+        QUESTIONS.forEach((q, i) => {
+          const ans = document.getElementById(`question-${i}`)?.value.trim() || "No answer provided";
+          html += `<div style="margin-bottom: 0.5rem;"><strong>Q${i+1}: ${q}</strong><br><span style="color: var(--text-muted);">${ans}</span></div>`;
+        });
+      }
+      
+      container.innerHTML = html;
+    }
+    
+    // Review Accuracy Confirmation Checkbox
+    const accuracyCheck = document.getElementById("confirm-accuracy-check");
+    const btnSubmit = document.getElementById("btn-submit");
+    if (accuracyCheck && btnSubmit) {
+      accuracyCheck.addEventListener("change", () => {
+        btnSubmit.disabled = !accuracyCheck.checked;
+      });
+    }
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      populateHeaderAndForm();
+      
+      function closeOrGoBack() {
+        if (window.opener && !window.opener.closed) {
+          window.close();
+          return;
+        }
+        
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.assign("validate.html");
+        }
+      }
+      
+      document
+      .getElementById("btn-ended-back")
+      .addEventListener("click", (event) => {
+        event.preventDefault();
+        closeOrGoBack();
+      });
+      
+      document
+      .getElementById("btn-submitted-back")
+      .addEventListener("click", (event) => {
+        event.preventDefault();
+        closeOrGoBack();
+      });
+      
+      // Step 1 Checkbox & Next Button
+      const termsCheck = document.getElementById("terms-check");
+      const btnStep1Next = document.getElementById("btn-step1-next");
+      termsCheck.addEventListener("change", () => {
+        btnStep1Next.disabled = !termsCheck.checked;
+      });
+      btnStep1Next.addEventListener("click", () => nextStep("1", null));
+      
+      // Mechanics Checkbox & Next Button
+      const mechanicsCheck = document.getElementById("mechanics-check");
+      const btnMechNext = document.getElementById("btn-mech-next");
+      mechanicsCheck.addEventListener("change", () => {
+        btnMechNext.disabled = !mechanicsCheck.checked;
+      });
+
+      // Step 2 Next Button Handler
+      const btnStep2Next = document.getElementById("btn-step2-next");
+      if (btnStep2Next) {
+        btnStep2Next.addEventListener("click", async () => {
+          const isValid = await validateStep2();
+          if (isValid) {
+            nextStep('2', null);
+          }
+        });
+      }
+      
+      // Submit Button Action
+      const btnSubmit = document.getElementById("btn-submit");
+      btnSubmit.addEventListener("click", async () => {
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = "Submitting...";
+        
+        const collaborators = [];
+        if (MAX_TEAM_SIZE > 1) {
+          for (let i = 2; i <= MAX_TEAM_SIZE; i++) {
+            const cId = document
+            .getElementById(`collab-id-${i}`)
+            .value.trim();
+            const cName = document
+            .getElementById(`collab-name-${i}`)
+            .value.trim();
+            if (cId && cName)
+            collaborators.push({
+              memberIndex: i,
+              studentNo: cId,
+              fullName: cName,
+            });
+          }
+        }
+        
+        const answers = QUESTIONS.map((q, i) => ({
+          question: q,
+          answer: document.getElementById(`question-${i}`).value.trim(),
+        }));
+        
+        function buildUploadsForPayload() {
+          const uploads = [];
+          if (verifiedUploads) {
+            if (verifiedUploads.slot1)
+            uploads.push({
+              slot: 1,
+              name: verifiedUploads.slot1.name,
+              link: verifiedUploads.slot1.link,
+            });
+            if (verifiedUploads.slot2)
+            uploads.push({
+              slot: 2,
+              name: verifiedUploads.slot2.name,
+              link: verifiedUploads.slot2.link,
+            });
+          }
+          return uploads;
+        }
+        
+        const payload = {
+          action: "submitForm",
+          formType: FORM_TYPE,
+          eventName: document.getElementById("event-title-display").textContent.trim(),
+          studentId: document.getElementById("field-studentid").value.trim(),
+          surname: document.getElementById("field-surname").value.trim(),
+          firstName: document.getElementById("field-firstname").value.trim(),
+          middleName: document
+          .getElementById("field-middlename")
+          .value.trim(),
+          studentNo: document.getElementById("field-studentid").value.trim(),
+          program: document.getElementById("field-program").value.trim(),
+          email: document.getElementById("field-email").value.trim(),
+          phone: document.getElementById("field-phone").value.trim(),
+          address: document.getElementById("field-address").value.trim(),
+          facebookLink: document.getElementById("field-fblink").value.trim(),
+          registrationFee: REGISTRATION_FEE,
+          paymentMethod: selectedPaymentMethod,
+          paymentReferenceNo: scannedRefNumber,
+          paymentVerified: isPaymentVerified,
+          teamSize: collaborators.length + 1,
+          collaborators: collaborators,
+          uploads: buildUploadsForPayload(),
+          answers: answers,
+        };
+        
+        try {
+          const res = await fetch(BASE_URL, {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          const json = await res.json();
+          if (json.ok) {
+            if (window.showCustomAlert) await window.showCustomAlert("Form submitted successfully!");
+            else alert("Form submitted successfully!");
+            window.location.assign("result.html");
+          } else {
+            throw new Error(json.error || "Submission failed.");
+          }
+        } catch (err) {
+          if (window.showCustomAlert) await window.showCustomAlert("Error submitting form: " + err.message);
+          else alert("Error submitting form: " + err.message);
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = "Submit Form";
+        }
+      });
     });
-  });
-</script>
+  </script>
 </body>
 </html>

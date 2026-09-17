@@ -141,9 +141,9 @@ try {
     // Pass custom attributes via onLoad
     window.Tawk_API.onLoad = function() {
       window.Tawk_API.setAttributes({
-        'Student ID': studentData.id || studentData['Student No.'] || "",
+        'StudentID': studentData.id || studentData['Student No.'] || "",
         'Program': studentData.program || studentData['Program'] || "",
-        'Contact Number': studentData.contact || studentData['Contact Number'] || "",
+        'phone': studentData.contact || studentData['Contact Number'] || "", // Changed to 'phone'
         'Address': ((studentData.street || "") + ", " + (studentData.municipality || "")).replace(/^,\s*|,\s*$/g, '')
       }, function(error) {
         if (error) {
