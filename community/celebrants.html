@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTLED | Birthdays</title>
+  <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
+  
+  <!-- Main Site CSS -->
+  <link rel="stylesheet" href="../resources/css/landing.css" />
+  
+  <meta property="og:title" content="BTLED Birthdays">
+  <meta property="og:description" content="Celebrating the birthdays of our BTLED Bravehearts!">
+  
+  <!-- Canvas Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Spotify IFrame API -->
+  <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+
+  <style>
+    /* =========================================
+       MAGICAL COLORFUL BACKGROUND & THEME
+       ========================================= */
+    body {
+      background: linear-gradient(-45deg, #fff0f0, #fce4ec, #f3e5f5, #e8eaf6);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      transition: background 1s ease, color 0.3s ease;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .birthday-section-wrapper {
+      padding: 4rem 0;
+      border-bottom: 1px solid rgba(226, 226, 220, 0.5);
+    }
+
+    /* Fixed 2-Column Grid on Desktop matching site constraints */
+    .celebrants-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 4rem;
+    }
+
+    /* Glassmorphism Cards */
+    .celebrant-card {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: var(--radius-sm);
+      padding: 1.5rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      grid-template-areas: "avatar info date";
+      align-items: center;
+      gap: 1.25rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+
+    .celebrant-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .avatar {
+      grid-area: avatar;
+      width: 50px;
+      height: 50px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      color: var(--text-dark);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 900;
+      font-size: 1.2rem;
+    }
+
+    .celebrant-info {
+      grid-area: info;
+      min-width: 0; 
+    }
+
+    .celebrant-info h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin: 0 0 0.15rem 0;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    .celebrant-info p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0;
+    }
+
+    .date-badge-wrapper {
+      grid-area: date;
+      justify-self: end;
+    }
+
+    .date-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(184, 29, 75, 0.08);
+      border: 1px solid rgba(184, 29, 75, 0.15);
+      color: #b81d4b;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    /* --- OVERKILL "TODAY" HIGHLIGHT --- */
+    .today-spotlight {
+      grid-column: 1 / -1; 
+      background: #ffffff;
+      border: 2px solid #ff6b6b;
+      box-shadow: 6px 6px 0px rgba(255, 107, 107, 0.4);
+      transform: scale(1.01);
+      animation: brutalistPulse 2s infinite alternate;
+    }
+    
+    @keyframes brutalistPulse {
+      0% { box-shadow: 4px 4px 0px rgba(255, 107, 107, 0.3); }
+      100% { box-shadow: 10px 10px 0px rgba(184, 29, 75, 0.4); border-color: #b81d4b; }
+    }
+
+    .today-spotlight .avatar {
+      background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+      color: #b81d4b;
+    }
+
+    .today-spotlight .celebrant-info h3 {
+      background: linear-gradient(45deg, #ff6b6b, #b81d4b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 1.35rem;
+    }
+
+    .today-spotlight .date-tag {
+      background: linear-gradient(45deg, #ff6b6b, #b81d4b);
+      color: #fff;
+      border-color: #111;
+    }
+
+    /* =========================================
+       VIDEOS & MULTIMEDIA
+       ========================================= */
+    .media-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 4rem;
+      align-items: stretch;
+    }
+
+    .video-on-page {
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    .video-on-page video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .spotify-card {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: var(--radius-sm);
+      padding: 1.5rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* =========================================
+       LETTERS SECTION (WITH RISING BUBBLES)
+       ========================================= */
+    .letters-section {
+      position: relative;
+      background: linear-gradient(135deg, #1a2a6c, #b81d4b, #fdbb2d);
+      border-radius: var(--radius-sm);
+      padding: 3.5rem 2rem;
+      color: #fff;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      margin-bottom: 3rem;
+      border: 1px solid var(--border-dark);
+    }
+
+    .letters-section .section-title { color: #fff; position: relative; z-index: 2; margin-bottom: 2rem;}
+
+    .bubbles {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .bubble {
+      position: absolute;
+      bottom: -50px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      animation: rise linear infinite;
+    }
+    @keyframes rise {
+      0% { transform: translateY(0) scale(1); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-800px) scale(1.5); opacity: 0; }
+    }
+    .bubble:nth-child(1) { left: 10%; width: 40px; height: 40px; animation-duration: 8s; animation-delay: 0s; }
+    .bubble:nth-child(2) { left: 25%; width: 70px; height: 70px; animation-duration: 12s; animation-delay: 2s; }
+    .bubble:nth-child(3) { left: 40%; width: 30px; height: 30px; animation-duration: 6s; animation-delay: 4s; }
+    .bubble:nth-child(4) { left: 60%; width: 50px; height: 50px; animation-duration: 10s; animation-delay: 1s; }
+    .bubble:nth-child(5) { left: 80%; width: 45px; height: 45px; animation-duration: 14s; animation-delay: 3s; }
+
+    .letters-grid {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .letter-card {
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: var(--radius-sm);
+      padding: 2rem 1.5rem;
+      position: relative;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      transition: transform 0.2s ease;
+    }
+    
+    .letter-card:hover {
+      transform: translateY(-5px);
+      background: rgba(255,255,255,0.2);
+    }
+
+    .letter-card i {
+      font-size: 1.5rem;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .letter-quote {
+      font-size: 0.95rem;
+      color: #fff;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+      font-style: italic;
+    }
+
+    .letter-author { font-weight: 800; font-size: 1rem; color: #fff; margin-bottom: 0.15rem; }
+    .letter-role { font-size: 0.75rem; color: rgba(255,255,255,0.8); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+
+    .empty-state { text-align: center; color: var(--text-muted); padding: 3rem; width: 100%; font-style: italic; grid-column: 1 / -1; border: 1px dashed rgba(0,0,0,0.15); border-radius: var(--radius-sm); }
+    .letters-section .empty-state { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+
+    /* =========================================
+       FULLSCREEN OVERLAY VIDEO MODAL
+       ========================================= */
+    #video-modal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(17, 17, 17, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+    
+    #video-modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      width: 90%;
+      max-width: 900px;
+      border: 2px solid var(--border-dark);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    
+    .modal-content video { width: 100%; display: block; }
+
+    .close-modal {
+      position: absolute;
+      top: 20px; right: 30px;
+      background: none; border: none;
+      color: #fff;
+      font-size: 3rem;
+      cursor: pointer;
+      z-index: 10000;
+    }
+
+    /* =========================================
+       DARK MODE ADAPTATION OVERRIDES
+       ========================================= */
+    html[data-theme="dark"] body {
+      background: linear-gradient(-45deg, #111827, #1f2937, #111827, #0f172a) !important;
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+
+    html[data-theme="dark"] .celebrant-card,
+    html[data-theme="dark"] .spotify-card {
+      background-color: #1e1e1e !important;
+      border-color: #374151 !important;
+      color: #f9fafb !important;
+    }
+
+    html[data-theme="dark"] .celebrant-info h3 {
+      color: #f9fafb !important;
+    }
+
+    html[data-theme="dark"] .celebrant-info p {
+      color: #9ca3af !important;
+    }
+
+    html[data-theme="dark"] .today-spotlight {
+      background: #18181b !important;
+      border-color: #ff6b6b !important;
+    }
+
+    html[data-theme="dark"] .empty-state {
+      color: #9ca3af !important;
+      border-color: #374151 !important;
+    }
+
+    html[data-theme="dark"] .section-border {
+      background: rgba(30, 30, 30, 0.4) !important;
+      border-bottom-color: #374151 !important;
+    }
+
+    /* =========================================
+       MOBILE RESPONSIVENESS
+       ========================================= */
+    @media (max-width: 950px) {
+      .letters-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 850px) {
+      .celebrants-grid { grid-template-columns: 1fr; }
+      .media-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+      .letters-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 550px) {
+      .celebrant-card {
+        padding: 1.25rem;
+        grid-template-columns: auto 1fr;
+        grid-template-areas: 
+          "avatar info"
+          "avatar date";
+        row-gap: 0.75rem;
+        align-items: start;
+      }
+      .date-badge-wrapper { justify-self: start; }
+      .avatar { width: 44px; height: 44px; font-size: 1rem; }
+      .celebrant-info h3 { font-size: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Standard Navbar -->
+  <header class="navbar" id="site-navbar" data-root="../"></header>
+  <script src="../resources/js/navbar.js"></script>
+
+  <!-- Fullscreen Overlay Video Modal -->
+  <div id="video-modal">
+    <button class="close-modal" id="close-modal-btn">&times;</button>
+    <div class="modal-content">
+      <video id="overlay-video" controls playsinline>
+        <source src="../resources/video/birthdayv1.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
+
+  <!-- Unified Section Header -->
+  <section class="section-border" style="text-align: center; border-bottom: 2px solid var(--border-dark); background: rgba(255,255,255,0.4); backdrop-filter: blur(8px);">
+    <div class="container section-header animate-on-scroll">
+      <span class="section-label">Birthdays</span>
+      <h2 style="font-size: 3rem; margin-bottom: 1rem;">🎉 HAPPY BIRTHDAY</h2>
+      <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto 2rem;">Celebrating the incredible members of the BTLED Organization born this month. Wishing you a year filled with passion, growth, and joy.</p>
+      <button class="btn btn-accent" id="open-modal-btn">
+        <i class="fa-solid fa-play" style="margin-right: 8px;"></i> Watch Special Greeting
+      </button>
+    </div>
+  </section>
+
+  <div class="container">
+    
+    <!-- Media Grid -->
+    <div class="birthday-section-wrapper animate-on-scroll delay-1">
+      <div class="section-header">
+        <span class="section-label">Highlights</span>
+        <h2>MONTHLY RECAP</h2>
+      </div>
+      
+      <div class="media-grid">
+        <div class="video-on-page">
+          <video id="inline-video" controls playsinline poster="../resources/image/birthday/video-poster.jpg">
+            <source src="../resources/video/birthdayv1.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="spotify-card">
+          <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 1rem;"><i class="fa-brands fa-spotify" style="color: #1DB954; margin-right: 8px;"></i> BTLED VIBES</h3>
+          <div id="spotify-embed"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Celebrants -->
+    <div class="birthday-section-wrapper animate-on-scroll" id="today-container" style="display: none; border-bottom: none; padding-bottom: 1rem;">
+      <div class="section-header">
+        <span class="section-label" style="color: #d97706;">Special Highlight</span>
+        <h2>TODAY'S CELEBRANTS</h2>
+      </div>
+      <div class="celebrants-grid" id="today-celebrants-list"></div>
+    </div>
+
+    <!-- BTLED Celebrants -->
+    <div class="birthday-section-wrapper animate-on-scroll">
+      <div class="section-header">
+        <span class="section-label">Bravehearts</span>
+        <h2>BTLED CELEBRANTS</h2>
+      </div>
+      <div class="celebrants-grid" id="btled-celebrants-list">
+        <div class="empty-state">Loading BTLED celebrants...</div>
+      </div>
+    </div>
+
+    <!-- Other Programs -->
+    <div class="birthday-section-wrapper animate-on-scroll" style="border-bottom: none; padding-bottom: 2rem;">
+      <div class="section-header">
+        <span class="section-label">Guests</span>
+        <h2>OTHER PROGRAMS</h2>
+      </div>
+      <div class="celebrants-grid" id="other-celebrants-list">
+        <div class="empty-state">Loading other programs...</div>
+      </div>
+    </div>
+
+    <!-- Letters Section (WITH BUBBLES!) -->
+    <div class="animate-on-scroll" style="margin-bottom: 5rem;">
+      <div class="letters-section">
+        <!-- Animated Bubbles -->
+        <div class="bubbles">
+          <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+          <div class="bubble"></div><div class="bubble"></div>
+        </div>
+        
+        <div class="section-header" style="position: relative; z-index: 2; margin-bottom: 2.5rem;">
+          <span class="section-label" style="color: rgba(255,255,255,0.8);">Notes</span>
+          <h2 style="color: #fff;">MESSAGES FROM OFFICERS</h2>
+        </div>
+        <div class="letters-grid" id="officer-letters-list">
+          <div class="empty-state">Loading letters...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Standard Footer -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-brand-section">
+        <strong class="footer-brand">BTLED Organization</strong>
+        <p style="color: #999; font-size: 0.9rem; margin-top: 0.5rem;">
+          One of the official student-led organizations at URS Cainta Campus, the BTLEd - IA Program Organization.
+        </p>
+      </div>
+      <div class="footer-right">
+        <p style="color: #999; font-size: 0.85rem;">&copy; 2026 BTLED. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="../resources/js/login.js"></script>
+  <script src="../resources/js/config.js"></script>
+  <script src="../resources/js/birthday.js"></script>
+
+  <script>
+    // --- SCROLL ANIMATION INITIALIZER ---
+    document.addEventListener("DOMContentLoaded", function() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+    });
+
+    // --- SPOTIFY IFRAME API INTEGRATION ---
+    window.onSpotifyIframeApiReady = (IFrameAPI) => {
+      const element = document.getElementById('spotify-embed');
+      const options = {
+        width: '100%',
+        height: '152',
+        uri: 'spotify:playlist:4mTkpy972GaRbBC0bkRFxa?si=2f1e9aadfe0b4a4a',
+        theme: '0'
+      };
+      
+      const callback = (EmbedController) => {
+        const startAudio = () => {
+          EmbedController.play();
+          document.removeEventListener('click', startAudio);
+        };
+        document.addEventListener('click', startAudio);
+
+        const allVideos = document.querySelectorAll('video');
+        allVideos.forEach(video => {
+          video.addEventListener('play', () => {
+            EmbedController.pause();
+          });
+        });
+      };
+      IFrameAPI.createController(element, options, callback);
+    };
+
+    // --- VIDEO MODAL LOGIC ---
+    const modal = document.getElementById('video-modal');
+    const btnOpen = document.getElementById('open-modal-btn');
+    const btnClose = document.getElementById('close-modal-btn');
+    const overlayVideo = document.getElementById('overlay-video');
+
+    btnOpen.addEventListener('click', () => {
+      modal.classList.add('active');
+      overlayVideo.play();
+    });
+
+    btnClose.addEventListener('click', () => {
+      modal.classList.remove('active');
+      overlayVideo.pause();
+      overlayVideo.currentTime = 0;
+    });
+
+    const OFFICERS_LETTERS = [
+      {
+        name: 'Mark Anthony Espora',
+        role: 'President, BTLED Organization',
+        message: 'To every Braveheart celebrating this month — thank you for the energy, heart, and dedication you bring to this org every single day. Wishing you a birthday as bright as your future ahead. Mabuhay, BTLED!'
+      }
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const BASE_URL = typeof APPS_SCRIPT_URL !== 'undefined' ? APPS_SCRIPT_URL : '';
+      fetchBirthdays(BASE_URL);
+      renderLetters(OFFICERS_LETTERS);
+    });
+
+    function toTitleCase(str) {
+      if (!str) return '';
+      return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
+    }
+
+    function getInitials(name) {
+      if (!name) return '🎂';
+      const parts = name.trim().split(' ');
+      if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    function sortByDate(list) {
+      return list.sort((a, b) => {
+        const dayA = parseInt(a.birthdate.split(' ')[1], 10) || 0;
+        const dayB = parseInt(b.birthdate.split(' ')[1], 10) || 0;
+        return dayA - dayB;
+      });
+    }
+
+    function fetchBirthdays(BASE_URL) {
+      const fetchUrl = BASE_URL + '?module=birthdays';
+
+      fetch(fetchUrl)
+        .then(res => res.json())
+        .then(response => {
+          if (!response.ok) throw new Error('Network response was not ok');
+          renderCelebrants(response.today, response.month);
+        })
+        .catch(err => {
+          document.getElementById('today-celebrants-list').innerHTML = `<div class="empty-state">Unable to load birthday records.</div>`;
+          document.getElementById('btled-celebrants-list').innerHTML = '';
+          document.getElementById('other-celebrants-list').innerHTML = '';
+          console.error("Fetch error:", err);
+        });
+    }
+
+    function renderLetters(letters) {
+      const container = document.getElementById('officer-letters-list');
+      container.innerHTML = letters.map(l => `
+        <div class="letter-card">
+          <i class="fa-solid fa-quote-left"></i>
+          <p class="letter-quote">"${escapeHtml(l.message)}"</p>
+          <div class="letter-author">${escapeHtml(l.name)}</div>
+          <div class="letter-role">${escapeHtml(l.role)}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderCelebrants(todayList, monthList) {
+      const todayWrapper = document.getElementById('today-container');
+      const todayContainer = document.getElementById('today-celebrants-list');
+      const btledContainer = document.getElementById('btled-celebrants-list');
+      const otherContainer = document.getElementById('other-celebrants-list');
+
+      let sortedMonth = sortByDate(monthList || []);
+      
+      const btledList = [];
+      const otherList = [];
+      
+      sortedMonth.forEach(c => {
+        if (c.program && c.program.toUpperCase().includes('BTLED')) {
+          btledList.push(c);
+        } else {
+          otherList.push(c);
+        }
+      });
+
+      if (todayList && todayList.length > 0) {
+        todayWrapper.style.display = 'block';
+        activateOverkillMode();
+        todayContainer.innerHTML = todayList.map(c => `
+          <div class="celebrant-card today-spotlight">
+            <div class="avatar">${getInitials(c.name)}</div>
+            <div class="celebrant-info">
+              <h3 title="${escapeHtml(toTitleCase(c.name))}">${escapeHtml(toTitleCase(c.name))}</h3>
+              <p>${escapeHtml(c.program)}</p>
+            </div>
+            <div class="date-badge-wrapper">
+              <span class="date-tag"><i class="fa-solid fa-cake-candles"></i> TODAY (${escapeHtml(c.birthdate)})</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      if (btledList.length === 0) {
+        btledContainer.innerHTML = `<div class="empty-state">No other BTLED birthdays this month.</div>`;
+      } else {
+        btledContainer.innerHTML = btledList.map(c => buildStandardCard(c)).join('');
+      }
+
+      if (otherList.length === 0) {
+        otherContainer.innerHTML = `<div class="empty-state">No birthdays from other programs this month.</div>`;
+      } else {
+        otherContainer.innerHTML = otherList.map(c => buildStandardCard(c)).join('');
+      }
+    }
+
+    function buildStandardCard(c) {
+      const titleCaseName = toTitleCase(c.name);
+      return `
+        <div class="celebrant-card">
+          <div class="avatar">${getInitials(titleCaseName)}</div>
+          <div class="celebrant-info">
+            <h3 title="${escapeHtml(titleCaseName)}">${escapeHtml(titleCaseName)}</h3>
+            <p>${escapeHtml(c.program)}</p>
+          </div>
+          <div class="date-badge-wrapper">
+            <span class="date-tag"><i class="fa-regular fa-calendar"></i> ${escapeHtml(c.birthdate)}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function activateOverkillMode() {
+      const duration = 5 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+      const colors = ['#ff6b6b', '#b81d4b', '#1d4ed8', '#fdbb2d'];
+
+      function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return clearInterval(interval);
+        
+        const particleCount = 50 * (timeLeft / duration);
+        confetti(Object.assign({}, defaults, { particleCount, colors, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount, colors, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+      }, 250);
+    }
+
+    function escapeHtml(str) {
+      return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+  </script>
+</body>
+</html>
