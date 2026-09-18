@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Coverage Pubmat Camera</title>
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="offline/manifest.json">
+<title>BTLED Pubmat Camera</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
   .app{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
 
-  /* Fixed 1:1 square stage, sized to fit viewport in either orientation */
   .camera-container{position:relative;width:min(100vw,100vh - 170px);height:min(100vw,100vh - 170px);max-width:640px;max-height:640px;background:#111;overflow:hidden;border-radius:4px;}
 
   #cameraFeed{width:100%;height:100%;object-fit:cover;display:block;transition:filter .15s ease;}
@@ -37,6 +38,9 @@
   .loading i,.error-state i{font-size:34px;}
   .error-state{color:#f0f0f0;}
   .error-state p{font-size:14px;max-width:240px;color:#999;}
+
+  .offline-banner{position:fixed;top:0;left:0;right:0;background:#ffd60a;color:#000;text-align:center;font-size:12px;font-weight:600;padding:7px 10px;z-index:2000;transform:translateY(-100%);transition:transform .25s ease;}
+  .offline-banner.show{transform:translateY(0);}
 
   .top-bar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:center;gap:10px;padding:12px;background:linear-gradient(to bottom, rgba(0,0,0,.55), transparent);}
   .icon-btn{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.4);border:none;color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}
@@ -73,6 +77,8 @@
 </style>
 </head>
 <body>
+<div class="offline-banner" id="offlineBanner">You're offline — the camera still works, and photos save normally.</div>
+
 <div class="app">
   <div class="camera-container" id="cameraContainer">
     <video id="cameraFeed" autoplay playsinline muted></video>
@@ -129,6 +135,7 @@ const flashFx = document.getElementById('flashFx');
 const countdownEl = document.getElementById('countdown');
 const filterStrip = document.getElementById('filterStrip');
 const galleryThumb = document.getElementById('galleryThumb');
+const offlineBanner = document.getElementById('offlineBanner');
 const EXPORT_SIZE = 1080; // square, social-media ready
 
 const FILTERS = [
@@ -167,13 +174,11 @@ function buildFilterStrip(){
 buildFilterStrip();
 
 async function initCamera() {
-
   try {
     if (video.srcObject) {
       video.srcObject.getTracks().forEach(t => t.stop());
     }
 
-    // Fallback constraints if 'environment' is unsupported
     let constraints = {
       video: { facingMode: currentFacingMode, width: { ideal: 1080 }, height: { ideal: 1080 } },
       audio: false
@@ -184,7 +189,6 @@ async function initCamera() {
       stream = await navigator.mediaDevices.getUserMedia(constraints);
     } catch (err) {
       console.warn("Preferred camera failed, trying default constraints...", err);
-      // Fallback to any available camera
       stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     }
 
@@ -200,7 +204,6 @@ async function initCamera() {
 
   } catch (err) {
     console.error('Camera access error details:', err.name, err.message);
-
   }
 }
 initCamera();
@@ -354,6 +357,21 @@ galleryThumb.addEventListener('click', ()=>{
 retakeBtn.addEventListener('click', ()=>{
   resultModal.classList.remove('open');
 });
+
+/* ---- Offline support ---- */
+function updateOnlineStatus(){
+  offlineBanner.classList.toggle('show', !navigator.onLine);
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('offline/sw.js')
+      .catch(err => console.warn('Service worker registration failed:', err));
+  });
+}
 </script>
 </body>
 </html>
