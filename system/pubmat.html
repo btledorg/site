@@ -81,7 +81,6 @@
     <div class="flash-fx" id="flashFx"></div>
     <div class="countdown" id="countdown"></div>
     <div class="loading" id="loadingState"><i class="ri-camera-3-line"></i><span>Starting camera…</span></div>
-    <div class="error-state" id="errorState" hidden><i class="ri-camera-off-line"></i><p>Camera access was blocked. Allow camera permission in your browser settings, then reload.</p></div>
 
     <div class="top-bar">
       <button class="icon-btn" id="flashBtn" hidden title="Flash"><i class="ri-flashlight-line"></i></button>
@@ -124,7 +123,6 @@ const retakeBtn = document.getElementById('retakeBtn');
 const shareBtn = document.getElementById('shareBtn');
 const saveNote = document.getElementById('saveNote');
 const loadingState = document.getElementById('loadingState');
-const errorState = document.getElementById('errorState');
 const gridBtn = document.getElementById('gridBtn');
 const gridOverlay = document.getElementById('gridOverlay');
 const timerBtn = document.getElementById('timerBtn');
@@ -170,15 +168,29 @@ function buildFilterStrip(){
 }
 buildFilterStrip();
 
-async function initCamera(){
+async function initCamera() {
   loadingState.hidden = false;
-  errorState.hidden = true;
-  try{
-    if(video.srcObject){ video.srcObject.getTracks().forEach(t=>t.stop()); }
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video:{ facingMode: currentFacingMode, width:{ideal:1920}, height:{ideal:1920} },
-      audio:false
-    });
+  
+  try {
+    if (video.srcObject) {
+      video.srcObject.getTracks().forEach(t => t.stop());
+    }
+
+    // Fallback constraints if 'environment' is unsupported
+    let constraints = {
+      video: { facingMode: currentFacingMode, width: { ideal: 1080 }, height: { ideal: 1080 } },
+      audio: false
+    };
+
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (err) {
+      console.warn("Preferred camera failed, trying default constraints...", err);
+      // Fallback to any available camera
+      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    }
+
     video.srcObject = stream;
     currentTrack = stream.getVideoTracks()[0];
     video.classList.toggle('mirrored', currentFacingMode === 'user');
@@ -190,10 +202,9 @@ async function initCamera(){
     flashBtn.classList.remove('active');
 
     loadingState.hidden = true;
-  }catch(err){
-    console.error('Camera access error:', err);
+  } catch (err) {
+    console.error('Camera access error details:', err.name, err.message);
     loadingState.hidden = true;
-    errorState.hidden = false;
   }
 }
 initCamera();
