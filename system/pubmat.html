@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Coverage Pubmat Camera</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  .app{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+
+  /* Fixed 1:1 square stage, sized to fit viewport in either orientation */
+  .camera-container{position:relative;width:min(100vw,100vh - 170px);height:min(100vw,100vh - 170px);max-width:640px;max-height:640px;background:#111;overflow:hidden;border-radius:4px;}
+
+  #cameraFeed{width:100%;height:100%;object-fit:cover;display:block;transition:filter .15s ease;}
+  #cameraFeed.mirrored{transform:scaleX(-1);}
+
+  .svg-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+
+  .grid-overlay{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;}
+  .grid-overlay.on{opacity:1;}
+  .grid-overlay::before,.grid-overlay::after{content:'';position:absolute;inset:0;background:
+    linear-gradient(to right, transparent calc(33.33% - .5px), rgba(255,255,255,.55) calc(33.33% - .5px), rgba(255,255,255,.55) calc(33.33% + .5px), transparent calc(33.33% + .5px)),
+    linear-gradient(to right, transparent calc(66.66% - .5px), rgba(255,255,255,.55) calc(66.66% - .5px), rgba(255,255,255,.55) calc(66.66% + .5px), transparent calc(66.66% + .5px));}
+  .grid-overlay::after{background:
+    linear-gradient(to bottom, transparent calc(33.33% - .5px), rgba(255,255,255,.55) calc(33.33% - .5px), rgba(255,255,255,.55) calc(33.33% + .5px), transparent calc(33.33% + .5px)),
+    linear-gradient(to bottom, transparent calc(66.66% - .5px), rgba(255,255,255,.55) calc(66.66% - .5px), rgba(255,255,255,.55) calc(66.66% + .5px), transparent calc(66.66% + .5px));}
+
+  .flash-fx{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;}
+  .flash-fx.active{opacity:1;transition:opacity .3s ease;}
+
+  .countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:88px;font-weight:600;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none;opacity:0;}
+  .countdown.show{opacity:1;}
+
+  .loading,.error-state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#aaa;background:#0a0a0a;text-align:center;padding:20px;}
+  .loading i,.error-state i{font-size:34px;}
+  .error-state{color:#f0f0f0;}
+  .error-state p{font-size:14px;max-width:240px;color:#999;}
+
+  .top-bar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:center;gap:10px;padding:12px;background:linear-gradient(to bottom, rgba(0,0,0,.55), transparent);}
+  .icon-btn{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.4);border:none;color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}
+  .icon-btn.active{color:#ffd60a;}
+  .icon-btn .badge{position:absolute;bottom:-4px;right:-4px;background:#ffd60a;color:#000;font-size:9px;font-weight:700;border-radius:8px;padding:1px 4px;line-height:1.3;}
+  .icon-btn[hidden]{display:none;}
+
+  /* Filter strip */
+  .filter-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 10px;max-width:min(100vw,640px);scrollbar-width:none;}
+  .filter-strip::-webkit-scrollbar{display:none;}
+  .filter-chip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;cursor:pointer;color:#999;font-size:11px;}
+  .filter-swatch{width:46px;height:46px;border-radius:50%;background:#333;border:2px solid transparent;background-size:cover;background-position:center;}
+  .filter-chip.active .filter-swatch{border-color:#ffd60a;}
+  .filter-chip.active{color:#fff;}
+
+  /* Controls */
+  .controls{display:flex;align-items:center;justify-content:center;gap:34px;}
+  .btn-action{background:#fff;border:none;width:68px;height:68px;border-radius:50%;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transition:transform .1s;}
+  .btn-action:active{transform:scale(.9);}
+  .btn-action-inner{width:56px;height:56px;border:3px solid #000;border-radius:50%;background:#fff;}
+
+  .btn-switch,.thumb-btn{background:rgba(255,255,255,.12);border:none;color:#fff;width:46px;height:46px;border-radius:50%;cursor:pointer;font-size:19px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .thumb-btn{background-size:cover;background-position:center;border:2px solid rgba(255,255,255,.4);}
+
+  /* Result modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .25s;gap:20px;padding:20px;}
+  .modal.open{opacity:1;pointer-events:auto;}
+  .modal img{max-width:min(90vw,500px);max-height:65vh;aspect-ratio:1/1;object-fit:cover;border-radius:10px;border:1px solid #333;}
+  .modal-buttons{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+  .modal-buttons button,.modal-buttons a{padding:12px 20px;border-radius:24px;font-weight:600;font-size:14px;text-decoration:none;cursor:pointer;border:none;display:flex;align-items:center;gap:7px;}
+  .btn-retake{background:#2a2a2a;color:#fff;}
+  .btn-download{background:#ffd60a;color:#000;}
+  .save-note{color:#8a8a8a;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="camera-container" id="cameraContainer">
+    <video id="cameraFeed" autoplay playsinline muted></video>
+    <object id="svgOverlayObj" data="../resources/image/pubmats/generic.svg" type="image/svg+xml" class="svg-overlay"></object>
+    <div class="grid-overlay" id="gridOverlay"></div>
+    <div class="flash-fx" id="flashFx"></div>
+    <div class="countdown" id="countdown"></div>
+    <div class="loading" id="loadingState"><i class="ri-camera-3-line"></i><span>Starting camera…</span></div>
+    <div class="error-state" id="errorState" hidden><i class="ri-camera-off-line"></i><p>Camera access was blocked. Allow camera permission in your browser settings, then reload.</p></div>
+
+    <div class="top-bar">
+      <button class="icon-btn" id="flashBtn" hidden title="Flash"><i class="ri-flashlight-line"></i></button>
+      <button class="icon-btn" id="gridBtn" title="Grid"><i class="ri-grid-line"></i></button>
+      <button class="icon-btn" id="timerBtn" title="Timer"><i class="ri-timer-line"></i></button>
+    </div>
+  </div>
+
+  <div class="filter-strip" id="filterStrip"></div>
+
+  <div class="controls">
+    <button class="thumb-btn" id="galleryThumb" title="Last photo"><i class="ri-image-line"></i></button>
+    <button class="btn-action" id="shutter" title="Capture"><div class="btn-action-inner"></div></button>
+    <button class="btn-switch" id="switchCam" title="Switch camera"><i class="ri-camera-switch-line"></i></button>
+  </div>
+</div>
+
+<canvas id="exportCanvas" style="display:none"></canvas>
+
+<div class="modal" id="resultModal">
+  <img id="previewImg" alt="Captured Result">
+  <div class="modal-buttons">
+    <button class="btn-retake" id="retakeBtn"><i class="ri-refresh-line"></i>Retake</button>
+    <button class="btn-download" id="shareBtn"><i class="ri-share-forward-line"></i>Share</button>
+    <a class="btn-download" id="downloadLink" download="pubmat.png"><i class="ri-download-2-line"></i>Save</a>
+  </div>
+  <div class="save-note" id="saveNote"></div>
+</div>
+
+<script>
+const video = document.getElementById('cameraFeed');
+const svgObj = document.getElementById('svgOverlayObj');
+const shutter = document.getElementById('shutter');
+const exportCanvas = document.getElementById('exportCanvas');
+const ctx = exportCanvas.getContext('2d');
+const resultModal = document.getElementById('resultModal');
+const previewImg = document.getElementById('previewImg');
+const downloadLink = document.getElementById('downloadLink');
+const retakeBtn = document.getElementById('retakeBtn');
+const shareBtn = document.getElementById('shareBtn');
+const saveNote = document.getElementById('saveNote');
+const loadingState = document.getElementById('loadingState');
+const errorState = document.getElementById('errorState');
+const gridBtn = document.getElementById('gridBtn');
+const gridOverlay = document.getElementById('gridOverlay');
+const timerBtn = document.getElementById('timerBtn');
+const flashBtn = document.getElementById('flashBtn');
+const flashFx = document.getElementById('flashFx');
+const countdownEl = document.getElementById('countdown');
+const filterStrip = document.getElementById('filterStrip');
+const galleryThumb = document.getElementById('galleryThumb');
+const EXPORT_SIZE = 1080; // square, social-media ready
+
+const FILTERS = [
+  {name:'Normal', css:'none'},
+  {name:'Mono', css:'grayscale(1)'},
+  {name:'Noir', css:'grayscale(1) contrast(1.35) brightness(.9)'},
+  {name:'Sepia', css:'sepia(.75)'},
+  {name:'Vivid', css:'saturate(1.6) contrast(1.1)'},
+  {name:'Warm', css:'sepia(.25) saturate(1.3) brightness(1.05)'},
+  {name:'Cool', css:'hue-rotate(180deg) saturate(1.15)'},
+  {name:'Fade', css:'contrast(.85) brightness(1.1) saturate(.7)'}
+];
+let activeFilter = FILTERS[0];
+const TIMERS = [0,3,10];
+let timerIdx = 0;
+let currentFacingMode = 'environment';
+let flashOn = false;
+let torchSupported = false;
+let currentTrack = null;
+let lastPhotoUrl = null;
+
+function buildFilterStrip(){
+  FILTERS.forEach((f,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'filter-chip' + (i===0 ? ' active' : '');
+    btn.innerHTML = `<span class="filter-swatch" style="filter:${f.css}"></span><span>${f.name}</span>`;
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = f;
+      video.style.filter = f.css;
+    });
+    filterStrip.appendChild(btn);
+  });
+}
+buildFilterStrip();
+
+async function initCamera(){
+  loadingState.hidden = false;
+  errorState.hidden = true;
+  try{
+    if(video.srcObject){ video.srcObject.getTracks().forEach(t=>t.stop()); }
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode: currentFacingMode, width:{ideal:1920}, height:{ideal:1920} },
+      audio:false
+    });
+    video.srcObject = stream;
+    currentTrack = stream.getVideoTracks()[0];
+    video.classList.toggle('mirrored', currentFacingMode === 'user');
+
+    const caps = currentTrack.getCapabilities ? currentTrack.getCapabilities() : {};
+    torchSupported = !!caps.torch;
+    flashBtn.hidden = !torchSupported;
+    flashOn = false;
+    flashBtn.classList.remove('active');
+
+    loadingState.hidden = true;
+  }catch(err){
+    console.error('Camera access error:', err);
+    loadingState.hidden = true;
+    errorState.hidden = false;
+  }
+}
+initCamera();
+
+document.getElementById('switchCam').addEventListener('click', ()=>{
+  currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+  initCamera();
+});
+
+gridBtn.addEventListener('click', ()=>{
+  gridOverlay.classList.toggle('on');
+  gridBtn.classList.toggle('active');
+});
+
+timerBtn.addEventListener('click', ()=>{
+  timerIdx = (timerIdx + 1) % TIMERS.length;
+  const val = TIMERS[timerIdx];
+  timerBtn.classList.toggle('active', val > 0);
+  timerBtn.querySelector('.badge')?.remove();
+  if(val > 0){
+    const badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = val;
+    timerBtn.appendChild(badge);
+  }
+});
+
+flashBtn.addEventListener('click', async ()=>{
+  if(!torchSupported || !currentTrack) return;
+  flashOn = !flashOn;
+  try{
+    await currentTrack.applyConstraints({ advanced:[{ torch: flashOn }] });
+    flashBtn.classList.toggle('active', flashOn);
+  }catch(e){ console.warn('Torch toggle failed', e); }
+});
+
+shutter.addEventListener('click', ()=>{
+  const seconds = TIMERS[timerIdx];
+  if(seconds > 0) runCountdown(seconds);
+  else capture();
+});
+
+function runCountdown(seconds){
+  let n = seconds;
+  countdownEl.textContent = n;
+  countdownEl.classList.add('show');
+  const iv = setInterval(()=>{
+    n--;
+    if(n <= 0){
+      clearInterval(iv);
+      countdownEl.classList.remove('show');
+      capture();
+    } else {
+      countdownEl.textContent = n;
+    }
+  }, 1000);
+}
+
+function capture(){
+  flashFx.classList.add('active');
+  setTimeout(()=>flashFx.classList.remove('active'), 180);
+  if(navigator.vibrate) navigator.vibrate(45);
+
+  const vw = video.videoWidth || 1080;
+  const vh = video.videoHeight || 1080;
+  const side = Math.min(vw, vh);
+  const sx = (vw - side) / 2;
+  const sy = (vh - side) / 2;
+  const mirrored = video.classList.contains('mirrored');
+
+  exportCanvas.width = EXPORT_SIZE;
+  exportCanvas.height = EXPORT_SIZE;
+  ctx.save();
+  ctx.filter = activeFilter.css;
+  if(mirrored){
+    ctx.translate(EXPORT_SIZE, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(video, sx, sy, side, side, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
+  ctx.restore();
+  ctx.filter = 'none';
+
+  try{
+    const svgDoc = svgObj.contentDocument;
+    if(svgDoc){
+      const svgString = new XMLSerializer().serializeToString(svgDoc);
+      const blob = new Blob([svgString], {type:'image/svg+xml;charset=utf-8'});
+      const blobURL = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = ()=>{
+        ctx.drawImage(img, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
+        URL.revokeObjectURL(blobURL);
+        finishCapture();
+      };
+      img.onerror = finishCapture;
+      img.src = blobURL;
+    } else {
+      finishCapture();
+    }
+  }catch(e){
+    console.error('Could not render SVG overlay:', e);
+    finishCapture();
+  }
+}
+
+function finishCapture(){
+  const dataUrl = exportCanvas.toDataURL('image/png');
+  lastPhotoUrl = dataUrl;
+  galleryThumb.style.backgroundImage = `url(${dataUrl})`;
+  galleryThumb.innerHTML = '';
+  previewImg.src = dataUrl;
+  downloadLink.href = dataUrl;
+  const fname = `pubmat_${Date.now()}.png`;
+  downloadLink.download = fname;
+  resultModal.classList.add('open');
+  autoSavePhoto(dataUrl, fname);
+}
+
+async function autoSavePhoto(dataUrl, fname){
+  saveNote.textContent = 'Saving…';
+  try{
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], fname, {type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:'Coverage Pubmat'});
+      saveNote.textContent = 'Shared — choose "Save Image" to add it to your gallery.';
+      return;
+    }
+  }catch(e){ console.warn('Share unavailable, falling back to direct download', e); }
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  saveNote.textContent = 'Saved to your downloads.';
+}
+
+shareBtn.addEventListener('click', ()=>{
+  if(lastPhotoUrl) autoSavePhoto(lastPhotoUrl, downloadLink.download || 'pubmat.png');
+});
+
+galleryThumb.addEventListener('click', ()=>{
+  if(!lastPhotoUrl) return;
+  previewImg.src = lastPhotoUrl;
+  downloadLink.href = lastPhotoUrl;
+  resultModal.classList.add('open');
+  saveNote.textContent = '';
+});
+
+retakeBtn.addEventListener('click', ()=>{
+  resultModal.classList.remove('open');
+});
+</script>
+</body>
+</html>
