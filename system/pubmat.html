@@ -80,7 +80,6 @@
     <div class="grid-overlay" id="gridOverlay"></div>
     <div class="flash-fx" id="flashFx"></div>
     <div class="countdown" id="countdown"></div>
-    <div class="loading" id="loadingState"><i class="ri-camera-3-line"></i><span>Starting camera…</span></div>
 
     <div class="top-bar">
       <button class="icon-btn" id="flashBtn" hidden title="Flash"><i class="ri-flashlight-line"></i></button>
@@ -122,7 +121,6 @@ const downloadLink = document.getElementById('downloadLink');
 const retakeBtn = document.getElementById('retakeBtn');
 const shareBtn = document.getElementById('shareBtn');
 const saveNote = document.getElementById('saveNote');
-const loadingState = document.getElementById('loadingState');
 const gridBtn = document.getElementById('gridBtn');
 const gridOverlay = document.getElementById('gridOverlay');
 const timerBtn = document.getElementById('timerBtn');
@@ -169,8 +167,7 @@ function buildFilterStrip(){
 buildFilterStrip();
 
 async function initCamera() {
-  loadingState.hidden = false;
-  
+
   try {
     if (video.srcObject) {
       video.srcObject.getTracks().forEach(t => t.stop());
@@ -201,10 +198,9 @@ async function initCamera() {
     flashOn = false;
     flashBtn.classList.remove('active');
 
-    loadingState.hidden = true;
   } catch (err) {
     console.error('Camera access error details:', err.name, err.message);
-    loadingState.hidden = true;
+
   }
 }
 initCamera();
