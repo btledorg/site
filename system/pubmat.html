@@ -1,705 +1,705 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#000000">
-<link rel="manifest" href="offline/manifest.json">
-<title>BTLED Pubmat Studio & Camera</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css">
-<style>
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
-  .app{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px 0;}
-
-  .camera-container{position:relative;width:min(100vw,100vh - 220px);height:min(100vw,100vh - 220px);max-width:640px;max-height:640px;background:#111;overflow:hidden;border-radius:6px;touch-action:none;}
-
-  #cameraFeed,#editorCanvas{width:100%;height:100%;object-fit:cover;display:block;transition:filter .15s ease;}
-  #cameraFeed.mirrored{transform:scaleX(-1);}
-  #editorCanvas{background:#0a0a0a;cursor:grab;}
-  #editorCanvas:active{cursor:grabbing;}
-
-  .svg-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;}
-
-  .grid-overlay{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;z-index:6;}
-  .grid-overlay.on{opacity:1;}
-  .grid-overlay::before,.grid-overlay::after{content:'';position:absolute;inset:0;background:
-    linear-gradient(to right, transparent calc(33.33% - .5px), rgba(255,255,255,.4) calc(33.33% - .5px), rgba(255,255,255,.4) calc(33.33% + .5px), transparent calc(33.33% + .5px)),
-    linear-gradient(to right, transparent calc(66.66% - .5px), rgba(255,255,255,.4) calc(66.66% - .5px), rgba(255,255,255,.4) calc(66.66% + .5px), transparent calc(66.66% + .5px));}
-  .grid-overlay::after{background:
-    linear-gradient(to bottom, transparent calc(33.33% - .5px), rgba(255,255,255,.4) calc(33.33% - .5px), rgba(255,255,255,.4) calc(33.33% + .5px), transparent calc(33.33% + .5px)),
-    linear-gradient(to bottom, transparent calc(66.66% - .5px), rgba(255,255,255,.4) calc(66.66% - .5px), rgba(255,255,255,.4) calc(66.66% + .5px), transparent calc(66.66% + .5px));}
-
-  .flash-fx{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:10;}
-  .flash-fx.active{opacity:1;transition:opacity .3s ease;}
-
-  .countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:88px;font-weight:600;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none;opacity:0;z-index:9;}
-  .countdown.show{opacity:1;}
-
-  .offline-banner{position:fixed;top:0;left:0;right:0;background:#ffd60a;color:#000;text-align:center;font-size:12px;font-weight:600;padding:7px 10px;z-index:2000;transform:translateY(-100%);transition:transform .25s ease;}
-  .offline-banner.show{transform:translateY(0);}
-
-  .top-bar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:center;gap:8px;padding:10px;background:linear-gradient(to bottom, rgba(0,0,0,.65), transparent);z-index:8;}
-  .icon-btn{width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}
-  .icon-btn.active{color:#ffd60a;border-color:#ffd60a;}
-  .icon-btn .badge{position:absolute;bottom:-3px;right:-3px;background:#ffd60a;color:#000;font-size:9px;font-weight:700;border-radius:8px;padding:1px 4px;line-height:1.2;}
-  .icon-btn[hidden]{display:none;}
-
-  /* Editor Toolbar Drawer */
-  .editor-tools{display:none;width:min(100vw,640px);background:#1a1a1a;border-radius:8px;padding:8px;gap:8px;flex-direction:column;font-size:12px;color:#ccc;}
-  .editor-tools.show{display:flex;}
-  .tool-row{display:flex;align-items:center;justify-content:space-between;gap:8px;overflow-x:auto;}
-  .tool-row::-webkit-scrollbar{display:none;}
-  .tool-group{display:flex;align-items:center;gap:6px;}
-  .tool-label{font-size:11px;color:#888;white-space:nowrap;}
-  .tool-btn{background:#2a2a2a;border:1px solid #333;color:#fff;padding:5px 10px;border-radius:14px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;}
-  .tool-btn.active{background:#ffd60a;color:#000;font-weight:600;}
-  .tool-slider{width:80px;accent-color:#ffd60a;}
-  .tool-input{background:#2a2a2a;border:1px solid #333;color:#fff;padding:4px 8px;border-radius:4px;font-size:11px;width:120px;}
-
-  /* Filter strip */
-  .filter-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 10px;max-width:min(100vw,640px);scrollbar-width:none;}
-  .filter-strip::-webkit-scrollbar{display:none;}
-  .filter-chip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;color:#888;font-size:10px;}
-  .filter-swatch{width:42px;height:42px;border-radius:50%;background:#333;border:2px solid transparent;background-size:cover;background-position:center;}
-  .filter-chip.active .filter-swatch{border-color:#ffd60a;}
-  .filter-chip.active{color:#fff;}
-
-  /* Controls */
-  .controls{display:flex;align-items:center;justify-content:center;gap:24px;}
-  .btn-action{background:#fff;border:none;width:64px;height:64px;border-radius:50%;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transition:transform .1s;}
-  .btn-action:active{transform:scale(.92);}
-  .btn-action-inner{width:52px;height:52px;border:3px solid #000;border-radius:50%;background:#fff;}
-
-  .btn-switch,.thumb-btn,.upload-btn{background:rgba(255,255,255,.12);border:none;color:#fff;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-  .thumb-btn{background-size:cover;background-position:center;border:2px solid rgba(255,255,255,.4);}
-
-  /* Result modal */
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .25s;gap:16px;padding:20px;}
-  .modal.open{opacity:1;pointer-events:auto;}
-  .modal img{max-width:min(90vw,500px);max-height:60vh;aspect-ratio:1/1;object-fit:cover;border-radius:10px;border:1px solid #333;}
-  .modal-buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
-  .modal-buttons button,.modal-buttons a{padding:10px 18px;border-radius:24px;font-weight:600;font-size:13px;text-decoration:none;cursor:pointer;border:none;display:flex;align-items:center;gap:6px;}
-  .btn-retake{background:#2a2a2a;color:#fff;}
-  .btn-download{background:#ffd60a;color:#000;}
-  .save-note{color:#8a8a8a;font-size:11px;}
-  
-  input[type="file"]{display:none;}
-</style>
-</head>
-<body>
-<div class="offline-banner" id="offlineBanner">Offline mode — editor and photo export remain fully functional.</div>
-
-<div class="app">
-  <div class="camera-container" id="cameraContainer">
-    <video id="cameraFeed" autoplay playsinline muted></video>
-    <canvas id="editorCanvas" style="display:none;"></canvas>
-    <object id="svgOverlayObj" data="../resources/image/pubmats/generic.svg" type="image/svg+xml" class="svg-overlay"></object>
-    <div class="grid-overlay" id="gridOverlay"></div>
-    <div class="flash-fx" id="flashFx"></div>
-    <div class="countdown" id="countdown"></div>
-
-    <div class="top-bar">
-      <button class="icon-btn" id="modeToggleBtn" title="Switch Mode (Camera/Editor)"><i class="ri-edit-circle-line"></i></button>
-      <button style="display:none;" class="icon-btn" id="frameUploadBtn" title="Upload Custom Pubmat Frame"><i class="ri-layout-grid-line"></i></button>
-      <button class="icon-btn" id="flashBtn" hidden title="Flash"><i class="ri-flashlight-line"></i></button>
-      <button class="icon-btn" id="gridBtn" title="Grid"><i class="ri-grid-line"></i></button>
-      <button class="icon-btn" id="timerBtn" title="Timer"><i class="ri-timer-line"></i></button>
-    </div>
-  </div>
-
-  <!-- Editor Tool Bar (Only active in Edit mode) -->
-  <div class="editor-tools" id="editorTools">
-    <div class="tool-row">
-      <div class="tool-group">
-        <span class="tool-label">Lineup:</span>
-        <button class="tool-btn active" data-layout="single"><i class="ri-square-line"></i> 1</button>
-        <button class="tool-btn" data-layout="split-v"><i class="ri-layout-column-line"></i> 2-V</button>
-        <button class="tool-btn" data-layout="split-h"><i class="ri-layout-row-line"></i> 2-H</button>
-        <button class="tool-btn" data-layout="grid-4"><i class="ri-layout-grid-fill"></i> 4 Grid</button>
-      </div>
-      <div class="tool-group">
-        <button class="tool-btn" id="resetTransformBtn"><i class="ri-restart-line"></i> Reset</button>
-      </div>
-    </div>
-    <div class="tool-row">
-      <div class="tool-group">
-        <span class="tool-label">Zoom:</span>
-        <input type="range" class="tool-slider" id="zoomSlider" min="0.2" max="3" step="0.05" value="1">
-      </div>
-      <div class="tool-group">
-        <span class="tool-label">Rotate:</span>
-        <input type="range" class="tool-slider" id="rotateSlider" min="-180" max="180" step="5" value="0">
-      </div>
-      <div class="tool-group">
-        <input type="text" class="tool-input" id="textOverlayInput" placeholder="Add Name/Caption...">
-      </div>
-    </div>
-  </div>
-
-  <div class="filter-strip" id="filterStrip"></div>
-
-  <div class="controls">
-    <button class="thumb-btn" id="galleryThumb" title="Last photo"><i class="ri-image-line"></i></button>
-    <button class="upload-btn" id="uploadPhotoBtn" title="Upload Photos"><i class="ri-upload-2-line"></i></button>
-    <button class="btn-action" id="shutter" title="Capture / Export"><div class="btn-action-inner"></div></button>
-    <button class="btn-switch" id="switchCam" title="Switch camera"><i class="ri-camera-switch-line"></i></button>
-  </div>
-</div>
-
-<input type="file" id="imageUploader" multiple accept="image/*">
-<input type="file" id="frameUploader" accept="image/png,image/svg+xml">
-<canvas id="exportCanvas" style="display:none"></canvas>
-
-<div class="modal" id="resultModal">
-  <img id="previewImg" alt="Captured Result">
-  <div class="modal-buttons">
-    <button class="btn-retake" id="retakeBtn"><i class="ri-refresh-line"></i>Edit/Retake</button>
-    <button class="btn-download" id="shareBtn"><i class="ri-share-forward-line"></i>Share</button>
-    <a class="btn-download" id="downloadLink" download="pubmat.png"><i class="ri-download-2-line"></i>Save</a>
-  </div>
-  <div class="save-note" id="saveNote"></div>
-</div>
-
-<script>
-const video = document.getElementById('cameraFeed');
-const editorCanvas = document.getElementById('editorCanvas');
-const editorCtx = editorCanvas.getContext('2d');
-const svgObj = document.getElementById('svgOverlayObj');
-const shutter = document.getElementById('shutter');
-const exportCanvas = document.getElementById('exportCanvas');
-const ctx = exportCanvas.getContext('2d');
-
-const resultModal = document.getElementById('resultModal');
-const previewImg = document.getElementById('previewImg');
-const downloadLink = document.getElementById('downloadLink');
-const retakeBtn = document.getElementById('retakeBtn');
-const shareBtn = document.getElementById('shareBtn');
-const saveNote = document.getElementById('saveNote');
-
-const gridBtn = document.getElementById('gridBtn');
-const gridOverlay = document.getElementById('gridOverlay');
-const timerBtn = document.getElementById('timerBtn');
-const flashBtn = document.getElementById('flashBtn');
-const flashFx = document.getElementById('flashFx');
-const countdownEl = document.getElementById('countdown');
-const filterStrip = document.getElementById('filterStrip');
-const galleryThumb = document.getElementById('galleryThumb');
-const offlineBanner = document.getElementById('offlineBanner');
-const modeToggleBtn = document.getElementById('modeToggleBtn');
-const editorTools = document.getElementById('editorTools');
-
-const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
-const imageUploader = document.getElementById('imageUploader');
-const frameUploadBtn = document.getElementById('frameUploadBtn');
-const frameUploader = document.getElementById('frameUploader');
-
-const zoomSlider = document.getElementById('zoomSlider');
-const rotateSlider = document.getElementById('rotateSlider');
-const textOverlayInput = document.getElementById('textOverlayInput');
-const resetTransformBtn = document.getElementById('resetTransformBtn');
-
-const EXPORT_SIZE = 1080;
-editorCanvas.width = EXPORT_SIZE;
-editorCanvas.height = EXPORT_SIZE;
-
-const FILTERS = [
-  {name:'Normal', css:'none'},
-  {name:'Mono', css:'grayscale(1)'},
-  {name:'Noir', css:'grayscale(1) contrast(1.35) brightness(.9)'},
-  {name:'Sepia', css:'sepia(.75)'},
-  {name:'Vivid', css:'saturate(1.6) contrast(1.1)'},
-  {name:'Warm', css:'sepia(.25) saturate(1.3) brightness(1.05)'},
-  {name:'Cool', css:'hue-rotate(180deg) saturate(1.15)'},
-  {name:'Fade', css:'contrast(.85) brightness(1.1) saturate(.7)'}
-];
-
-let activeFilter = FILTERS[0];
-const TIMERS = [0,3,10];
-let timerIdx = 0;
-let currentFacingMode = 'environment';
-let flashOn = false;
-let torchSupported = false;
-let currentTrack = null;
-let lastPhotoUrl = null;
-
-// Studio Mode State
-let isEditMode = false;
-let uploadedImages = []; // Array of Image elements
-let activePhotoIdx = 0;
-let activeLayout = 'single'; // 'single', 'split-v', 'split-h', 'grid-4'
-let customFrameImg = null;
-let customText = '';
-
-// Transform per photo state
-let photoTransforms = []; 
-
-function createDefaultTransform() {
-  return { x: 0, y: 0, scale: 1, rotation: 0 };
-}
-
-function buildFilterStrip(){
-  filterStrip.innerHTML = '';
-  FILTERS.forEach((f,i)=>{
-    const btn = document.createElement('button');
-    btn.className = 'filter-chip' + (i===0 ? ' active' : '');
-    btn.innerHTML = `<span class="filter-swatch" style="filter:${f.css}"></span><span>${f.name}</span>`;
-    btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
-      btn.classList.add('active');
-      activeFilter = f;
-      video.style.filter = f.css;
-      if(isEditMode) renderEditorCanvas();
-    });
-    filterStrip.appendChild(btn);
-  });
-}
-buildFilterStrip();
-
-async function initCamera() {
-  try {
-    if (video.srcObject) {
-      video.srcObject.getTracks().forEach(t => t.stop());
-    }
-    let constraints = {
-      video: { facingMode: currentFacingMode, width: { ideal: 1080 }, height: { ideal: 1080 } },
-      audio: false
-    };
-    let stream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia(constraints);
-    } catch (err) {
-      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    }
-    video.srcObject = stream;
-    currentTrack = stream.getVideoTracks()[0];
-    video.classList.toggle('mirrored', currentFacingMode === 'user');
-
-    const caps = currentTrack.getCapabilities ? currentTrack.getCapabilities() : {};
-    torchSupported = !!caps.torch;
-    flashBtn.hidden = !torchSupported;
-    flashOn = false;
-    flashBtn.classList.remove('active');
-  } catch (err) {
-    console.warn('Camera access restricted/unavailable. Defaulting to upload mode.');
-    setMode(true);
-  }
-}
-initCamera();
-
-function setMode(editMode) {
-  isEditMode = editMode;
-  if(isEditMode) {
-    video.style.display = 'none';
-    editorCanvas.style.display = 'block';
-    editorTools.classList.add('show');
-    modeToggleBtn.classList.add('active');
-    renderEditorCanvas();
-  } else {
-    video.style.display = 'block';
-    editorCanvas.style.display = 'none';
-    editorTools.classList.remove('show');
-    modeToggleBtn.classList.remove('active');
-  }
-}
-
-modeToggleBtn.addEventListener('click', () => setMode(!isEditMode));
-
-document.getElementById('switchCam').addEventListener('click', ()=>{
-  if(isEditMode) return;
-  currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-  initCamera();
-});
-
-gridBtn.addEventListener('click', ()=>{
-  gridOverlay.classList.toggle('on');
-  gridBtn.classList.toggle('active');
-});
-
-timerBtn.addEventListener('click', ()=>{
-  timerIdx = (timerIdx + 1) % TIMERS.length;
-  const val = TIMERS[timerIdx];
-  timerBtn.classList.toggle('active', val > 0);
-  timerBtn.querySelector('.badge')?.remove();
-  if(val > 0){
-    const badge = document.createElement('span');
-    badge.className = 'badge';
-    badge.textContent = val;
-    timerBtn.appendChild(badge);
-  }
-});
-
-flashBtn.addEventListener('click', async ()=>{
-  if(!torchSupported || !currentTrack) return;
-  flashOn = !flashOn;
-  try{
-    await currentTrack.applyConstraints({ advanced:[{ torch: flashOn }] });
-    flashBtn.classList.toggle('active', flashOn);
-  }catch(e){ console.warn('Torch failed', e); }
-});
-
-/* Upload Handling */
-uploadPhotoBtn.addEventListener('click', () => imageUploader.click());
-imageUploader.addEventListener('change', (e) => {
-  const files = Array.from(e.target.files);
-  if(!files.length) return;
-  
-  uploadedImages = [];
-  photoTransforms = [];
-  
-  let loaded = 0;
-  files.forEach((file, idx) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        uploadedImages[idx] = img;
-        photoTransforms[idx] = createDefaultTransform();
-        loaded++;
-        if(loaded === files.length) {
-          if(files.length > 1 && activeLayout === 'single') {
-            activeLayout = files.length === 2 ? 'split-v' : 'grid-4';
-            updateLayoutButtons();
-          }
-          setMode(true);
-        }
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-});
-
-frameUploadBtn.addEventListener('click', () => frameUploader.click());
-frameUploader.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const img = new Image();
-    img.onload = () => {
-      customFrameImg = img;
-      frameUploadBtn.classList.add('active');
-      if(isEditMode) renderEditorCanvas();
-    };
-    img.src = event.target.result;
-  };
-  reader.readAsDataURL(file);
-});
-
-/* Layout & Transform Controls */
-document.querySelectorAll('.tool-btn[data-layout]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    activeLayout = btn.dataset.layout;
-    updateLayoutButtons();
-    if(isEditMode) renderEditorCanvas();
-  });
-});
-
-function updateLayoutButtons() {
-  document.querySelectorAll('.tool-btn[data-layout]').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.layout === activeLayout);
-  });
-}
-
-zoomSlider.addEventListener('input', (e) => {
-  if(photoTransforms[activePhotoIdx]) {
-    photoTransforms[activePhotoIdx].scale = parseFloat(e.target.value);
-    if(isEditMode) renderEditorCanvas();
-  }
-});
-
-rotateSlider.addEventListener('input', (e) => {
-  if(photoTransforms[activePhotoIdx]) {
-    photoTransforms[activePhotoIdx].rotation = parseInt(e.target.value);
-    if(isEditMode) renderEditorCanvas();
-  }
-});
-
-textOverlayInput.addEventListener('input', (e) => {
-  customText = e.target.value;
-  if(isEditMode) renderEditorCanvas();
-});
-
-resetTransformBtn.addEventListener('click', () => {
-  if(photoTransforms[activePhotoIdx]) {
-    photoTransforms[activePhotoIdx] = createDefaultTransform();
-    zoomSlider.value = 1;
-    rotateSlider.value = 0;
-    if(isEditMode) renderEditorCanvas();
-  }
-});
-
-/* Drag/Pan Canvas Gesture Handling */
-let isDragging = false;
-let startX = 0, startY = 0;
-
-editorCanvas.addEventListener('pointerdown', (e) => {
-  if(!uploadedImages.length) return;
-  isDragging = true;
-  startX = e.clientX;
-  startY = e.clientY;
-  editorCanvas.setPointerCapture(e.pointerId);
-});
-
-editorCanvas.addEventListener('pointermove', (e) => {
-  if(!isDragging || !photoTransforms[activePhotoIdx]) return;
-  const dx = (e.clientX - startX) * (EXPORT_SIZE / editorCanvas.clientWidth);
-  const dy = (e.clientY - startY) * (EXPORT_SIZE / editorCanvas.clientHeight);
-  startX = e.clientX;
-  startY = e.clientY;
-
-  photoTransforms[activePhotoIdx].x += dx;
-  photoTransforms[activePhotoIdx].y += dy;
-  renderEditorCanvas();
-});
-
-editorCanvas.addEventListener('pointerup', () => isDragging = false);
-editorCanvas.addEventListener('pointercancel', () => isDragging = false);
-
-/* Multi-Photo Render Engine */
-function renderEditorCanvas() {
-  editorCtx.save();
-  editorCtx.clearRect(0, 0, EXPORT_SIZE, EXPORT_SIZE);
-  editorCtx.fillStyle = '#111';
-  editorCtx.fillRect(0, 0, EXPORT_SIZE, EXPORT_SIZE);
-
-  if (uploadedImages.length > 0) {
-    let rects = getLayoutRects(activeLayout);
-    
-    rects.forEach((rect, idx) => {
-      const img = uploadedImages[idx % uploadedImages.length];
-      const t = photoTransforms[idx % uploadedImages.length] || createDefaultTransform();
-
-      editorCtx.save();
-      editorCtx.beginPath();
-      editorCtx.rect(rect.x, rect.y, rect.w, rect.h);
-      editorCtx.clip();
-
-      editorCtx.filter = activeFilter.css;
-
-      const centerX = rect.x + rect.w / 2 + t.x;
-      const centerY = rect.y + rect.h / 2 + t.y;
-
-      editorCtx.translate(centerX, centerY);
-      editorCtx.rotate((t.rotation * Math.PI) / 180);
-      editorCtx.scale(t.scale, t.scale);
-
-      const aspect = img.width / img.height;
-      let drawW = rect.w;
-      let drawH = rect.w / aspect;
-      if (drawH < rect.h) {
-        drawH = rect.h;
-        drawW = rect.h * aspect;
-      }
-
-      editorCtx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
-      editorCtx.restore();
-    });
-  }
-
-  // Draw Custom Frame or Pubmat SVG Overlay
-  if (customFrameImg) {
-    editorCtx.drawImage(customFrameImg, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
-    finishCanvasDecoration();
-  } else {
-    try {
-      const svgDoc = svgObj.contentDocument;
-      if (svgDoc) {
-        const svgString = new XMLSerializer().serializeToString(svgDoc);
-        const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-        const blobURL = URL.createObjectURL(blob);
-        const img = new Image();
-        img.onload = () => {
-          editorCtx.drawImage(img, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
-          URL.revokeObjectURL(blobURL);
-          finishCanvasDecoration();
-        };
-        img.onerror = finishCanvasDecoration;
-        img.src = blobURL;
-      } else {
-        finishCanvasDecoration();
-      }
-    } catch (e) {
-      finishCanvasDecoration();
-    }
-  }
-  editorCtx.restore();
-}
-
-function finishCanvasDecoration() {
-  if (customText.trim() !== '') {
-    editorCtx.save();
-    editorCtx.font = '600 36px -apple-system, sans-serif';
-    editorCtx.fillStyle = '#ffffff';
-    editorCtx.textAlign = 'center';
-    editorCtx.shadowColor = 'rgba(0,0,0,0.8)';
-    editorCtx.shadowBlur = 8;
-    editorCtx.fillText(customText, EXPORT_SIZE / 2, EXPORT_SIZE - 60);
-    editorCtx.restore();
-  }
-}
-
-function getLayoutRects(layout) {
-  const S = EXPORT_SIZE;
-  if(layout === 'split-v') {
-    return [
-      { x: 0, y: 0, w: S / 2, h: S },
-      { x: S / 2, y: 0, w: S / 2, h: S }
-    ];
-  } else if(layout === 'split-h') {
-    return [
-      { x: 0, y: 0, w: S, h: S / 2 },
-      { x: 0, y: S / 2, w: S, h: S / 2 }
-    ];
-  } else if(layout === 'grid-4') {
-    return [
-      { x: 0, y: 0, w: S / 2, h: S / 2 },
-      { x: S / 2, y: 0, w: S / 2, h: S / 2 },
-      { x: 0, y: S / 2, w: S / 2, h: S / 2 },
-      { x: S / 2, y: S / 2, w: S / 2, h: S / 2 }
-    ];
-  }
-  return [{ x: 0, y: 0, w: S, h: S }]; // Default single
-}
-
-/* Shutter / Capture Trigger */
-shutter.addEventListener('click', ()=>{
-  const seconds = TIMERS[timerIdx];
-  if(seconds > 0) runCountdown(seconds);
-  else capture();
-});
-
-function runCountdown(seconds){
-  let n = seconds;
-  countdownEl.textContent = n;
-  countdownEl.classList.add('show');
-  const iv = setInterval(()=>{
-    n--;
-    if(n <= 0){
-      clearInterval(iv);
-      countdownEl.classList.remove('show');
-      capture();
-    } else {
-      countdownEl.textContent = n;
-    }
-  }, 1000);
-}
-
-function capture(){
-  flashFx.classList.add('active');
-  setTimeout(()=>flashFx.classList.remove('active'), 180);
-  if(navigator.vibrate) navigator.vibrate(45);
-
-  exportCanvas.width = EXPORT_SIZE;
-  exportCanvas.height = EXPORT_SIZE;
-
-  if(isEditMode) {
-    ctx.drawImage(editorCanvas, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
-    finishCapture();
-  } else {
-    const vw = video.videoWidth || 1080;
-    const vh = video.videoHeight || 1080;
-    const side = Math.min(vw, vh);
-    const sx = (vw - side) / 2;
-    const sy = (vh - side) / 2;
-    const mirrored = video.classList.contains('mirrored');
-
-    ctx.save();
-    ctx.filter = activeFilter.css;
-    if(mirrored){
-      ctx.translate(EXPORT_SIZE, 0);
-      ctx.scale(-1, 1);
-    }
-    ctx.drawImage(video, sx, sy, side, side, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
-    ctx.restore();
-
-    if(customFrameImg) {
-      ctx.drawImage(customFrameImg, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
-      finishCapture();
-    } else {
-      try{
-        const svgDoc = svgObj.contentDocument;
-        if(svgDoc){
-          const svgString = new XMLSerializer().serializeToString(svgDoc);
-          const blob = new Blob([svgString], {type:'image/svg+xml;charset=utf-8'});
-          const blobURL = URL.createObjectURL(blob);
-          const img = new Image();
-          img.onload = ()=>{
-            ctx.drawImage(img, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
-            URL.revokeObjectURL(blobURL);
-            finishCapture();
-          };
-          img.onerror = finishCapture;
-          img.src = blobURL;
-        } else {
-          finishCapture();
-        }
-      }catch(e){ finishCapture(); }
-    }
-  }
-}
-
-function finishCapture(){
-  const dataUrl = exportCanvas.toDataURL('image/png');
-  lastPhotoUrl = dataUrl;
-  galleryThumb.style.backgroundImage = `url(${dataUrl})`;
-  galleryThumb.innerHTML = '';
-  previewImg.src = dataUrl;
-  downloadLink.href = dataUrl;
-  const fname = `pubmat_${Date.now()}.png`;
-  downloadLink.download = fname;
-  resultModal.classList.add('open');
-  autoSavePhoto(dataUrl, fname);
-}
-
-async function autoSavePhoto(dataUrl, fname){
-  saveNote.textContent = 'Saving…';
-  try{
-    const blob = await (await fetch(dataUrl)).blob();
-    const file = new File([blob], fname, {type:'image/png'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file], title:'BTLED Pubmat'});
-      saveNote.textContent = 'Shared successfully!';
-      return;
-    }
-  }catch(e){ console.warn('Share fallback to direct download', e); }
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = fname;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  saveNote.textContent = 'Saved to downloads.';
-}
-
-shareBtn.addEventListener('click', ()=>{
-  if(lastPhotoUrl) autoSavePhoto(lastPhotoUrl, downloadLink.download || 'pubmat.png');
-});
-
-galleryThumb.addEventListener('click', ()=>{
-  if(!lastPhotoUrl) return;
-  previewImg.src = lastPhotoUrl;
-  downloadLink.href = lastPhotoUrl;
-  resultModal.classList.add('open');
-  saveNote.textContent = '';
-});
-
-retakeBtn.addEventListener('click', () => resultModal.classList.remove('open'));
-
-function updateOnlineStatus(){
-  offlineBanner.classList.toggle('show', !navigator.onLine);
-}
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-updateOnlineStatus();
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('offline/sw.js')
-      .catch(err => console.warn('SW registration skipped or unavailable:', err));
-  });
-}
-</script>
-</body>
-</html>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="offline/manifest.json">
+    <title>BTLED Pubmat Studio & Camera</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+        html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+        .app{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px 0;}
+        
+        .camera-container{position:relative;width:min(100vw,100vh - 220px);height:min(100vw,100vh - 220px);max-width:640px;max-height:640px;background:#111;overflow:hidden;border-radius:6px;touch-action:none;}
+        
+        #cameraFeed,#editorCanvas{width:100%;height:100%;object-fit:cover;display:block;transition:filter .15s ease;}
+        #cameraFeed.mirrored{transform:scaleX(-1);}
+        #editorCanvas{background:#0a0a0a;cursor:grab;}
+        #editorCanvas:active{cursor:grabbing;}
+        
+        .svg-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;}
+        
+        .grid-overlay{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;z-index:6;}
+        .grid-overlay.on{opacity:1;}
+        .grid-overlay::before,.grid-overlay::after{content:'';position:absolute;inset:0;background:
+        linear-gradient(to right, transparent calc(33.33% - .5px), rgba(255,255,255,.4) calc(33.33% - .5px), rgba(255,255,255,.4) calc(33.33% + .5px), transparent calc(33.33% + .5px)),
+        linear-gradient(to right, transparent calc(66.66% - .5px), rgba(255,255,255,.4) calc(66.66% - .5px), rgba(255,255,255,.4) calc(66.66% + .5px), transparent calc(66.66% + .5px));}
+        .grid-overlay::after{background:
+            linear-gradient(to bottom, transparent calc(33.33% - .5px), rgba(255,255,255,.4) calc(33.33% - .5px), rgba(255,255,255,.4) calc(33.33% + .5px), transparent calc(33.33% + .5px)),
+            linear-gradient(to bottom, transparent calc(66.66% - .5px), rgba(255,255,255,.4) calc(66.66% - .5px), rgba(255,255,255,.4) calc(66.66% + .5px), transparent calc(66.66% + .5px));}
+            
+            .flash-fx{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:10;}
+            .flash-fx.active{opacity:1;transition:opacity .3s ease;}
+            
+            .countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:88px;font-weight:600;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none;opacity:0;z-index:9;}
+            .countdown.show{opacity:1;}
+            
+            .offline-banner{position:fixed;top:0;left:0;right:0;background:#ffd60a;color:#000;text-align:center;font-size:12px;font-weight:600;padding:7px 10px;z-index:2000;transform:translateY(-100%);transition:transform .25s ease;}
+            .offline-banner.show{transform:translateY(0);}
+            
+            .top-bar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:center;gap:8px;padding:10px;background:linear-gradient(to bottom, rgba(0,0,0,.65), transparent);z-index:8;}
+            .icon-btn{width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}
+            .icon-btn.active{color:#ffd60a;border-color:#ffd60a;}
+            .icon-btn .badge{position:absolute;bottom:-3px;right:-3px;background:#ffd60a;color:#000;font-size:9px;font-weight:700;border-radius:8px;padding:1px 4px;line-height:1.2;}
+            .icon-btn[hidden]{display:none;}
+            
+            /* Editor Toolbar Drawer */
+            .editor-tools{display:none;width:min(100vw,640px);background:#1a1a1a;border-radius:8px;padding:8px;gap:8px;flex-direction:column;font-size:12px;color:#ccc;}
+            .editor-tools.show{display:flex;}
+            .tool-row{display:flex;align-items:center;justify-content:space-between;gap:8px;overflow-x:auto;}
+            .tool-row::-webkit-scrollbar{display:none;}
+            .tool-group{display:flex;align-items:center;gap:6px;}
+            .tool-label{font-size:11px;color:#888;white-space:nowrap;}
+            .tool-btn{background:#2a2a2a;border:1px solid #333;color:#fff;padding:5px 10px;border-radius:14px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+            .tool-btn.active{background:#ffd60a;color:#000;font-weight:600;}
+            .tool-slider{width:80px;accent-color:#ffd60a;}
+            .tool-input{background:#2a2a2a;border:1px solid #333;color:#fff;padding:4px 8px;border-radius:4px;font-size:11px;width:120px;}
+            
+            /* Filter strip */
+            .filter-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 10px;max-width:min(100vw,640px);scrollbar-width:none;}
+            .filter-strip::-webkit-scrollbar{display:none;}
+            .filter-chip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;color:#888;font-size:10px;}
+            .filter-swatch{width:42px;height:42px;border-radius:50%;background:#333;border:2px solid transparent;background-size:cover;background-position:center;}
+            .filter-chip.active .filter-swatch{border-color:#ffd60a;}
+            .filter-chip.active{color:#fff;}
+            
+            /* Controls */
+            .controls{display:flex;align-items:center;justify-content:center;gap:24px;}
+            .btn-action{background:#fff;border:none;width:64px;height:64px;border-radius:50%;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transition:transform .1s;}
+            .btn-action:active{transform:scale(.92);}
+            .btn-action-inner{width:52px;height:52px;border:3px solid #000;border-radius:50%;background:#fff;}
+            
+            .btn-switch,.thumb-btn,.upload-btn{background:rgba(255,255,255,.12);border:none;color:#fff;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+            .thumb-btn{background-size:cover;background-position:center;border:2px solid rgba(255,255,255,.4);}
+            
+            /* Result modal */
+            .modal{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .25s;gap:16px;padding:20px;}
+            .modal.open{opacity:1;pointer-events:auto;}
+            .modal img{max-width:min(90vw,500px);max-height:60vh;aspect-ratio:1/1;object-fit:cover;border-radius:10px;border:1px solid #333;}
+            .modal-buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+            .modal-buttons button,.modal-buttons a{padding:10px 18px;border-radius:24px;font-weight:600;font-size:13px;text-decoration:none;cursor:pointer;border:none;display:flex;align-items:center;gap:6px;}
+            .btn-retake{background:#2a2a2a;color:#fff;}
+            .btn-download{background:#ffd60a;color:#000;}
+            .save-note{color:#8a8a8a;font-size:11px;}
+            
+            input[type="file"]{display:none;}
+        </style>
+    </head>
+    <body>
+        <div class="offline-banner" id="offlineBanner">Offline mode — editor and photo export remain fully functional.</div>
+        
+        <div class="app">
+            <div class="camera-container" id="cameraContainer">
+                <video id="cameraFeed" autoplay playsinline muted></video>
+                <canvas id="editorCanvas" style="display:none;"></canvas>
+                <object id="svgOverlayObj" data="../resources/image/pubmats/generic.svg" type="image/svg+xml" class="svg-overlay"></object>
+                <div class="grid-overlay" id="gridOverlay"></div>
+                <div class="flash-fx" id="flashFx"></div>
+                <div class="countdown" id="countdown"></div>
+                
+                <div class="top-bar">
+                    <button class="icon-btn" id="modeToggleBtn" title="Switch Mode (Camera/Editor)"><i class="ri-edit-circle-line"></i></button>
+                    <button style="display:none;" class="icon-btn" id="frameUploadBtn" title="Upload Custom Pubmat Frame"><i class="ri-layout-grid-line"></i></button>
+                    <button class="icon-btn" id="flashBtn" hidden title="Flash"><i class="ri-flashlight-line"></i></button>
+                    <button class="icon-btn" id="gridBtn" title="Grid"><i class="ri-grid-line"></i></button>
+                    <button class="icon-btn" id="timerBtn" title="Timer"><i class="ri-timer-line"></i></button>
+                </div>
+            </div>
+            
+            <!-- Editor Tool Bar (Only active in Edit mode) -->
+            <div class="editor-tools" id="editorTools">
+                <div class="tool-row">
+                    <div class="tool-group">
+                        <span class="tool-label">Lineup:</span>
+                        <button class="tool-btn active" data-layout="single"><i class="ri-square-line"></i> 1</button>
+                        <button class="tool-btn" data-layout="split-v"><i class="ri-layout-column-line"></i> 2-V</button>
+                        <button class="tool-btn" data-layout="split-h"><i class="ri-layout-row-line"></i> 2-H</button>
+                        <button class="tool-btn" data-layout="grid-4"><i class="ri-layout-grid-fill"></i> 4 Grid</button>
+                    </div>
+                    <div class="tool-group">
+                        <button class="tool-btn" id="resetTransformBtn"><i class="ri-restart-line"></i> Reset</button>
+                    </div>
+                </div>
+                <div class="tool-row">
+                    <div class="tool-group">
+                        <span class="tool-label">Zoom:</span>
+                        <input type="range" class="tool-slider" id="zoomSlider" min="0.2" max="3" step="0.05" value="1">
+                    </div>
+                    <div class="tool-group">
+                        <span class="tool-label">Rotate:</span>
+                        <input type="range" class="tool-slider" id="rotateSlider" min="-180" max="180" step="5" value="0">
+                    </div>
+                    <div class="tool-group">
+                        <input type="text" class="tool-input" id="textOverlayInput" placeholder="Add Name/Caption...">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-strip" id="filterStrip"></div>
+            
+            <div class="controls">
+                <button class="thumb-btn" id="galleryThumb" title="Last photo"><i class="ri-image-line"></i></button>
+                <button class="upload-btn" id="uploadPhotoBtn" title="Upload Photos"><i class="ri-upload-2-line"></i></button>
+                <button class="btn-action" id="shutter" title="Capture / Export"><div class="btn-action-inner"></div></button>
+                <button class="btn-switch" id="switchCam" title="Switch camera"><i class="ri-camera-switch-line"></i></button>
+            </div>
+        </div>
+        
+        <input type="file" id="imageUploader" multiple accept="image/*">
+        <input type="file" id="frameUploader" accept="image/png,image/svg+xml">
+        <canvas id="exportCanvas" style="display:none"></canvas>
+        
+        <div class="modal" id="resultModal">
+            <img id="previewImg" alt="Captured Result">
+            <div class="modal-buttons">
+                <button class="btn-retake" id="retakeBtn"><i class="ri-refresh-line"></i>Edit/Retake</button>
+                <button class="btn-download" id="shareBtn"><i class="ri-share-forward-line"></i>Share</button>
+                <a class="btn-download" id="downloadLink" download="pubmat.png"><i class="ri-download-2-line"></i>Save</a>
+            </div>
+            <div class="save-note" id="saveNote"></div>
+        </div>
+        
+        <script>
+            const video = document.getElementById('cameraFeed');
+            const editorCanvas = document.getElementById('editorCanvas');
+            const editorCtx = editorCanvas.getContext('2d');
+            const svgObj = document.getElementById('svgOverlayObj');
+            const shutter = document.getElementById('shutter');
+            const exportCanvas = document.getElementById('exportCanvas');
+            const ctx = exportCanvas.getContext('2d');
+            
+            const resultModal = document.getElementById('resultModal');
+            const previewImg = document.getElementById('previewImg');
+            const downloadLink = document.getElementById('downloadLink');
+            const retakeBtn = document.getElementById('retakeBtn');
+            const shareBtn = document.getElementById('shareBtn');
+            const saveNote = document.getElementById('saveNote');
+            
+            const gridBtn = document.getElementById('gridBtn');
+            const gridOverlay = document.getElementById('gridOverlay');
+            const timerBtn = document.getElementById('timerBtn');
+            const flashBtn = document.getElementById('flashBtn');
+            const flashFx = document.getElementById('flashFx');
+            const countdownEl = document.getElementById('countdown');
+            const filterStrip = document.getElementById('filterStrip');
+            const galleryThumb = document.getElementById('galleryThumb');
+            const offlineBanner = document.getElementById('offlineBanner');
+            const modeToggleBtn = document.getElementById('modeToggleBtn');
+            const editorTools = document.getElementById('editorTools');
+            
+            const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
+            const imageUploader = document.getElementById('imageUploader');
+            const frameUploadBtn = document.getElementById('frameUploadBtn');
+            const frameUploader = document.getElementById('frameUploader');
+            
+            const zoomSlider = document.getElementById('zoomSlider');
+            const rotateSlider = document.getElementById('rotateSlider');
+            const textOverlayInput = document.getElementById('textOverlayInput');
+            const resetTransformBtn = document.getElementById('resetTransformBtn');
+            
+            const EXPORT_SIZE = 1080;
+            editorCanvas.width = EXPORT_SIZE;
+            editorCanvas.height = EXPORT_SIZE;
+            
+            const FILTERS = [
+            {name:'Normal', css:'none'},
+            {name:'Mono', css:'grayscale(1)'},
+            {name:'Noir', css:'grayscale(1) contrast(1.35) brightness(.9)'},
+            {name:'Sepia', css:'sepia(.75)'},
+            {name:'Vivid', css:'saturate(1.6) contrast(1.1)'},
+            {name:'Warm', css:'sepia(.25) saturate(1.3) brightness(1.05)'},
+            {name:'Cool', css:'hue-rotate(180deg) saturate(1.15)'},
+            {name:'Fade', css:'contrast(.85) brightness(1.1) saturate(.7)'}
+            ];
+            
+            let activeFilter = FILTERS[0];
+            const TIMERS = [0,3,10];
+            let timerIdx = 0;
+            let currentFacingMode = 'environment';
+            let flashOn = false;
+            let torchSupported = false;
+            let currentTrack = null;
+            let lastPhotoUrl = null;
+            
+            // Studio Mode State
+            let isEditMode = false;
+            let uploadedImages = []; // Array of Image elements
+            let activePhotoIdx = 0;
+            let activeLayout = 'single'; // 'single', 'split-v', 'split-h', 'grid-4'
+            let customFrameImg = null;
+            let customText = '';
+            
+            // Transform per photo state
+            let photoTransforms = []; 
+            
+            function createDefaultTransform() {
+                return { x: 0, y: 0, scale: 1, rotation: 0 };
+            }
+            
+            function buildFilterStrip(){
+                filterStrip.innerHTML = '';
+                FILTERS.forEach((f,i)=>{
+                    const btn = document.createElement('button');
+                    btn.className = 'filter-chip' + (i===0 ? ' active' : '');
+                    btn.innerHTML = `<span class="filter-swatch" style="filter:${f.css}"></span><span>${f.name}</span>`;
+                    btn.addEventListener('click', ()=>{
+                        document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+                        btn.classList.add('active');
+                        activeFilter = f;
+                        video.style.filter = f.css;
+                        if(isEditMode) renderEditorCanvas();
+                    });
+                    filterStrip.appendChild(btn);
+                });
+            }
+            buildFilterStrip();
+            
+            async function initCamera() {
+                try {
+                    if (video.srcObject) {
+                        video.srcObject.getTracks().forEach(t => t.stop());
+                    }
+                    let constraints = {
+                        video: { facingMode: currentFacingMode, width: { ideal: 1080 }, height: { ideal: 1080 } },
+                        audio: false
+                    };
+                    let stream;
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    } catch (err) {
+                        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    }
+                    video.srcObject = stream;
+                    currentTrack = stream.getVideoTracks()[0];
+                    video.classList.toggle('mirrored', currentFacingMode === 'user');
+                    
+                    const caps = currentTrack.getCapabilities ? currentTrack.getCapabilities() : {};
+                    torchSupported = !!caps.torch;
+                    flashBtn.hidden = !torchSupported;
+                    flashOn = false;
+                    flashBtn.classList.remove('active');
+                } catch (err) {
+                    console.warn('Camera access restricted/unavailable. Defaulting to upload mode.');
+                    setMode(true);
+                }
+            }
+            initCamera();
+            
+            function setMode(editMode) {
+                isEditMode = editMode;
+                if(isEditMode) {
+                    video.style.display = 'none';
+                    editorCanvas.style.display = 'block';
+                    editorTools.classList.add('show');
+                    modeToggleBtn.classList.add('active');
+                    renderEditorCanvas();
+                } else {
+                    video.style.display = 'block';
+                    editorCanvas.style.display = 'none';
+                    editorTools.classList.remove('show');
+                    modeToggleBtn.classList.remove('active');
+                }
+            }
+            
+            modeToggleBtn.addEventListener('click', () => setMode(!isEditMode));
+            
+            document.getElementById('switchCam').addEventListener('click', ()=>{
+                if(isEditMode) return;
+                currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+                initCamera();
+            });
+            
+            gridBtn.addEventListener('click', ()=>{
+                gridOverlay.classList.toggle('on');
+                gridBtn.classList.toggle('active');
+            });
+            
+            timerBtn.addEventListener('click', ()=>{
+                timerIdx = (timerIdx + 1) % TIMERS.length;
+                const val = TIMERS[timerIdx];
+                timerBtn.classList.toggle('active', val > 0);
+                timerBtn.querySelector('.badge')?.remove();
+                if(val > 0){
+                    const badge = document.createElement('span');
+                    badge.className = 'badge';
+                    badge.textContent = val;
+                    timerBtn.appendChild(badge);
+                }
+            });
+            
+            flashBtn.addEventListener('click', async ()=>{
+                if(!torchSupported || !currentTrack) return;
+                flashOn = !flashOn;
+                try{
+                    await currentTrack.applyConstraints({ advanced:[{ torch: flashOn }] });
+                    flashBtn.classList.toggle('active', flashOn);
+                }catch(e){ console.warn('Torch failed', e); }
+            });
+            
+            /* Upload Handling */
+            uploadPhotoBtn.addEventListener('click', () => imageUploader.click());
+            imageUploader.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                if(!files.length) return;
+                
+                uploadedImages = [];
+                photoTransforms = [];
+                
+                let loaded = 0;
+                files.forEach((file, idx) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            uploadedImages[idx] = img;
+                            photoTransforms[idx] = createDefaultTransform();
+                            loaded++;
+                            if(loaded === files.length) {
+                                if(files.length > 1 && activeLayout === 'single') {
+                                    activeLayout = files.length === 2 ? 'split-v' : 'grid-4';
+                                    updateLayoutButtons();
+                                }
+                                setMode(true);
+                            }
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+            
+            frameUploadBtn.addEventListener('click', () => frameUploader.click());
+            frameUploader.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        customFrameImg = img;
+                        frameUploadBtn.classList.add('active');
+                        if(isEditMode) renderEditorCanvas();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            /* Layout & Transform Controls */
+            document.querySelectorAll('.tool-btn[data-layout]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeLayout = btn.dataset.layout;
+                    updateLayoutButtons();
+                    if(isEditMode) renderEditorCanvas();
+                });
+            });
+            
+            function updateLayoutButtons() {
+                document.querySelectorAll('.tool-btn[data-layout]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.layout === activeLayout);
+                });
+            }
+            
+            zoomSlider.addEventListener('input', (e) => {
+                if(photoTransforms[activePhotoIdx]) {
+                    photoTransforms[activePhotoIdx].scale = parseFloat(e.target.value);
+                    if(isEditMode) renderEditorCanvas();
+                }
+            });
+            
+            rotateSlider.addEventListener('input', (e) => {
+                if(photoTransforms[activePhotoIdx]) {
+                    photoTransforms[activePhotoIdx].rotation = parseInt(e.target.value);
+                    if(isEditMode) renderEditorCanvas();
+                }
+            });
+            
+            textOverlayInput.addEventListener('input', (e) => {
+                customText = e.target.value;
+                if(isEditMode) renderEditorCanvas();
+            });
+            
+            resetTransformBtn.addEventListener('click', () => {
+                if(photoTransforms[activePhotoIdx]) {
+                    photoTransforms[activePhotoIdx] = createDefaultTransform();
+                    zoomSlider.value = 1;
+                    rotateSlider.value = 0;
+                    if(isEditMode) renderEditorCanvas();
+                }
+            });
+            
+            /* Drag/Pan Canvas Gesture Handling */
+            let isDragging = false;
+            let startX = 0, startY = 0;
+            
+            editorCanvas.addEventListener('pointerdown', (e) => {
+                if(!uploadedImages.length) return;
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                editorCanvas.setPointerCapture(e.pointerId);
+            });
+            
+            editorCanvas.addEventListener('pointermove', (e) => {
+                if(!isDragging || !photoTransforms[activePhotoIdx]) return;
+                const dx = (e.clientX - startX) * (EXPORT_SIZE / editorCanvas.clientWidth);
+                const dy = (e.clientY - startY) * (EXPORT_SIZE / editorCanvas.clientHeight);
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                photoTransforms[activePhotoIdx].x += dx;
+                photoTransforms[activePhotoIdx].y += dy;
+                renderEditorCanvas();
+            });
+            
+            editorCanvas.addEventListener('pointerup', () => isDragging = false);
+            editorCanvas.addEventListener('pointercancel', () => isDragging = false);
+            
+            /* Multi-Photo Render Engine */
+            function renderEditorCanvas() {
+                editorCtx.save();
+                editorCtx.clearRect(0, 0, EXPORT_SIZE, EXPORT_SIZE);
+                editorCtx.fillStyle = '#111';
+                editorCtx.fillRect(0, 0, EXPORT_SIZE, EXPORT_SIZE);
+                
+                if (uploadedImages.length > 0) {
+                    let rects = getLayoutRects(activeLayout);
+                    
+                    rects.forEach((rect, idx) => {
+                        const img = uploadedImages[idx % uploadedImages.length];
+                        const t = photoTransforms[idx % uploadedImages.length] || createDefaultTransform();
+                        
+                        editorCtx.save();
+                        editorCtx.beginPath();
+                        editorCtx.rect(rect.x, rect.y, rect.w, rect.h);
+                        editorCtx.clip();
+                        
+                        editorCtx.filter = activeFilter.css;
+                        
+                        const centerX = rect.x + rect.w / 2 + t.x;
+                        const centerY = rect.y + rect.h / 2 + t.y;
+                        
+                        editorCtx.translate(centerX, centerY);
+                        editorCtx.rotate((t.rotation * Math.PI) / 180);
+                        editorCtx.scale(t.scale, t.scale);
+                        
+                        const aspect = img.width / img.height;
+                        let drawW = rect.w;
+                        let drawH = rect.w / aspect;
+                        if (drawH < rect.h) {
+                            drawH = rect.h;
+                            drawW = rect.h * aspect;
+                        }
+                        
+                        editorCtx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+                        editorCtx.restore();
+                    });
+                }
+                
+                // Draw Custom Frame or Pubmat SVG Overlay
+                if (customFrameImg) {
+                    editorCtx.drawImage(customFrameImg, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
+                    finishCanvasDecoration();
+                } else {
+                    try {
+                        const svgDoc = svgObj.contentDocument;
+                        if (svgDoc) {
+                            const svgString = new XMLSerializer().serializeToString(svgDoc);
+                            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                            const blobURL = URL.createObjectURL(blob);
+                            const img = new Image();
+                            img.onload = () => {
+                                editorCtx.drawImage(img, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
+                                URL.revokeObjectURL(blobURL);
+                                finishCanvasDecoration();
+                            };
+                            img.onerror = finishCanvasDecoration;
+                            img.src = blobURL;
+                        } else {
+                            finishCanvasDecoration();
+                        }
+                    } catch (e) {
+                        finishCanvasDecoration();
+                    }
+                }
+                editorCtx.restore();
+            }
+            
+            function finishCanvasDecoration() {
+                if (customText.trim() !== '') {
+                    editorCtx.save();
+                    editorCtx.font = '600 36px -apple-system, sans-serif';
+                    editorCtx.fillStyle = '#ffffff';
+                    editorCtx.textAlign = 'center';
+                    editorCtx.shadowColor = 'rgba(0,0,0,0.8)';
+                    editorCtx.shadowBlur = 8;
+                    editorCtx.fillText(customText, EXPORT_SIZE / 2, EXPORT_SIZE - 60);
+                    editorCtx.restore();
+                }
+            }
+            
+            function getLayoutRects(layout) {
+                const S = EXPORT_SIZE;
+                if(layout === 'split-v') {
+                    return [
+                    { x: 0, y: 0, w: S / 2, h: S },
+                    { x: S / 2, y: 0, w: S / 2, h: S }
+                    ];
+                } else if(layout === 'split-h') {
+                    return [
+                    { x: 0, y: 0, w: S, h: S / 2 },
+                    { x: 0, y: S / 2, w: S, h: S / 2 }
+                    ];
+                } else if(layout === 'grid-4') {
+                    return [
+                    { x: 0, y: 0, w: S / 2, h: S / 2 },
+                    { x: S / 2, y: 0, w: S / 2, h: S / 2 },
+                    { x: 0, y: S / 2, w: S / 2, h: S / 2 },
+                    { x: S / 2, y: S / 2, w: S / 2, h: S / 2 }
+                    ];
+                }
+                return [{ x: 0, y: 0, w: S, h: S }]; // Default single
+            }
+            
+            /* Shutter / Capture Trigger */
+            shutter.addEventListener('click', ()=>{
+                const seconds = TIMERS[timerIdx];
+                if(seconds > 0) runCountdown(seconds);
+                else capture();
+            });
+            
+            function runCountdown(seconds){
+                let n = seconds;
+                countdownEl.textContent = n;
+                countdownEl.classList.add('show');
+                const iv = setInterval(()=>{
+                    n--;
+                    if(n <= 0){
+                        clearInterval(iv);
+                        countdownEl.classList.remove('show');
+                        capture();
+                    } else {
+                        countdownEl.textContent = n;
+                    }
+                }, 1000);
+            }
+            
+            function capture(){
+                flashFx.classList.add('active');
+                setTimeout(()=>flashFx.classList.remove('active'), 180);
+                if(navigator.vibrate) navigator.vibrate(45);
+                
+                exportCanvas.width = EXPORT_SIZE;
+                exportCanvas.height = EXPORT_SIZE;
+                
+                if(isEditMode) {
+                    ctx.drawImage(editorCanvas, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
+                    finishCapture();
+                } else {
+                    const vw = video.videoWidth || 1080;
+                    const vh = video.videoHeight || 1080;
+                    const side = Math.min(vw, vh);
+                    const sx = (vw - side) / 2;
+                    const sy = (vh - side) / 2;
+                    const mirrored = video.classList.contains('mirrored');
+                    
+                    ctx.save();
+                    ctx.filter = activeFilter.css;
+                    if(mirrored){
+                        ctx.translate(EXPORT_SIZE, 0);
+                        ctx.scale(-1, 1);
+                    }
+                    ctx.drawImage(video, sx, sy, side, side, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
+                    ctx.restore();
+                    
+                    if(customFrameImg) {
+                        ctx.drawImage(customFrameImg, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
+                        finishCapture();
+                    } else {
+                        try{
+                            const svgDoc = svgObj.contentDocument;
+                            if(svgDoc){
+                                const svgString = new XMLSerializer().serializeToString(svgDoc);
+                                const blob = new Blob([svgString], {type:'image/svg+xml;charset=utf-8'});
+                                const blobURL = URL.createObjectURL(blob);
+                                const img = new Image();
+                                img.onload = ()=>{
+                                    ctx.drawImage(img, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
+                                    URL.revokeObjectURL(blobURL);
+                                    finishCapture();
+                                };
+                                img.onerror = finishCapture;
+                                img.src = blobURL;
+                            } else {
+                                finishCapture();
+                            }
+                        }catch(e){ finishCapture(); }
+                    }
+                }
+            }
+            
+            function finishCapture(){
+                const dataUrl = exportCanvas.toDataURL('image/png');
+                lastPhotoUrl = dataUrl;
+                galleryThumb.style.backgroundImage = `url(${dataUrl})`;
+                galleryThumb.innerHTML = '';
+                previewImg.src = dataUrl;
+                downloadLink.href = dataUrl;
+                const fname = `pubmat_${Date.now()}.png`;
+                downloadLink.download = fname;
+                resultModal.classList.add('open');
+                autoSavePhoto(dataUrl, fname);
+            }
+            
+            async function autoSavePhoto(dataUrl, fname){
+                saveNote.textContent = 'Saving…';
+                try{
+                    const blob = await (await fetch(dataUrl)).blob();
+                    const file = new File([blob], fname, {type:'image/png'});
+                    if(navigator.canShare && navigator.canShare({files:[file]})){
+                        await navigator.share({files:[file], title:'BTLED Pubmat'});
+                        saveNote.textContent = 'Shared successfully!';
+                        return;
+                    }
+                }catch(e){ console.warn('Share fallback to direct download', e); }
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = fname;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                saveNote.textContent = 'Saved to downloads.';
+            }
+            
+            shareBtn.addEventListener('click', ()=>{
+                if(lastPhotoUrl) autoSavePhoto(lastPhotoUrl, downloadLink.download || 'pubmat.png');
+            });
+            
+            galleryThumb.addEventListener('click', ()=>{
+                if(!lastPhotoUrl) return;
+                previewImg.src = lastPhotoUrl;
+                downloadLink.href = lastPhotoUrl;
+                resultModal.classList.add('open');
+                saveNote.textContent = '';
+            });
+            
+            retakeBtn.addEventListener('click', () => resultModal.classList.remove('open'));
+            
+            function updateOnlineStatus(){
+                offlineBanner.classList.toggle('show', !navigator.onLine);
+            }
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            updateOnlineStatus();
+            
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('offline/sw.js')
+                    .catch(err => console.warn('SW registration skipped or unavailable:', err));
+                });
+            }
+        </script>
+    </body>
+    </html>

@@ -3,370 +3,503 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Certificate Generator</title>
+    <title>Bulk Certificate Generator | BTLED Organization</title>
+    <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
+    <link rel="stylesheet" href="../resources/css/landing.css" />
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://db.onlinewebfonts.com/c/89d9dff8a40ef63d7bb2002d9030d109?family=SymphonyPro-Regular" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --primary: #2563eb;
             --primary-hover: #1d4ed8;
             --success: #16a34a;
             --success-hover: #15803d;
-            --bg: #f8fafc;
+            --bg: #f0fdf4;
             --card: #ffffff;
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border: #e2e8f0;
+            --focus-ring: rgba(37, 99, 235, 0.2);
         }
-
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
             color: var(--text-main);
             margin: 0;
-            padding: 30px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 0;
         }
-
+        
+        .main-content-wrapper {
+            padding: 40px 20px;
+            max-width: 1450px;
+            margin: 0 auto;
+        }
+        
         .header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
-
-        h2 { margin: 0 0 10px 0; font-size: 28px; }
-        p { margin: 0; color: var(--text-muted); }
-
+        
+        .header h2 { 
+            margin: 0 0 8px 0; 
+            font-size: 32px; 
+            color: #0f172a;
+            letter-spacing: -0.5px;
+        }
+        
         .container {
-            display: flex;
-            gap: 30px;
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 25px;
+            align-items: start;
+        }
+        
+        .panel {
             background: var(--card);
-            padding: 30px;
+            padding: 25px;
             border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            max-width: 1100px;
-            width: 100%;
-            box-sizing: border-box;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            max-height: 90vh;
+            overflow-y: auto;
         }
-
-        .controls {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .preview-container {
-            flex: 1.5;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border-left: 1px solid var(--border);
-            padding-left: 30px;
-        }
-
+        
         .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            margin-bottom: 15px;
         }
-
+        
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .input-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        
         label {
+            display: block;
             font-weight: 600;
-            font-size: 14px;
-            color: var(--text-main);
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #334155;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-
-        input[type="file"], textarea, input[type="number"], input[type="color"], select {
+        
+        .required-asterisk {
+            color: #dc2626;
+            margin-left: 2px;
+        }
+        
+        input[type="file"], textarea, input[type="text"], select {
             width: 100%;
             padding: 10px;
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: 8px;
             box-sizing: border-box;
             font-family: inherit;
-            transition: border-color 0.2s;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            background-color: #f8fafc;
         }
-
+        
+        input[type="range"] {
+            width: 100%;
+            margin-top: 8px;
+        }
+        
         input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--primary);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px var(--focus-ring);
         }
-
+        
         textarea {
-            height: 140px;
+            height: 100px;
             resize: vertical;
-            line-height: 1.5;
         }
-
-        .settings-grid, .range-grid {
+        
+        .button-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 12px;
+            margin-top: 15px;
         }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
+        
         button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 15px;
+            padding: 12px;
+            font-size: 14px;
             font-weight: 600;
-            border-radius: 6px;
+            border-radius: 8px;
+            border: none;
             cursor: pointer;
             transition: all 0.2s;
-            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
         }
-
-        button:hover { background-color: var(--primary-hover); }
+        
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-success:hover { background-color: var(--success-hover); }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
         
-        .btn-success { background-color: var(--success); }
-        .btn-success:hover { background-color: var(--success-hover); }
-
+        .preview-panel { display: flex; flex-direction: column; gap: 15px; }
+        
+        .canvas-wrapper {
+            width: 100%;
+            background: #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        
         canvas {
             max-width: 100%;
             height: auto;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            margin-bottom: 15px;
-            background-color: #f1f5f9;
+            display: block;
         }
-
+        
         .preview-nav {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .preview-nav button {
-            padding: 8px 15px;
-            flex: none;
-            background-color: var(--border);
-            color: var(--text-main);
-        }
-
-        .preview-nav button:hover:not(:disabled) {
-            background-color: #cbd5e1;
-        }
-
-        .preview-nav span {
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .output-list {
-            width: 100%;
-            max-height: 180px;
-            overflow-y: auto;
-            border-top: 1px solid var(--border);
-            padding-top: 15px;
-        }
-
-        .output-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 10px;
-            font-size: 14px;
-            border-radius: 6px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
         }
         
-        .output-item:nth-child(even) { background-color: #f1f5f9; }
-
-        .output-item button {
-            padding: 6px 12px;
-            font-size: 12px;
-            flex: none;
-            background-color: var(--success);
+        .preview-nav button { background-color: #f1f5f9; color: #475569; padding: 8px 16px; }
+        .preview-nav button:hover:not(:disabled) { background-color: #e2e8f0; }
+        
+        .custom-upload-section {
+            display: none;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e1;
+            margin-bottom: 18px;
         }
+        
+        hr { border: 0; border-top: 1px solid var(--border); margin: 15px 0; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2>Certificate Generator</h2>
-        <p>Upload background, set paper size, preview layout, and batch download.</p>
-    </div>
-
-    <div class="container">
-        <!-- Controls Column -->
-        <div class="controls">
-            <div class="input-group">
-                <label for="bgImage">1. Upload Background Image (Landscape)</label>
-                <input type="file" id="bgImage" accept="image/*">
-            </div>
-
-            <div class="input-group">
-                <label for="namesInput">2. Enter Names (one per line)</label>
-                <textarea id="namesInput" placeholder="juan dela cruz&#10;MARIA SANTOS&#10;pedro reyes"></textarea>
+    <div class="main-content-wrapper">
+        <div class="header">
+            <h2>Certificate Generator System</h2>
+            <p style="color: var(--text-muted);">Automated overlay generation and QR embedding over SVG templates</p>
+        </div>
+        
+        <div class="container">
+            <div class="panel">
+                <div class="input-row-3">
+                    <div class="input-group">
+                        <label for="templateType">SVG Template</label>
+                        <select id="templateType">
+                            <option value="btled_a">BTLED (Appreciation)</option>
+                            <option value="btled_p">BTLED (Participation)</option>
+                            <option value="volunteers_a">Volunteers (Appreciation)</option>
+                            <option value="volunteers_p">Volunteers (Participation)</option>
+                            <option value="custom">Custom (Upload)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="paperSize">Paper Size</label>
+                        <select id="paperSize">
+                            <option value="short">Short (8.5x11")</option>
+                            <option value="long">Long (8.5x13")</option>
+                            <option value="a4">A4</option>
+                            <option value="a5">A5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="printMargin">Print Margin</label>
+                        <select id="printMargin">
+                            <option value="0">None</option>
+                            <option value="75" selected>0.25" (Safe)</option>
+                            <option value="150">0.50" (Wide)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="customUploadBlock" class="custom-upload-section">
+                    <label for="bgImage" style="font-size: 11px;">Upload Custom Background</label>
+                    <input type="file" id="bgImage" accept="image/*">
+                </div>
+                
+                <hr>
+                
+                <div class="input-group">
+                    <label for="eventName">Event Name <span class="required-asterisk">*</span></label>
+                    <input type="text" id="eventName" placeholder="e.g. ABANIKEWL 2026" required>
+                </div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="eventType">Event Type</label>
+                        <select id="eventType">
+                            <option value="contest">Contest</option>
+                            <option value="activity">Activity</option>
+                            <option value="seminar">Seminar</option>
+                            <option value="workshop">Workshop</option>
+                            <option value="event">Event</option>
+                            <option value="program">Program</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="eventDate">Event Date <span class="required-asterisk">*</span></label>
+                        <input type="text" id="eventDate" placeholder="August 27, 2026" value="August 27, 2026" required>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="eventVenue">Event Venue <span class="required-asterisk">*</span></label>
+                    <input type="text" id="eventVenue" placeholder="e.g. URS Cainta Campus" value="URS Cainta Campus" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="evalLink">Evaluation Link (QR) <span class="required-asterisk">*</span></label>
+                    <input type="text" id="evalLink" placeholder="https://forms.gle/..." value="https://btledorg.github.io/eval" required>
+                </div>
+                
+                <hr>
+                
+                <div class="input-group">
+                    <label for="namesInput">Recipient Names (One per line) <span class="required-asterisk">*</span></label>
+                    <textarea id="namesInput" placeholder="Juan Dela Cruz&#10;Maria Santos" required></textarea>
+                </div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="nameYOffset">Vertical Offset</label>
+                        <input type="range" id="nameYOffset" min="-200" max="200" value="100">
+                    </div>
+                    <div class="input-group">
+                        <label for="nameXOffset">Horizontal Offset</label>
+                        <input type="range" id="nameXOffset" min="-200" max="200" value="0">
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="previewBtn" class="btn-primary">Update Preview</button>
+                    <button id="downloadPdfBtn" class="btn-success">Download PDF</button>
+                </div>
             </div>
             
-            <div class="input-group">
-                <label for="paperSize">3. Paper Size (Landscape - 300 DPI)</label>
-                <select id="paperSize">
-                    <option value="auto">Auto (Match Image Upload)</option>
-                    <option value="short">Short / Letter (11" x 8.5")</option>
-                    <option value="long">Long / Folio (13" x 8.5")</option>
-                    <option value="a4">A4 (11.69" x 8.27")</option>
-                    <option value="a5">A5 (8.27" x 5.83")</option>
-                </select>
-            </div>
-
-            <div class="settings-grid">
-                <div class="input-group">
-                    <label for="fontSize">Font Size (px)</label>
-                    <input type="number" id="fontSize" value="120">
+            <div class="preview-panel">
+                <div class="preview-nav">
+                    <button id="prevBtn" disabled>◄ Previous</button>
+                    <span id="previewCounter" style="font-weight: 600; font-size: 14px; min-width: 60px; text-align: center;">0 / 0</span>
+                    <button id="nextBtn" disabled>Next ►</button>
                 </div>
-                <div class="input-group">
-                    <label for="fontColor">Font Color</label>
-                    <input type="color" id="fontColor" value="#1a1a1a">
+                
+                <div class="canvas-wrapper">
+                    <canvas id="canvas"></canvas>
                 </div>
-                <div class="input-group">
-                    <label for="fontFamily">Font Family</label>
-                    <select id="fontFamily">
-                        <option value="SymphonyPro-Regular">Symphony Pro</option>
-                        <option value="Arial">Arial</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Courier New">Courier New</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="textY">Vertical Position (Y px)</label>
-                    <input type="number" id="textY" value="1200">
-                </div>
-            </div>
-
-            <div class="range-grid">
-                <div class="input-group">
-                    <label for="rangeStart">PDF Start Range</label>
-                    <input type="number" id="rangeStart" placeholder="e.g. 1" min="1">
-                </div>
-                <div class="input-group">
-                    <label for="rangeEnd">PDF End Range</label>
-                    <input type="number" id="rangeEnd" placeholder="e.g. 10" min="1">
-                </div>
-            </div>
-
-            <div class="button-group">
-                <button id="generateBtn">List PNGs</button>
-                <button id="downloadPdfBtn" class="btn-success">Download PDF Batch</button>
             </div>
         </div>
-
-        <!-- Preview Column -->
-        <div class="preview-container">
-            <label style="margin-bottom: 10px;">Live Preview</label>
-            <canvas id="canvas" width="800" height="600"></canvas>
-            
-            <!-- Preview Navigation -->
-            <div class="preview-nav">
-                <button id="prevBtn" disabled>◄ Prev</button>
-                <span id="previewCounter">0 / 0</span>
-                <button id="nextBtn" disabled>Next ►</button>
-            </div>
-            
-            <div class="output-list" id="outputList">
-                <!-- Generated PNG links will appear here -->
-            </div>
-        </div>
     </div>
 
+    <!-- Footer Integration -->
+    <footer class="footer">
+        <div class="container footer-grid" style="display: flex; justify-content: space-between; align-items: center; max-width: 1450px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+            <div class="footer-brand-section">
+                <strong class="footer-brand">BTLED Organization</strong>
+                <p style="color: #999; font-size: 0.9rem; margin-top: 0.5rem;">
+                    One of the official student-led organizations at URS Cainta Campus,
+                    the BTLEd - IA Program Organization.
+                </p>
+            </div>
+            
+            <div class="footer-legal-section">
+                <strong style="color:#fff; font-size: 0.95rem; display: block; margin-bottom: 0.5rem;">Legal &amp; Compliance</strong>
+                <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                    <li><a href="/about/privacy.html" style="color: #999; text-decoration: none;">Privacy Policy</a></li>
+                    <li><a href="/about/terms.html" style="color: #999; text-decoration: none;">Terms &amp; Conditions</a></li>
+                    <li><a href="/about/compliance.html" style="color: #999; text-decoration: none;">Data Compliance (RA 10173)</a></li>
+                    <li><a href="/about/guidelines.html" style="color: #999; text-decoration: none;">Organization Guidelines</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-right">
+                <p style="color: #999; font-size: 0.85rem;">&copy; 2026 BTLED. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
     <script>
+        const templateType = document.getElementById('templateType');
+        const paperSize = document.getElementById('paperSize');
+        const printMargin = document.getElementById('printMargin');
+        const customUploadBlock = document.getElementById('customUploadBlock');
         const bgImageInput = document.getElementById('bgImage');
+        const eventName = document.getElementById('eventName');
+        const eventType = document.getElementById('eventType');
+        const eventDate = document.getElementById('eventDate');
+        const eventVenue = document.getElementById('eventVenue');
+        const evalLink = document.getElementById('evalLink');
         const namesInput = document.getElementById('namesInput');
-        const paperSizeInput = document.getElementById('paperSize');
-        const fontSizeInput = document.getElementById('fontSize');
-        const fontColorInput = document.getElementById('fontColor');
-        const fontFamilyInput = document.getElementById('fontFamily');
-        const textYInput = document.getElementById('textY');
+        const nameYOffset = document.getElementById('nameYOffset');
+        const nameXOffset = document.getElementById('nameXOffset');
         
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const previewCounter = document.getElementById('previewCounter');
-        
-        const generateBtn = document.getElementById('generateBtn');
+        const previewBtn = document.getElementById('previewBtn');
         const downloadPdfBtn = document.getElementById('downloadPdfBtn');
-        
         const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const outputList = document.getElementById('outputList');
-
-        let backgroundImage = null;
+        
+        // ---------- State ----------
+        let customBackgroundImage = null;
         let currentPreviewIndex = 0;
         let namesList = [];
-
-        // Print resolutions (Landscape at 300 DPI)
-        const dimensions = {
-            short: { width: 3300, height: 2550 },
-            long: { width: 3900, height: 2550 },
-            a4: { width: 3508, height: 2480 },
-            a5: { width: 2480, height: 1748 }
+        let renderToken = 0;
+        let previewTimer = null;
+        let isExporting = false;
+        
+        // ---------- Config ----------
+        const PAPER_DIMENSIONS = {
+            'short': { width: 3300, height: 2550 },
+            'long': { width: 3900, height: 2550 },
+            'a4': { width: 3508, height: 2480 },
+            'a5': { width: 2480, height: 1748 }
         };
-
-        // Helper function to convert text to Title Case
-        function toTitleCase(str) {
-            return str.toLowerCase().split(' ').map(function(word) {
-                return word.charAt(0).toUpperCase() + word.slice(1);
-            }).join(' ');
+        
+        const templatePaths = {
+            'btled_a': 'certificates/btled_a.svg',
+            'btled_p': 'certificates/btled_p.svg',
+            'volunteers_a': 'certificates/volunteers_a.svg',
+            'volunteers_p': 'certificates/volunteers_p.svg'
+        };
+        
+        function loadImage(src, useCors) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                if (useCors) img.crossOrigin = "Anonymous";
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = src;
+            });
         }
-
-        // Get the active paper dimensions
-        function getActiveDimensions() {
-            if (!backgroundImage) return { width: 800, height: 600 };
-            const sizeKey = paperSizeInput.value;
-            if (sizeKey === 'auto') {
-                return { width: backgroundImage.width, height: backgroundImage.height };
+        
+        const templateCache = new Map();
+        async function getTemplateImage(type) {
+            if (type === 'custom') return customBackgroundImage;
+            if (templateCache.has(type)) return templateCache.get(type);
+            
+            const path = templatePaths[type];
+            const img = await loadImage(path, false);
+            if (img) {
+                templateCache.set(type, img);
+            } else {
+                console.warn(`Template SVG missing. Ensure files are hosted at ${path}`);
             }
-            return dimensions[sizeKey];
+            return img;
         }
-
-        // Update name list array when typing and apply Title Case
-        namesInput.addEventListener('input', () => {
-            namesList = namesInput.value.split('\n')
+        
+        const qrCache = new Map();
+        async function loadQRCode(url) {
+            if (!url) return null;
+            if (qrCache.has(url)) return qrCache.get(url);
+            
+            const img = await loadImage(
+                `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(url)}&margin=10`,
+                true
+            );
+            if (img) qrCache.set(url, img);
+            return img;
+        }
+        
+        let fontsPromise = null;
+        function ensureFonts() {
+            if (!fontsPromise) {
+                if (document.fonts && document.fonts.load) {
+                    fontsPromise = Promise.all(
+                        ['400', '500', '700'].map(w => document.fonts.load(`${w} 40px Inter`))
+                    ).catch(() => {});
+                } else {
+                    fontsPromise = Promise.resolve();
+                }
+            }
+            return fontsPromise;
+        }
+        
+        async function loadAssets(settings) {
+            const [template, qr] = await Promise.all([
+                getTemplateImage(settings.templateType),
+                settings.evalLink ? loadQRCode(settings.evalLink) : Promise.resolve(null),
+                ensureFonts()
+            ]);
+            return { template, qr };
+        }
+        
+        // ---------- Settings snapshot ----------
+        function readSettings() {
+            return {
+                templateType: templateType.value,
+                paperSize: paperSize.value,
+                margin: parseInt(printMargin.value) || 0,
+                eventName: eventName.value.trim() || "[Event Name]",
+                eventType: eventType.value || "event",
+                eventDate: eventDate.value.trim() || "[Date]",
+                venue: eventVenue.value.trim() || "URS Cainta Campus",
+                evalLink: evalLink.value.trim(),
+                nameYOffset: parseInt(nameYOffset.value) || 0,
+                nameXOffset: parseInt(nameXOffset.value) || 0
+            };
+        }
+        
+        // ---------- Helpers ----------
+        function toTitleCase(str) {
+            return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+        
+        function parseNames() {
+            return namesInput.value
+                .split('\n')
                 .filter(n => n.trim() !== '')
                 .map(n => toTitleCase(n.trim()));
-                
-            currentPreviewIndex = 0;
-            updatePreviewNav();
-            drawPreview();
-        });
-
-        // Load background image
-        bgImageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.onload = function() {
-                        backgroundImage = img;
-                        drawPreview();
-                    }
-                    img.src = event.target.result;
-                }
-                reader.readAsDataURL(file);
+        }
+        
+        function validateFields() {
+            const eName = eventName.value.trim();
+            const eDate = eventDate.value.trim();
+            const eVenue = eventVenue.value.trim();
+            const eLink = evalLink.value.trim();
+            const nInput = namesInput.value.trim();
+            
+            if (!eName || !eDate || !eVenue || !eLink || !nInput) {
+                alert("Generation Failed: Please fill in all required fields (Event Name, Date, Venue, Evaluation Link, and Recipient Names cannot be empty).");
+                return false;
             }
-        });
-
-        // Trigger preview update on settings changes
-        [paperSizeInput, fontSizeInput, fontColorInput, fontFamilyInput, textYInput].forEach(element => {
-            element.addEventListener('input', drawPreview);
-        });
-
-        // Preview Navigation Logic
-        function updatePreviewNav() {
-            if (namesList.length === 0) {
-                previewCounter.textContent = `0 / 0`;
+            return true;
+        }
+        
+        function updateNav() {
+            if (namesList.length <= 1) {
+                previewCounter.textContent = namesList.length > 0 ? `1 / ${namesList.length}` : `0 / 0`;
                 prevBtn.disabled = true;
                 nextBtn.disabled = true;
             } else {
@@ -375,145 +508,263 @@
                 nextBtn.disabled = currentPreviewIndex === namesList.length - 1;
             }
         }
+        
+        function wrapMixedText(context, wordsData, centerX, startY, maxWidth, lineHeight, normalFont, boldFont) {
+            let lines = [];
+            let currentLine = [];
+            let currentWidth = 0;
+            
+            for (let i = 0; i < wordsData.length; i++) {
+                let wd = wordsData[i];
+                context.font = wd.bold ? boldFont : normalFont;
+                let metrics = context.measureText(wd.word + " ");
+                
+                if (currentWidth + metrics.width > maxWidth && currentLine.length > 0) {
+                    lines.push(currentLine);
+                    currentLine = [wd];
+                    currentWidth = metrics.width;
+                } else {
+                    currentLine.push(wd);
+                    currentWidth += metrics.width;
+                }
+            }
+            if (currentLine.length > 0) lines.push(currentLine);
+            
+            let y = startY;
+            context.textAlign = "left";
+            
+            for (let line of lines) {
+                let lineWidth = 0;
+                for (let i = 0; i < line.length; i++) {
+                    context.font = line[i].bold ? boldFont : normalFont;
+                    lineWidth += context.measureText(line[i].word + (i === line.length - 1 ? "" : " ")).width;
+                }
+                
+                let x = centerX - (lineWidth / 2);
+                for (let i = 0; i < line.length; i++) {
+                    context.font = line[i].bold ? boldFont : normalFont;
+                    context.fillText(line[i].word, x, y);
+                    x += context.measureText(line[i].word + " ").width;
+                }
+                y += lineHeight;
+            }
+            context.textAlign = "center";
+        }
+        
+        // ---------- Drawing ----------
+        function drawCertificate(targetCanvas, name, s, assets) {
+            const ctx = targetCanvas.getContext('2d');
+            const dims = PAPER_DIMENSIONS[s.paperSize];
+            targetCanvas.width = dims.width;
+            targetCanvas.height = dims.height;
+            
+            const margin = Math.max(0, Math.min(s.margin, Math.floor(Math.min(dims.width, dims.height) / 4)));
+            
+            const drawW = targetCanvas.width - (margin * 2);
+            const drawH = targetCanvas.height - (margin * 2);
+            
+            const scaleX = drawW / 3300;
+            const scaleY = drawH / 2550;
+            const scale = Math.min(scaleX, scaleY);
+            
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+            
+            ctx.save();
+            ctx.translate(margin, margin);
+            
+            if (assets.template) {
+                ctx.drawImage(assets.template, 0, 0, drawW, drawH);
+            } else {
+                ctx.fillStyle = "#f8fafc";
+                ctx.fillRect(0, 0, drawW, drawH);
+                ctx.fillStyle = "#cbd5e1";
+                ctx.font = `bold ${60 * scale}px Inter`;
+                ctx.textAlign = "center";
+                ctx.fillText("Background SVG Missing or Loading...", drawW / 2, drawH / 2);
+            }
+            
+            const baseNameY = 1130 * scaleY;
+            const offsetY = s.nameYOffset * scaleY;
+            const offsetX = s.nameXOffset * scaleX;
+            
+            ctx.textAlign = "center";
+            ctx.font = `700 ${145 * scale}px 'Inter', sans-serif`;
+            ctx.fillStyle = "#0f172a";
+            ctx.fillText(name.toUpperCase(), (drawW / 2) + offsetX, baseNameY + offsetY);
+            
+            const normalFont = `500 ${65 * scale}px 'Inter', sans-serif`;
+            const boldFont = `700 ${65 * scale}px 'Inter', sans-serif`;
+            ctx.fillStyle = "#334155";
+            
+            let wordsData = [];
+            function addWords(str, isBold) {
+                str.split(' ').forEach(w => {
+                    if (w) wordsData.push({ word: w, bold: isBold });
+                });
+            }
+            
+            if (s.templateType.endsWith('_a')) {
+                addWords("For their invaluable contributions during the", false);
+                addWords(s.eventName, true);
+                addWords(`${s.eventType}, held on ${s.eventDate}, at ${s.venue}.`, false);
+            } else {
+                addWords("For participating in the", false);
+                addWords(s.eventName, true);
+                addWords(`${s.eventType}, held on ${s.eventDate}, at ${s.venue}.`, false);
+            }
+            
+            wrapMixedText(ctx, wordsData, drawW / 2, 1380 * scaleY, 2500 * scaleX, 95 * scaleY, normalFont, boldFont);
+            
+            ctx.font = `400 ${60 * scale}px 'Inter', sans-serif`;
+            ctx.fillStyle = "#334155";
+            ctx.textAlign = "center";
+            ctx.fillText(`Given this ${s.eventDate}.`, drawW / 2, 1720 * scaleY);
+            
+            if (assets.qr) {
+                const qrSize = 340 * scale;
+                const qrX = drawW - qrSize - (100 * scaleX);
+                const qrY = drawH - qrSize - (120 * scaleY);
+                
 
+                
+                ctx.drawImage(assets.qr, qrX, qrY, qrSize, qrSize);
+                
+               
+            }
+            
+            ctx.restore();
+        }
+        
+        async function generatePreview() {
+            const token = ++renderToken;
+            const settings = readSettings();
+            const assets = await loadAssets(settings);
+            
+            if (token !== renderToken) return;
+            
+            const displayName = namesList.length > 0 ? namesList[currentPreviewIndex] : "[Recipient Name]";
+            drawCertificate(canvas, displayName, settings, assets);
+        }
+        
+        function schedulePreview(delay = 120) {
+            clearTimeout(previewTimer);
+            previewTimer = setTimeout(generatePreview, delay);
+        }
+        
+        // ---------- Event listeners ----------
+        const liveUpdateInputs = [
+            templateType, paperSize, printMargin, eventName, eventType,
+            eventDate, eventVenue, evalLink, nameYOffset, nameXOffset
+        ];
+        liveUpdateInputs.forEach(input => {
+            input.addEventListener('input', () => schedulePreview());
+            input.addEventListener('change', () => schedulePreview());
+        });
+        
+        templateType.addEventListener('change', (e) => {
+            customUploadBlock.style.display = e.target.value === 'custom' ? 'block' : 'none';
+        });
+        
+        bgImageInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const img = new Image();
+                    img.onload = function () {
+                        customBackgroundImage = img;
+                        generatePreview();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        namesInput.addEventListener('input', () => {
+            namesList = parseNames();
+            currentPreviewIndex = 0;
+            updateNav();
+            schedulePreview();
+        });
+        
+        previewBtn.addEventListener('click', generatePreview);
+        
         prevBtn.addEventListener('click', () => {
             if (currentPreviewIndex > 0) {
                 currentPreviewIndex--;
-                updatePreviewNav();
-                drawPreview();
+                updateNav();
+                generatePreview();
             }
         });
-
+        
         nextBtn.addEventListener('click', () => {
             if (currentPreviewIndex < namesList.length - 1) {
                 currentPreviewIndex++;
-                updatePreviewNav();
-                drawPreview();
+                updateNav();
+                generatePreview();
             }
         });
-
-        function drawPreview() {
-            const dims = getActiveDimensions();
-            canvas.width = dims.width;
-            canvas.height = dims.height;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            if (!backgroundImage) {
-                ctx.fillStyle = "#f1f5f9";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = "#94a3b8";
-                ctx.font = "24px Arial";
-                ctx.textAlign = "center";
-                ctx.fillText("Upload a background image to preview", canvas.width / 2, canvas.height / 2);
+        
+        // ---------- PDF generation ----------
+        downloadPdfBtn.addEventListener('click', async function () {
+            if (isExporting) return;
+            if (!validateFields()) return;
+            
+            const names = parseNames();
+            if (names.length === 0) {
+                alert("Generation Failed: Please add at least one recipient name.");
                 return;
             }
-
-            // Draw image stretched to chosen dimensions
-            ctx.drawImage(backgroundImage, 0, 0, dims.width, dims.height);
-
-            const displayName = namesList.length > 0 ? namesList[currentPreviewIndex] : "Sample Name";
-
-            const fontSize = fontSizeInput.value;
-            const fontFamily = fontFamilyInput.value;
-            ctx.font = `bold ${fontSize}px ${fontFamily}`;
-            ctx.fillStyle = fontColorInput.value;
-            ctx.textAlign = "center";
-            ctx.fillText(displayName, canvas.width / 2, parseInt(textYInput.value));
-        }
-
-        // Helper function to draw on an offscreen canvas for export
-        function createCertificateCanvas(name) {
-            const dims = getActiveDimensions();
-            const offscreenCanvas = document.createElement('canvas');
-            offscreenCanvas.width = dims.width;
-            offscreenCanvas.height = dims.height;
-            const oCtx = offscreenCanvas.getContext('2d');
-
-            oCtx.drawImage(backgroundImage, 0, 0, dims.width, dims.height);
-            oCtx.font = `bold ${fontSizeInput.value}px ${fontFamilyInput.value}`;
-            oCtx.fillStyle = fontColorInput.value;
-            oCtx.textAlign = "center";
-            oCtx.fillText(name.trim(), dims.width / 2, parseInt(textYInput.value));
             
-            return offscreenCanvas;
-        }
-
-        // Generate PNG List
-        generateBtn.addEventListener('click', function() {
-            if (!backgroundImage || namesList.length === 0) return alert("Please upload an image and enter names.");
-
-            outputList.innerHTML = '<strong style="display:block; margin-bottom:10px;">Individual PNGs:</strong>';
-
-            namesList.forEach((name, index) => {
-                const certCanvas = createCertificateCanvas(name);
-                const dataUrl = certCanvas.toDataURL('image/png');
-                
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'output-item';
-                
-                const nameSpan = document.createElement('span');
-                nameSpan.textContent = `${index + 1}. ${name.trim()}`;
-
-                const downloadBtn = document.createElement('button');
-                downloadBtn.textContent = 'Download PNG';
-                downloadBtn.onclick = function() {
-                    const link = document.createElement('a');
-                    link.download = `Certificate_${name.trim().replace(/\s+/g, '_')}.png`;
-                    link.href = dataUrl;
-                    link.click();
-                };
-
-                itemDiv.appendChild(nameSpan);
-                itemDiv.appendChild(downloadBtn);
-                outputList.appendChild(itemDiv);
-            });
-        });
-
-        // Batch Download as PDF
-        downloadPdfBtn.addEventListener('click', function() {
-            if (!backgroundImage || namesList.length === 0) return alert("Please upload an image and enter names.");
-
-            const { jsPDF } = window.jspdf;
-            
-            let start = parseInt(document.getElementById('rangeStart').value) || 1;
-            let end = parseInt(document.getElementById('rangeEnd').value) || namesList.length;
-            
-            start = Math.max(1, start) - 1; 
-            end = Math.min(namesList.length, end) - 1; 
-
-            if (start > end) return alert("Invalid range selected.");
-
-            const dims = getActiveDimensions();
-            const orientation = dims.width > dims.height ? 'l' : 'p';
-            const pdf = new jsPDF({
-                orientation: orientation,
-                unit: 'px',
-                format: [dims.width, dims.height]
-            });
-
-            downloadPdfBtn.textContent = "Generating...";
+            isExporting = true;
+            const originalLabel = downloadPdfBtn.innerHTML;
             downloadPdfBtn.disabled = true;
-
-            setTimeout(() => {
-                for (let i = start; i <= end; i++) {
-                    const name = namesList[i];
-                    const certCanvas = createCertificateCanvas(name);
+            downloadPdfBtn.textContent = "Preparing...";
+            
+            try {
+                const settings = readSettings();
+                const assets = await loadAssets(settings);
+                
+                if (settings.evalLink && !assets.qr) {
+                    const proceed = confirm("The evaluation QR code could not be generated (check your internet connection). Continue without it?");
+                    if (!proceed) return;
+                }
+                
+                const dims = PAPER_DIMENSIONS[settings.paperSize];
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: [dims.width, dims.height] });
+                const exportCanvas = document.createElement('canvas');
+                
+                for (let i = 0; i < names.length; i++) {
+                    downloadPdfBtn.textContent = `Generating ${i + 1} / ${names.length}...`;
+                    await new Promise(resolve => setTimeout(resolve, 0));
                     
-                    const imgData = certCanvas.toDataURL('image/jpeg', 0.95);
+                    drawCertificate(exportCanvas, names[i], settings, assets);
+                    const imgData = exportCanvas.toDataURL('image/jpeg', 0.95);
                     
-                    if (i > start) {
-                        pdf.addPage([dims.width, dims.height], orientation);
-                    }
+                    if (i > 0) pdf.addPage([dims.width, dims.height], 'l');
                     pdf.addImage(imgData, 'JPEG', 0, 0, dims.width, dims.height);
                 }
-
-                pdf.save(`Certificates_${start + 1}_to_${end + 1}.pdf`);
                 
-                downloadPdfBtn.textContent = "Download PDF Batch";
+                pdf.save(`Certificates_${eventName.value.trim().replace(/\s+/g, '_')}.pdf`);
+            } catch (err) {
+                console.error(err);
+                alert("PDF generation failed: " + (err && err.message ? err.message : err));
+            } finally {
+                downloadPdfBtn.innerHTML = originalLabel;
                 downloadPdfBtn.disabled = false;
-            }, 100);
+                isExporting = false;
+            }
         });
+        
+        // ---------- Init ----------
+        window.onload = async () => {
+            namesList = parseNames();
+            updateNav();
+            await generatePreview();
+        };
     </script>
 </body>
 </html>
