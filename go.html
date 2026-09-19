@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Redirecting...</title>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const target = urlParams.get('to');
+
+
+        const links = {
+            "craft": "https://btledorg.github.io/site/events/submit.html?form=activity&eventID=EVT-002&fee=10",
+            "draw": "https://btledorg.github.io/site/events/submit.html?form=activity&eventID=EVT-003&fee=10"
+        };
+
+        if (target && links[target]) {
+            window.location.replace(links[target]);
+        } else {
+            window.location.replace("https://btledorg.github.io/site/"); 
+        }
+    </script>
+</head>
+<body>
+    <p>Redirecting to the official BTLED registration form...</p>
+</body>
+</html>
