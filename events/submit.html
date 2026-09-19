@@ -1971,6 +1971,11 @@ const refRegex = /(?:Ref(?:erence)?\s*(?:No\.?|Num(?:ber)?|ID|#)?|Txn\s*(?:ID|No
     }
     
     document.addEventListener("DOMContentLoaded", () => {
+
+      setTimeout(() => {
+        hideLoader();
+      }, 5000);
+      
       populateHeaderAndForm();
       
       function closeOrGoBack() {
