@@ -2109,7 +2109,7 @@ const refRegex = /(?:Ref(?:erence)?\s*(?:No\.?|Num(?:ber)?|ID|#)?|Txn\s*(?:ID|No
           if (json.ok) {
             if (window.showCustomAlert) await window.showCustomAlert("Form submitted successfully!");
             else alert("Form submitted successfully!");
-            window.location.assign("result.html");
+            window.location.assign("validate.html");
           } else {
             throw new Error(json.error || "Submission failed.");
           }
