@@ -14,42 +14,35 @@
     <style>
         /* === SASS-STYLE DESIGN TOKENS (CSS Variables) === */
         :root {
-            /* Navy Blue Palette */
             --navy-50: #f0f4f8;
             --navy-100: #d9e2ec;
-            --navy-500: #1a365d; /* Base Navy */
-            --navy-600: #152b4a; /* Hover Navy */
-            --navy-800: #0a1424; /* Dark text */
+            --navy-500: #1a365d;
+            --navy-600: #152b4a;
+            --navy-800: #0a1424;
             
-            --accent: #fbbf24;   /* Gold/Yellow accent */
+            --accent: #fbbf24;
             
-            /* Status Colors */
             --danger: #ef4444;
             --danger-hover: #dc2626;
             --success: #10b981;
             
-            /* UI Colors */
             --bg-body: #f8fafc;
             --surface: #ffffff;
             --border: #e2e8f0;
             --text-main: #334155;
             --text-muted: #64748b;
             
-            /* Shadows & Radius */
             --radius-md: 8px;
             --radius-lg: 12px;
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
 
-        /* === RESET & BASE === */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; }
 
-        /* === LAYOUT === */
         .container { max-width: 1200px; margin: 0 auto; padding: 30px; }
 
-        /* === HEADER === */
         header { 
             background: var(--surface); 
             padding: 20px 30px; 
@@ -58,7 +51,7 @@
         }
         .brand { display: flex; align-items: center; gap: 20px; }
         .logo-wrapper { 
-            width: 70px; /* Adjust size as needed */
+            width: 70px;
             height: auto;
             display: flex; align-items: center; justify-content: center; 
         }
@@ -68,7 +61,6 @@
         .brand-text h1 { font-size: 1.25rem; color: var(--navy-500); font-weight: 700; letter-spacing: -0.02em; }
         .brand-text p { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
         
-        /* Event Title */
         .event-title-wrapper { text-align: right; }
         .event-title-wrapper p { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; font-weight: 600; }
         #eventName { 
@@ -78,7 +70,6 @@
         }
         #eventName:hover, #eventName:focus { border-color: var(--navy-500); background: var(--navy-50); }
 
-        /* === TABS === */
         .tabs { 
             display: flex; background: var(--surface); border-bottom: 1px solid var(--border); 
             padding: 0 30px; overflow-x: auto; 
@@ -92,12 +83,10 @@
         .tab-btn:hover { color: var(--navy-500); }
         .tab-btn.active { color: var(--navy-500); border-bottom-color: var(--navy-500); }
 
-        /* === TAB CONTENT === */
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* === COMPONENTS === */
         .card { 
             background: var(--surface); padding: 24px; border-radius: var(--radius-lg); 
             box-shadow: var(--shadow-sm); border: 1px solid var(--border); margin-bottom: 24px; 
@@ -105,7 +94,6 @@
         .card-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--navy-50); }
         .card-header h2 { font-size: 1.15rem; color: var(--navy-800); display: flex; align-items: center; gap: 8px; }
 
-        /* Forms */
         .form-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 16px; }
         .form-group { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--navy-500); }
@@ -119,7 +107,6 @@
             box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.1); 
         }
 
-        /* Buttons */
         button { 
             padding: 10px 20px; background: var(--navy-500); color: white; border: none; 
             border-radius: var(--radius-md); font-size: 0.95rem; font-weight: 600; 
@@ -137,7 +124,6 @@
         button.ghost-danger { background: transparent; border: 1px solid transparent; color: var(--danger); padding: 8px; }
         button.ghost-danger:hover { background: #fef2f2; border-color: #fecaca; }
 
-        /* Grid */
         .contestant-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
         .contestant-card { 
             background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); 
@@ -145,7 +131,6 @@
         }
         .contestant-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--navy-100); }
         
-        /* Shared styles for both uploaded img and blank placeholder */
         .contestant-card img, .blank-placeholder { 
             width: 140px; height: 140px; object-fit: cover; border-radius: var(--radius-lg); 
             margin: 0 auto 20px; background: var(--navy-50); border: 1px solid var(--border);
@@ -164,7 +149,6 @@
         .action-row input { width: 100px; flex: none; font-weight: 600; text-align: center; }
         .action-row button { flex: 1; justify-content: center; }
 
-        /* Dashboard Stats */
         .dashboard-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 24px; }
         .stat-card { 
             background: var(--surface); border: 1px solid var(--border); padding: 24px; 
@@ -177,7 +161,6 @@
         .stat-content h3 { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px; }
         .stat-content .value { font-size: 2rem; font-weight: 700; color: var(--navy-800); line-height: 1; }
 
-        /* Tables */
         .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
@@ -186,7 +169,6 @@
         tr:last-child td { border-bottom: none; }
         tr:hover td { background-color: var(--navy-50); }
 
-        /* Alerts/Instructions */
         .alert { padding: 16px 20px; border-radius: var(--radius-md); margin-bottom: 24px; font-size: 0.95rem; display: flex; gap: 12px; }
         .alert i { font-size: 1.2rem; }
         .alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; }
@@ -195,7 +177,6 @@
 </head>
 <body>
 
-    <!-- Header -->
     <header>
         <div class="brand">
             <div class="logo-wrapper">
@@ -212,7 +193,6 @@
         </div>
     </header>
 
-    <!-- Navigation Tabs -->
     <nav class="tabs">
         <button class="tab-btn active" onclick="switchTab('voting')">
             <i class="ri-ballot-line"></i> Voting Station
@@ -227,7 +207,6 @@
 
     <main class="container">
         
-        <!-- TAB 1: VOTING STATION -->
         <section id="voting" class="tab-content active">
             <div class="card" style="border-top: 4px solid var(--navy-500);">
                 <div class="card-header">
@@ -251,11 +230,9 @@
             </div>
             
             <div class="contestant-grid" id="contestantGrid">
-                <!-- Populated by JS -->
             </div>
         </section>
 
-        <!-- TAB 2: DASHBOARD & RESULTS -->
         <section id="results" class="tab-content">
             <div class="dashboard-stats">
                 <div class="stat-card">
@@ -290,14 +267,12 @@
                             </tr>
                         </thead>
                         <tbody id="resultsTable">
-                            <!-- Populated by JS -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- TAB 3: ADMIN SETUP -->
         <section id="admin" class="tab-content">
             <div class="alert alert-info">
                 <i class="ri-information-line"></i>
@@ -339,7 +314,6 @@
     </main>
 
     <script>
-        // --- TAB NAVIGATION LOGIC ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -347,7 +321,6 @@
             event.currentTarget.classList.add('active');
         }
 
-        // --- APP STATE & STORAGE ---
         let state = {
             eventName: "AY 2026-2027 Rebranding Pageant",
             contestants: [],
@@ -375,16 +348,14 @@
             saveState();
         }
 
-        // --- CORE FUNCTIONS ---
 
-        // NEW: Fix the localstorage limit bug by compressing large images before saving them
         function resizeImage(file, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 400; // Force resize so LocalStorage never fills up
+                    const MAX_WIDTH = 400;
                     const MAX_HEIGHT = 400;
                     let width = img.width;
                     let height = img.height;
@@ -405,7 +376,6 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Compress to 80% JPEG to keep size tiny
                     callback(canvas.toDataURL('image/jpeg', 0.8)); 
                 };
                 img.src = e.target.result;
@@ -422,20 +392,17 @@
             const newContestant = { id: Date.now(), name: name, image: '', votes: 0 };
 
             if (fileInput.files && fileInput.files[0]) {
-                // If they uploaded an image, shrink it first to prevent crashes, then save
                 resizeImage(fileInput.files[0], function(compressedImg) {
                     newContestant.image = compressedImg;
                     state.contestants.push(newContestant);
                     finalizeAdd(name, fileInput);
                 });
             } else {
-                // If NO image is uploaded, just save it with a blank image string
                 state.contestants.push(newContestant);
                 finalizeAdd(name, fileInput);
             }
         }
 
-        // Extracted success step to prevent race conditions
         function finalizeAdd(name, fileInput) {
             saveState();
             document.getElementById('contestantName').value = '';
@@ -480,13 +447,11 @@
             }
         }
 
-        // --- RENDER UI ---
         function render() {
             const grid = document.getElementById('contestantGrid');
             const table = document.getElementById('resultsTable');
             let totalRev = 0;
             
-            // 1. Render Voting Grid
             grid.innerHTML = '';
             if(state.contestants.length === 0) {
                 grid.innerHTML = `
@@ -499,7 +464,6 @@
             state.contestants.forEach(c => {
                 totalRev += c.votes;
                 
-                // NEW: Logic to cleanly render a blank placeholder if no image was uploaded
                 const imageHTML = c.image && c.image !== '' 
                     ? `<img src="${c.image}" alt="${c.name}">` 
                     : `<div class="blank-placeholder"><i class="ri-user-smile-line" style="font-size: 3rem; color: var(--text-muted);"></i></div>`;
@@ -522,11 +486,9 @@
                 `;
             });
 
-            // 2. Render Dashboard Stats
             document.getElementById('statTotalRev').innerText = totalRev.toLocaleString();
             document.getElementById('statTotalVotes').innerText = totalRev.toLocaleString();
 
-            // 3. Render Leaderboard Table
             const sorted = [...state.contestants].sort((a, b) => b.votes - a.votes);
             table.innerHTML = '';
             if(sorted.length === 0) {
@@ -550,7 +512,6 @@
             });
         }
 
-        // --- EXPORT & CLEAR ---
         function exportToTxt() {
             let content = `======================================\n`;
             content += `      BTLED ORGANIZATION POS LOG      \n`;
@@ -598,7 +559,6 @@
             }
         }
 
-        // Initialize App
         loadState();
     </script>
 </body>

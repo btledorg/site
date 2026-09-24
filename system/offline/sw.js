@@ -1,8 +1,5 @@
 const CACHE_NAME = 'btled-pubmat-camera-v1';
 
-// Assets we know we need up front. Fonts referenced by remixicon.css and the
-// page itself get picked up automatically by the runtime cache-on-fetch logic
-// below the first time they're requested, so we don't need to guess their exact URLs here.
 const PRECACHE_URLS = [
   './',
   './manifest.json',
@@ -14,8 +11,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      // Cache each URL independently so one missing/failed asset
-      // doesn't stop the rest from being precached.
       await Promise.all(
         PRECACHE_URLS.map((url) =>
           fetch(url)
@@ -35,8 +30,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Stale-while-revalidate: serve from cache instantly when we have it
-// (fast + works offline), and refresh the cache in the background when online.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
