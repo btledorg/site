@@ -287,6 +287,14 @@
       display: none;
     }
 
+    .smart-remainders-box {
+      margin-bottom: 1.5rem; 
+      padding: 1rem; 
+      background-color: #f8fafc; 
+      border-radius: var(--radius-md); 
+      border: 1px solid #e2e8f0;
+    }
+
     footer#appFooter {
       padding: 1.1rem 1.5rem;
       margin-top: 2rem;
@@ -311,9 +319,9 @@
     <header>
       <div class="logo">
         <img src="../resources/image/logo/logo4.png" alt="Archer Studio Logo" style="width: 40px; height: 40px;">
-        <span class="logo-text">ARCHER <span class="accent-word">STUDIO</span></span>
+        <span class="logo-text"><b>ARCHER</b><span class="accent-word">STUDIO</span></span>
       </div>
-      <h1>Group Randomizer</h1>
+      <h1>Group Generator</h1>
     </header>
 
     <div id="error-box" class="error-msg"></div>
@@ -371,7 +379,7 @@ VILLARUEL II MICHAEL LOPEZ, Male
         <label class="radio-label"><input type="radio" name="groupMode" value="advanced"> Advanced Builder</label>
       </div>
 
-      <div class="settings-grid">
+      <div class="settings-grid" style="margin-bottom: 1.5rem;">
         <div id="setting-total" class="form-group">
           <label for="totalPerGroup">Total members per group</label>
           <input type="number" id="totalPerGroup" value="4" min="1">
@@ -414,6 +422,17 @@ VILLARUEL II MICHAEL LOPEZ, Male
         </div>
       </div>
 
+      <!-- Smart Remainder Handling Section -->
+      <div class="smart-remainders-box" id="smartRemaindersContainer">
+        <label class="radio-label" style="margin-bottom: 0;">
+          <input type="checkbox" id="smartRemainders" checked> 
+          <strong>Smart Grouping</strong>
+        </label>
+        <div class="help-text" style="margin-top: 0.25rem; margin-left: 1.5rem; color: #64748b;">
+          Automatically resolves unassigned members. If leftovers are &lt;60% of a total group, they are distributed evenly into existing groups. Otherwise, they form a new group together.
+        </div>
+      </div>
+
       <button id="generateBtn" class="primary">Generate Groups</button>
       <button id="exportPngBtn" class="secondary hidden">Export as PNG</button>
     </div>
@@ -432,8 +451,9 @@ VILLARUEL II MICHAEL LOPEZ, Male
     const settingBalancedGender = document.getElementById('setting-balancedGender');
     const settingExactGender = document.getElementById('setting-exactGender');
     const settingAdvanced = document.getElementById('setting-advanced');
+    const smartRemaindersContainer = document.getElementById('smartRemaindersContainer');
     
-    // Function to generate the options from 1 to 50 for the dropdowns
+    // Function to generate options 1 to 50
     const generateOptionsHtml = () => {
       let options = '';
       for (let i = 1; i <= 50; i++) {
@@ -442,7 +462,7 @@ VILLARUEL II MICHAEL LOPEZ, Male
       return options;
     };
 
-    // Function to dynamically add a rule row in Advanced mode
+    // Dynamically add a rule row in Advanced mode
     const addAdvancedRule = () => {
       const container = document.getElementById('advanced-rules-container');
       const row = document.createElement('div');
@@ -464,7 +484,7 @@ VILLARUEL II MICHAEL LOPEZ, Male
       container.appendChild(row);
     };
 
-    // Initialize with one rule by default
+    // Default setup
     document.getElementById('addRuleBtn').addEventListener('click', addAdvancedRule);
     addAdvancedRule(); // Add the first row on load
 
@@ -474,11 +494,13 @@ VILLARUEL II MICHAEL LOPEZ, Male
         settingBalancedGender.classList.add('hidden');
         settingExactGender.classList.add('hidden');
         settingAdvanced.classList.add('hidden');
+        smartRemaindersContainer.classList.remove('hidden'); // Shown by default for most modes
 
         if (e.target.value === 'total') {
           settingTotal.classList.remove('hidden');
         } else if (e.target.value === 'balancedGender') {
           settingBalancedGender.classList.remove('hidden');
+          smartRemaindersContainer.classList.add('hidden'); // Not needed for balanced, since it never leaves remainders
         } else if (e.target.value === 'exactGender') {
           settingExactGender.classList.remove('hidden');
         } else if (e.target.value === 'advanced') {
@@ -543,6 +565,7 @@ VILLARUEL II MICHAEL LOPEZ, Male
 
       const parsedData = parseInput(text);
       const mode = document.querySelector('input[name="groupMode"]:checked').value;
+      const useSmartRemainders = document.getElementById('smartRemainders').checked && mode !== 'balancedGender';
       const resultsContainer = document.getElementById('results-container');
       resultsContainer.innerHTML = '';
 
@@ -557,9 +580,13 @@ VILLARUEL II MICHAEL LOPEZ, Male
         }
         let allMembers = [...parsedData.Object_Males, ...parsedData.Object_Females, ...parsedData.Object_Unknowns];
         allMembers = shuffleArray(allMembers);
-        while (allMembers.length > 0) {
+        
+        // Take out full size groups until we can't anymore
+        while (allMembers.length >= totalSize) {
           groups.push(allMembers.splice(0, totalSize));
         }
+        // What is left is the unassigned remainder
+        unassigned.push(...allMembers);
 
       } else if (mode === 'balancedGender') {
         const numGroups = parseInt(document.getElementById('numGroupsBalanced').value, 10);
@@ -588,7 +615,6 @@ VILLARUEL II MICHAEL LOPEZ, Male
         distribute(shuffledFemales);
         distribute(shuffledUnknowns);
 
-        // Remove empty groups if requested groups > participants
         groups = groups.filter(g => g.length > 0);
 
       } else if (mode === 'exactGender') {
@@ -602,7 +628,7 @@ VILLARUEL II MICHAEL LOPEZ, Male
 
         let shuffledMales = shuffleArray(parsedData.Object_Males);
         let shuffledFemales = shuffleArray(parsedData.Object_Females);
-        unassigned = [...parsedData.Object_Unknowns];
+        unassigned = [...parsedData.Object_Unknowns]; // Unknowns instantly unassigned in exact gender
 
         while (true) {
           let group = [];
@@ -666,7 +692,6 @@ VILLARUEL II MICHAEL LOPEZ, Male
           let madeProgress = true;
           
           // Evenly round-robin distribute 1 person from each pool type sequentially 
-          // into the custom groups to ensure proportional gender balance.
           while(madeProgress) {
             madeProgress = false;
             for (let poolType of activePools) {
@@ -684,6 +709,33 @@ VILLARUEL II MICHAEL LOPEZ, Male
         }
       }
 
+      // === SMART REMAINDER DISTRIBUTION ENGINE ===
+      if (useSmartRemainders && unassigned.length > 0) {
+        if (groups.length === 0) {
+           // If no groups could form initially, remainders become the first group
+           groups.push([...unassigned]);
+           unassigned = [];
+        } else {
+           // Average capacity/size of current groups
+           let avgSize = groups.reduce((acc, g) => acc + g.length, 0) / groups.length;
+           
+           // If leftover total is <= 60% of average group size, distribute them
+           if (unassigned.length <= Math.ceil(avgSize * 0.6)) {
+              let gIdx = 0;
+              unassigned = shuffleArray(unassigned); // Keep it random
+              while(unassigned.length > 0) {
+                 groups[gIdx % groups.length].push(unassigned.shift());
+                 gIdx++;
+              }
+           } else {
+              // Too many leftovers to distribute nicely, form a whole new group
+              groups.push([...unassigned]);
+              unassigned = [];
+           }
+        }
+      }
+
+      // === HTML GENERATION ===
       let htmlOutput = '';
 
       groups.forEach((group, index) => {
