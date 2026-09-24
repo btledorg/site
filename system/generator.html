@@ -112,7 +112,7 @@
       display: block;
     }
 
-    textarea, input[type="number"], input[type="text"] {
+    textarea, input[type="number"], input[type="text"], select {
       width: 100%;
       padding: 0.75rem;
       border: 1px solid var(--color-border);
@@ -122,7 +122,7 @@
       transition: border-color 0.2s;
     }
 
-    textarea:focus, input[type="number"]:focus, input[type="text"]:focus {
+    textarea:focus, input[type="number"]:focus, input[type="text"]:focus, select:focus {
       outline: none;
       border-color: var(--color-primary);
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -150,6 +150,7 @@
 
     .mode-toggle {
       display: flex;
+      flex-wrap: wrap;
       gap: 1rem;
       margin-bottom: 1rem;
     }
@@ -184,7 +185,6 @@
       color: var(--color-primary);
       border: 2px solid var(--color-primary);
       border-radius: var(--radius-md);
-      /* Subtracting the 2px border from the primary's 0.75rem padding keeps the buttons exactly the same height */
       padding: calc(0.75rem - 2px) 1.5rem;
       font-size: 1rem;
       font-weight: 600;
@@ -288,7 +288,6 @@
     }
 
     footer#appFooter {
-
       padding: 1.1rem 1.5rem;
       margin-top: 2rem;
       text-align: center;
@@ -350,14 +349,12 @@ MORENO KIM ALTHEA RADANA, Female
 MORENO JOHN DENVER CABAL, Male
 OLEGARIO AIRENE BLANCO, Female
 PAGALAN JHON REYDIÑO LUCION, Male
-PASTORITES CHRISTINE SIMBILING, Female
 PUDA RONIEL ALLEN DOÑA, Male
 REPOBERBIO CARISSA MAY ARAMBULO, Female
 RIVERA GENESIS NABUA, Male
 SAYSON MICHAEL JAY COMPRADO, Male
 STA ANA TRIXIE ANN SALGON, Female
 SULIT MIKAELLA MAE FELIX, Female
-TRESVALLES JUAN CARLOS VALENZUELA, Male
 TROCIO CRISTINE BUTAL, Female
 VILLAREAL KRISTINE HEAVEN VALE, Female
 VILLARUEL II MICHAEL LOPEZ, Male
@@ -369,8 +366,9 @@ VILLARUEL II MICHAEL LOPEZ, Male
       <label>Grouping Strategy</label>
       <div class="mode-toggle">
         <label class="radio-label"><input type="radio" name="groupMode" value="total" checked> Total per Group</label>
-        <label class="radio-label"><input type="radio" name="groupMode" value="gender"> Gender Split</label>
-        <label class="radio-label"><input type="radio" name="groupMode" value="advanced"> Advanced (Custom Sizes)</label>
+        <label class="radio-label"><input type="radio" name="groupMode" value="balancedGender"> Balanced Gender Split</label>
+        <label class="radio-label"><input type="radio" name="groupMode" value="exactGender"> Exact Gender Split</label>
+        <label class="radio-label"><input type="radio" name="groupMode" value="advanced"> Advanced Builder</label>
       </div>
 
       <div class="settings-grid">
@@ -379,21 +377,40 @@ VILLARUEL II MICHAEL LOPEZ, Male
           <input type="number" id="totalPerGroup" value="4" min="1">
         </div>
 
-        <div id="setting-gender" class="form-group hidden" style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div id="setting-balancedGender" class="form-group hidden" style="grid-column: 1 / -1;">
+          <label for="numGroupsBalanced">Number of Groups (Balanced)</label>
+          <span class="help-text">Distributes males and females evenly across the specified number of groups.</span>
+          <input type="number" id="numGroupsBalanced" value="5" min="1">
+        </div>
+
+        <div id="setting-exactGender" class="form-group hidden" style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
           <div>
-            <label for="malesPerGroup">Males per group</label>
+            <label for="malesPerGroup">Males per group (Exact)</label>
             <input type="number" id="malesPerGroup" value="2" min="0">
           </div>
           <div>
-            <label for="femalesPerGroup">Females per group</label>
+            <label for="femalesPerGroup">Females per group (Exact)</label>
             <input type="number" id="femalesPerGroup" value="2" min="0">
           </div>
         </div>
 
         <div id="setting-advanced" class="form-group hidden" style="grid-column: 1 / -1;">
-          <label for="advancedSizes">Custom Group Sizes</label>
-          <span class="help-text">Enter sizes separated by commas (e.g., "4, 4, 5") or use multipliers (e.g., "3x3, 1x10" for 3 groups of 3 and 1 group of 10).</span>
-          <input type="text" id="advancedSizes" placeholder="3x3, 1x10">
+          <label>Custom Group Builder</label>
+          <span class="help-text" style="margin-bottom: 1rem;">Build your exact configuration. Customize the number of groups and sizes below.</span>
+          
+          <div id="advanced-rules-container">
+            <!-- Dynamic dropdown rules will be injected here -->
+          </div>
+          
+          <button type="button" id="addRuleBtn" class="secondary" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; margin-top: 0.5rem; margin-bottom: 1.5rem;">+ Add Group Rule</button>
+
+          <div style="border-top: 1px solid var(--color-border); padding-top: 1rem;">
+            <label class="radio-label">
+              <input type="checkbox" id="advancedBalanceGenders"> 
+              <strong>Balance Genders across these groups</strong>
+            </label>
+            <span class="help-text" style="margin-left: 1.5rem; margin-top: 0.25rem;">Evenly distributes males and females among all customized groups.</span>
+          </div>
         </div>
       </div>
 
@@ -410,22 +427,60 @@ VILLARUEL II MICHAEL LOPEZ, Male
   </div>
 
   <script>
-    // UI Mode toggling
     const radioButtons = document.querySelectorAll('input[name="groupMode"]');
     const settingTotal = document.getElementById('setting-total');
-    const settingGender = document.getElementById('setting-gender');
+    const settingBalancedGender = document.getElementById('setting-balancedGender');
+    const settingExactGender = document.getElementById('setting-exactGender');
     const settingAdvanced = document.getElementById('setting-advanced');
+    
+    // Function to generate the options from 1 to 50 for the dropdowns
+    const generateOptionsHtml = () => {
+      let options = '';
+      for (let i = 1; i <= 50; i++) {
+        options += `<option value="${i}">${i}</option>`;
+      }
+      return options;
+    };
+
+    // Function to dynamically add a rule row in Advanced mode
+    const addAdvancedRule = () => {
+      const container = document.getElementById('advanced-rules-container');
+      const row = document.createElement('div');
+      row.className = 'adv-rule-row';
+      row.style.cssText = 'display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem;';
+      
+      row.innerHTML = `
+        <select class="adv-count" style="width: 80px; padding: 0.5rem;">${generateOptionsHtml()}</select>
+        <span style="font-size: 0.9rem; font-weight: 500; color: var(--color-text-muted);">groups of</span>
+        <select class="adv-size" style="width: 80px; padding: 0.5rem;">${generateOptionsHtml()}</select>
+        <span style="font-size: 0.9rem; font-weight: 500; color: var(--color-text-muted);">members</span>
+        <button type="button" class="remove-rule-btn" title="Remove" style="margin-left: auto; background: none; border: none; color: #dc2626; font-size: 1.25rem; font-weight: bold; cursor: pointer; padding: 0 0.5rem;">&times;</button>
+      `;
+      
+      row.querySelector('.remove-rule-btn').addEventListener('click', () => {
+        row.remove();
+      });
+      
+      container.appendChild(row);
+    };
+
+    // Initialize with one rule by default
+    document.getElementById('addRuleBtn').addEventListener('click', addAdvancedRule);
+    addAdvancedRule(); // Add the first row on load
 
     radioButtons.forEach(radio => {
       radio.addEventListener('change', (e) => {
         settingTotal.classList.add('hidden');
-        settingGender.classList.add('hidden');
+        settingBalancedGender.classList.add('hidden');
+        settingExactGender.classList.add('hidden');
         settingAdvanced.classList.add('hidden');
 
         if (e.target.value === 'total') {
           settingTotal.classList.remove('hidden');
-        } else if (e.target.value === 'gender') {
-          settingGender.classList.remove('hidden');
+        } else if (e.target.value === 'balancedGender') {
+          settingBalancedGender.classList.remove('hidden');
+        } else if (e.target.value === 'exactGender') {
+          settingExactGender.classList.remove('hidden');
         } else if (e.target.value === 'advanced') {
           settingAdvanced.classList.remove('hidden');
         }
@@ -455,11 +510,7 @@ VILLARUEL II MICHAEL LOPEZ, Male
           return;
         }
 
-        let name = parts[0];
-        name = name.replace(/\t/g, ' ');
-        name = name.replace(/\s+/g, ' ');
-        name = name.trim();
-
+        let name = parts[0].replace(/\t/g, ' ').replace(/\s+/g, ' ').trim();
         const genderStr = parts[1].trim().toLowerCase();
 
         if (genderStr.includes('f') || genderStr.includes('girl')) {
@@ -504,14 +555,43 @@ VILLARUEL II MICHAEL LOPEZ, Male
           showError("Please enter a valid total members per group.");
           return;
         }
-
         let allMembers = [...parsedData.Object_Males, ...parsedData.Object_Females, ...parsedData.Object_Unknowns];
         allMembers = shuffleArray(allMembers);
-
         while (allMembers.length > 0) {
           groups.push(allMembers.splice(0, totalSize));
         }
-      } else if (mode === 'gender') {
+
+      } else if (mode === 'balancedGender') {
+        const numGroups = parseInt(document.getElementById('numGroupsBalanced').value, 10);
+        if (isNaN(numGroups) || numGroups < 1) {
+          showError("Please enter a valid number of groups.");
+          return;
+        }
+
+        for (let i = 0; i < numGroups; i++) {
+          groups.push([]);
+        }
+
+        let shuffledMales = shuffleArray(parsedData.Object_Males);
+        let shuffledFemales = shuffleArray(parsedData.Object_Females);
+        let shuffledUnknowns = shuffleArray(parsedData.Object_Unknowns);
+
+        let groupIndex = 0;
+        const distribute = (arr) => {
+          for (let i = 0; i < arr.length; i++) {
+            groups[groupIndex].push(arr[i]);
+            groupIndex = (groupIndex + 1) % numGroups;
+          }
+        };
+
+        distribute(shuffledMales);
+        distribute(shuffledFemales);
+        distribute(shuffledUnknowns);
+
+        // Remove empty groups if requested groups > participants
+        groups = groups.filter(g => g.length > 0);
+
+      } else if (mode === 'exactGender') {
         const mSize = parseInt(document.getElementById('malesPerGroup').value, 10) || 0;
         const fSize = parseInt(document.getElementById('femalesPerGroup').value, 10) || 0;
 
@@ -540,48 +620,68 @@ VILLARUEL II MICHAEL LOPEZ, Male
             break;
           }
         }
-
         unassigned.push(...shuffledMales, ...shuffledFemales);
+
       } else if (mode === 'advanced') {
-        const advancedInput = document.getElementById('advancedSizes').value.trim();
-        if (!advancedInput) {
-          showError("Please enter custom group sizes (e.g. 3x3, 1x10).");
-          return;
-        }
-
         let requestedSizes = [];
-        const parts = advancedInput.split(',');
-        for (let part of parts) {
-          part = part.trim().toLowerCase();
-          if (!part) continue;
-
-          if (part.includes('x')) {
-            const [countStr, sizeStr] = part.split('x');
-            const count = parseInt(countStr, 10);
-            const size = parseInt(sizeStr, 10);
-            if (!isNaN(count) && !isNaN(size) && count > 0 && size > 0) {
-              for (let i = 0; i < count; i++) requestedSizes.push(size);
+        const ruleRows = document.querySelectorAll('.adv-rule-row');
+        
+        ruleRows.forEach(row => {
+          const count = parseInt(row.querySelector('.adv-count').value, 10);
+          const size = parseInt(row.querySelector('.adv-size').value, 10);
+          if (!isNaN(count) && !isNaN(size) && count > 0 && size > 0) {
+            for (let i = 0; i < count; i++) {
+              requestedSizes.push(size);
             }
-          } else {
-            const size = parseInt(part, 10);
-            if (!isNaN(size) && size > 0) requestedSizes.push(size);
           }
-        }
+        });
 
         if (requestedSizes.length === 0) {
-          showError("Invalid advanced configuration. Use formats like '3x3, 1x10' or '3, 4, 5'.");
+          showError("Please add at least one group size rule.");
           return;
         }
 
-        let allMembers = [...parsedData.Object_Males, ...parsedData.Object_Females, ...parsedData.Object_Unknowns];
-        allMembers = shuffleArray(allMembers);
+        const balanceGenders = document.getElementById('advancedBalanceGenders').checked;
 
-        for (let size of requestedSizes) {
-          if (allMembers.length === 0) break;
-          groups.push(allMembers.splice(0, size));
+        if (!balanceGenders) {
+          // Standard advanced logic (No gender balancing)
+          let allMembers = [...parsedData.Object_Males, ...parsedData.Object_Females, ...parsedData.Object_Unknowns];
+          allMembers = shuffleArray(allMembers);
+
+          for (let size of requestedSizes) {
+            if (allMembers.length === 0) break;
+            groups.push(allMembers.splice(0, size));
+          }
+          unassigned.push(...allMembers);
+        } else {
+          // Gender-balanced custom allocation algorithm
+          let groupObjects = requestedSizes.map(s => ({ cap: s, members: [] }));
+          let pools = {
+            'M': shuffleArray(parsedData.Object_Males),
+            'F': shuffleArray(parsedData.Object_Females),
+            '?': shuffleArray(parsedData.Object_Unknowns)
+          };
+          
+          let activePools = ['M', 'F', '?'];
+          let madeProgress = true;
+          
+          // Evenly round-robin distribute 1 person from each pool type sequentially 
+          // into the custom groups to ensure proportional gender balance.
+          while(madeProgress) {
+            madeProgress = false;
+            for (let poolType of activePools) {
+              for (let g of groupObjects) {
+                if (g.members.length < g.cap && pools[poolType].length > 0) {
+                  g.members.push(pools[poolType].pop());
+                  madeProgress = true;
+                }
+              }
+            }
+          }
+          
+          groups = groupObjects.map(g => g.members).filter(g => g.length > 0);
+          unassigned.push(...pools['M'], ...pools['F'], ...pools['?']);
         }
-
-        unassigned.push(...allMembers);
       }
 
       let htmlOutput = '';
@@ -589,7 +689,9 @@ VILLARUEL II MICHAEL LOPEZ, Male
       groups.forEach((group, index) => {
         let mCount = group.filter(p => p.gender === 'M').length;
         let fCount = group.filter(p => p.gender === 'F').length;
-        let statText = mode === 'gender' ? `(${mCount}M, ${fCount}F)` : `${group.length} Members`;
+        // Show gender split breakdown if balanced modes are enabled, otherwise just member count
+        let isBalancedMode = mode === 'exactGender' || mode === 'balancedGender' || (mode === 'advanced' && document.getElementById('advancedBalanceGenders').checked);
+        let statText = isBalancedMode ? `(${mCount}M, ${fCount}F)` : `${group.length} Members`;
 
         htmlOutput += `
           <div class="group-card">
