@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In Loving Memory of Maila A. Pataray</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            card: '#1e293b',
+                            accent: '#3b82f6',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Subtle fade-in animation for a peaceful loading effect */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 1s ease-out forwards;
+        }
+        .delay-100 { animation-delay: 100ms; opacity: 0; }
+        .delay-200 { animation-delay: 200ms; opacity: 0; }
+        .delay-300 { animation-delay: 300ms; opacity: 0; }
+    </style>
+</head>
+<body class="bg-brand-dark text-slate-300 font-sans min-h-screen antialiased selection:bg-slate-700 selection:text-white">
+    <main class="max-w-4xl mx-auto px-6 py-16 md:py-24">
+        
+        <!-- Header Section -->
+        <header class="text-center mb-16 animate-fade-in">
+            <div class="flex items-center justify-center gap-4 mb-6 opacity-60">
+                <div class="h-[1px] w-12 bg-slate-400"></div>
+                <svg class="w-6 h-6 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                <div class="h-[1px] w-12 bg-slate-400"></div>
+            </div>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-serif text-white mb-6 leading-tight">
+                In Loving Memory of <br/> <span class="text-slate-200">Maila A. Pataray</span>
+            </h1>
+            
+            <!-- Quote Section -->
+            <div class="max-w-2xl mx-auto mt-10">
+                <p class="font-serif italic text-xl md:text-2xl text-slate-400 text-center leading-relaxed">
+                    "What we have once enjoyed we can never lose. All that we love deeply becomes a part of us."
+                </p>
+                <p class="mt-4 text-sm tracking-widest uppercase text-slate-500">— Helen Keller</p>
+            </div>
+        </header>
+
+        <!-- Main Tribute Section -->
+        <section class="mb-20 animate-fade-in delay-100">
+            <div class="flex flex-col md:flex-row items-center gap-10 md:gap-16 bg-brand-card/50 p-8 md:p-12 rounded-3xl border border-slate-700/50 shadow-2xl backdrop-blur-sm">
+                
+                <!-- Image 1 -->
+                <div class="w-full md:w-1/2 flex justify-center">
+                    <div class="relative w-full max-w-sm aspect-square md:aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-600/30">
+                        <img 
+                            src="resources/maila.png" 
+                            alt="Portrait of Maila A. Pataray" 
+                            class="w-full h-full object-cover"
+                            onerror="this.onerror=null; this.src='https://placehold.co/600x800/1e293b/94a3b8?text=1.png';"
+                        >
+                    </div>
+                </div>
+                
+                <!-- Tribute Text -->
+                <div class="w-full md:w-1/2 text-center md:text-left">
+                    <h2 class="text-3xl font-serif text-white mb-6">Rest In Peace</h2>
+                    <p class="text-lg leading-relaxed text-slate-300 font-light">
+                        With heavy hearts, we mourn the passing of our dear former BTLED student, Maila A. Pataray. Your time with us may have come to an end, but the memories, kindness, and moments you shared with your classmates, teachers, and the BTLED community will forever remain in our hearts.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call for Support Section -->
+        <section class="mb-20 animate-fade-in delay-200">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-serif text-white mb-4">A Call for Support</h2>
+                <div class="h-[1px] w-24 bg-slate-600 mx-auto mb-6"></div>
+                <p class="max-w-3xl mx-auto text-lg leading-relaxed font-light text-slate-300">
+                    In this time of grief, we humbly ask for any amount of financial assistance to help Maila A. Pataray's family with the expenses and needs brought by this loss. Every contribution, no matter how small, will be deeply appreciated and will serve as a meaningful gesture of love and solidarity.
+                </p>
+            </div>
+
+            <!-- Donation Details Card -->
+            <div class="max-w-2xl mx-auto bg-gradient-to-br from-brand-card to-slate-900 p-8 rounded-3xl border border-slate-700 shadow-xl flex flex-col sm:flex-row items-center gap-8">
+                
+                <!-- Image 2 (QR Code) -->
+                <div class="w-48 h-48 sm:w-56 sm:h-56 shrink-0 bg-white p-2 rounded-xl shadow-inner">
+                    <img 
+                        src="resources/qr.png" 
+                        alt="GCash QR Code for Mercedita Pataray" 
+                        class="w-full h-full object-contain rounded-lg"
+                        onerror="this.onerror=null; this.src='https://placehold.co/400x400/f8fafc/1e293b?text=2.png';"
+                    >
+                </div>
+                
+                <div class="flex-1 text-center sm:text-left">
+                    <span class="inline-block px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-semibold tracking-wider uppercase rounded-full mb-4">
+                        Scan to Donate
+                    </span>
+                    <h3 class="text-2xl font-semibold text-white mb-2">GCash Details</h3>
+                    <div class="space-y-3 mt-4">
+                        <div>
+                            <p class="text-sm text-slate-400 uppercase tracking-wide">Account Name</p>
+                            <p class="text-lg text-white font-medium">MERCEDITA PATARAY</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-400 uppercase tracking-wide">Mobile No.</p>
+                            <p class="text-xl text-brand-accent font-semibold tracking-wider">09515349559</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-24 pt-8 border-t border-slate-800 text-center animate-fade-in delay-300">
+            <p class="text-slate-500 text-sm mb-4">Organized by the BTLED Community</p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
+                <a href="https://fb.com/btledorg.urscainta" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors duration-300">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    <span>fb.com/btledorg.urscainta</span>
+                </a>
+                <a href="https://btledorg.github.io/site/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors duration-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                    <span>btledorg.github.io/site/</span>
+                </a>
+            </div>
+        </footer>
+
+    </main>
+
+</body>
+</html>
