@@ -1525,21 +1525,21 @@ function extractColorsFromImage(url) {
       }
 
       // Explicit Facebook Link Validation
-      const fbInput = document.getElementById("field-fblink");
-      const fbVal = fbInput.value.trim();
-      const fbPattern = /^https?:\/\/(www\.)?(facebook|fb)\.com\/.+/i;
-      
-      if (!fbPattern.test(fbVal)) {
-        if (window.showCustomAlert) {
-          await window.showCustomAlert(
-            "Please enter a valid Facebook profile or page link (e.g., https://facebook.com/username) before proceeding."
-          );
-        } else {
-          alert("Please enter a valid Facebook profile or page link (e.g., https://facebook.com/username) before proceeding.");
-        }
-        fbInput.focus();
-        return false;
-      }
+      //const fbInput = document.getElementById("field-fblink");
+      //const fbVal = fbInput.value.trim();
+      //const fbPattern = /^https?:\/\/(www\.)?(facebook|fb)\.com\/.+/i;
+    
+      // if (!fbPattern.test(fbVal)) {
+      //  if (window.showCustomAlert) {
+      //    await window.showCustomAlert(
+      //      "Please enter a valid Facebook profile or page link (e.g., https://facebook.com/username) before proceeding."
+      //   );
+      //  } else {
+      //    alert("Please enter a valid Facebook profile or page link (e.g., https://facebook.com/username) before proceeding.");
+      //  }
+      //  fbInput.focus();
+      //  return false;
+      //}
 
       return true;
     }
