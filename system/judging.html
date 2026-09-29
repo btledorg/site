@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTLED | Event Judging Portal</title>
+  <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
+  <link rel="stylesheet" href="../resources/css/landing.css" />
+  
+  <style>
+    /* Light Mode Scoring Interface Styles */
+    .judging-controls {
+      background-color: #ffffff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: left;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .form-group label {
+      color: #333;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .custom-select {
+      background-color: #f9f9f9;
+      color: #333;
+      border: 1px solid #ccc;
+      padding: 0.75rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .custom-select:focus {
+      outline: none;
+      border-color: #ffcc00;
+      background-color: #fff;
+    }
+
+    /* Contestant Scoring Cards */
+    .scoring-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .scoring-card {
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    .contestant-badge {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background-color: #ffcc00;
+      color: #111;
+      font-weight: 800;
+      font-size: 1.2rem;
+      padding: 0.4rem 1rem;
+      border-radius: 4px;
+      z-index: 2;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .scoring-card img.contestant-img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      border-bottom: 3px solid #ffcc00;
+      background-color: #f4f4f4;
+    }
+
+    .scoring-header {
+      padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+      text-align: center;
+    }
+
+    .scoring-header h4 {
+      font-size: 1.4rem;
+      margin: 0 0 0.25rem 0;
+      color: #222;
+    }
+    
+    .scoring-header p {
+      color: #666;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .criteria-section {
+      padding: 1rem 1.5rem 1.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex-grow: 1;
+    }
+
+    .criteria-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #f9f9f9;
+      padding: 0.75rem;
+      border-radius: 4px;
+      border: 1px solid #eee;
+    }
+
+    .criteria-row label {
+      font-size: 0.85rem;
+      color: #444;
+      width: 60%;
+      font-weight: 600;
+    }
+
+    .score-input {
+      width: 30%;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      color: #222;
+      padding: 0.5rem;
+      border-radius: 4px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    .score-input:focus {
+      outline: none;
+      border-color: #ffcc00;
+    }
+
+    .score-input::-webkit-outer-spin-button,
+    .score-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .score-input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px dashed #ccc;
+    }
+
+    .total-label {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .total-score {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #111;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 1rem;
+      background-color: #ffcc00;
+      color: #111;
+      border: none;
+      border-radius: 0 0 8px 8px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .submit-btn:hover {
+      background-color: #e6b800;
+    }
+
+    /* Admin Toolbar */
+    .admin-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      background-color: #f4f4f4;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      margin-bottom: 2rem;
+    }
+    
+    .btn-admin {
+      background-color: #222;
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background-color 0.2s;
+    }
+    
+    .btn-admin:hover {
+      background-color: #444;
+    }
+
+    .btn-admin.accent {
+      background-color: #ffcc00;
+      color: #111;
+    }
+
+    .btn-admin.accent:hover {
+      background-color: #e6b800;
+    }
+
+    /* Overlay / Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal-content h3 {
+      margin-top: 0;
+      color: #222;
+      border-bottom: 2px solid #ffcc00;
+      padding-bottom: 0.5rem;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #666;
+    }
+
+    /* Configuration Modal Specifics */
+    .config-group {
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .config-group label {
+      font-weight: bold;
+      color: #444;
+    }
+
+    .config-group input[type="text"], .config-group textarea {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+
+    .contestant-entry {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      background: #f4f4f4;
+      padding: 0.5rem;
+      border-radius: 4px;
+      flex-wrap: wrap;
+    }
+    
+    .contestant-entry input[type="text"] {
+      flex: 1;
+      min-width: 120px;
+      padding: 0.4rem;
+      font-size: 0.85rem;
+    }
+    
+    .contestant-entry input[type="file"] {
+      max-width: 180px;
+      font-size: 0.8rem;
+    }
+
+    .img-preview {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+
+    /* Results Table Styles */
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .results-table th, .results-table td {
+      border: 1px solid #ddd;
+      padding: 0.75rem;
+      text-align: center;
+    }
+
+    .results-table th {
+      background-color: #f4f4f4;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .results-table tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+
+    .rank-badge {
+      background-color: #ffcc00;
+      color: #111;
+      font-weight: bold;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+    }
+
+    .btn-save {
+      background-color: #ffcc00;
+      color: #111;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar" id="site-navbar" data-root="../"></header>
+  <script src="../resources/js/navbar.js"></script>
+
+  <!-- Hero Section -->
+  <section id="hero" class="hero-bg" style="min-height: 25vh;">
+    <div class="hero-image" style="background-image: url('../resources/image/3.png'); background-position: center;"></div>
+    <div class="hero-overlay"></div>
+    <div class="container hero-content-container" style="justify-content: center;">
+      <div class="hero-text-block animate-on-scroll">
+        <h1 class="hero-title" style="font-size: 2.8rem;">
+          JUDGING <span class="highlight-text">PORTAL</span>
+        </h1>
+      </div>
+    </div>
+  </section>
+  
+  <section class="section-border bg-subtle" style="padding-top: 2rem;">
+    <div class="container">
+      
+      <!-- Admin Toolbar -->
+      <div class="admin-toolbar animate-on-scroll">
+        <button class="btn-admin" onclick="openConfigModal()">⚙️ Setup Event</button>
+        <button class="btn-admin" onclick="document.getElementById('import-file').click()">📥 Import Settings</button>
+        <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importConfiguration(event)">
+        <button class="btn-admin" onclick="exportConfiguration()">📤 Export Settings</button>
+        <button class="btn-admin accent" onclick="openResultsModal()">📊 View Results</button>
+      </div>
+
+      <!-- Dynamic Event Header -->
+      <div class="section-header" style="text-align: center; margin-bottom: 2rem;">
+        <span class="section-label">Live Scoring</span>
+        <h2 id="display-event-name">Event Name Here</h2>
+      </div>
+
+      <!-- Judge Identity Selection -->
+      <div class="judging-controls">
+        <div class="form-group">
+          <label for="judge-select">Select Judge Profile:</label>
+          <select id="judge-select" class="custom-select" onchange="loadJudgeScores()">
+            <option value="" disabled selected>-- Choose your name --</option>
+            <!-- Judges dynamically inserted here -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Dynamic Scoring Grid -->
+      <div class="scoring-grid" id="dynamic-scoring-grid">
+        <!-- Contestants will be injected here via JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Configuration Modal Overlay -->
+  <div class="modal-overlay" id="config-modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeConfigModal()">&times;</span>
+      <h3>Event Configuration</h3>
+      <p style="font-size: 0.85rem; color: #666; margin-bottom: 1.5rem;">Data and images are saved securely to your browser's local storage.</p>
+      
+      <div class="config-group">
+        <label>Event Name:</label>
+        <input type="text" id="config-event-name" placeholder="e.g., Traditional Hand Fan Design Competition">
+      </div>
+
+      <div class="config-group">
+        <label>Judges (One per line):</label>
+        <textarea id="config-judges" rows="4" placeholder="Dr. Maria Santos&#10;Prof. Erwin O. Elardo"></textarea>
+      </div>
+
+      <div class="config-group">
+        <label>Contestants:</label>
+        <div id="config-contestants-list">
+          <!-- Contestant rows added here -->
+        </div>
+        <button class="btn-admin" onclick="addContestantInput()" style="margin-top: 0.5rem; width: max-content;">+ Add Contestant</button>
+      </div>
+
+      <button class="btn-save" onclick="saveConfiguration()" style="width: 100%; margin-top: 1rem; padding: 0.8rem; font-size: 1.1rem;">Save Setup</button>
+    </div>
+  </div>
+
+  <!-- Results Modal Overlay -->
+  <div class="modal-overlay" id="results-modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeResultsModal()">&times;</span>
+      <h3>Live Results Dashboard</h3>
+      <p style="font-size: 0.85rem; color: #666; margin-bottom: 1rem;">Scores are updated locally based on submitted judge evaluations.</p>
+      
+      <div style="overflow-x: auto;">
+        <table class="results-table" id="results-table">
+          <!-- Results injected here -->
+        </table>
+      </div>
+
+      <div style="margin-top: 1.5rem; text-align: right;">
+        <button class="btn-admin accent" style="display: inline-flex;" onclick="exportResultsCSV()">📥 Download Results (CSV)</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-brand-section">
+        <strong class="footer-brand">BTLED Organization</strong>
+        <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">
+          One of the official student-led organizations at URS Cainta Campus,
+          the BTLEd - IA Program Organization.
+        </p>
+      </div>
+      <div class="footer-right">
+        <p style="color: #666; font-size: 0.85rem;">&copy; 2026 BTLED. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../resources/js/index.js"></script>
+  
+  <!-- Core Logic: Config, Scoring, Export/Import, Results -->
+  <script>
+    const CONFIG_KEY = 'btled_judging_config';
+    const SCORES_KEY = 'btled_judging_scores';
+
+    let eventConfig = {
+      eventName: "Sample Event Name",
+      judges: [],
+      contestants: []
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadConfiguration();
+      renderUI();
+    });
+
+    function loadConfiguration() {
+      const savedConfig = localStorage.getItem(CONFIG_KEY);
+      if (savedConfig) {
+        eventConfig = JSON.parse(savedConfig);
+      }
+    }
+
+    function renderUI() {
+      // 1. Set Event Name
+      document.getElementById('display-event-name').textContent = eventConfig.eventName || "Please setup an event";
+
+      // 2. Populate Judges Dropdown
+      const judgeSelect = document.getElementById('judge-select');
+      const currentSelection = judgeSelect.value;
+      judgeSelect.innerHTML = '<option value="" disabled selected>-- Choose your name --</option>';
+      eventConfig.judges.forEach(judge => {
+        const option = document.createElement('option');
+        option.value = judge;
+        option.textContent = judge;
+        judgeSelect.appendChild(option);
+      });
+      if (currentSelection && eventConfig.judges.includes(currentSelection)) {
+        judgeSelect.value = currentSelection;
+      }
+
+      // 3. Render Contestants Grid
+      const grid = document.getElementById('dynamic-scoring-grid');
+      grid.innerHTML = ''; 
+      
+      eventConfig.contestants.forEach((c, index) => {
+        const fallbackImg = 'https://placehold.co/400x300/f4f4f4/cccccc?text=No+Image';
+        const displayImage = c.image && c.image.length > 10 ? c.image : fallbackImg;
+        
+        const cardHTML = `
+          <form class="scoring-card" data-contestant-id="${index}">
+            <div class="contestant-badge">#${String(index + 1).padStart(2, '0')}</div>
+            <img src="${displayImage}" class="contestant-img" alt="${c.name}">
+            <div class="scoring-header">
+              <h4>${c.name}</h4>
+              <p>${c.section}</p>
+            </div>
+            <div class="criteria-section">
+              <div class="criteria-row">
+                <label>Creativity & Originality - 50%</label>
+                <input type="number" class="score-input c-create" min="0" max="50" placeholder="0" required>
+              </div>
+              <div class="criteria-row">
+                <label>Relevance to Theme - 25%</label>
+                <input type="number" class="score-input c-orig" min="0" max="25" placeholder="0" required>
+              </div>
+              <div class="criteria-row">
+                <label>Craftsmanship, Shading & Neatness - 25%</label>
+                <input type="number" class="score-input c-craft" min="0" max="25" placeholder="0" required>
+              </div>
+              <div class="total-row">
+                <span class="total-label">Total Score:</span>
+                <span class="total-score">0</span>
+              </div>
+            </div>
+            <button type="submit" class="submit-btn">Save Score</button>
+          </form>
+        `;
+        grid.insertAdjacentHTML('beforeend', cardHTML);
+      });
+
+      attachScoringEvents();
+      loadJudgeScores(); // Reload scores if judge is already selected
+    }
+
+    function attachScoringEvents() {
+      const scoringForms = document.querySelectorAll('.scoring-card');
+      
+      scoringForms.forEach(form => {
+        const inputs = form.querySelectorAll('.score-input');
+        const totalDisplay = form.querySelector('.total-score');
+        
+        inputs.forEach(input => {
+          input.addEventListener('input', () => {
+            let total = 0;
+            inputs.forEach(inp => {
+              const val = parseInt(inp.value) || 0;
+              const max = parseInt(inp.getAttribute('max')) || 100;
+              if (val > max) inp.value = max; 
+              total += parseInt(inp.value) || 0;
+            });
+            totalDisplay.textContent = total;
+            
+            const btn = form.querySelector('.submit-btn');
+            btn.textContent = 'Save Score';
+            btn.style.backgroundColor = '#ffcc00';
+            btn.style.color = '#111';
+          });
+        });
+
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const judgeName = document.getElementById('judge-select').value;
+          if(!judgeName) {
+            alert('Please select your Judge Profile before submitting scores.');
+            return;
+          }
+
+          const contestantId = form.getAttribute('data-contestant-id');
+          const scores = {
+            create: parseInt(form.querySelector('.c-create').value) || 0,
+            orig: parseInt(form.querySelector('.c-orig').value) || 0,
+            craft: parseInt(form.querySelector('.c-craft').value) || 0,
+            rel: parseInt(form.querySelector('.c-rel').value) || 0,
+            total: parseInt(totalDisplay.textContent) || 0
+          };
+
+          saveScoreToStorage(judgeName, contestantId, scores);
+          
+          const btn = form.querySelector('.submit-btn');
+          btn.textContent = 'Score Saved ✓';
+          btn.style.backgroundColor = '#4CAF50';
+          btn.style.color = 'white';
+        });
+      });
+    }
+
+    function saveScoreToStorage(judge, contestantId, scoresObj) {
+      let allScores = JSON.parse(localStorage.getItem(SCORES_KEY)) || {};
+      if (!allScores[judge]) allScores[judge] = {};
+      allScores[judge][contestantId] = scoresObj;
+      localStorage.setItem(SCORES_KEY, JSON.stringify(allScores));
+    }
+
+    function loadJudgeScores() {
+      const judgeName = document.getElementById('judge-select').value;
+      if (!judgeName) return;
+
+      let allScores = JSON.parse(localStorage.getItem(SCORES_KEY)) || {};
+      let judgeScores = allScores[judgeName] || {};
+
+      const scoringForms = document.querySelectorAll('.scoring-card');
+      scoringForms.forEach(form => {
+        const cId = form.getAttribute('data-contestant-id');
+        const btn = form.querySelector('.submit-btn');
+
+        if (judgeScores[cId]) {
+          form.querySelector('.c-create').value = judgeScores[cId].create;
+          form.querySelector('.c-orig').value = judgeScores[cId].orig;
+          form.querySelector('.c-craft').value = judgeScores[cId].craft;
+          form.querySelector('.c-rel').value = judgeScores[cId].rel;
+          form.querySelector('.total-score').textContent = judgeScores[cId].total;
+          
+          btn.textContent = 'Previously Saved ✓';
+          btn.style.backgroundColor = '#4CAF50';
+          btn.style.color = 'white';
+        } else {
+          form.querySelector('.c-create').value = '';
+          form.querySelector('.c-orig').value = '';
+          form.querySelector('.c-craft').value = '';
+          form.querySelector('.c-rel').value = '';
+          form.querySelector('.total-score').textContent = '0';
+          
+          btn.textContent = 'Save Score';
+          btn.style.backgroundColor = '#ffcc00';
+          btn.style.color = '#111';
+        }
+      });
+    }
+
+    // --- Configuration Modal & File Upload Logic ---
+    function openConfigModal() {
+      document.getElementById('config-event-name').value = eventConfig.eventName || '';
+      document.getElementById('config-judges').value = eventConfig.judges.join('\n');
+      
+      const cList = document.getElementById('config-contestants-list');
+      cList.innerHTML = '';
+      if(eventConfig.contestants.length === 0) {
+        addContestantInput();
+      } else {
+        eventConfig.contestants.forEach(c => addContestantInput(c.name, c.section, c.image));
+      }
+      document.getElementById('config-modal').classList.add('active');
+    }
+
+    function closeConfigModal() {
+      document.getElementById('config-modal').classList.remove('active');
+    }
+
+    function addContestantInput(name = '', section = '', imgBase64 = '') {
+      const container = document.getElementById('config-contestants-list');
+      const row = document.createElement('div');
+      row.className = 'contestant-entry';
+      
+      const placeholder = imgBase64 && imgBase64.length > 10 ? imgBase64 : 'https://placehold.co/40x40/ccc/fff?text=Img';
+      
+      row.innerHTML = `
+        <input type="text" placeholder="Name" value="${name}" class="inp-name">
+        <input type="text" placeholder="Section/Details" value="${section}" class="inp-sec">
+        <input type="file" accept="image/*" class="inp-file" onchange="processImageUpload(this)">
+        <input type="hidden" class="inp-img-data" value="${imgBase64}">
+        <img src="${placeholder}" class="img-preview" alt="Preview">
+        <button onclick="this.parentElement.remove()" style="background:#ff4444; border:none; color:#fff; border-radius:4px; padding:0.4rem 0.6rem; cursor:pointer;">X</button>
+      `;
+      container.appendChild(row);
+    }
+
+    function processImageUpload(inputElement) {
+      const file = inputElement.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400; 
+          let scaleSize = 1;
+          
+          if (img.width > MAX_WIDTH) {
+             scaleSize = MAX_WIDTH / img.width;
+          }
+          
+          canvas.width = img.width * scaleSize;
+          canvas.height = img.height * scaleSize;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7); 
+          
+          const row = inputElement.closest('.contestant-entry');
+          row.querySelector('.inp-img-data').value = dataUrl;
+          row.querySelector('.img-preview').src = dataUrl;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveConfiguration() {
+      const newEventName = document.getElementById('config-event-name').value;
+      const judgesRaw = document.getElementById('config-judges').value;
+      const judgesArray = judgesRaw.split('\n').map(j => j.trim()).filter(j => j !== '');
+      
+      const contestantRows = document.querySelectorAll('.contestant-entry');
+      const contestantsArray = [];
+      
+      contestantRows.forEach(row => {
+        const n = row.querySelector('.inp-name').value.trim();
+        const s = row.querySelector('.inp-sec').value.trim();
+        const i = row.querySelector('.inp-img-data').value;
+        if (n) {
+          contestantsArray.push({ name: n, section: s, image: i });
+        }
+      });
+
+      eventConfig = {
+        eventName: newEventName,
+        judges: judgesArray,
+        contestants: contestantsArray
+      };
+
+      try {
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(eventConfig));
+        closeConfigModal();
+        renderUI();
+      } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+          alert("Storage limit exceeded! Try uploading smaller images or adding fewer contestants.");
+        } else {
+          alert("An error occurred while saving. " + e.message);
+        }
+      }
+    }
+
+    // --- Export / Import Configuration Logic ---
+    function exportConfiguration() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(eventConfig));
+      const downloadAnchorElement = document.createElement('a');
+      downloadAnchorElement.setAttribute("href", dataStr);
+      const safeName = (eventConfig.eventName || "Event").replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      downloadAnchorElement.setAttribute("download", `${safeName}_setup.json`);
+      document.body.appendChild(downloadAnchorElement);
+      downloadAnchorElement.click();
+      downloadAnchorElement.remove();
+    }
+
+    function importConfiguration(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedConfig = JSON.parse(e.target.result);
+          if (importedConfig.eventName && importedConfig.judges && importedConfig.contestants) {
+            eventConfig = importedConfig;
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(eventConfig));
+            renderUI();
+            alert("Settings imported successfully!");
+          } else {
+            alert("Invalid JSON format. Make sure you are uploading a valid event settings file.");
+          }
+        } catch (err) {
+          alert("Error reading file.");
+        }
+        event.target.value = ""; // Reset input
+      };
+      reader.readAsText(file);
+    }
+
+    // --- Results & Averages Calculation ---
+    function calculateResults() {
+      const allScores = JSON.parse(localStorage.getItem(SCORES_KEY)) || {};
+      
+      let results = eventConfig.contestants.map((c, index) => {
+        let totalSum = 0;
+        let judgesScored = 0;
+        let judgeDetails = {};
+
+        eventConfig.judges.forEach(j => {
+          if (allScores[j] && allScores[j][index]) {
+            const s = allScores[j][index].total;
+            judgeDetails[j] = s;
+            totalSum += s;
+            judgesScored++;
+          } else {
+            judgeDetails[j] = "N/A";
+          }
+        });
+
+        const average = judgesScored > 0 ? (totalSum / eventConfig.judges.length).toFixed(2) : 0;
+
+        return {
+          id: index + 1,
+          name: c.name,
+          section: c.section,
+          judgeDetails: judgeDetails,
+          average: parseFloat(average)
+        };
+      });
+
+      // Sort by Average (Highest to Lowest)
+      results.sort((a, b) => b.average - a.average);
+      return results;
+    }
+
+    function openResultsModal() {
+      const results = calculateResults();
+      const table = document.getElementById('results-table');
+      
+      // Build Header
+      let thead = `<tr>
+        <th>Rank</th>
+        <th>No.</th>
+        <th style="text-align: left;">Contestant</th>`;
+      eventConfig.judges.forEach(j => {
+        thead += `<th>${j}</th>`;
+      });
+      thead += `<th>Average Score</th></tr>`;
+      
+      // Build Rows
+      let tbody = '';
+      results.forEach((r, rank) => {
+        tbody += `<tr>
+          <td><span class="rank-badge">${rank + 1}</span></td>
+          <td>#${String(r.id).padStart(2, '0')}</td>
+          <td style="text-align: left;"><strong>${r.name}</strong><br><small style="color:#666;">${r.section}</small></td>`;
+        
+        eventConfig.judges.forEach(j => {
+          const score = r.judgeDetails[j];
+          tbody += `<td>${score}</td>`;
+        });
+        
+        tbody += `<td style="font-weight:bold; font-size:1.1rem; color:#111;">${r.average}</td></tr>`;
+      });
+
+      table.innerHTML = `<thead>${thead}</thead><tbody>${tbody}</tbody>`;
+      document.getElementById('results-modal').classList.add('active');
+    }
+
+    function closeResultsModal() {
+      document.getElementById('results-modal').classList.remove('active');
+    }
+
+    // --- Export Results to CSV ---
+    function exportResultsCSV() {
+      const results = calculateResults();
+      let csvContent = "data:text/csv;charset=utf-8,";
+
+      // Headers
+      let headers = ["Rank", "Contestant No.", "Name", "Section"];
+      eventConfig.judges.forEach(j => headers.push(j));
+      headers.push("Average Score");
+      csvContent += headers.join(",") + "\r\n";
+
+      // Data Rows
+      results.forEach((r, rank) => {
+        let row = [
+          rank + 1,
+          r.id,
+          `"${r.name.replace(/"/g, '""')}"`, 
+          `"${r.section.replace(/"/g, '""')}"`
+        ];
+        
+        eventConfig.judges.forEach(j => {
+          row.push(r.judgeDetails[j]);
+        });
+        
+        row.push(r.average);
+        csvContent += row.join(",") + "\r\n";
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      const safeName = (eventConfig.eventName || "Results").replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      link.setAttribute("download", `${safeName}_final_results.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+  </script>
+</body>
+</html>
