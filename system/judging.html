@@ -519,7 +519,11 @@
     function loadConfiguration() {
       const savedConfig = localStorage.getItem(CONFIG_KEY);
       if (savedConfig) {
-        eventConfig = JSON.parse(savedConfig);
+        try {
+          eventConfig = JSON.parse(savedConfig);
+        } catch(e) {
+          console.error("Error loading config from localStorage", e);
+        }
       }
     }
 
@@ -545,8 +549,10 @@
       const grid = document.getElementById('dynamic-scoring-grid');
       grid.innerHTML = ''; 
       
+      // Inline SVG Data-URI fallback to completely avoid external requests like placehold.co
+      const fallbackImg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f4f4f4'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%23cccccc'%3ENo Image%3C/text%3E%3C/svg%3E";
+
       eventConfig.contestants.forEach((c, index) => {
-        const fallbackImg = 'https://placehold.co/400x300/f4f4f4/cccccc?text=No+Image';
         const displayImage = c.image && c.image.length > 10 ? c.image : fallbackImg;
         
         const cardHTML = `
@@ -582,7 +588,7 @@
       });
 
       attachScoringEvents();
-      loadJudgeScores(); // Reload scores if judge is already selected
+      loadJudgeScores(); 
     }
 
     function attachScoringEvents() {
@@ -623,7 +629,6 @@
             create: parseInt(form.querySelector('.c-create').value) || 0,
             orig: parseInt(form.querySelector('.c-orig').value) || 0,
             craft: parseInt(form.querySelector('.c-craft').value) || 0,
-            rel: parseInt(form.querySelector('.c-rel').value) || 0,
             total: parseInt(totalDisplay.textContent) || 0
           };
 
@@ -660,7 +665,6 @@
           form.querySelector('.c-create').value = judgeScores[cId].create;
           form.querySelector('.c-orig').value = judgeScores[cId].orig;
           form.querySelector('.c-craft').value = judgeScores[cId].craft;
-          form.querySelector('.c-rel').value = judgeScores[cId].rel;
           form.querySelector('.total-score').textContent = judgeScores[cId].total;
           
           btn.textContent = 'Previously Saved ✓';
@@ -670,7 +674,6 @@
           form.querySelector('.c-create').value = '';
           form.querySelector('.c-orig').value = '';
           form.querySelector('.c-craft').value = '';
-          form.querySelector('.c-rel').value = '';
           form.querySelector('.total-score').textContent = '0';
           
           btn.textContent = 'Save Score';
@@ -704,7 +707,8 @@
       const row = document.createElement('div');
       row.className = 'contestant-entry';
       
-      const placeholder = imgBase64 && imgBase64.length > 10 ? imgBase64 : 'https://placehold.co/40x40/ccc/fff?text=Img';
+      const fallbackThumb = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23cccccc'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%23fff'%3EImg%3C/text%3E%3C/svg%3E";
+      const placeholder = imgBase64 && imgBase64.length > 10 ? imgBase64 : fallbackThumb;
       
       row.innerHTML = `
         <input type="text" placeholder="Name" value="${name}" class="inp-name">
@@ -817,7 +821,7 @@
         } catch (err) {
           alert("Error reading file.");
         }
-        event.target.value = ""; // Reset input
+        event.target.value = ""; 
       };
       reader.readAsText(file);
     }
@@ -853,7 +857,6 @@
         };
       });
 
-      // Sort by Average (Highest to Lowest)
       results.sort((a, b) => b.average - a.average);
       return results;
     }
@@ -862,7 +865,6 @@
       const results = calculateResults();
       const table = document.getElementById('results-table');
       
-      // Build Header
       let thead = `<tr>
         <th>Rank</th>
         <th>No.</th>
@@ -872,7 +874,6 @@
       });
       thead += `<th>Average Score</th></tr>`;
       
-      // Build Rows
       let tbody = '';
       results.forEach((r, rank) => {
         tbody += `<tr>
@@ -901,13 +902,11 @@
       const results = calculateResults();
       let csvContent = "data:text/csv;charset=utf-8,";
 
-      // Headers
       let headers = ["Rank", "Contestant No.", "Name", "Section"];
       eventConfig.judges.forEach(j => headers.push(j));
       headers.push("Average Score");
       csvContent += headers.join(",") + "\r\n";
 
-      // Data Rows
       results.forEach((r, rank) => {
         let row = [
           rank + 1,
