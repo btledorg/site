@@ -24,7 +24,6 @@
             position: absolute;
             inset: 0;
             width: 100%;
-
             object-fit: fill;
             pointer-events: none;
             z-index: 5;
@@ -270,7 +269,7 @@
         editorCanvas.width = EXPORT_SIZE;
         editorCanvas.height = EXPORT_SIZE;
         
-        // --- OVERLAY / EVENTS DATA (Update file paths to your actual PNG frames) ---
+        // --- OVERLAY / EVENTS DATA (Configured with PNG frame sources) ---
         const EVENT_FRAMES = [
             { id: 'none', name: 'None', type: 'none' },
             { id: 'generic', name: 'Generic', type: 'preset', src: '../resources/image/pubmats/generic.svg', thumb: 'https://placehold.co/100x100/1a1a1a/fff?text=GEN' },
