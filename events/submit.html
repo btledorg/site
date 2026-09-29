@@ -745,6 +745,12 @@
     <!-- STEP 2: MECHANICS -->
     <div id="step-page-mech" class="step-content">
       <h3 class="section-title">Event Mechanics & Guidelines</h3>
+      
+      <!-- Loading Text for Mechanics -->
+      <p id="mech-loading-text" style="font-size: 0.85rem; font-weight: 800; color: var(--accent-blue); margin-bottom: 1rem; text-align: center; display: none;">
+        ⏳ Please wait for mechanics to load...
+      </p>
+
       <div class="canva-container skeleton-dark" id="canva-wrapper">
         <iframe
         id="canva-iframe"
@@ -753,17 +759,12 @@
         allow="fullscreen"
         ></iframe>
       </div>
-      <div class="checkbox-group">
-        <input type="checkbox" id="mechanics-check" />
-        <label for="mechanics-check"
-        >I have thoroughly read and agree to follow all event
-        mechanics.</label
-        >
-      </div>
+      
       <div class="button-row">
         <button class="btn btn-secondary" onclick="prevStep('mech')">
           Back
         </button>
+        <!-- Button is disabled until iframe finishes loading -->
         <button id="btn-mech-next" class="btn btn-primary" disabled onclick="nextStep('mech', null)">
           Next
         </button>
@@ -1232,7 +1233,7 @@
       bgPoster.style.backgroundImage = `url('https://github.com/AstraMarky/Connect/blob/main/resources/img/3.png?raw=true')`;
     }
     
-function extractColorsFromImage(url) {
+    function extractColorsFromImage(url) {
       return new Promise((resolve) => {
         try {
           const img = new Image();
@@ -1327,7 +1328,7 @@ function extractColorsFromImage(url) {
       const phone = getParam("contact") || localData["Contact Number"] || localData["contact"] || "";
       const street = getParam("street") || localData["Street / Barangay"] || localData["street"] || "";
       const municipality = getParam("municipality") || localData["Municipality / City"] || localData["municipality"] || "";
-      const province = getParam("province") || localData["Province"] || localData["province"] || "";
+      const province = getParam("province") || localData["Province"] || localData["Province"] || "";
       
       // Fill out the visual fields immediately
       setFieldState("field-surname", surname);
@@ -1387,22 +1388,46 @@ function extractColorsFromImage(url) {
           
           removeSkeletons(title, venue, dateStr, timeStr, posterUrl);
           
-          if (posterUrl) {
-            const colors = await extractColorsFromImage(posterUrl);
-            applyColorScheme(colors);
-          }
-          
+          // --- PRIORITY LOAD: Canva Mechanics Logic with Skeleton Loading & Validation ---
+          // Moved UP before image extraction so it starts fetching immediately in the background
           const canvaLink = eventData.canvaLink;
           const canvaWrapper = document.getElementById("canva-wrapper");
           const canvaIframe = document.getElementById("canva-iframe");
+          const btnMechNext = document.getElementById("btn-mech-next");
+          const mechLoadingText = document.getElementById("mech-loading-text");
+
+          // Disable the button initially while we prepare to load the iframe
+          btnMechNext.disabled = true;
+
           if (canvaLink && canvaLink.includes("canva.com")) {
-            canvaWrapper.classList.remove("skeleton-dark");
+            canvaWrapper.style.display = "block";
+            canvaWrapper.classList.add("skeleton-dark");
+            mechLoadingText.style.display = "block";
+            
             const embedUrl = canvaLink.endsWith("/view?embed")
             ? canvaLink
             : `${canvaLink.replace(/\/view.*$/, "")}`;
-            canvaIframe.src = embedUrl;
+            
+            // Listen for the iframe finishing its load process
+            canvaIframe.onload = () => {
+              canvaWrapper.classList.remove("skeleton-dark");
+              mechLoadingText.style.display = "none";
+              btnMechNext.disabled = false;
+            };
+
+            canvaIframe.src = embedUrl; // Start loading immediately
           } else {
+            // No Canva link provided, so just hide the mechanics step visuals and enable the button
             canvaWrapper.style.display = "none";
+            mechLoadingText.style.display = "none";
+            btnMechNext.disabled = false;
+          }
+
+          // Trigger image color extraction in the background (NON-blocking)
+          if (posterUrl) {
+            extractColorsFromImage(posterUrl).then(colors => {
+              applyColorScheme(colors);
+            });
           }
           
           if (eventData.participants) {
@@ -1978,13 +2003,6 @@ const refRegex = /(?:Ref(?:erence)?\s*(?:No\.?|Num(?:ber)?|ID|#)?|Txn\s*(?:ID|No
       });
       btnStep1Next.addEventListener("click", () => nextStep("1", null));
       
-      // Mechanics Checkbox & Next Button
-      const mechanicsCheck = document.getElementById("mechanics-check");
-      const btnMechNext = document.getElementById("btn-mech-next");
-      mechanicsCheck.addEventListener("change", () => {
-        btnMechNext.disabled = !mechanicsCheck.checked;
-      });
-
       // Step 2 Next Button Handler
       const btnStep2Next = document.getElementById("btn-step2-next");
       if (btnStep2Next) {
