@@ -815,7 +815,7 @@
           />
         </div>
         <div class="form-group">
-          <label>Phone Number <span style="color: red">*</span></label>
+          <label>Phone Number</label>
           <input type="text" id="field-phone" class="form-control" required />
         </div>
         <div class="form-group full-width">
@@ -828,24 +828,12 @@
           />
         </div>
         <div class="form-group full-width">
-          <label>Address <span style="color: red">*</span></label>
+          <label>Address</label>
           <input
           type="text"
           id="field-address"
           class="form-control"
           required
-          />
-        </div>
-        <div class="form-group full-width">
-          <label
-          >Facebook Profile Link <span style="color: red">*</span></label
-          >
-          <input
-          type="url"
-          id="field-fblink"
-          class="form-control"
-          placeholder="https://facebook.com/your.username"
-          title="Please enter a valid Facebook profile or page URL (e.g., https://facebook.com/username)"
           />
         </div>
       </div>
@@ -1503,11 +1491,9 @@ function extractColorsFromImage(url) {
         "field-firstname",
         "field-studentid",
         "field-program",
-        "field-phone",
         "field-email",
-        "field-address",
-        "field-fblink",
       ];
+      
       for (const fieldId of requiredFields) {
         const el = document.getElementById(fieldId);
         const val = el.value.trim();
@@ -1523,23 +1509,6 @@ function extractColorsFromImage(url) {
           return false;
         }
       }
-
-      // Explicit Facebook Link Validation
-      //const fbInput = document.getElementById("field-fblink");
-      //const fbVal = fbInput.value.trim();
-      //const fbPattern = /^https?:\/\/(www\.)?(facebook|fb)\.com\/.+/i;
-    
-      // if (!fbPattern.test(fbVal)) {
-      //  if (window.showCustomAlert) {
-      //    await window.showCustomAlert(
-      //      "Please enter a valid Facebook profile or page link (e.g., https://facebook.com/username) before proceeding."
-      //   );
-      //  } else {
-      //    alert("Please enter a valid Facebook profile or page link (e.g., https://facebook.com/username) before proceeding.");
-      //  }
-      //  fbInput.focus();
-      //  return false;
-      //}
 
       return true;
     }
@@ -1903,7 +1872,6 @@ const refRegex = /(?:Ref(?:erence)?\s*(?:No\.?|Num(?:ber)?|ID|#)?|Txn\s*(?:ID|No
       const phone = document.getElementById("field-phone").value.trim();
       const email = document.getElementById("field-email").value.trim();
       const address = document.getElementById("field-address").value.trim();
-      const fblink = document.getElementById("field-fblink").value.trim();
       
       let stepCounter = 1;
       let html = `
@@ -1915,7 +1883,6 @@ const refRegex = /(?:Ref(?:erence)?\s*(?:No\.?|Num(?:ber)?|ID|#)?|Txn\s*(?:ID|No
           <div><strong>Phone:</strong> ${phone}</div>
           <div style="grid-column: span 2;"><strong>Email:</strong> ${email}</div>
           <div style="grid-column: span 2;"><strong>Address:</strong> ${address}</div>
-          <div style="grid-column: span 2;"><strong>Facebook:</strong> <a href="${fblink}" target="_blank" style="color: var(--accent-blue);">${fblink}</a></div>
           </div>`;
 
       if (REGISTRATION_FEE > 0) {
@@ -2092,7 +2059,7 @@ const refRegex = /(?:Ref(?:erence)?\s*(?:No\.?|Num(?:ber)?|ID|#)?|Txn\s*(?:ID|No
           email: document.getElementById("field-email").value.trim(),
           phone: document.getElementById("field-phone").value.trim(),
           address: document.getElementById("field-address").value.trim(),
-          facebookLink: document.getElementById("field-fblink").value.trim(),
+          facebookLink: "", // Field removed from UI
           registrationFee: REGISTRATION_FEE,
           paymentMethod: selectedPaymentMethod,
           paymentReferenceNo: scannedRefNumber,
