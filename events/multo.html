@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="tl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTLED ORGANIZATION | Multo Special</title>
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://btledorg.github.io/">
+    <meta property="og:title" content="BTLED Organization | Multo: Horror Story Special">
+    <meta property="og:description" content="Minumulto ka rin ba ng damdamin mo? Isang interactive special experience at sulatan ng mga hindi nasabing alaala, inspired by Cup of Joe's 'Multo'.">
+    <meta property="og:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/multo.png?raw=true">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="BTLED Organization | Multo: Horror Story Special">
+    <meta name="twitter:description" content="Minumulto ka rin ba ng damdamin mo? Isang interactive special experience at sulatan ng mga hindi nasabing alaala, inspired by Cup of Joe's 'Multo'.">
+    <meta name="twitter:image" content="https://github.com/btledorg/site/blob/main/resources/image/banner/multo.png?raw=true">
+    
+    <link rel="icon" type="image/png" href="../resources/multo/logo.png" />
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../resources/js/config.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Rye&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Crimson Text', serif;
+            background-color: #050301;
+            color: #ebdcb1;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        .wood-bg {
+            background-color: #050301;
+            background-image: 
+            radial-gradient(circle at center, rgba(30, 18, 10, 0.85) 0%, rgba(5, 3, 1, 0.98) 85%),
+            url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E"),
+            url('../resources/multo/R.jpg');
+            background-repeat: no-repeat, repeat, no-repeat;
+            background-position: center, center, center center;
+            background-size: cover, auto, cover;
+            background-attachment: fixed;
+        }
+        
+        .font-cinzel { font-family: 'Cinzel Decorative', serif; }
+        .font-rye { font-family: 'Rye', serif; }
+        .font-crimson { font-family: 'Crimson Text', serif; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #080503; }
+        ::-webkit-scrollbar-thumb { background: #5a4627; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c59b27; }
+        
+        @keyframes pulseGlow {
+            0%, 100% { text-shadow: 0 0 8px rgba(197, 155, 39, 0.3), 0 0 15px rgba(197, 155, 39, 0.2); }
+            50% { text-shadow: 0 0 18px rgba(197, 155, 39, 0.8), 0 0 30px rgba(197, 155, 39, 0.5); }
+        }
+        .animate-glow { animation: pulseGlow 3.5s infinite alternate ease-in-out; }
+        
+        @keyframes floatEffect {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1deg); }
+        }
+        .animate-float { animation: floatEffect 4s ease-in-out infinite; }
+        
+        #preloader {
+            position: fixed;
+            inset: 0;
+            background: #080503;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        
+        .stage {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            z-index: 40;
+            pointer-events: none;
+        }
+        .curtain {
+            width: 50%;
+            height: 100%;
+            background-color: #120c07;
+            background-image: linear-gradient(90deg, rgba(0,0,0,0.85), transparent, rgba(0,0,0,0.95)),
+            url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.12'/%3E%3C/svg%3E");
+            transition: transform 2.2s cubic-bezier(0.77, 0, 0.175, 1);
+            pointer-events: auto;
+        }
+        .curtain.left {
+            border-right: 2px solid #5a4627;
+            box-shadow: inset -20px 0 35px #000;
+        }
+        .curtain.right {
+            border-left: 2px solid #5a4627;
+            box-shadow: inset 20px 0 35px #000;
+        }
+        .stage.open .curtain.left { transform: translateX(-100%); }
+        .stage.open .curtain.right { transform: translateX(100%); }
+        
+        .ouija-card {
+            background: rgba(18, 12, 7, 0.82);
+            border: 1px solid #5a4627;
+            border-radius: 12px;
+            box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.95), 0 10px 25px rgba(0,0,0,0.8);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+        }
+        .ouija-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(197, 155, 39, 0.4), transparent, rgba(197, 155, 39, 0.15));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        .ouija-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: #c59b27;
+            box-shadow: inset 0 0 30px rgba(197, 155, 39, 0.15), 0 15px 35px rgba(0, 0, 0, 0.9), 0 0 20px rgba(197, 155, 39, 0.25);
+        }
+        
+        .planchette-btn {
+            background: linear-gradient(145deg, #2a1d13, #150e09);
+            border: 1px solid #c59b27;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .planchette-btn:hover {
+            background: #c59b27;
+            color: #050301;
+            box-shadow: 0 0 25px rgba(197, 155, 39, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        #dustCanvas, #burnCanvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+        }
+        #dustCanvas { z-index: 1; }
+        #burnCanvas { z-index: 90; }
+        
+        .ouija-input {
+            background: rgba(8, 5, 3, 0.7);
+            border: 1px solid #5a4627;
+            color: #ebdcb1;
+            transition: all 0.3s ease;
+        }
+        .ouija-input:focus {
+            border-color: #c59b27;
+            box-shadow: 0 0 15px rgba(197, 155, 39, 0.3);
+            outline: none;
+            background: rgba(15, 10, 5, 0.85);
+        }
+        input[type=range] {
+            -webkit-appearance: none;
+            background: #2c1e16;
+            height: 6px;
+            border-radius: 3px;
+            border: 1px solid #5a4627;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 22px;
+            width: 22px;
+            border-radius: 50%;
+            background: #c59b27;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(197, 155, 39, 0.8);
+            border: 2px solid #050301;
+        }
+        
+        .candle-candle {
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+        .candle-candle:hover {
+            transform: scale(1.15);
+        }
+        
+        .burning-card-effect {
+            transition: all 3s ease-out !important;
+            filter: brightness(2) contrast(1.5) drop-shadow(0 0 35px #ff5500) !important;
+            box-shadow: inset 0 0 80px #ff3300, 0 0 100px #ff6600 !important;
+            border-color: #ff8800 !important;
+        }
+        
+        @media (max-width: 640px) {
+            header.fixed.top-0.left-0.right-0.p-3.sm\:p-5.flex.justify-between.items-center.z-50.pointer-events-auto {
+                background: linear-gradient(180deg, rgba(0, 0, 0, 0.96), rgba(0, 0, 0, 0.55));
+                backdrop-filter: blur(6px);
+            }
+        }
+    </style>
+</head>
+
+<body class="wood-bg flex flex-col justify-between min-h-screen text-center px-4 overflow-x-hidden">
+    
+    <canvas id="dustCanvas"></canvas>
+    <canvas id="burnCanvas"></canvas>
+    
+    <div id="ytPlayerContainer">
+        <div id="youtube-audio-player"></div>
+    </div>
+    
+    <div id="preloader">
+        <div class="font-rye text-[#c59b27] tracking-widest text-base sm:text-xl mb-6 animate-pulse uppercase">
+            LOADING EXPERIENCE...
+        </div>
+        <div class="w-60 sm:w-80 h-2 bg-[#1c130c] border border-[#5a4627] rounded-full overflow-hidden p-0.5">
+            <div id="load-progress" class="h-full bg-[#c59b27] shadow-[0_0_12px_#c59b27] w-0 transition-all duration-300 rounded-full"></div>
+        </div>
+        <p class="font-crimson italic text-sm text-[#ebdcb1]/60 mt-4">Sandali lang, inihahanda ang karanasan...</p>
+    </div>
+    
+    <header class="fixed top-0 left-0 right-0 p-3 sm:p-5 flex justify-between items-center z-50 pointer-events-auto">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 relative flex items-center justify-center cursor-pointer" onclick="goBackToStart()">
+                <img src="../resources/multo/logo.png" alt="BTLED Logo" 
+                class="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(197,155,39,0.5)]"
+                onerror="this.onerror=null; this.parentNode.innerHTML='<svg class=\'w-9 h-9 text-[#c59b27] filter drop-shadow-[0_0_5px_rgba(197,155,39,0.6)]\' viewBox=\'0 0 24 24\' fill=\'currentColor\'><path d=\'M12 2L2 22h20L12 2zm0 4.5l6.5 13.5h-13L12 6.5zM12 10a2 2 0 100 4 2 2 0 000-4z\'/></svg>';">
+            </div>
+            <div class="text-left">
+                <span class="font-rye text-xs text-[#c59b27] tracking-wider block">BTLED ORGANIZATION</span>
+                <span class="font-crimson italic text-[11px] text-[#ebdcb1]/60 hidden sm:block">Inspired by "Multo" - Cup of Joe</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <button id="topNavWallBtn" onclick="openWallPage()" class="p-2 sm:px-3 sm:py-2 rounded-full border border-[#5a4627] bg-[#0d0805]/80 text-[#c59b27] hover:text-[#ebdcb1] hover:border-[#c59b27] transition-all shadow-lg flex items-center gap-1.5 hidden" title="Memory Wall">
+                <i class="ri-book-read-line text-lg"></i>
+                <span class="text-xs font-rye hidden md:inline">MEMORY WALL</span>
+            </button>
+            
+            <button id="songToggleBtn" onclick="toggleSongPlayback()" class="p-2 sm:px-3 sm:py-2 rounded-full border border-[#5a4627] bg-[#0d0805]/80 text-[#c59b27] hover:text-[#ebdcb1] hover:border-[#c59b27] transition-all shadow-lg flex items-center gap-2">
+                <i id="songPlayIcon" class="ri-disc-fill text-lg animate-spin" style="animation-duration: 4s;"></i>
+                <span id="songStatusText" class="text-xs font-rye hidden md:inline">CUP OF JOE - MULTO</span>
+            </button>
+            
+            <button id="muteToggleBtn" onclick="toggleAudioMute()" class="p-2 sm:p-2.5 rounded-full border border-[#5a4627] bg-[#0d0805]/80 text-[#c59b27] hover:text-[#ebdcb1] hover:border-[#c59b27] transition-all shadow-lg flex items-center gap-2">
+                <i id="muteIcon" class="ri-volume-up-fill text-lg"></i>
+            </button>
+        </div>
+    </header>
+    
+    <div id="stage" class="stage open">
+        <div class="curtain left"></div>
+        <div class="curtain right"></div>
+    </div>
+    
+    <main class="flex-grow flex items-center justify-center pt-24 sm:pt-32 pb-20 px-4 z-10 w-full max-w-4xl mx-auto">
+        
+        <section id="startScreen" class="flex flex-col items-center justify-center w-full my-auto transition-all duration-700">
+            <div class="w-32 h-32 sm:w-40 sm:h-40 mb-6 animate-float relative flex items-center justify-center cursor-pointer" onclick="startJourney()">
+                <div class="absolute inset-2 rounded-full bg-[#c59b27]/25 blur-xl pointer-events-none z-0"></div>
+                <img src="../resources/multo/Logo.gif" alt="Multo Animated Logo" 
+                class="w-full h-full object-contain relative z-10"
+                onerror="this.onerror=null; this.parentNode.innerHTML='<svg viewBox=\'0 0 100 120\' class=\'w-full h-full text-[#c59b27] filter drop-shadow-[0_0_15px_rgba(197,155,39,0.4)] relative z-10\'><path d=\'M 50,5 C 20,40 5,70 15,100 C 25,115 75,115 85,100 C 95,70 80,40 50,5 Z\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'3\'/><circle cx=\'50\' cy=\'65\' r=\'16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'/><circle cx=\'50\' cy=\'65\' r=\'8\' fill=\'rgba(197,155,39,0.2)\'/><polygon points=\'50,15 45,30 55,30\' fill=\'currentColor\'/></svg>';">
+            </div>
+            <h1 class="font-cinzel text-2xl sm:text-4xl md:text-5xl text-[#ebdcb1] font-bold mb-2 tracking-wide leading-tight animate-glow">
+                Minumulto ako ng damdamin ko
+            </h1>
+            <p class="font-rye text-xs sm:text-sm text-[#c59b27] mb-8 tracking-widest uppercase opacity-90">
+                A HORROR STORY SPECIAL
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="startJourney()" class="planchette-btn font-rye text-sm sm:text-base text-[#c59b27] px-8 py-4 rounded-lg tracking-widest uppercase flex items-center justify-center gap-3">
+                    <span>SIMULAN</span>
+                    <i class="ri-arrow-right-line"></i>
+                </button>
+                
+                <button id="startScreenWallBtn" onclick="openWallPage()" class="px-6 py-4 rounded-lg border border-[#5a4627] hover:border-[#c59b27] bg-[#0d0805]/80 text-[#ebdcb1] font-rye text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 hidden">
+                    <i class="ri-book-read-line text-[#c59b27]"></i>
+                    <span>MEMORY WALL</span>
+                </button>
+            </div>
+        </section>
+        
+        <section id="nameFormSection" class="hidden flex-col items-center w-full max-w-lg ouija-card p-8 sm:p-10 rounded-2xl border border-[#5a4627]/60 shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-md transition-all duration-500">
+            <div class="text-center mb-8">
+                <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[#c59b27]/10 border border-[#c59b27]/30 flex items-center justify-center">
+                    <i class="ri-quill-pen-line text-2xl text-[#c59b27]"></i>
+                </div>
+                <h2 class="font-cinzel text-xl sm:text-2xl text-[#c59b27] font-bold tracking-wider uppercase">ANO'NG PANGALAN MO?</h2>
+                <p class="font-crimson text-sm sm:text-base text-[#ebdcb1]/70 mt-1 italic">Sino ang mag-iiwan ng sulat ngayon?</p>
+            </div>
+            
+            <form id="entryForm" onsubmit="handleNameSubmit(event)" class="w-full flex flex-col items-center space-y-6">
+                <div class="relative w-full max-w-xs sm:max-w-sm">
+                    <input type="text" id="nameInput" placeholder="Pangalan o Palayaw mo..." autocomplete="off"
+                    class="w-full px-2 py-3 text-center bg-transparent border-b-2 border-[#5a4627] text-[#ebdcb1] placeholder-[#ebdcb1]/30 font-crimson text-lg focus:outline-none focus:border-[#c59b27] transition-all duration-300">
+                </div>
+                
+                <button type="submit" class="w-full max-w-xs sm:max-w-sm py-3.5 px-6 rounded-lg bg-[#c59b27]/15 hover:bg-[#c59b27] text-[#c59b27] hover:text-[#080503] border border-[#c59b27]/50 font-rye text-sm tracking-widest uppercase transition-all duration-300 shadow-[0_0_15px_rgba(197,155,39,0.15)] hover:shadow-[0_0_20px_rgba(197,155,39,0.4)] flex justify-center items-center gap-2 group">
+                    <span>ITULOY</span>
+                    <i class="ri-arrow-right-line text-lg group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </form>
+            
+            <div class="mt-8 pt-4 border-t border-[#5a4627]/30 w-full text-center">
+                <button onclick="enterAnonymous()" class="text-[#ebdcb1]/60 hover:text-[#c59b27] font-crimson italic text-sm hover:underline underline-offset-4 transition-all">
+                    <u>O kaya, manatiling anonymous na lang...</u>
+                </button>
+            </div>
+        </section>
+        
+        <section id="rationaleSection" class="hidden flex-col items-center w-full max-w-2xl ouija-card p-6 sm:p-10 transition-all duration-500">
+            <h2 class="font-cinzel text-1xl sm:text-3xl text-[#ebdcb1] font-bold mb-2">ANO BA ANG "MULTO" PARA SA'YO?</h2>
+            <div class="w-20 h-0.5 bg-[#5a4627] my-3"></div>
+            
+            <p class="font-crimson text-base sm:text-lg text-[#ebdcb1]/90 max-w-xl text-center mb-6 leading-relaxed">
+                Hindi lang naman totoong multo ang nakakatakot. Minsan, mas nakakatakot 'yung mga <span class="text-[#c59b27] font-semibold">tao, alaala, at salitang</span> hindi na nawala sa isip mo—mga bagay na tahimik na bumabalik kapag tahimik na ang paligid.
+            </p>
+            
+            <div class="relative w-full mb-8">
+                <div id="rationaleCarousel" class="flex gap-4 overflow-x-auto snap-x snap-mandatory py-2 px-1 w-full scroll-smooth scrollbar-none">
+                    
+                    <!-- Card 1 -->
+                    <div class="snap-center flex-shrink-0 w-[85%] sm:w-[260px] p-5 rounded-xl bg-[#0a0604]/90 border border-[#5a4627]/60 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.6)] hover:border-[#c59b27]/60 transition-all cursor-pointer" onclick="playCardAudio('../resources/multo/vo1.mp3', 0)">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 rounded-full bg-[#c59b27]/10 border border-[#c59b27]/30 flex items-center justify-center text-xl">👥</div>
+                                <h3 class="font-cinzel text-base text-[#c59b27] font-bold">Mga Taong Lumayo</h3>
+                            </div>
+                            <p class="font-crimson text-xs sm:text-sm text-[#ebdcb1]/80 leading-relaxed">Dating malapit sa 'yo na bigla na lang naging estranghero nang walang malinaw na dahilan.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Card 2 -->
+                    <div class="snap-center flex-shrink-0 w-[85%] sm:w-[260px] p-5 rounded-xl bg-[#0a0604]/90 border border-[#5a4627]/60 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.6)] hover:border-[#c59b27]/60 transition-all cursor-pointer" onclick="playCardAudio('../resources/multo/vo1.mp3', 2)">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 rounded-full bg-[#c59b27]/10 border border-[#c59b27]/30 flex items-center justify-center text-xl">💭</div>
+                                <h3 class="font-cinzel text-base text-[#c59b27] font-bold">Mga "What If"</h3>
+                            </div>
+                            <p class="font-crimson text-xs sm:text-sm text-[#ebdcb1]/80 leading-relaxed">Mga 'paano kaya' at pangarap na hindi natuloy dahil sa takot o maling timing.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Card 3 -->
+                    <div class="snap-center flex-shrink-0 w-[85%] sm:w-[260px] p-5 rounded-xl bg-[#0a0604]/90 border border-[#5a4627]/60 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.6)] hover:border-[#c59b27]/60 transition-all cursor-pointer" onclick="playCardAudio('../resources/multo/vo1.mp3', 4)">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 rounded-full bg-[#c59b27]/10 border border-[#c59b27]/30 flex items-center justify-center text-xl">💌</div>
+                                <h3 class="font-cinzel text-base text-[#c59b27] font-bold">Mga Hindi Nasabi</h3>
+                            </div>
+                            <p class="font-crimson text-xs sm:text-sm text-[#ebdcb1]/80 leading-relaxed">Mga salita at damdaming itinago mo na lang kasi natakot kang magbago ang lahat.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Card 4 -->
+                    <div class="snap-center flex-shrink-0 w-[85%] sm:w-[260px] p-5 rounded-xl bg-[#0a0604]/90 border border-[#5a4627]/60 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.6)] hover:border-[#c59b27]/60 transition-all cursor-pointer" onclick="playCardAudio('../resources/multo/vo1.mp3', 6)">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 rounded-full bg-[#c59b27]/10 border border-[#c59b27]/30 flex items-center justify-center text-xl">🥀</div>
+                                <h3 class="font-cinzel text-base text-[#c59b27] font-bold">Mga Lumang Alaala</h3>
+                            </div>
+                            <p class="font-crimson text-xs sm:text-sm text-[#ebdcb1]/80 leading-relaxed">Yung dating ikaw—yung bersyon ng sarili mong masaya at 'di pa masyadong pagod sa buhay.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="button" onclick="document.getElementById('rationaleCarousel').scrollBy({left: -270, behavior: 'smooth'})" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 w-8 h-8 rounded-full bg-[#080503]/90 border border-[#c59b27]/40 text-[#c59b27] flex items-center justify-center shadow-lg hover:bg-[#c59b27] hover:text-[#080503] transition-all hidden sm:flex">
+                    <i class="ri-arrow-left-s-line text-xl"></i>
+                </button>
+                <button type="button" onclick="document.getElementById('rationaleCarousel').scrollBy({left: 270, behavior: 'smooth'})" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 w-8 h-8 rounded-full bg-[#080503]/90 border border-[#c59b27]/40 text-[#c59b27] flex items-center justify-center shadow-lg hover:bg-[#c59b27] hover:text-[#080503] transition-all hidden sm:flex">
+                    <i class="ri-arrow-right-s-line text-xl"></i>
+                </button>
+            </div>
+            
+            <button onclick="goToCategorySelection()" class="planchette-btn font-rye text-sm text-[#c59b27] px-8 py-3.5 rounded-lg tracking-wider uppercase flex items-center gap-2">
+                <span>PUMILI NG MULTO MO</span>
+                <i class="ri-arrow-right-s-line text-lg"></i>
+            </button>
+        </section>
+        
+        <section id="categorySection" class="hidden flex-col items-center w-full max-w-3xl transition-all duration-500">
+            <div class="text-center mb-8">
+                <span class="font-rye text-xs text-[#c59b27] tracking-[0.2em] uppercase">PUMILI NG BIBITAWAN MO</span>
+                <h2 class="font-cinzel text-2xl sm:text-3xl text-[#ebdcb1] font-bold mt-1 tracking-wide">ANO ANG MADALAS MONG MAISIP?</h2>
+                <p class="font-crimson italic text-sm sm:text-base text-[#ebdcb1]/70 mt-2 max-w-md mx-auto">
+                    Pumili ng isa na pinakanakakarelate ka ngayon.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 w-full">
+                
+                <!-- Card 1: Person -->
+                <div onclick="selectCategory('tao')" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-2xl p-2.5 rounded-lg bg-[#140c06] border border-[#5a4627]/60 group-hover:border-[#c59b27]/80 transition-colors">👥</span>
+                            <span class="font-rye text-[10px] text-[#5a4627] group-hover:text-[#c59b27] tracking-widest uppercase transition-colors">01 / TAO</span>
+                        </div>
+                        
+                        <h3 class="font-cinzel text-lg sm:text-xl text-[#c59b27] font-bold group-hover:text-[#ebdcb1] transition-colors">Mga Taong Lumayo</h3>
+                        <p class="font-crimson text-sm text-[#ebdcb1]/80 mt-2 leading-relaxed">
+                            Dating malapit sa 'yo na bigla na lang naging estranghero.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-5 pt-3 border-t border-[#5a4627]/30 flex items-center justify-end text-xs font-crimson italic text-[#ebdcb1]/40 group-hover:text-[#c59b27] transition-colors">
+                        <span>Piliin ito &rarr;</span>
+                    </div>
+                </div>
+                
+                <!-- Card 2: What If -->
+                <div onclick="selectCategory('whatif')" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-2xl p-2.5 rounded-lg bg-[#140c06] border border-[#5a4627]/60 group-hover:border-[#c59b27]/80 transition-colors">💭</span>
+                            <span class="font-rye text-[10px] text-[#5a4627] group-hover:text-[#c59b27] tracking-widest uppercase transition-colors">02 / PAANO KAYA</span>
+                        </div>
+                        
+                        <h3 class="font-cinzel text-lg sm:text-xl text-[#c59b27] font-bold group-hover:text-[#ebdcb1] transition-colors">Mga What If</h3>
+                        <p class="font-crimson text-sm text-[#ebdcb1]/80 mt-2 leading-relaxed">
+                            Mga 'paano kaya' na hindi natuloy dahil sa takot o maling timing.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-5 pt-3 border-t border-[#5a4627]/30 flex items-center justify-end text-xs font-crimson italic text-[#ebdcb1]/40 group-hover:text-[#c59b27] transition-colors">
+                        <span>Piliin ito &rarr;</span>
+                    </div>
+                </div>
+                
+                <!-- Card 3: Unspoken -->
+                <div onclick="selectCategory('nasabi')" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-2xl p-2.5 rounded-lg bg-[#140c06] border border-[#5a4627]/60 group-hover:border-[#c59b27]/80 transition-colors">💌</span>
+                            <span class="font-rye text-[10px] text-[#5a4627] group-hover:text-[#c59b27] tracking-widest uppercase transition-colors">03 / HINDI NASABI</span>
+                        </div>
+                        
+                        <h3 class="font-cinzel text-lg sm:text-xl text-[#c59b27] font-bold group-hover:text-[#ebdcb1] transition-colors">Mga Hindi Nasabi</h3>
+                        <p class="font-crimson text-sm text-[#ebdcb1]/80 mt-2 leading-relaxed">
+                            Mga bagay na itinago mo na lang sa sarili mo hanggang sa naging huli na.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-5 pt-3 border-t border-[#5a4627]/30 flex items-center justify-end text-xs font-crimson italic text-[#ebdcb1]/40 group-hover:text-[#c59b27] transition-colors">
+                        <span>Piliin ito &rarr;</span>
+                    </div>
+                </div>
+                
+                <!-- Card 4: Memory -->
+                <div onclick="selectCategory('nakaraan')" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-2xl p-2.5 rounded-lg bg-[#140c06] border border-[#5a4627]/60 group-hover:border-[#c59b27]/80 transition-colors">🥀</span>
+                            <span class="font-rye text-[10px] text-[#5a4627] group-hover:text-[#c59b27] tracking-widest uppercase transition-colors">04 / LUMANG ALAALA</span>
+                        </div>
+                        
+                        <h3 class="font-cinzel text-lg sm:text-xl text-[#c59b27] font-bold group-hover:text-[#ebdcb1] transition-colors">Mga Lumang Alaala</h3>
+                        <p class="font-crimson text-sm text-[#ebdcb1]/80 mt-2 leading-relaxed">
+                            Ang dating ikaw—yung masaya at 'di pa masyadong pagod sa buhay.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-5 pt-3 border-t border-[#5a4627]/30 flex items-center justify-end text-xs font-crimson italic text-[#ebdcb1]/40 group-hover:text-[#c59b27] transition-colors">
+                        <span>Piliin ito &rarr;</span>
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+        
+        <section id="reflectionSection" class="hidden flex-col items-center w-full max-w-xl ouija-card p-8 sm:p-10 rounded-2xl bg-[#080503]/95 border border-[#5a4627]/80 shadow-[0_0_40px_rgba(0,0,0,0.9)] backdrop-blur-md text-center transition-all duration-500 relative overflow-hidden">
+            <div class="absolute inset-0 bg-radial-glow opacity-20 pointer-events-none"></div>
+            
+            <div class="relative w-20 h-20 sm:w-24 sm:h-24 mb-5 mx-auto flex items-center justify-center animate-float">
+                <div class="absolute inset-2 rounded-full bg-[#c59b27]/25 blur-xl pointer-events-none"></div>
+                <img src="../resources/multo/logo.png" alt="Multo Logo" 
+                class="w-full h-full object-contain relative z-10"
+                onerror="this.onerror=null; this.parentNode.innerHTML='<svg viewBox=\'0 0 100 120\' class=\'w-full h-full text-[#c59b27] relative z-10 drop-shadow-[0_0_10px_rgba(197,155,39,0.4)]\'><path d=\'M 50,5 C 20,40 5,70 15,100 C 25,115 75,115 85,100 C 95,70 80,40 50,5 Z\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'3\'/><circle cx=\'50\' cy=\'65\' r=\'14\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'/></svg>';">
+            </div>
+            
+            <div class="relative w-full my-3 px-4 sm:px-6">
+                <i class="ri-double-quotes-l text-2xl sm:text-3xl text-[#5a4627]/60 absolute -top-4 left-0"></i>
+                <blockquote id="reflectionQuote" class="font-crimson italic text-lg sm:text-2xl text-[#ebdcb1] leading-relaxed relative z-10 px-4">
+                    "..."
+                </blockquote>
+                <i class="ri-double-quotes-r text-2xl sm:text-3xl text-[#5a4627]/60 absolute -bottom-4 right-0"></i>
+            </div>
+            
+            <div class="w-32 h-px bg-gradient-to-r from-transparent via-[#5a4627] to-transparent my-6"></div>
+            
+            <button onclick="goToStoryForm()" class="planchette-btn font-rye text-xs sm:text-sm text-[#c59b27] hover:text-[#080503] hover:bg-[#c59b27] px-8 py-3.5 rounded-lg border border-[#c59b27]/60 uppercase tracking-widest shadow-[0_0_15px_rgba(197,155,39,0.15)] hover:shadow-[0_0_20px_rgba(197,155,39,0.4)] transition-all duration-300 flex items-center justify-center gap-2.5 group">
+                <span>IPATULOY</span>
+                <i class="ri-arrow-right-line text-lg group-hover:translate-x-1 transition-transform"></i>
+            </button>
+        </section>
+        
+        <section id="storyFormSection" class="hidden flex-col items-center w-full max-w-xl ouija-card p-6 sm:p-8 rounded-lg bg-[#0a0604] border border-[#3b2d1d] transition-all duration-500">
+            
+            <div class="text-center mb-6 w-full">
+                <span id="selectedCategoryBadge" class="font-rye text-[10px] sm:text-xs text-[#c59b27] tracking-[0.2em] uppercase border-b border-[#5a4627] pb-1 inline-block">MULTO</span>
+                <h2 id="storyFormTitle" class="font-cinzel text-xl sm:text-2xl text-[#ebdcb1] font-bold mt-3">ISULAT MO NA ANG SULAT MO</h2>
+                <p id="storyPromptText" class="font-crimson italic text-sm text-[#ebdcb1]/70 mt-1">
+                    Ano ba ang gusto mong sabihin sa kaniya o sa sarili mo?
+                </p>
+            </div>
+            
+            <form id="storyForm" onsubmit="handleStorySubmit(event)" class="w-full space-y-5">
+                
+                <div class="w-full relative">
+                    <textarea id="storyTextArea" rows="6" required 
+                    placeholder="Isulat mo rito lahat ng gusto mong ilabas sa dibdib mo..."
+                    class="w-full p-4 rounded bg-[#050301] border border-[#5a4627] focus:border-[#c59b27] text-[#ebdcb1] placeholder-[#ebdcb1]/30 font-crimson text-base sm:text-lg leading-relaxed resize-none focus:outline-none transition-colors duration-300"></textarea>
+                </div>
+                
+                <div class="w-full bg-[#050301] p-4 rounded border border-[#3b2d1d] space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="font-rye text-[11px] text-[#c59b27] tracking-wider uppercase">BIGAT NG NARARAMDAMAN</span>
+                        <span id="weightValueText" class="font-crimson italic text-sm text-[#ebdcb1]/90">
+                            3 / Sakto lang
+                        </span>
+                    </div>
+                    
+                    <input type="range" id="weightSlider" min="1" max="5" value="3" 
+                    oninput="updateWeightDisplay(this.value)" 
+                    class="w-full h-1.5 bg-[#1a1007] rounded appearance-none cursor-pointer accent-[#c59b27]">
+                    
+                    <div class="flex justify-between text-[11px] font-crimson text-[#ebdcb1]/40 pt-1">
+                        <span>Magaan</span>
+                        <span>Sakto lang</span>
+                        <span>Sobrang bigat</span>
+                    </div>
+                </div>
+                
+                <div class="w-full bg-[#080503]/80 p-3.5 rounded border border-[#5a4627]/40 space-y-2.5 text-left">
+                    <div class="flex items-center gap-2.5">
+                        <input type="checkbox" id="showNameToggle" class="accent-[#c59b27] w-4 h-4 cursor-pointer rounded-sm">
+                        <label for="showNameToggle" class="font-crimson text-sm text-[#ebdcb1]/90 cursor-pointer hover:text-[#ebdcb1]">
+                            Ipakita ang pangalan ko sa sulat <span class="text-xs text-[#ebdcb1]/50 italic">(I-uncheck kung gusto mong maging Anonymous)</span>
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <input type="checkbox" id="shareWallToggle" required class="accent-[#c59b27] w-4 h-4 cursor-pointer rounded-sm">
+                        <label for="shareWallToggle" class="font-crimson text-sm text-[#ebdcb1]/90 cursor-pointer hover:text-[#ebdcb1]">
+                            Ibahagi sa Memory Wall
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full py-3.5 px-6 rounded border border-[#c59b27] bg-[#120b06] hover:bg-[#c59b27] hover:text-[#050301] text-[#c59b27] font-rye text-xs sm:text-sm tracking-[0.15em] uppercase transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="ri-fire-line text-base"></i>
+                    <span>PALAYAIN</span>
+                </button>
+                
+            </form>
+        </section>
+        
+        <section id="thankYouSection" class="hidden flex-col items-center w-full max-w-4xl transition-all duration-500 space-y-8">
+            
+            <div class="w-full flex justify-between items-center border-b border-[#3b2d1d] pb-4">
+                <button onclick="goBackToStart()" class="px-4 py-2 rounded border border-[#5a4627] hover:border-[#c59b27] bg-[#120b06] text-[#c59b27] font-rye text-xs tracking-widest uppercase transition-all flex items-center gap-2 cursor-pointer">
+                    <i class="ri-arrow-left-line text-base"></i>
+                    <span>BUMALIK</span>
+                </button>
+                <button onclick="redoRitual()" class="px-4 py-2 rounded border border-[#c59b27] bg-[#120b06] hover:bg-[#c59b27] hover:text-[#050301] text-[#c59b27] font-rye text-xs tracking-widest uppercase transition-all flex items-center gap-2 cursor-pointer">
+                    <i class="ri-quill-pen-line text-base"></i>
+                    <span>MAGBAHAGI ULIT</span>
+                </button>
+            </div>
+            
+            <div id="submissionAckBox" class="hidden ouija-card p-4 sm:p-5 text-center max-w-md w-full bg-[#0a0604] border border-[#3b2d1d] rounded-lg relative">
+                <button onclick="document.getElementById('submissionAckBox').classList.add('hidden')" class="absolute top-2 right-2 text-[#ebdcb1]/40 hover:text-[#c59b27] text-sm">
+                    <i class="ri-close-line"></i>
+                </button>
+                <span class="font-rye text-[10px] text-[#c59b27] tracking-[0.2em] uppercase border-b border-[#5a4627] pb-0.5 inline-block mb-1.5">PINALAYA</span>
+                <h2 class="font-cinzel text-lg sm:text-xl text-[#ebdcb1] font-bold mb-1">MALAYA NA ANG SULAT MO</h2>
+                <p class="font-crimson text-xs sm:text-sm text-[#ebdcb1]/80 italic leading-relaxed">
+                    “Salamat sa pagpapalaya ng saloobin mo. Sana mabawasan kahit papaano ang bigat na dala mo.”
+                </p>
+            </div>
+            
+            <div class="w-full space-y-5">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-[#3b2d1d] pb-4">
+                    <div class="text-center sm:text-left">
+                        <h3 class="font-cinzel text-lg sm:text-xl text-[#c59b27] font-bold tracking-wide">MGA KWENTONG PINALAYA</h3>
+                        <p class="font-crimson italic text-xs sm:text-sm text-[#ebdcb1]/60">Mga alaalang inihinga rin ng iba.</p>
+                    </div>
+                    
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button onclick="filterWall('all')" class="wall-filter-btn px-3 py-1 rounded border border-[#5a4627] font-rye text-[10px] text-[#c59b27] hover:border-[#c59b27] bg-[#120b06] transition-colors">LAHAT</button>
+                        <button onclick="filterWall('tao')" class="wall-filter-btn px-3 py-1 rounded border border-[#3b2d1d] font-rye text-[10px] text-[#ebdcb1]/70 hover:border-[#c59b27] transition-colors">TAO</button>
+                        <button onclick="filterWall('whatif')" class="wall-filter-btn px-3 py-1 rounded border border-[#3b2d1d] font-rye text-[10px] text-[#ebdcb1]/70 hover:border-[#c59b27] transition-colors">WHAT IF</button>
+                        <button onclick="filterWall('nasabi')" class="wall-filter-btn px-3 py-1 rounded border border-[#3b2d1d] font-rye text-[10px] text-[#ebdcb1]/70 hover:border-[#c59b27] transition-colors">HINDI NASABI</button>
+                        <button onclick="filterWall('nakaraan')" class="wall-filter-btn px-3 py-1 rounded border border-[#3b2d1d] font-rye text-[10px] text-[#ebdcb1]/70 hover:border-[#c59b27] transition-colors">ALAALA</button>
+                    </div>
+                </div>
+                
+                <div id="spiritsWallGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-left">
+                </div>
+            </div>
+        </section>
+        
+    </main>
+    
+    <footer class="w-full py-6 border-t border-[#3b2d1d] z-10 text-center space-y-1">
+        <p class="font-rye text-[10px] sm:text-xs text-[#c59b27] tracking-[0.15em] uppercase">
+            © 2026 BTLED ORGANIZATION
+        </p>
+        <p class="font-crimson text-[11px] text-[#ebdcb1]/50 italic">
+            Non-commercial experience. Music: "Multo" by Cup of Joe (© Viva Records).
+        </p>
+    </footer>
+    
+    <script>
+        let state = {
+            userName: "Anonymous",
+            selectedCategory: null,
+            storyText: "",
+            weight: 3,
+            isMuted: false,
+            isPlayingSong: false,
+            audioCtx: null,
+            bgAudio: null,
+            currentVoAudio: null,
+            inSession: false
+        };
+        
+        const CATEGORIES = {
+            tao: {
+                title: "Ang Taong Lumayo",
+                badge: "TAONG LUMAYO",
+                prompt: "Sino ang taong bumabalik sa isip mo kapag tahimik na ang paligid? Ano ang huling iniwan niyang alaala?",
+                quote: "“Ang hirap kapag 'yung taong dahilan ng saya mo noon, bigla na lang naging estranghero ngayon na parang 'di ka man lang nakilala.”"
+            },
+            whatif: {
+                title: "Ang What If",
+                badge: "PAANO KAYA",
+                prompt: "Anong 'paano kaya' ang hanggang ngayon ay nagpapatulala pa rin sa 'yo sa hatinggabi?",
+                quote: "“Mas masakit pala 'yung mga hindi man lang nasimulan... kaysa sa mga natapos na.”"
+            },
+            nasabi: {
+                title: "Ang Hindi Nasabi",
+                badge: "HINDI NASABI",
+                prompt: "Ano ang mga salitang itinago mo sa iyong dibdib dahil natakot ka sa magiging bagong mundo?",
+                quote: "“Mas pinili nating manahimik kasi natakot tayong magbago ang lahat... pero nagbago pa rin naman.”"
+            },
+            nakaraan: {
+                title: "Ang Lumang Alaala",
+                badge: "LUMANG ALAALA",
+                prompt: "Anong bersyon ng sarili mo ang nami-miss mo na ngayong pagod ka na sa buhay?",
+                quote: "“Minsan, hindi lang ibang tao ang nami-miss natin... kundi 'yung dating sarili natin na masaya pa.”"
+            }
+        };
+        
+        let spiritStories = [];
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            initPreloader();
+            initLocalAudio();
+            initDustCanvas();
+            initBurnCanvas();
+            fetchSpiritsFromScript();
+            
+            state.inSession = false;
+            updateNavigationState();
+            showSection('startScreen');
+        });
+        
+        function updateNavigationState() {
+            const hasVisited = localStorage.getItem('multo_visited') === 'true';
+            const topWallBtn = document.getElementById('topNavWallBtn');
+            const startWallBtn = document.getElementById('startScreenWallBtn');
+            
+            if (!hasVisited) {
+                // First time visitor: Hide Memory Wall access
+                if (topWallBtn) topWallBtn.classList.add('hidden');
+                if (startWallBtn) startWallBtn.classList.add('hidden');
+            } else {
+                // Repeat visitor: Show Memory Wall on Start Screen
+                if (startWallBtn) startWallBtn.classList.remove('hidden');
+                
+                // Disable/Hide top nav Memory Wall button if session has started
+                if (topWallBtn) {
+                    if (state.inSession) {
+                        topWallBtn.classList.add('hidden');
+                    } else {
+                        topWallBtn.classList.remove('hidden');
+                    }
+                }
+            }
+        }
+        
+        function initPreloader() {
+            let progress = 0;
+            const progressBar = document.getElementById('load-progress');
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 20) + 12;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        const preloader = document.getElementById('preloader');
+                        if (preloader) {
+                            preloader.style.opacity = '0';
+                            setTimeout(() => preloader.style.display = 'none', 800);
+                        }
+                    }, 400);
+                }
+                if (progressBar) progressBar.style.width = progress + '%';
+            }, 200);
+        }
+        
+        function initLocalAudio() {
+            state.bgAudio = new Audio('../resources/multo/multo.mp3');
+            state.bgAudio.loop = true;
+            state.bgAudio.volume = 0.7;
+        }
+        
+        function playSong() {
+            if (state.bgAudio) {
+                state.bgAudio.play().then(() => {
+                    state.isPlayingSong = true;
+                    updateAudioUI();
+                }).catch(e => {
+                    console.log("Local audio play waiting for user action");
+                });
+            }
+        }
+        
+        function toggleSongPlayback() {
+            playWoodenTap();
+            if (!state.bgAudio) return;
+            
+            if (state.isPlayingSong) {
+                state.bgAudio.pause();
+                state.isPlayingSong = false;
+            } else {
+                state.bgAudio.play().catch(e => {});
+                state.isPlayingSong = true;
+            }
+            updateAudioUI();
+        }
+        
+        function toggleAudioMute() {
+            playWoodenTap();
+            state.isMuted = !state.isMuted;
+            if (state.bgAudio) {
+                state.bgAudio.muted = state.isMuted;
+            }
+            if (state.currentVoAudio) {
+                state.currentVoAudio.muted = state.isMuted;
+            }
+            updateAudioUI();
+        }
+        
+        function updateAudioUI() {
+            const icon = document.getElementById('muteIcon');
+            const songIcon = document.getElementById('songPlayIcon');
+            
+            if (icon) {
+                icon.className = state.isMuted ? "ri-volume-mute-fill text-lg" : "ri-volume-up-fill text-lg";
+            }
+            
+            if (songIcon) {
+                songIcon.style.animationPlayState = state.isPlayingSong ? "running" : "paused";
+            }
+        }
+        
+        function initWebAudio() {
+            if (state.audioCtx) return;
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                state.audioCtx = new AudioContext();
+            } catch(e){}
+        }
+        
+        function playChime(freq = 523.25) {
+            initWebAudio();
+            if (!state.audioCtx || state.isMuted) return;
+            try {
+                const osc = state.audioCtx.createOscillator();
+                const gain = state.audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, state.audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.12, state.audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + 1.2);
+                osc.connect(gain);
+                gain.connect(state.audioCtx.destination);
+                osc.start();
+                osc.stop(state.audioCtx.currentTime + 1.2);
+            } catch(e) {}
+        }
+        
+        function playWoodenTap() {
+            initWebAudio();
+            if (!state.audioCtx || state.isMuted) return;
+            try {
+                const osc = state.audioCtx.createOscillator();
+                const gain = state.audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(140, state.audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(45, state.audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.2, state.audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, state.audioCtx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(state.audioCtx.destination);
+                osc.start();
+                osc.stop(state.audioCtx.currentTime + 0.08);
+            } catch(e) {}
+        }
+        
+        function playCardAudio(audioPath, startTime = 0) {
+            if (state.isMuted) return;
+            
+            if (state.currentVoAudio) {
+                state.currentVoAudio.pause();
+                state.currentVoAudio.currentTime = 0;
+            }
+            
+            try {
+                const vo = new Audio(audioPath);
+                vo.volume = 0.7;
+                vo.currentTime = startTime;
+                state.currentVoAudio = vo;
+                vo.play().catch(e => {});
+            } catch(e) {}
+        }
+        
+        function startJourney() {
+            playSong();
+            playChime(523.25);
+            
+            state.inSession = true;
+            updateNavigationState();
+            
+            const stage = document.getElementById('stage');
+            if (stage) stage.classList.add('open');
+            
+            hideAllSections();
+            setTimeout(() => showSection('nameFormSection'), 400);
+        }
+        
+        function openWallPage() {
+            playWoodenTap();
+            localStorage.setItem('multo_visited', 'true');
+            state.inSession = false;
+            
+            // Hide top-nav wall button while on the Memory Wall page
+            const topWallBtn = document.getElementById('topNavWallBtn');
+            if (topWallBtn) topWallBtn.classList.add('hidden');
+            
+            const stage = document.getElementById('stage');
+            if (stage) stage.classList.add('open');
+            
+            const ackBox = document.getElementById('submissionAckBox');
+            if (ackBox) ackBox.classList.add('hidden');
+            
+            hideAllSections();
+            setTimeout(() => showSection('thankYouSection'), 400);
+        }
+        
+        function goBackToStart() {
+            playWoodenTap();
+            state.inSession = false;
+            updateNavigationState();
+            
+            hideAllSections();
+            setTimeout(() => showSection('startScreen'), 400);
+        }
+        
+        function handleNameSubmit(e) {
+            e.preventDefault();
+            playWoodenTap();
+            const val = document.getElementById('nameInput').value.trim();
+            if (val) state.userName = val;
+            proceedToRationale();
+        }
+        
+        function enterAnonymous() {
+            playWoodenTap();
+            state.userName = "Anonymous";
+            proceedToRationale();
+        }
+        
+        function proceedToRationale() {
+            hideAllSections();
+            setTimeout(() => {
+                showSection('rationaleSection');
+                playCardAudio('../resources/multo/vo1.mp3', 0);
+            }, 400);
+        }
+        
+        function goToCategorySelection() {
+            playWoodenTap();
+            hideAllSections();
+            setTimeout(() => showSection('categorySection'), 400);
+        }
+        
+        function selectCategory(catKey) {
+            playChime(659.25);
+            state.selectedCategory = catKey;
+            const config = CATEGORIES[catKey];
+            
+            document.getElementById('reflectionQuote').textContent = config.quote;
+            
+            hideAllSections();
+            setTimeout(() => showSection('reflectionSection'), 400);
+        }
+        
+        function goToStoryForm() {
+            playWoodenTap();
+            const config = CATEGORIES[state.selectedCategory];
+            
+            document.getElementById('selectedCategoryBadge').textContent = config.badge;
+            document.getElementById('storyFormTitle').textContent = config.title;
+            document.getElementById('storyPromptText').textContent = config.prompt;
+            
+            hideAllSections();
+            setTimeout(() => showSection('storyFormSection'), 400);
+        }
+        
+        function updateWeightDisplay(val) {
+            state.weight = val;
+            const labels = ["1 / Magaan lang", "2 / Medyo mabigat", "3 / Sakto lang", "4 / Mabigat", "5 / Sobrang bigat"];
+            document.getElementById('weightValueText').textContent = labels[val - 1];
+            playWoodenTap();
+        }
+        
+        const APPS_SCRIPT_URL_MULTO = "https://script.google.com/macros/s/AKfycbyIT7E-p-ajGH5Mn8VXWgJoa_c3RsnKXPDGzjOo6DWM8Th0Xu8Z0EC6dc_pWmoAoR0/exec";
+        
+        async function fetchSpiritsFromScript() {
+            try {
+                const res = await fetch(`${APPS_SCRIPT_URL_MULTO}?action=read&_t=${Date.now()}`);
+                const data = await res.json();
+                if (data && data.status === 'success' && Array.isArray(data.stories)) {
+                    spiritStories = data.stories;
+                    renderSpiritsWall('all');
+                }
+            } catch (err) {
+                console.error("Failed to fetch stories from Apps Script:", err);
+            }
+        }
+        
+        function handleStorySubmit(e) {
+            e.preventDefault();
+            
+            const textarea = document.getElementById('storyTextArea');
+            const formSection = document.getElementById('storyFormSection');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const text = textarea.value.trim();
+            
+            if (!text) return;
+            
+            playCardAudio('../resources/multo/vo2.mp3', 2);
+            
+            state.storyText = text;
+            state.weight = document.getElementById('weightSlider').value;
+            
+            const showName = document.getElementById('showNameToggle').checked;
+            const author = showName && state.userName ? state.userName : "Anonymous";
+            const category = state.selectedCategory || "tao";
+            const weight = state.weight;
+            
+            textarea.readOnly = true;
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.innerHTML = `<i class="ri-fire-fill text-amber-500 animate-pulse"></i> <span>SINASUNOG NA ANG SULAT...</span>`;
+            
+            playChime(440);
+            
+            const uploadPromise = logToGoogleSheets(author, category, text, weight);
+            
+            burnFullCardAnimation(formSection, textarea, uploadPromise, async () => {
+                const shouldShare = document.getElementById('shareWallToggle').checked;
+                if (shouldShare) {
+                    await fetchSpiritsFromScript();
+                }
+                
+                resetTextareaState(textarea);
+                
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.innerHTML = `<i class="ri-fire-line text-base"></i> <span>PALAYAIN</span>`;
+                
+                // Set visitor state to true & complete session
+                localStorage.setItem('multo_visited', 'true');
+                state.inSession = false;
+                updateNavigationState();
+                
+                const ackBox = document.getElementById('submissionAckBox');
+                if (ackBox) ackBox.classList.remove('hidden');
+                
+                hideAllSections();
+                setTimeout(() => {
+                    showSection('thankYouSection');
+                }, 500);
+            });
+        }
+        
+        function logToGoogleSheets(author, category, story, weight) {
+            return new Promise((resolve) => {
+                const queryParams = new URLSearchParams({
+                    name: author,
+                    category: category,
+                    story: story,
+                    weight: weight,
+                    _t: Date.now()
+                });
+                
+                const targetUrl = `${APPS_SCRIPT_URL_MULTO}?${queryParams.toString()}`;
+                
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = targetUrl;
+                
+                let resolved = false;
+                
+                function finish() {
+                    if (!resolved) {
+                        resolved = true;
+                        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+                        resolve();
+                    }
+                }
+                
+                iframe.onload = finish;
+                iframe.onerror = finish;
+                
+                document.body.appendChild(iframe);
+                setTimeout(finish, 4500);
+            });
+        }
+        
+        function burnFullCardAnimation(containerEl, textareaEl, uploadPromise, onComplete) {
+            containerEl.classList.add('burning-card-effect');
+            
+            textareaEl.style.transition = 'color 2s ease, filter 2s ease, opacity 2.5s ease';
+            textareaEl.style.color = '#ff6b00';
+            textareaEl.style.filter = 'blur(1px) drop-shadow(0 0 15px rgba(255, 100, 0, 1))';
+            
+            setTimeout(() => {
+                textareaEl.style.color = '#000000';
+                textareaEl.style.opacity = '0.1';
+            }, 1800);
+            
+            const rect = containerEl.getBoundingClientRect();
+            const canvas = document.createElement('canvas');
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0px';
+            canvas.style.left = '0px';
+            canvas.style.pointerEvents = 'none';
+            canvas.style.zIndex = '35';
+            
+            containerEl.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+            
+            let particles = [];
+            const particleCount = 180;
+            
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: canvas.height - (Math.random() * (canvas.height * 0.9)),
+                    size: Math.random() * 5 + 1.5,
+                    speedX: (Math.random() - 0.5) * 2.5,
+                    speedY: -Math.random() * 3.5 - 1.2,
+                    alpha: 1,
+                    decay: Math.random() * 0.008 + 0.003,
+                    color: Math.random() > 0.4 ? '#ff6600' : (Math.random() > 0.5 ? '#c59b27' : '#ff1100')
+                });
+            }
+            
+            let minBurnDurationPassed = false;
+            let uploadFinished = false;
+            
+            setTimeout(() => {
+                minBurnDurationPassed = true;
+            }, 3800);
+            
+            uploadPromise.then(() => {
+                uploadFinished = true;
+            });
+            
+            let animationFrame;
+            
+            function renderEmbers() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let activeParticles = 0;
+                
+                particles.forEach(p => {
+                    if (p.alpha > 0) {
+                        activeParticles++;
+                        p.x += p.speedX + (Math.random() - 0.5) * 0.6;
+                        p.y += p.speedY;
+                        p.alpha -= p.decay;
+                        
+                        ctx.save();
+                        ctx.globalAlpha = Math.max(0, p.alpha);
+                        ctx.fillStyle = p.color;
+                        ctx.shadowBlur = 12;
+                        ctx.shadowColor = p.color;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                });
+                
+                if (activeParticles > 0 || !minBurnDurationPassed || !uploadFinished) {
+                    animationFrame = requestAnimationFrame(renderEmbers);
+                } else {
+                    cancelAnimationFrame(animationFrame);
+                    containerEl.classList.remove('burning-card-effect');
+                    if (canvas.parentNode) {
+                        canvas.parentNode.removeChild(canvas);
+                    }
+                    if (onComplete) onComplete();
+                }
+            }
+            
+            renderEmbers();
+        }
+        
+        function resetTextareaState(textarea) {
+            textarea.value = '';
+            textarea.readOnly = false;
+            textarea.style.opacity = '1';
+            textarea.style.color = '#ebdcb1';
+            textarea.style.backgroundColor = '#050301';
+            textarea.style.filter = 'none';
+            textarea.style.transition = 'none';
+        }
+        
+        function redoRitual() {
+            playWoodenTap();
+            const textarea = document.getElementById('storyTextArea');
+            resetTextareaState(textarea);
+            
+            state.inSession = true;
+            updateNavigationState();
+            
+            hideAllSections();
+            setTimeout(() => showSection('categorySection'), 400);
+        }
+        
+        function hideAllSections() {
+            const sections = ['startScreen', 'nameFormSection', 'rationaleSection', 'categorySection', 'reflectionSection', 'storyFormSection', 'thankYouSection'];
+            sections.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.opacity = '0';
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+            });
+        }
+        
+        function showSection(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('hidden');
+                el.classList.add('flex');
+                setTimeout(() => el.style.opacity = '1', 50);
+            }
+        }
+        
+        function renderSpiritsWall(filterCat) {
+            const grid = document.getElementById('spiritsWallGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            
+            if (spiritStories.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-8 text-[#ebdcb1]/50 font-crimson italic">
+                        Wala pang kwento rito. Ikaw muna ang unang mag-iwan ng sulat...
+                    </div>
+                `;
+                return;
+            }
+            
+            const filtered = filterCat === 'all' 
+            ? spiritStories 
+            : spiritStories.filter(s => s.category === filterCat);
+            
+            filtered.forEach(s => {
+                const card = document.createElement('div');
+                card.className = "ouija-card p-5 flex flex-col justify-between space-y-3 group hover:border-[#c59b27]";
+                
+                const catInfo = CATEGORIES[s.category] || { badge: "MULTO" };
+                const isLiked = localStorage.getItem(`multo_liked_story_${s.id}`);
+                const likedClass = isLiked ? "text-[#ffd700] opacity-80 cursor-default" : "text-[#c59b27] hover:text-[#ebdcb1] cursor-pointer";
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center text-[10px] font-rye text-[#c59b27] mb-2">
+                            <span>${catInfo.badge}</span>
+                            <span class="text-[#ebdcb1]/40">${s.date}</span>
+                        </div>
+                        <p class="font-crimson text-sm text-[#ebdcb1]/90 italic leading-relaxed">"${s.text}"</p>
+                    </div>
+                    <div class="flex justify-between items-center text-xs font-crimson border-t border-[#5a4627]/40 pt-2 text-[#ebdcb1]/60">
+                        <span>— ${s.author}</span>
+                        <div class="flex items-center gap-3">
+                            <button onclick="reactToSpirit('${s.id}', this)" class="candle-candle ${likedClass} text-xs flex items-center gap-1" title="${isLiked ? 'Naka-alay na ang kandila' : 'Mag-alay ng kandila'}">
+                                🕯️ <span class="candle-count font-rye text-[10px]">${s.likes || 0}</span>
+                            </button>
+                            <span class="text-[10px] font-rye text-[#c59b27]">BIGAT: ${s.weight}/5</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            
+            document.querySelectorAll('.wall-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-[#1c120a]', 'text-[#c59b27]');
+                btn.classList.add('text-[#ebdcb1]/70');
+            });
+        }
+        
+        async function reactToSpirit(storyId, btnEl) {
+            const likedKey = `multo_liked_story_${storyId}`;
+            if (localStorage.getItem(likedKey)) {
+                playWoodenTap();
+                return;
+            }
+            
+            playWoodenTap();
+            playChime(880);
+            
+            localStorage.setItem(likedKey, 'true');
+            btnEl.classList.remove('hover:text-[#ebdcb1]', 'cursor-pointer');
+            btnEl.classList.add('text-[#ffd700]', 'opacity-80', 'cursor-default');
+            btnEl.title = "Naka-alay na ang kandila";
+            
+            const countSpan = btnEl.querySelector('.candle-count');
+            let currentCount = parseInt(countSpan.textContent || "0");
+            countSpan.textContent = currentCount + 1;
+            
+            try {
+                fetch(`${APPS_SCRIPT_URL_MULTO}?action=like&id=${storyId}&_t=${Date.now()}`);
+            } catch(e) {
+                console.error("Failed to sync like with Google Sheets:", e);
+            }
+        }
+        
+        function filterWall(cat) {
+            playWoodenTap();
+            renderSpiritsWall(cat);
+        }
+        
+        function initDustCanvas() {
+            const canvas = document.getElementById('dustCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let dusts = [];
+            
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+            
+            for (let i = 0; i < 45; i++) {
+                dusts.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    r: Math.random() * 1.5 + 0.5,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: -Math.random() * 0.4 - 0.1,
+                    alpha: Math.random() * 0.5 + 0.1
+                });
+            }
+            
+            function loop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                dusts.forEach(d => {
+                    d.x += d.vx;
+                    d.y += d.vy;
+                    if (d.y < 0) d.y = canvas.height;
+                    if (d.x < 0) d.x = canvas.width;
+                    if (d.x > canvas.width) d.x = 0;
+                    
+                    ctx.beginPath();
+                    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(197, 155, 39, ${d.alpha})`;
+                    ctx.fill();
+                });
+                requestAnimationFrame(loop);
+            }
+            loop();
+        }
+        
+        let burnCanvas, burnCtx;
+        
+        function initBurnCanvas() {
+            burnCanvas = document.getElementById('burnCanvas');
+            if (burnCanvas) {
+                burnCtx = burnCanvas.getContext('2d');
+                resizeBurnCanvas();
+                window.addEventListener('resize', resizeBurnCanvas);
+            }
+        }
+        
+        function resizeBurnCanvas() {
+            if (burnCanvas) {
+                burnCanvas.width = window.innerWidth;
+                burnCanvas.height = window.innerHeight;
+            }
+        }
+    </script>
+</body>
+</html>
