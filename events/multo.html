@@ -406,7 +406,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 w-full">
                 
                 <!-- Card 1: Person -->
-                <div onclick="selectCategory('tao')" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
+                <div onclick="selectCategory('tao'); playCardAudio('../resources/multo/vo3.mp3', 1, 11);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="text-2xl p-2.5 rounded-lg bg-[#140c06] border border-[#5a4627]/60 group-hover:border-[#c59b27]/80 transition-colors">👥</span>
@@ -425,7 +425,7 @@
                 </div>
                 
                 <!-- Card 2: What If -->
-                <div onclick="selectCategory('whatif')" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
+                <div onclick="selectCategory('whatif'); playCardAudio('../resources/multo/vo3s.mp3', 14, 20);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="text-2xl p-2.5 rounded-lg bg-[#140c06] border border-[#5a4627]/60 group-hover:border-[#c59b27]/80 transition-colors">💭</span>
@@ -444,7 +444,7 @@
                 </div>
                 
                 <!-- Card 3: Unspoken -->
-                <div onclick="selectCategory('nasabi')" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
+                <div onclick="selectCategory('nasabi'); playCardAudio('../resources/multo/vo3.mp3', 21, 30);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="text-2xl p-2.5 rounded-lg bg-[#140c06] border border-[#5a4627]/60 group-hover:border-[#c59b27]/80 transition-colors">💌</span>
@@ -463,7 +463,7 @@
                 </div>
                 
                 <!-- Card 4: Memory -->
-                <div onclick="selectCategory('nakaraan')" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
+                <div onclick="selectCategory('nakaraan'); playCardAudio('../resources/multo/vo3.mp3', 31, 41);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="text-2xl p-2.5 rounded-lg bg-[#140c06] border border-[#5a4627]/60 group-hover:border-[#c59b27]/80 transition-colors">🥀</span>
@@ -626,603 +626,610 @@
         </p>
     </footer>
     
-<script>
-    // Inilipat sa taas para maiwasan ang Temporal Dead Zone (TDZ) / Uncaught ReferenceError
-    const APPS_SCRIPT_URL_MULTO = "https://script.google.com/macros/s/AKfycbyIT7E-p-ajGH5Mn8VXWgJoa_c3RsnKXPDGzjOo6DWM8Th0Xu8Z0EC6dc_pWmoAoR0/exec";
-    let burnCanvas, burnCtx;
-
-    let state = {
-        userName: "Anonymous",
-        selectedCategory: null,
-        storyText: "",
-        weight: 3,
-        isMuted: false,
-        isPlayingSong: false,
-        audioCtx: null,
-        bgAudio: null,
-        currentVoAudio: null,
-        inSession: false
-    };
-    
-    const CATEGORIES = {
-        tao: {
-            title: "Ang Taong Lumayo",
-            badge: "TAONG LUMAYO",
-            prompt: "Sino ang taong bumabalik sa isip mo kapag tahimik na ang paligid? Ano ang huling iniwan niyang alaala?",
-            quote: "“Ang hirap kapag 'yung taong dahilan ng saya mo noon, bigla na lang naging estranghero ngayon na parang 'di ka man lang nakilala.”"
-        },
-        whatif: {
-            title: "Ang What If",
-            badge: "PAANO KAYA",
-            prompt: "Anong 'paano kaya' ang hanggang ngayon ay nagpapatulala pa rin sa 'yo sa hatinggabi?",
-            quote: "“Mas masakit pala 'yung mga hindi man lang nasimulan... kaysa sa mga natapos na.”"
-        },
-        nasabi: {
-            title: "Ang Hindi Nasabi",
-            badge: "HINDI NASABI",
-            prompt: "Ano ang mga salitang itinago mo sa iyong dibdib dahil natakot ka sa magiging bagong mundo?",
-            quote: "“Mas pinili nating manahimik kasi natakot tayong magbago ang lahat... pero nagbago pa rin naman.”"
-        },
-        nakaraan: {
-            title: "Ang Lumang Alaala",
-            badge: "LUMANG ALAALA",
-            prompt: "Anong bersyon ng sarili mo ang nami-miss mo na ngayong pagod ka na sa buhay?",
-            quote: "“Minsan, hindi lang ibang tao ang nami-miss natin... kundi 'yung dating sarili natin na masaya pa.”"
-        }
-    };
-    
-    let spiritStories = [];
-    
-    window.addEventListener('DOMContentLoaded', () => {
-        initPreloader();
-        initLocalAudio();
-        initDustCanvas();
-        initBurnCanvas();
-        fetchSpiritsFromScript();
+    <script>
+        // Inilipat sa taas para maiwasan ang Temporal Dead Zone (TDZ) / Uncaught ReferenceError
+        const APPS_SCRIPT_URL_MULTO = "https://script.google.com/macros/s/AKfycbyIT7E-p-ajGH5Mn8VXWgJoa_c3RsnKXPDGzjOo6DWM8Th0Xu8Z0EC6dc_pWmoAoR0/exec";
+        let burnCanvas, burnCtx;
         
-        state.inSession = false;
-        updateNavigationState();
-        showSection('startScreen');
-    });
-    
-    function updateNavigationState() {
-        const hasVisited = localStorage.getItem('multo_visited') === 'true';
-        const topWallBtn = document.getElementById('topNavWallBtn');
-        const startWallBtn = document.getElementById('startScreenWallBtn');
+        let state = {
+            userName: "Anonymous",
+            selectedCategory: null,
+            storyText: "",
+            weight: 3,
+            isMuted: false,
+            isPlayingSong: false,
+            audioCtx: null,
+            bgAudio: null,
+            currentVoAudio: null,
+            inSession: false
+        };
         
-        if (!hasVisited) {
-            if (topWallBtn) topWallBtn.classList.add('hidden');
-            if (startWallBtn) startWallBtn.classList.add('hidden');
-        } else {
-            if (startWallBtn) startWallBtn.classList.remove('hidden');
-            if (topWallBtn) {
-                if (state.inSession) {
-                    topWallBtn.classList.add('hidden');
-                } else {
-                    topWallBtn.classList.remove('hidden');
-                }
+        const CATEGORIES = {
+            tao: {
+                title: "Ang Taong Lumayo",
+                badge: "TAONG LUMAYO",
+                prompt: "Sino ang taong bumabalik sa isip mo kapag tahimik na ang paligid? Ano ang huling iniwan niyang alaala?",
+                quote: "“Ang hirap kapag 'yung taong dahilan ng saya mo noon, bigla na lang naging estranghero ngayon na parang 'di ka man lang nakilala.”"
+            },
+            whatif: {
+                title: "Ang What If",
+                badge: "PAANO KAYA",
+                prompt: "Anong 'paano kaya' ang hanggang ngayon ay nagpapatulala pa rin sa 'yo sa hatinggabi?",
+                quote: "“Mas masakit pala 'yung mga hindi man lang nasimulan... kaysa sa mga natapos na.”"
+            },
+            nasabi: {
+                title: "Ang Hindi Nasabi",
+                badge: "HINDI NASABI",
+                prompt: "Ano ang mga salitang itinago mo sa iyong dibdib dahil natakot ka sa magiging bagong mundo?",
+                quote: "“Mas pinili nating manahimik kasi natakot tayong magbago ang lahat... pero nagbago pa rin naman.”"
+            },
+            nakaraan: {
+                title: "Ang Lumang Alaala",
+                badge: "LUMANG ALAALA",
+                prompt: "Anong bersyon ng sarili mo ang nami-miss mo na ngayong pagod ka na sa buhay?",
+                quote: "“Minsan, hindi lang ibang tao ang nami-miss natin... kundi 'yung dating sarili natin na masaya pa.”"
             }
-        }
-    }
-    
-    function initPreloader() {
-        let progress = 0;
-        const progressBar = document.getElementById('load-progress');
-        const interval = setInterval(() => {
-            progress += Math.floor(Math.random() * 20) + 12;
-            if (progress >= 100) {
-                progress = 100;
-                clearInterval(interval);
-                setTimeout(() => {
-                    const preloader = document.getElementById('preloader');
-                    if (preloader) {
-                        preloader.style.opacity = '0';
-                        setTimeout(() => preloader.style.display = 'none', 800);
+        };
+        
+        let spiritStories = [];
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            initPreloader();
+            initLocalAudio();
+            initDustCanvas();
+            initBurnCanvas();
+            fetchSpiritsFromScript();
+            
+            state.inSession = false;
+            updateNavigationState();
+            showSection('startScreen');
+        });
+        
+        function updateNavigationState() {
+            const hasVisited = localStorage.getItem('multo_visited') === 'true';
+            const topWallBtn = document.getElementById('topNavWallBtn');
+            const startWallBtn = document.getElementById('startScreenWallBtn');
+            
+            if (!hasVisited) {
+                if (topWallBtn) topWallBtn.classList.add('hidden');
+                if (startWallBtn) startWallBtn.classList.add('hidden');
+            } else {
+                if (startWallBtn) startWallBtn.classList.remove('hidden');
+                if (topWallBtn) {
+                    if (state.inSession) {
+                        topWallBtn.classList.add('hidden');
+                    } else {
+                        topWallBtn.classList.remove('hidden');
                     }
-                }, 400);
-            }
-            if (progressBar) progressBar.style.width = progress + '%';
-        }, 200);
-    }
-    
-    function initLocalAudio() {
-        state.bgAudio = new Audio('../resources/multo/multo.mp3');
-        state.bgAudio.loop = true;
-        state.bgAudio.volume = 0.7;
-    }
-    
-    function playSong() {
-        if (state.bgAudio) {
-            state.bgAudio.play().then(() => {
-                state.isPlayingSong = true;
-                updateAudioUI();
-            }).catch(e => {
-                console.log("Local audio play waiting for user action");
-            });
-        }
-    }
-    
-    function toggleSongPlayback() {
-        playWoodenTap();
-        if (!state.bgAudio) return;
-        
-        if (state.isPlayingSong) {
-            state.bgAudio.pause();
-            state.isPlayingSong = false;
-        } else {
-            state.bgAudio.play().catch(e => {});
-            state.isPlayingSong = true;
-        }
-        updateAudioUI();
-    }
-    
-    function toggleAudioMute() {
-        playWoodenTap();
-        state.isMuted = !state.isMuted;
-        if (state.bgAudio) {
-            state.bgAudio.muted = state.isMuted;
-        }
-        if (state.currentVoAudio) {
-            state.currentVoAudio.muted = state.isMuted;
-        }
-        updateAudioUI();
-    }
-    
-    function updateAudioUI() {
-        const icon = document.getElementById('muteIcon');
-        const songIcon = document.getElementById('songPlayIcon');
-        
-        if (icon) {
-            icon.className = state.isMuted ? "ri-volume-mute-fill text-lg" : "ri-volume-up-fill text-lg";
-        }
-        
-        if (songIcon) {
-            songIcon.style.animationPlayState = state.isPlayingSong ? "running" : "paused";
-        }
-    }
-    
-    function initWebAudio() {
-        if (state.audioCtx) return;
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            state.audioCtx = new AudioContext();
-        } catch(e){}
-    }
-    
-    function playChime(freq = 523.25) {
-        initWebAudio();
-        if (!state.audioCtx || state.isMuted) return;
-        try {
-            const osc = state.audioCtx.createOscillator();
-            const gain = state.audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, state.audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.12, state.audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + 1.2);
-            osc.connect(gain);
-            gain.connect(state.audioCtx.destination);
-            osc.start();
-            osc.stop(state.audioCtx.currentTime + 1.2);
-        } catch(e) {}
-    }
-    
-    function playWoodenTap() {
-        initWebAudio();
-        if (!state.audioCtx || state.isMuted) return;
-        try {
-            const osc = state.audioCtx.createOscillator();
-            const gain = state.audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(140, state.audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(45, state.audioCtx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.2, state.audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, state.audioCtx.currentTime + 0.08);
-            osc.connect(gain);
-            gain.connect(state.audioCtx.destination);
-            osc.start();
-            osc.stop(state.audioCtx.currentTime + 0.08);
-        } catch(e) {}
-    }
-    
-    function playCardAudio(audioPath, startTime = 0) {
-        if (state.isMuted) return;
-        
-        if (state.currentVoAudio) {
-            state.currentVoAudio.pause();
-            state.currentVoAudio.currentTime = 0;
-            // Ibalik ang volume kung may naunang tumutugtog
-            if (state.bgAudio) state.bgAudio.volume = 0.7;
-        }
-        
-        try {
-            const vo = new Audio(audioPath);
-            vo.volume = 0.7;
-            vo.currentTime = startTime;
-            state.currentVoAudio = vo;
-
-            // Babaan ang volume ng background music habang may voiceover
-            if (state.bgAudio) {
-                state.bgAudio.volume = 0.3;
-            }
-
-            const restoreVolume = () => {
-                if (state.bgAudio) {
-                    state.bgAudio.volume = 0.7;
                 }
-            };
-
-            // Ibalik sa orihinal na volume (0.7) pag natapos o na-pause
-            vo.onended = restoreVolume;
-            vo.onpause = restoreVolume;
-            
-            vo.play().catch(e => {});
-        } catch(e) {}
-    }
-    
-    function startJourney() {
-        playSong();
-        playChime(523.25);
-        
-        state.inSession = true;
-        updateNavigationState();
-        
-        const stage = document.getElementById('stage');
-        if (stage) stage.classList.add('open');
-        
-        hideAllSections();
-        setTimeout(() => showSection('nameFormSection'), 400);
-    }
-    
-    function openWallPage() {
-        playSong();
-        playWoodenTap();
-        localStorage.setItem('multo_visited', 'true');
-        state.inSession = false;
-        
-        const topWallBtn = document.getElementById('topNavWallBtn');
-        if (topWallBtn) topWallBtn.classList.add('hidden');
-        
-        const stage = document.getElementById('stage');
-        if (stage) stage.classList.add('open');
-        
-        const ackBox = document.getElementById('submissionAckBox');
-        if (ackBox) ackBox.classList.add('hidden');
-        
-        hideAllSections();
-        setTimeout(() => showSection('thankYouSection'), 400);
-    } // Tinanggal ang stray 'z' dito
-    
-    function goBackToStart() {
-        playWoodenTap();
-        state.inSession = false;
-        updateNavigationState();
-        
-        hideAllSections();
-        setTimeout(() => showSection('startScreen'), 400);
-    }
-    
-    function handleNameSubmit(e) {
-        e.preventDefault();
-        playWoodenTap();
-        const val = document.getElementById('nameInput').value.trim();
-        if (val) state.userName = val;
-        proceedToRationale();
-    }
-    
-    function enterAnonymous() {
-        playWoodenTap();
-        state.userName = "Anonymous";
-        proceedToRationale();
-    }
-    
-    function proceedToRationale() {
-        hideAllSections();
-        setTimeout(() => {
-            showSection('rationaleSection');
-            playCardAudio('../resources/multo/vo1.mp3', 0);
-        }, 400);
-    }
-    
-    function goToCategorySelection() {
-        playWoodenTap();
-        hideAllSections();
-        setTimeout(() => showSection('categorySection'), 400);
-    }
-    
-    function selectCategory(catKey) {
-        playChime(659.25);
-        state.selectedCategory = catKey;
-        const config = CATEGORIES[catKey];
-        
-        document.getElementById('reflectionQuote').textContent = config.quote;
-        
-        hideAllSections();
-        setTimeout(() => showSection('reflectionSection'), 400);
-    }
-    
-    function goToStoryForm() {
-        playWoodenTap();
-        const config = CATEGORIES[state.selectedCategory];
-        
-        document.getElementById('selectedCategoryBadge').textContent = config.badge;
-        document.getElementById('storyFormTitle').textContent = config.title;
-        document.getElementById('storyPromptText').textContent = config.prompt;
-        
-        hideAllSections();
-        setTimeout(() => showSection('storyFormSection'), 400);
-    }
-    
-    function updateWeightDisplay(val) {
-        state.weight = val;
-        const labels = ["1 / Magaan lang", "2 / Medyo mabigat", "3 / Sakto lang", "4 / Mabigat", "5 / Sobrang bigat"];
-        document.getElementById('weightValueText').textContent = labels[val - 1];
-        playWoodenTap();
-    }
-    
-    async function fetchSpiritsFromScript() {
-        try {
-            const res = await fetch(`${APPS_SCRIPT_URL_MULTO}?action=read&_t=${Date.now()}`);
-            const data = await res.json();
-            if (data && data.status === 'success' && Array.isArray(data.stories)) {
-                spiritStories = data.stories;
-                renderSpiritsWall('all');
             }
-        } catch (err) {
-            console.error("Failed to fetch stories from Apps Script:", err);
         }
-    }
-    
-    function handleStorySubmit(e) {
-        e.preventDefault();
         
-        const textarea = document.getElementById('storyTextArea');
-        const formSection = document.getElementById('storyFormSection');
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        const text = textarea.value.trim();
+        function initPreloader() {
+            let progress = 0;
+            const progressBar = document.getElementById('load-progress');
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 20) + 12;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        const preloader = document.getElementById('preloader');
+                        if (preloader) {
+                            preloader.style.opacity = '0';
+                            setTimeout(() => preloader.style.display = 'none', 800);
+                        }
+                    }, 400);
+                }
+                if (progressBar) progressBar.style.width = progress + '%';
+            }, 200);
+        }
         
-        if (!text) return;
+        function initLocalAudio() {
+            state.bgAudio = new Audio('../resources/multo/multo.mp3');
+            state.bgAudio.loop = true;
+            state.bgAudio.volume = 0.7;
+        }
         
-        playCardAudio('../resources/multo/vo2.mp3', 2);
+        function playSong() {
+            if (state.bgAudio) {
+                state.bgAudio.play().then(() => {
+                    state.isPlayingSong = true;
+                    updateAudioUI();
+                }).catch(e => {
+                    console.log("Local audio play waiting for user action");
+                });
+            }
+        }
         
-        state.storyText = text;
-        state.weight = document.getElementById('weightSlider').value;
+        function toggleSongPlayback() {
+            playWoodenTap();
+            if (!state.bgAudio) return;
+            
+            if (state.isPlayingSong) {
+                state.bgAudio.pause();
+                state.isPlayingSong = false;
+            } else {
+                state.bgAudio.play().catch(e => {});
+                state.isPlayingSong = true;
+            }
+            updateAudioUI();
+        }
         
-        const showName = document.getElementById('showNameToggle').checked;
-        const author = showName && state.userName ? state.userName : "Anonymous";
-        const category = state.selectedCategory || "tao";
-        const weight = state.weight;
+        function toggleAudioMute() {
+            playWoodenTap();
+            state.isMuted = !state.isMuted;
+            if (state.bgAudio) {
+                state.bgAudio.muted = state.isMuted;
+            }
+            if (state.currentVoAudio) {
+                state.currentVoAudio.muted = state.isMuted;
+            }
+            updateAudioUI();
+        }
         
-        textarea.readOnly = true;
-        submitBtn.disabled = true;
-        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        submitBtn.innerHTML = `<i class="ri-fire-fill text-amber-500 animate-pulse"></i> <span>SINASUNOG NA ANG SULAT...</span>`;
-        
-        playChime(440);
-        
-        const uploadPromise = logToGoogleSheets(author, category, text, weight);
-        
-        burnFullCardAnimation(formSection, textarea, uploadPromise, async () => {
-            const shouldShare = document.getElementById('shareWallToggle').checked;
-            if (shouldShare) {
-                await fetchSpiritsFromScript();
+        function updateAudioUI() {
+            const icon = document.getElementById('muteIcon');
+            const songIcon = document.getElementById('songPlayIcon');
+            
+            if (icon) {
+                icon.className = state.isMuted ? "ri-volume-mute-fill text-lg" : "ri-volume-up-fill text-lg";
             }
             
-            resetTextareaState(textarea);
+            if (songIcon) {
+                songIcon.style.animationPlayState = state.isPlayingSong ? "running" : "paused";
+            }
+        }
+        
+        function initWebAudio() {
+            if (state.audioCtx) return;
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                state.audioCtx = new AudioContext();
+            } catch(e){}
+        }
+        
+        function playChime(freq = 523.25) {
+            initWebAudio();
+            if (!state.audioCtx || state.isMuted) return;
+            try {
+                const osc = state.audioCtx.createOscillator();
+                const gain = state.audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, state.audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.12, state.audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + 1.2);
+                osc.connect(gain);
+                gain.connect(state.audioCtx.destination);
+                osc.start();
+                osc.stop(state.audioCtx.currentTime + 1.2);
+            } catch(e) {}
+        }
+        
+        function playWoodenTap() {
+            initWebAudio();
+            if (!state.audioCtx || state.isMuted) return;
+            try {
+                const osc = state.audioCtx.createOscillator();
+                const gain = state.audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(140, state.audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(45, state.audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.2, state.audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, state.audioCtx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(state.audioCtx.destination);
+                osc.start();
+                osc.stop(state.audioCtx.currentTime + 0.08);
+            } catch(e) {}
+        }
+        
+        function playCardAudio(audioPath, startTime = 0, endTime = null) {
+            if (state.isMuted) return;
             
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            submitBtn.innerHTML = `<i class="ri-fire-line text-base"></i> <span>PALAYAIN</span>`;
+            if (state.currentVoAudio) {
+                state.currentVoAudio.pause();
+                state.currentVoAudio.currentTime = 0;
+                if (state.bgAudio) state.bgAudio.volume = 0.7;
+            }
             
+            try {
+                const vo = new Audio(audioPath);
+                vo.volume = 0.7;
+                vo.currentTime = startTime;
+                state.currentVoAudio = vo;
+                
+                if (state.bgAudio) {
+                    state.bgAudio.volume = 0.3;
+                }
+                
+                const restoreVolume = () => {
+                    if (state.bgAudio) {
+                        state.bgAudio.volume = 0.7;
+                    }
+                };
+                
+                vo.onended = restoreVolume;
+                vo.onpause = restoreVolume;
+                
+                if (endTime !== null && endTime > startTime) {
+                    const checkEndTime = () => {
+                        if (vo.currentTime >= endTime) {
+                            vo.pause();
+                            vo.removeEventListener('timeupdate', checkEndTime);
+                        }
+                    };
+                    vo.addEventListener('timeupdate', checkEndTime);
+                }
+                
+                vo.play().catch(e => {});
+            } catch(e) {}
+        }
+        
+        function startJourney() {
+            playSong();
+            playChime(523.25);
+            
+            state.inSession = true;
+            updateNavigationState();
+            
+            const stage = document.getElementById('stage');
+            if (stage) stage.classList.add('open');
+            
+            hideAllSections();
+            setTimeout(() => showSection('nameFormSection'), 400);
+        }
+        
+        function openWallPage() {
+            playSong();
+            playWoodenTap();
             localStorage.setItem('multo_visited', 'true');
+            state.inSession = false;
+            
+            const topWallBtn = document.getElementById('topNavWallBtn');
+            if (topWallBtn) topWallBtn.classList.add('hidden');
+            
+            const stage = document.getElementById('stage');
+            if (stage) stage.classList.add('open');
+            
+            const ackBox = document.getElementById('submissionAckBox');
+            if (ackBox) ackBox.classList.add('hidden');
+            
+            hideAllSections();
+            setTimeout(() => showSection('thankYouSection'), 400);
+        } // Tinanggal ang stray 'z' dito
+        
+        function goBackToStart() {
+            playWoodenTap();
             state.inSession = false;
             updateNavigationState();
             
-            const ackBox = document.getElementById('submissionAckBox');
-            if (ackBox) ackBox.classList.remove('hidden');
-            
+            hideAllSections();
+            setTimeout(() => showSection('startScreen'), 400);
+        }
+        
+        function handleNameSubmit(e) {
+            e.preventDefault();
+            playWoodenTap();
+            const val = document.getElementById('nameInput').value.trim();
+            if (val) state.userName = val;
+            proceedToRationale();
+        }
+        
+        function enterAnonymous() {
+            playWoodenTap();
+            state.userName = "Anonymous";
+            proceedToRationale();
+        }
+        
+        function proceedToRationale() {
             hideAllSections();
             setTimeout(() => {
-                showSection('thankYouSection');
-            }, 500);
-        });
-    }
-    
-    function logToGoogleSheets(author, category, story, weight) {
-        return new Promise((resolve) => {
-            const queryParams = new URLSearchParams({
-                name: author,
-                category: category,
-                story: story,
-                weight: weight,
-                _t: Date.now()
-            });
-            
-            const targetUrl = `${APPS_SCRIPT_URL_MULTO}?${queryParams.toString()}`;
-            
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = targetUrl;
-            
-            let resolved = false;
-            
-            function finish() {
-                if (!resolved) {
-                    resolved = true;
-                    if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-                    resolve();
-                }
-            }
-            
-            iframe.onload = finish;
-            iframe.onerror = finish;
-            
-            document.body.appendChild(iframe);
-            setTimeout(finish, 4500);
-        });
-    }
-    
-    function burnFullCardAnimation(containerEl, textareaEl, uploadPromise, onComplete) {
-        containerEl.classList.add('burning-card-effect');
-        
-        textareaEl.style.transition = 'color 2s ease, filter 2s ease, opacity 2.5s ease';
-        textareaEl.style.color = '#ff6b00';
-        textareaEl.style.filter = 'blur(1px) drop-shadow(0 0 15px rgba(255, 100, 0, 1))';
-        
-        setTimeout(() => {
-            textareaEl.style.color = '#000000';
-            textareaEl.style.opacity = '0.1';
-        }, 1800);
-        
-        const rect = containerEl.getBoundingClientRect();
-        const canvas = document.createElement('canvas');
-        canvas.width = rect.width;
-        canvas.height = rect.height;
-        canvas.style.position = 'absolute';
-        canvas.style.top = '0px';
-        canvas.style.left = '0px';
-        canvas.style.pointerEvents = 'none';
-        canvas.style.zIndex = '35';
-        
-        containerEl.appendChild(canvas);
-        const ctx = canvas.getContext('2d');
-        
-        let particles = [];
-        const particleCount = 180;
-        
-        for (let i = 0; i < particleCount; i++) {
-            particles.push({
-                x: Math.random() * canvas.width,
-                y: canvas.height - (Math.random() * (canvas.height * 0.9)),
-                size: Math.random() * 5 + 1.5,
-                speedX: (Math.random() - 0.5) * 2.5,
-                speedY: -Math.random() * 3.5 - 1.2,
-                alpha: 1,
-                decay: Math.random() * 0.008 + 0.003,
-                color: Math.random() > 0.4 ? '#ff6600' : (Math.random() > 0.5 ? '#c59b27' : '#ff1100')
-            });
+                showSection('rationaleSection');
+                playCardAudio('../resources/multo/vo1.mp3', 2);
+            }, 400);
         }
         
-        let minBurnDurationPassed = false;
-        let uploadFinished = false;
+        function goToCategorySelection() {
+            playWoodenTap();
+            hideAllSections();
+            setTimeout(() => showSection('categorySection'), 400);
+        }
         
-        setTimeout(() => {
-            minBurnDurationPassed = true;
-        }, 3800);
-        
-        uploadPromise.then(() => {
-            uploadFinished = true;
-        });
-        
-        let animationFrame;
-        
-        function renderEmbers() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            let activeParticles = 0;
+        function selectCategory(catKey) {
+            playChime(659.25);
+            state.selectedCategory = catKey;
+            const config = CATEGORIES[catKey];
             
-            particles.forEach(p => {
-                if (p.alpha > 0) {
-                    activeParticles++;
-                    p.x += p.speedX + (Math.random() - 0.5) * 0.6;
-                    p.y += p.speedY;
-                    p.alpha -= p.decay;
-                    
-                    ctx.save();
-                    ctx.globalAlpha = Math.max(0, p.alpha);
-                    ctx.fillStyle = p.color;
-                    ctx.shadowBlur = 12;
-                    ctx.shadowColor = p.color;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-                }
-            });
+            document.getElementById('reflectionQuote').textContent = config.quote;
             
-            if (activeParticles > 0 || !minBurnDurationPassed || !uploadFinished) {
-                animationFrame = requestAnimationFrame(renderEmbers);
-            } else {
-                cancelAnimationFrame(animationFrame);
-                containerEl.classList.remove('burning-card-effect');
-                if (canvas.parentNode) {
-                    canvas.parentNode.removeChild(canvas);
+            hideAllSections();
+            setTimeout(() => showSection('reflectionSection'), 400);
+        }
+        
+        function goToStoryForm() {
+            playWoodenTap();
+            const config = CATEGORIES[state.selectedCategory];
+            
+            document.getElementById('selectedCategoryBadge').textContent = config.badge;
+            document.getElementById('storyFormTitle').textContent = config.title;
+            document.getElementById('storyPromptText').textContent = config.prompt;
+            
+            hideAllSections();
+            setTimeout(() => showSection('storyFormSection'), 400);
+        }
+        
+        function updateWeightDisplay(val) {
+            state.weight = val;
+            const labels = ["1 / Magaan lang", "2 / Medyo mabigat", "3 / Sakto lang", "4 / Mabigat", "5 / Sobrang bigat"];
+            document.getElementById('weightValueText').textContent = labels[val - 1];
+            playWoodenTap();
+        }
+        
+        async function fetchSpiritsFromScript() {
+            try {
+                const res = await fetch(`${APPS_SCRIPT_URL_MULTO}?action=read&_t=${Date.now()}`);
+                const data = await res.json();
+                if (data && data.status === 'success' && Array.isArray(data.stories)) {
+                    spiritStories = data.stories;
+                    renderSpiritsWall('all');
                 }
-                if (onComplete) onComplete();
+            } catch (err) {
+                console.error("Failed to fetch stories from Apps Script:", err);
             }
         }
         
-        renderEmbers();
-    }
-    
-    function resetTextareaState(textarea) {
-        textarea.value = '';
-        textarea.readOnly = false;
-        textarea.style.opacity = '1';
-        textarea.style.color = '#ebdcb1';
-        textarea.style.backgroundColor = '#050301';
-        textarea.style.filter = 'none';
-        textarea.style.transition = 'none';
-    }
-    
-    function redoRitual() {
-        playWoodenTap();
-        const textarea = document.getElementById('storyTextArea');
-        resetTextareaState(textarea);
+        function handleStorySubmit(e) {
+            e.preventDefault();
+            
+            const textarea = document.getElementById('storyTextArea');
+            const formSection = document.getElementById('storyFormSection');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const text = textarea.value.trim();
+            
+            if (!text) return;
+            
+            playCardAudio('../resources/multo/vo2.mp3', 2);
+            
+            state.storyText = text;
+            state.weight = document.getElementById('weightSlider').value;
+            
+            const showName = document.getElementById('showNameToggle').checked;
+            const author = showName && state.userName ? state.userName : "Anonymous";
+            const category = state.selectedCategory || "tao";
+            const weight = state.weight;
+            
+            textarea.readOnly = true;
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.innerHTML = `<i class="ri-fire-fill text-amber-500 animate-pulse"></i> <span>SINASUNOG NA ANG SULAT...</span>`;
+            
+            playChime(440);
+            
+            const uploadPromise = logToGoogleSheets(author, category, text, weight);
+            
+            burnFullCardAnimation(formSection, textarea, uploadPromise, async () => {
+                const shouldShare = document.getElementById('shareWallToggle').checked;
+                if (shouldShare) {
+                    await fetchSpiritsFromScript();
+                }
+                
+                resetTextareaState(textarea);
+                
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.innerHTML = `<i class="ri-fire-line text-base"></i> <span>PALAYAIN</span>`;
+                
+                localStorage.setItem('multo_visited', 'true');
+                state.inSession = false;
+                updateNavigationState();
+                
+                const ackBox = document.getElementById('submissionAckBox');
+                if (ackBox) ackBox.classList.remove('hidden');
+                
+                hideAllSections();
+                setTimeout(() => {
+                    showSection('thankYouSection');
+                }, 500);
+            });
+        }
         
-        state.inSession = true;
-        updateNavigationState();
+        function logToGoogleSheets(author, category, story, weight) {
+            return new Promise((resolve) => {
+                const queryParams = new URLSearchParams({
+                    name: author,
+                    category: category,
+                    story: story,
+                    weight: weight,
+                    _t: Date.now()
+                });
+                
+                const targetUrl = `${APPS_SCRIPT_URL_MULTO}?${queryParams.toString()}`;
+                
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = targetUrl;
+                
+                let resolved = false;
+                
+                function finish() {
+                    if (!resolved) {
+                        resolved = true;
+                        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+                        resolve();
+                    }
+                }
+                
+                iframe.onload = finish;
+                iframe.onerror = finish;
+                
+                document.body.appendChild(iframe);
+                setTimeout(finish, 4500);
+            });
+        }
         
-        hideAllSections();
-        setTimeout(() => showSection('categorySection'), 400);
-    }
-    
-    function hideAllSections() {
-        const sections = ['startScreen', 'nameFormSection', 'rationaleSection', 'categorySection', 'reflectionSection', 'storyFormSection', 'thankYouSection'];
-        sections.forEach(id => {
+        function burnFullCardAnimation(containerEl, textareaEl, uploadPromise, onComplete) {
+            containerEl.classList.add('burning-card-effect');
+            
+            textareaEl.style.transition = 'color 2s ease, filter 2s ease, opacity 2.5s ease';
+            textareaEl.style.color = '#ff6b00';
+            textareaEl.style.filter = 'blur(1px) drop-shadow(0 0 15px rgba(255, 100, 0, 1))';
+            
+            setTimeout(() => {
+                textareaEl.style.color = '#000000';
+                textareaEl.style.opacity = '0.1';
+            }, 1800);
+            
+            const rect = containerEl.getBoundingClientRect();
+            const canvas = document.createElement('canvas');
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0px';
+            canvas.style.left = '0px';
+            canvas.style.pointerEvents = 'none';
+            canvas.style.zIndex = '35';
+            
+            containerEl.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+            
+            let particles = [];
+            const particleCount = 180;
+            
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: canvas.height - (Math.random() * (canvas.height * 0.9)),
+                    size: Math.random() * 5 + 1.5,
+                    speedX: (Math.random() - 0.5) * 2.5,
+                    speedY: -Math.random() * 3.5 - 1.2,
+                    alpha: 1,
+                    decay: Math.random() * 0.008 + 0.003,
+                    color: Math.random() > 0.4 ? '#ff6600' : (Math.random() > 0.5 ? '#c59b27' : '#ff1100')
+                });
+            }
+            
+            let minBurnDurationPassed = false;
+            let uploadFinished = false;
+            
+            setTimeout(() => {
+                minBurnDurationPassed = true;
+            }, 3800);
+            
+            uploadPromise.then(() => {
+                uploadFinished = true;
+            });
+            
+            let animationFrame;
+            
+            function renderEmbers() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let activeParticles = 0;
+                
+                particles.forEach(p => {
+                    if (p.alpha > 0) {
+                        activeParticles++;
+                        p.x += p.speedX + (Math.random() - 0.5) * 0.6;
+                        p.y += p.speedY;
+                        p.alpha -= p.decay;
+                        
+                        ctx.save();
+                        ctx.globalAlpha = Math.max(0, p.alpha);
+                        ctx.fillStyle = p.color;
+                        ctx.shadowBlur = 12;
+                        ctx.shadowColor = p.color;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                });
+                
+                if (activeParticles > 0 || !minBurnDurationPassed || !uploadFinished) {
+                    animationFrame = requestAnimationFrame(renderEmbers);
+                } else {
+                    cancelAnimationFrame(animationFrame);
+                    containerEl.classList.remove('burning-card-effect');
+                    if (canvas.parentNode) {
+                        canvas.parentNode.removeChild(canvas);
+                    }
+                    if (onComplete) onComplete();
+                }
+            }
+            
+            renderEmbers();
+        }
+        
+        function resetTextareaState(textarea) {
+            textarea.value = '';
+            textarea.readOnly = false;
+            textarea.style.opacity = '1';
+            textarea.style.color = '#ebdcb1';
+            textarea.style.backgroundColor = '#050301';
+            textarea.style.filter = 'none';
+            textarea.style.transition = 'none';
+        }
+        
+        function redoRitual() {
+            playWoodenTap();
+            const textarea = document.getElementById('storyTextArea');
+            resetTextareaState(textarea);
+            
+            state.inSession = true;
+            updateNavigationState();
+            
+            hideAllSections();
+            setTimeout(() => showSection('categorySection'), 400);
+        }
+        
+        function hideAllSections() {
+            const sections = ['startScreen', 'nameFormSection', 'rationaleSection', 'categorySection', 'reflectionSection', 'storyFormSection', 'thankYouSection'];
+            sections.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.opacity = '0';
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+            });
+        }
+        
+        function showSection(id) {
             const el = document.getElementById(id);
             if (el) {
-                el.style.opacity = '0';
-                el.classList.add('hidden');
-                el.classList.remove('flex');
+                el.classList.remove('hidden');
+                el.classList.add('flex');
+                setTimeout(() => el.style.opacity = '1', 50);
             }
-        });
-    }
-    
-    function showSection(id) {
-        const el = document.getElementById(id);
-        if (el) {
-            el.classList.remove('hidden');
-            el.classList.add('flex');
-            setTimeout(() => el.style.opacity = '1', 50);
         }
-    }
-    
-    function renderSpiritsWall(filterCat) {
-        const grid = document.getElementById('spiritsWallGrid');
-        if (!grid) return;
-        grid.innerHTML = '';
         
-        if (spiritStories.length === 0) {
-            grid.innerHTML = `
+        function renderSpiritsWall(filterCat) {
+            const grid = document.getElementById('spiritsWallGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            
+            if (spiritStories.length === 0) {
+                grid.innerHTML = `
                 <div class="col-span-full text-center py-8 text-[#ebdcb1]/50 font-crimson italic">
                     Wala pang kwento rito. Ikaw muna ang unang mag-iwan ng sulat...
                 </div>
             `;
-            return;
-        }
-        
-        const filtered = filterCat === 'all' 
-        ? spiritStories 
-        : spiritStories.filter(s => s.category === filterCat);
-        
-        filtered.forEach(s => {
-            const card = document.createElement('div');
-            card.className = "ouija-card p-5 flex flex-col justify-between space-y-3 group hover:border-[#c59b27]";
+                return;
+            }
             
-            const catInfo = CATEGORIES[s.category] || { badge: "MULTO" };
-            const isLiked = localStorage.getItem(`multo_liked_story_${s.id}`);
-            const likedClass = isLiked ? "text-[#ffd700] opacity-80 cursor-default" : "text-[#c59b27] hover:text-[#ebdcb1] cursor-pointer";
+            const filtered = filterCat === 'all' 
+            ? spiritStories 
+            : spiritStories.filter(s => s.category === filterCat);
             
-            card.innerHTML = `
+            filtered.forEach(s => {
+                const card = document.createElement('div');
+                card.className = "ouija-card p-5 flex flex-col justify-between space-y-3 group hover:border-[#c59b27]";
+                
+                const catInfo = CATEGORIES[s.category] || { badge: "MULTO" };
+                const isLiked = localStorage.getItem(`multo_liked_story_${s.id}`);
+                const likedClass = isLiked ? "text-[#ffd700] opacity-80 cursor-default" : "text-[#c59b27] hover:text-[#ebdcb1] cursor-pointer";
+                
+                card.innerHTML = `
                 <div>
                     <div class="flex justify-between items-center text-[10px] font-rye text-[#c59b27] mb-2">
                         <span>${catInfo.badge}</span>
@@ -1240,106 +1247,106 @@
                     </div>
                 </div>
             `;
-            grid.appendChild(card);
-        });
+                grid.appendChild(card);
+            });
+            
+            document.querySelectorAll('.wall-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-[#1c120a]', 'text-[#c59b27]');
+                btn.classList.add('text-[#ebdcb1]/70');
+            });
+        }
         
-        document.querySelectorAll('.wall-filter-btn').forEach(btn => {
-            btn.classList.remove('bg-[#1c120a]', 'text-[#c59b27]');
-            btn.classList.add('text-[#ebdcb1]/70');
-        });
-    }
-    
-    async function reactToSpirit(storyId, btnEl) {
-        const likedKey = `multo_liked_story_${storyId}`;
-        if (localStorage.getItem(likedKey)) {
+        async function reactToSpirit(storyId, btnEl) {
+            const likedKey = `multo_liked_story_${storyId}`;
+            if (localStorage.getItem(likedKey)) {
+                playWoodenTap();
+                return;
+            }
+            
             playWoodenTap();
-            return;
+            playChime(880);
+            
+            localStorage.setItem(likedKey, 'true');
+            btnEl.classList.remove('hover:text-[#ebdcb1]', 'cursor-pointer');
+            btnEl.classList.add('text-[#ffd700]', 'opacity-80', 'cursor-default');
+            btnEl.title = "Naka-alay na ang kandila";
+            
+            const countSpan = btnEl.querySelector('.candle-count');
+            let currentCount = parseInt(countSpan.textContent || "0");
+            countSpan.textContent = currentCount + 1;
+            
+            try {
+                fetch(`${APPS_SCRIPT_URL_MULTO}?action=like&id=${storyId}&_t=${Date.now()}`, {
+                    mode: 'no-cors'
+                });
+            } catch(e) {
+                console.error("Failed to sync like with Google Sheets:", e);
+            }
         }
         
-        playWoodenTap();
-        playChime(880);
-        
-        localStorage.setItem(likedKey, 'true');
-        btnEl.classList.remove('hover:text-[#ebdcb1]', 'cursor-pointer');
-        btnEl.classList.add('text-[#ffd700]', 'opacity-80', 'cursor-default');
-        btnEl.title = "Naka-alay na ang kandila";
-        
-        const countSpan = btnEl.querySelector('.candle-count');
-        let currentCount = parseInt(countSpan.textContent || "0");
-        countSpan.textContent = currentCount + 1;
-        
-        try {
-            fetch(`${APPS_SCRIPT_URL_MULTO}?action=like&id=${storyId}&_t=${Date.now()}`, {
-                mode: 'no-cors'
-            });
-        } catch(e) {
-            console.error("Failed to sync like with Google Sheets:", e);
-        }
-    }
-    
-    function filterWall(cat) {
-        playWoodenTap();
-        renderSpiritsWall(cat);
-    }
-    
-    function initDustCanvas() {
-        const canvas = document.getElementById('dustCanvas');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        let dusts = [];
-        
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resize();
-        window.addEventListener('resize', resize);
-        
-        for (let i = 0; i < 45; i++) {
-            dusts.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                r: Math.random() * 1.5 + 0.5,
-                vx: (Math.random() - 0.5) * 0.3,
-                vy: -Math.random() * 0.4 - 0.1,
-                alpha: Math.random() * 0.5 + 0.1
-            });
+        function filterWall(cat) {
+            playWoodenTap();
+            renderSpiritsWall(cat);
         }
         
-        function loop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            dusts.forEach(d => {
-                d.x += d.vx;
-                d.y += d.vy;
-                if (d.y < 0) d.y = canvas.height;
-                if (d.x < 0) d.x = canvas.width;
-                if (d.x > canvas.width) d.x = 0;
-                
-                ctx.beginPath();
-                ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(197, 155, 39, ${d.alpha})`;
-                ctx.fill();
-            });
-            requestAnimationFrame(loop);
+        function initDustCanvas() {
+            const canvas = document.getElementById('dustCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let dusts = [];
+            
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+            
+            for (let i = 0; i < 45; i++) {
+                dusts.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    r: Math.random() * 1.5 + 0.5,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: -Math.random() * 0.4 - 0.1,
+                    alpha: Math.random() * 0.5 + 0.1
+                });
+            }
+            
+            function loop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                dusts.forEach(d => {
+                    d.x += d.vx;
+                    d.y += d.vy;
+                    if (d.y < 0) d.y = canvas.height;
+                    if (d.x < 0) d.x = canvas.width;
+                    if (d.x > canvas.width) d.x = 0;
+                    
+                    ctx.beginPath();
+                    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(197, 155, 39, ${d.alpha})`;
+                    ctx.fill();
+                });
+                requestAnimationFrame(loop);
+            }
+            loop();
         }
-        loop();
-    }
-    
-    function initBurnCanvas() {
-        burnCanvas = document.getElementById('burnCanvas');
-        if (burnCanvas) {
-            burnCtx = burnCanvas.getContext('2d');
-            resizeBurnCanvas();
-            window.addEventListener('resize', resizeBurnCanvas);
+        
+        function initBurnCanvas() {
+            burnCanvas = document.getElementById('burnCanvas');
+            if (burnCanvas) {
+                burnCtx = burnCanvas.getContext('2d');
+                resizeBurnCanvas();
+                window.addEventListener('resize', resizeBurnCanvas);
+            }
         }
-    }
-    
-    function resizeBurnCanvas() {
-        if (burnCanvas) {
-            burnCanvas.width = window.innerWidth;
-            burnCanvas.height = window.innerHeight;
+        
+        function resizeBurnCanvas() {
+            if (burnCanvas) {
+                burnCanvas.width = window.innerWidth;
+                burnCanvas.height = window.innerHeight;
+            }
         }
-    }
-</script>
+    </script>
 </body>
 </html>
