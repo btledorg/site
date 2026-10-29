@@ -199,10 +199,18 @@
         }
         
         .burning-card-effect {
-            transition: all 3s ease-out !important;
+            transition: all 2.5s ease-out !important;
             filter: brightness(2) contrast(1.5) drop-shadow(0 0 35px #ff5500) !important;
             box-shadow: inset 0 0 80px #ff3300, 0 0 100px #ff6600 !important;
             border-color: #ff8800 !important;
+        }
+        
+        .burned-ash-effect {
+            transition: all 1.8s ease-in-out !important;
+            background: #0d0a08 !important;
+            border-color: #2e2620 !important;
+            box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.98), 0 0 20px rgba(20, 15, 10, 0.8) !important;
+            filter: grayscale(0.9) contrast(1.1) brightness(0.5) !important;
         }
         
         @media (max-width: 640px) {
@@ -425,7 +433,7 @@
                 </div>
                 
                 <!-- Card 2: What If -->
-                <div onclick="selectCategory('whatif'); playCardAudio('../resources/multo/vo3s.mp3', 14, 20);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
+                <div onclick="selectCategory('whatif'); playCardAudio('../resources/multo/vo3.mp3', 14, 20);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="text-2xl p-2.5 rounded-lg bg-[#140c06] border border-[#5a4627]/60 group-hover:border-[#c59b27]/80 transition-colors">💭</span>
@@ -533,6 +541,12 @@
                     <textarea id="storyTextArea" rows="6" required 
                     placeholder="Isulat mo rito lahat ng gusto mong ilabas sa dibdib mo..."
                     class="w-full p-4 rounded bg-[#050301] border border-[#5a4627] focus:border-[#c59b27] text-[#ebdcb1] placeholder-[#ebdcb1]/30 font-crimson text-base sm:text-lg leading-relaxed resize-none focus:outline-none transition-colors duration-300"></textarea>
+                    
+                    <!-- Profanity Error Message Box -->
+                    <p id="profanityErrorMessage" class="hidden text-red-500 text-xs sm:text-sm font-crimson mt-1.5 text-left flex items-center gap-1.5 bg-red-950/40 p-2.5 border border-red-800/60 rounded">
+                        <i class="ri-error-warning-fill text-base shrink-0"></i>
+                        <span>Hindi maaasahang maipasa ang sulat dahil naglalaman ito ng hindi angkop na pananalita (inappropriate/profane words). Paki-ayos ang sulat.</span>
+                    </p>
                 </div>
                 
                 <div class="w-full bg-[#050301] p-4 rounded border border-[#3b2d1d] space-y-2">
@@ -634,7 +648,6 @@
         
     </main>
     
-    <!-- Data Privacy Policy Modal Dialog -->
     <div id="privacyModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="ouija-card max-w-lg w-full p-6 rounded-xl border border-[#5a4627] bg-[#0a0604] text-left relative space-y-4 shadow-[0_0_50px_rgba(0,0,0,0.9)]">
             <button onclick="closePrivacyModal()" class="absolute top-3 right-3 text-[#ebdcb1]/50 hover:text-[#c59b27] text-xl transition-colors">
@@ -665,7 +678,6 @@
     </footer>
     
     <script>
-        const APPS_SCRIPT_URL_MULTO = "https://script.google.com/macros/s/AKfycbyIT7E-p-ajGH5Mn8VXWgJoa_c3RsnKXPDGzjOo6DWM8Th0Xu8Z0EC6dc_pWmoAoR0/exec";
         let burnCanvas, burnCtx;
         
         let state = {
@@ -710,6 +722,51 @@
         
         let spiritStories = [];
         
+        function createSmartRegex(word) {
+            const cleanWord = word.trim().toLowerCase();
+            const words = cleanWord.split(/\s+/);
+            
+            const pattern = words.map(w => {
+                return w.split('').map(char => {
+                    const leet = LEET_MAP[char];
+                    if (leet) {
+                        return `${leet}+`;
+                    }
+                    return `${char.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}+`;
+                }).join('[\\s\\._\\-]*');
+            }).join('[\\s\\._\\-]+');
+            
+            return new RegExp(`(?<![a-zA-Z0-9])${pattern}(?![a-zA-Z0-9])`, 'gi');
+        }
+        
+        const COMPILED_PROFANITY_REGEXES = PROFANITY_WORDS.map(word => createSmartRegex(word));
+        
+        function containsProfanity(text) {
+            if (!text) return false;
+            return COMPILED_PROFANITY_REGEXES.some(regex => {
+                regex.lastIndex = 0;
+                return regex.test(text);
+            });
+        }
+        
+        function censorMatch(match) {
+            if (match.length <= 2) {
+                return match[0] + '*';
+            }
+            return match[0] + '*'.repeat(match.length - 2) + match[match.length - 1];
+        }
+        
+        function censorProfanity(text) {
+            if (!text) return text;
+            let censoredText = text;
+            COMPILED_PROFANITY_REGEXES.forEach(regex => {
+                regex.lastIndex = 0;
+                censoredText = censoredText.replace(regex, (match) => censorMatch(match));
+            });
+            return censoredText;
+        }
+        
+
         window.addEventListener('DOMContentLoaded', () => {
             initPreloader();
             initLocalAudio();
@@ -720,6 +777,29 @@
             state.inSession = false;
             updateNavigationState();
             showSection('startScreen');
+            
+            const textarea = document.getElementById('storyTextArea');
+            if (textarea) {
+                textarea.addEventListener('input', () => {
+                    const profanityError = document.getElementById('profanityErrorMessage');
+                    const rawText = textarea.value;
+                    
+                    if (containsProfanity(rawText)) {
+                        if (profanityError) profanityError.classList.remove('hidden');
+                        textarea.classList.add('border-red-500');
+                        
+                        const startPos = textarea.selectionStart;
+                        const endPos = textarea.selectionEnd;
+                        
+                        textarea.value = censorProfanity(rawText);
+                        
+                        textarea.setSelectionRange(startPos, endPos);
+                    } else {
+                        if (profanityError) profanityError.classList.add('hidden');
+                        textarea.classList.remove('border-red-500');
+                    }
+                });
+            }
         });
         
         function updateNavigationState() {
@@ -1051,13 +1131,25 @@
             const textarea = document.getElementById('storyTextArea');
             const formSection = document.getElementById('storyFormSection');
             const submitBtn = e.target.querySelector('button[type="submit"]');
+            const profanityError = document.getElementById('profanityErrorMessage');
             const text = textarea.value.trim();
             
             if (!text) return;
             
+            if (containsProfanity(text)) {
+                if (profanityError) profanityError.classList.remove('hidden');
+                textarea.classList.add('border-red-500');
+                playWoodenTap();
+                return;
+            } else {
+                if (profanityError) profanityError.classList.add('hidden');
+                textarea.classList.remove('border-red-500');
+            }
+            
             playCardAudio('../resources/multo/vo2.mp3', 2);
             
-            state.storyText = text;
+            const cleanText = censorProfanity(text);
+            state.storyText = cleanText;
             state.weight = document.getElementById('weightSlider').value;
             
             const showNameToggle = document.getElementById('showNameToggle');
@@ -1073,7 +1165,7 @@
             
             playChime(440);
             
-            const uploadPromise = logToGoogleSheets(author, category, text, weight);
+            const uploadPromise = logToGoogleSheets(author, category, cleanText, weight);
             
             burnFullCardAnimation(formSection, textarea, uploadPromise, async () => {
                 const shouldShare = document.getElementById('shareWallToggle').checked;
@@ -1136,7 +1228,8 @@
         }
         
         function burnFullCardAnimation(containerEl, textareaEl, uploadPromise, onComplete) {
-            containerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            containerEl.scrollIntoView({ behavior: 'smooth', block: 'top' });
+            containerEl.classList.remove('burned-ash-effect');
             containerEl.classList.add('burning-card-effect');
             
             textareaEl.style.transition = 'color 2s ease, filter 2s ease, opacity 2.5s ease';
@@ -1144,9 +1237,15 @@
             textareaEl.style.filter = 'blur(1px) drop-shadow(0 0 15px rgba(255, 100, 0, 1))';
             
             setTimeout(() => {
-                textareaEl.style.color = '#000000';
-                textareaEl.style.opacity = '0.1';
+                textareaEl.style.color = '#111111';
+                textareaEl.style.opacity = '0.15';
             }, 1800);
+            
+            // Magiging mukhang abo ang card kalahati ng aksyon
+            setTimeout(() => {
+                containerEl.classList.remove('burning-card-effect');
+                containerEl.classList.add('burned-ash-effect');
+            }, 2200);
             
             const rect = containerEl.getBoundingClientRect();
             const canvas = document.createElement('canvas');
@@ -1162,18 +1261,29 @@
             const ctx = canvas.getContext('2d');
             
             let particles = [];
-            const particleCount = 180;
+            const particleCount = 260;
+            const centerX = canvas.width / 2;
             
             for (let i = 0; i < particleCount; i++) {
+                const rand = Math.random();
+                const type = rand < 0.35 ? 'smoke' : (rand < 0.70 ? 'ash' : 'ember');
+                
+                const px = Math.random() * canvas.width;
+                const dir = px < centerX ? -1 : 1;
+                const spreadSpeed = (Math.random() * 3.5 + 1.2) * dir;
+                
                 particles.push({
-                    x: Math.random() * canvas.width,
-                    y: canvas.height - (Math.random() * (canvas.height * 0.9)),
-                    size: Math.random() * 5 + 1.5,
-                    speedX: (Math.random() - 0.5) * 2.5,
-                    speedY: -Math.random() * 3.5 - 1.2,
-                    alpha: 1,
-                    decay: Math.random() * 0.008 + 0.003,
-                    color: Math.random() > 0.4 ? '#ff6600' : (Math.random() > 0.5 ? '#c59b27' : '#ff1100')
+                    type: type,
+                    x: px,
+                    y: canvas.height - (Math.random() * (canvas.height * 0.85)),
+                    size: type === 'smoke' ? (Math.random() * 14 + 8) : (type === 'ash' ? (Math.random() * 4 + 1.5) : (Math.random() * 3.5 + 1)),
+                    speedX: spreadSpeed + (Math.random() - 0.5) * 1.5,
+                    speedY: type === 'smoke' ? (-Math.random() * 2 - 0.8) : (-Math.random() * 3.8 - 1.2),
+                    alpha: type === 'smoke' ? 0.35 : 1,
+                    decay: type === 'smoke' ? (Math.random() * 0.005 + 0.002) : (type === 'ash' ? (Math.random() * 0.006 + 0.003) : (Math.random() * 0.008 + 0.004)),
+                    color: type === 'smoke' ? 'rgba(60, 55, 50, ' : (type === 'ash' ? (Math.random() > 0.5 ? '#a8a8a8' : '#666666') : (Math.random() > 0.4 ? '#ff6600' : (Math.random() > 0.5 ? '#c59b27' : '#ff2200'))),
+                    angle: Math.random() * Math.PI * 2,
+                    spin: (Math.random() - 0.5) * 0.1
                 });
             }
             
@@ -1197,18 +1307,36 @@
                 particles.forEach(p => {
                     if (p.alpha > 0) {
                         activeParticles++;
-                        p.x += p.speedX + (Math.random() - 0.5) * 0.6;
+                        p.x += p.speedX;
                         p.y += p.speedY;
                         p.alpha -= p.decay;
+                        p.angle += p.spin;
                         
                         ctx.save();
-                        ctx.globalAlpha = Math.max(0, p.alpha);
-                        ctx.fillStyle = p.color;
-                        ctx.shadowBlur = 12;
-                        ctx.shadowColor = p.color;
-                        ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                        ctx.fill();
+                        
+                        if (p.type === 'smoke') {
+                            p.size += 0.2;
+                            ctx.globalAlpha = Math.max(0, p.alpha);
+                            ctx.fillStyle = `${p.color}${p.alpha})`;
+                            ctx.beginPath();
+                            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else if (p.type === 'ash') {
+                            ctx.globalAlpha = Math.max(0, p.alpha);
+                            ctx.fillStyle = p.color;
+                            ctx.translate(p.x, p.y);
+                            ctx.rotate(p.angle);
+                            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.5);
+                        } else {
+                            ctx.globalAlpha = Math.max(0, p.alpha);
+                            ctx.fillStyle = p.color;
+                            ctx.shadowBlur = 10;
+                            ctx.shadowColor = p.color;
+                            ctx.beginPath();
+                            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        
                         ctx.restore();
                     }
                 });
@@ -1217,7 +1345,6 @@
                     animationFrame = requestAnimationFrame(renderEmbers);
                 } else {
                     cancelAnimationFrame(animationFrame);
-                    containerEl.classList.remove('burning-card-effect');
                     if (canvas.parentNode) {
                         canvas.parentNode.removeChild(canvas);
                     }
@@ -1229,6 +1356,13 @@
         }
         
         function resetTextareaState(textarea) {
+            const formSection = document.getElementById('storyFormSection');
+            if (formSection) {
+                formSection.classList.remove('burning-card-effect', 'burned-ash-effect');
+                formSection.style.filter = '';
+                formSection.style.backgroundColor = '';
+                formSection.style.borderColor = '';
+            }
             textarea.value = '';
             textarea.readOnly = false;
             textarea.style.opacity = '1';
@@ -1236,6 +1370,9 @@
             textarea.style.backgroundColor = '#050301';
             textarea.style.filter = 'none';
             textarea.style.transition = 'none';
+            textarea.classList.remove('border-red-500');
+            const profanityError = document.getElementById('profanityErrorMessage');
+            if (profanityError) profanityError.classList.add('hidden');
         }
         
         function redoRitual() {
