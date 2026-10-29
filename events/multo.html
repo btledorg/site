@@ -283,13 +283,13 @@
             <p class="font-rye text-xs sm:text-sm text-[#c59b27] mb-8 tracking-widest uppercase opacity-90">
                 A HORROR STORY SPECIAL
             </p>
-            <div class="flex flex-col sm:flex-row gap-3">
-                <button onclick="startJourney()" class="planchette-btn font-rye text-sm sm:text-base text-[#c59b27] px-8 py-4 rounded-lg tracking-widest uppercase flex items-center justify-center gap-3">
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto max-w-xs sm:max-w-none">
+                <button onclick="startJourney()" class="w-full sm:w-auto planchette-btn font-rye text-sm sm:text-base text-[#c59b27] px-8 py-4 rounded-lg tracking-widest uppercase flex items-center justify-center gap-3">
                     <span>SIMULAN</span>
                     <i class="ri-arrow-right-line"></i>
                 </button>
                 
-                <button id="startScreenWallBtn" onclick="openWallPage()" class="px-6 py-4 rounded-lg border border-[#5a4627] hover:border-[#c59b27] bg-[#0d0805]/80 text-[#ebdcb1] font-rye text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 hidden">
+                <button id="startScreenWallBtn" onclick="openWallPage()" class="w-full sm:w-auto px-6 py-4 rounded-lg border border-[#5a4627] hover:border-[#c59b27] bg-[#0d0805]/80 text-[#ebdcb1] font-rye text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 hidden">
                     <i class="ri-book-read-line text-[#c59b27]"></i>
                     <span>MEMORY WALL</span>
                 </button>
@@ -425,7 +425,7 @@
                 </div>
                 
                 <!-- Card 2: What If -->
-                <div onclick="selectCategory('whatif'); playCardAudio('../resources/multo/vo3.mp3', 14, 20);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
+                <div onclick="selectCategory('whatif'); playCardAudio('../resources/multo/vo3s.mp3', 14, 20);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <span class="text-2xl p-2.5 rounded-lg bg-[#140c06] border border-[#5a4627]/60 group-hover:border-[#c59b27]/80 transition-colors">💭</span>
@@ -504,13 +504,13 @@
             
             <div class="w-32 h-px bg-gradient-to-r from-transparent via-[#5a4627] to-transparent my-6"></div>
             
-            <!-- Category Action Buttons with Reselect (BUMALIK) -->
-            <div class="flex flex-col sm:flex-row gap-3 justify-center items-center w-full">
-                <button onclick="goToCategorySelection()" class="px-6 py-3.5 rounded-lg border border-[#5a4627] hover:border-[#c59b27] bg-[#0d0805]/80 text-[#ebdcb1] font-rye text-xs sm:text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 cursor-pointer">
+            <!-- Mobile-responsive action buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-center items-center w-full max-w-xs sm:max-w-md mx-auto">
+                <button onclick="goToCategorySelection()" class="w-full sm:w-auto px-6 py-3.5 rounded-lg border border-[#5a4627] hover:border-[#c59b27] bg-[#0d0805]/80 text-[#ebdcb1] font-rye text-xs sm:text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 cursor-pointer">
                     <i class="ri-arrow-left-line text-lg"></i>
                     <span>BUMALIK</span>
                 </button>
-                <button onclick="goToStoryForm()" class="planchette-btn font-rye text-xs sm:text-sm text-[#c59b27] hover:text-[#080503] hover:bg-[#c59b27] px-8 py-3.5 rounded-lg border border-[#c59b27]/60 uppercase tracking-widest shadow-[0_0_15px_rgba(197,155,39,0.15)] hover:shadow-[0_0_20px_rgba(197,155,39,0.4)] transition-all duration-300 flex items-center justify-center gap-2.5 group cursor-pointer">
+                <button onclick="goToStoryForm()" class="w-full sm:w-auto planchette-btn font-rye text-xs sm:text-sm text-[#c59b27] hover:text-[#080503] hover:bg-[#c59b27] px-6 py-3.5 rounded-lg border border-[#c59b27]/60 uppercase tracking-widest shadow-[0_0_15px_rgba(197,155,39,0.15)] hover:shadow-[0_0_20px_rgba(197,155,39,0.4)] transition-all duration-300 flex items-center justify-center gap-2.5 group cursor-pointer">
                     <span>IPATULOY</span>
                     <i class="ri-arrow-right-line text-lg group-hover:translate-x-1 transition-transform"></i>
                 </button>
@@ -665,7 +665,6 @@
     </footer>
     
     <script>
-        // Inilipat sa taas para maiwasan ang Temporal Dead Zone (TDZ) / Uncaught ReferenceError
         const APPS_SCRIPT_URL_MULTO = "https://script.google.com/macros/s/AKfycbyIT7E-p-ajGH5Mn8VXWgJoa_c3RsnKXPDGzjOo6DWM8Th0Xu8Z0EC6dc_pWmoAoR0/exec";
         let burnCanvas, burnCtx;
         
@@ -1011,7 +1010,6 @@
             document.getElementById('storyFormTitle').textContent = config.title;
             document.getElementById('storyPromptText').textContent = config.prompt;
             
-            // I-check kung Anonymous para itago ang show name option
             const showNameContainer = document.getElementById('showNameContainer');
             const showNameToggle = document.getElementById('showNameToggle');
             
@@ -1271,7 +1269,7 @@
                 el.classList.add('flex');
                 setTimeout(() => {
                     el.style.opacity = '1';
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.scrollIntoView({ behavior: 'smooth', block: 'top' });
                 }, 50);
             }
         }
