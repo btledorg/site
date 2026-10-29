@@ -57,10 +57,10 @@
       max-height: 500px;
       overflow-y: auto;
     }
-
+    
     footer.w-full.py-6.border-t.border-\[\#3b2d1d\].z-10.text-center.space-y-1 {
-    backdrop-filter: blur(3px);
-}
+      backdrop-filter: blur(3px);
+    }
   </style>
 </head>
 <body>
@@ -281,9 +281,9 @@
                               
                               if (!params.has("page")) params.set("page", "Submissions");
                               if (!params.has("term")) {
-                                  params.set("term", TERM);
-                                  updated = true;
-                                }
+                                params.set("term", TERM);
+                                updated = true;
+                              }
                               if (!params.has("sem")) {
                                 params.set("sem", SEMESTER);
                                 updated = true;

@@ -2,49 +2,25 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNG
 const APPS_SCRIPT_URL_MULTO = "https://script.google.com/macros/s/AKfycbyIT7E-p-ajGH5Mn8VXWgJoa_c3RsnKXPDGzjOo6DWM8Th0Xu8Z0EC6dc_pWmoAoR0/exec";
 const TERM = "2627";;
 const SEMESTER = "1";
-const PROFANITY_WORDS = [
-    // English
-    "fuck", "fucking", "fucked", "fucker", "fuckin", "shit", "bitch", "asshole", "bastard", "cunt", 
-    "dick", "pussy", "motherfucker", "cock", "douche", "prick", "whore", "slut", "nigga", "nigger",
-    // Tagalog
-    "tangina", "taena", "putangina", "ptangina", "putang ina", "gago", "gaga", "tarantado", "tarantada", 
-    "ulol", "bobo", "kupal", "kantot", "kantutan", "pokpok", "puki", "tite", "bayag", "hinayupak", 
-    "bwisit", "leche", "pucha", "puchangina", "punyeta", "kiki", "pepe", "demonyo",
-    // Spanish
-    "mierda", "carajo", "pendejo", "pendeja", "puta", "puto", "cabron", "cabrona", "maricon", 
-    "chinga", "chingada", "coño", "joder", "gilipollas", "culero", "mamon"
-];
+        const PROFANITY_WORDS = [
+            "fuck", "fucking", "fucked", "fucker", "fuckin", "shit", "bitch", "asshole", "bastard", "cunt", 
+            "dick", "pussy", "motherfucker", "cock", "douche", "prick", "whore", "slut", "nigga", "nigger",
+            "tangina", "taena", "putangina", "ptangina", "putang ina", "gago", "gaga", "tarantado", "tarantada", 
+            "ulol", "bobo", "kupal", "kantot", "kantutan", "pokpok", "puki", "tite", "bayag", "hinayupak", 
+            "bwisit", "leche", "pucha", "puchangina", "punyeta", "kiki", "pepe", "demonyo",
+            "mierda", "carajo", "pendejo", "pendeja", "puta", "puto", "cabron", "cabrona", "maricon", 
+            "chinga", "chingada", "coño", "joder", "gilipollas", "culero", "mamon"
+        ];
 
-// Leetspeak & character substitution dictionary
-const LEET_MAP = {
-    'a': '[a@4αâáäàÅA]',
-    'b': '[b88B]',
-    'c': '[c\\(<\\[C]',
-    'd': '[d|]D]',
-    'e': '[e3€E]',
-    'f': '[f|=F]',
-    'g': '[g96G]',
-    'h': '[h#H]',
-    'i': '[i1!|lI!i]',
-    'j': '[jJ]',
-    'k': '[kK]',
-    'l': '[l1!|L]',
-    'm': '[mM]',
-    'n': '[nñÑN]',
-    'o': '[o0ÖöØO]',
-    'p': '[pP]',
-    'q': '[qQ]',
-    'r': '[rR]',
-    's': '[s5$S]',
-    't': '[t7+T]',
-    'u': '[uvVµU]',
-    'v': '[v\\/V]',
-    'w': '[wvvW]',
-    'x': '[xXK]',
-    'y': '[yY]',
-    'z': '[z2Z]'
-};
-
+        const LEET_MAP = {
+            'a': '[a@4αâáäàÅA]', 'b': '[b88B]', 'c': '[c\\(<\\[C]', 'd': '[d|]D]',
+            'e': '[e3€E]', 'f': '[f|=F]', 'g': '[g96G]', 'h': '[h#H]',
+            'i': '[i1!|lI!i]', 'j': '[jJ]', 'k': '[kK]', 'l': '[l1!|L]',
+            'm': '[mM]', 'n': '[nñÑN]', 'o': '[o0ÖöØO]', 'p': '[pP]',
+            'q': '[qQ]', 'r': '[rR]', 's': '[s5$S]', 't': '[t7+T]',
+            'u': '[uvVµU]', 'v': '[v\\/V]', 'w': '[wvvW]', 'x': '[xXK]',
+            'y': '[yY]', 'z': '[z2Z]'
+        };
 // BTLED Session Management and Activity Logging
 (function () {
   "use strict";

@@ -56,10 +56,13 @@
         .font-rye { font-family: 'Rye', serif; }
         .font-crimson { font-family: 'Crimson Text', serif; }
         
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #080503; }
         ::-webkit-scrollbar-thumb { background: #5a4627; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #c59b27; }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         @keyframes pulseGlow {
             0%, 100% { text-shadow: 0 0 8px rgba(197, 155, 39, 0.3), 0 0 15px rgba(197, 155, 39, 0.2); }
@@ -113,12 +116,12 @@
         .stage.open .curtain.right { transform: translateX(100%); }
         
         .ouija-card {
-            background: rgba(18, 12, 7, 0.82);
+            background: rgba(18, 12, 7, 0.85);
             border: 1px solid #5a4627;
             border-radius: 12px;
             box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.95), 0 10px 25px rgba(0,0,0,0.8);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            backdrop-filter: blur(5px);
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            backdrop-filter: blur(6px);
             position: relative;
             overflow: hidden;
         }
@@ -128,16 +131,16 @@
             inset: 0;
             border-radius: 12px;
             padding: 1px;
-            background: linear-gradient(135deg, rgba(197, 155, 39, 0.4), transparent, rgba(197, 155, 39, 0.15));
+            background: linear-gradient(135deg, rgba(197, 155, 39, 0.35), transparent, rgba(197, 155, 39, 0.1));
             -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
             -webkit-mask-composite: xor;
             mask-composite: exclude;
             pointer-events: none;
         }
         .ouija-card:hover {
-            transform: translateY(-5px) scale(1.02);
+            transform: translateY(-4px);
             border-color: #c59b27;
-            box-shadow: inset 0 0 30px rgba(197, 155, 39, 0.15), 0 15px 35px rgba(0, 0, 0, 0.9), 0 0 20px rgba(197, 155, 39, 0.25);
+            box-shadow: inset 0 0 30px rgba(197, 155, 39, 0.15), 0 12px 30px rgba(0, 0, 0, 0.9), 0 0 15px rgba(197, 155, 39, 0.2);
         }
         
         .planchette-btn {
@@ -197,6 +200,13 @@
         .candle-candle:hover {
             transform: scale(1.15);
         }
+
+        .line-clamp-4 {
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
         
         .burning-card-effect {
             transition: all 2.5s ease-out !important;
@@ -212,17 +222,33 @@
             box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.98), 0 0 20px rgba(20, 15, 10, 0.8) !important;
             filter: grayscale(0.9) contrast(1.1) brightness(0.5) !important;
         }
+
+        .wall-filter-btn {
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+        .wall-filter-btn.active-filter {
+            background-color: #c59b27 !important;
+            color: #050301 !important;
+            border-color: #ebdcb1 !important;
+            box-shadow: 0 0 12px rgba(197, 155, 39, 0.4);
+            font-weight: 700;
+        }
+
+        #toastNotice {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
         
         @media (max-width: 640px) {
-            header.fixed.top-0.left-0.right-0.p-3.sm\:p-5.flex.justify-between.items-center.z-50.pointer-events-auto {
-                background: linear-gradient(180deg, rgba(0, 0, 0, 0.96), rgba(0, 0, 0, 0.55));
-                backdrop-filter: blur(6px);
+            header.fixed.top-0.left-0.right-0 {
+                background: linear-gradient(180deg, rgba(5, 3, 1, 0.98), rgba(5, 3, 1, 0.7));
+                backdrop-filter: blur(8px);
             }
         }
     </style>
 </head>
 
-<body class="wood-bg flex flex-col justify-between min-h-screen text-center px-4 overflow-x-hidden">
+<body class="wood-bg flex flex-col justify-between min-h-screen text-center px-3 sm:px-4 overflow-x-hidden">
     
     <canvas id="dustCanvas"></canvas>
     <canvas id="burnCanvas"></canvas>
@@ -231,6 +257,12 @@
         <div id="youtube-audio-player"></div>
     </div>
     
+    <!-- Toast Notification -->
+    <div id="toastNotice" class="fixed bottom-6 right-6 z-50 bg-[#120c07] border border-[#c59b27] text-[#ebdcb1] px-4 py-3 rounded-lg shadow-2xl flex items-center gap-2 opacity-0 pointer-events-none transform translate-y-4 font-crimson text-sm">
+        <i id="toastIcon" class="ri-checkbox-circle-fill text-[#c59b27] text-lg"></i>
+        <span id="toastMsg">Notification message</span>
+    </div>
+
     <div id="preloader">
         <div class="font-rye text-[#c59b27] tracking-widest text-base sm:text-xl mb-6 animate-pulse uppercase">
             LOADING EXPERIENCE...
@@ -265,6 +297,11 @@
                 <span id="songStatusText" class="text-xs font-rye hidden md:inline">CUP OF JOE - MULTO</span>
             </button>
             
+            <button id="audioControlPanelBtn" onclick="toggleAudioControlModal()" class="p-2 sm:px-3 sm:py-2 rounded-full border border-[#5a4627] bg-[#0d0805]/80 text-[#c59b27] hover:text-[#ebdcb1] hover:border-[#c59b27] transition-all shadow-lg flex items-center gap-1.5" title="Audio & Ambient Settings">
+                <i class="ri-equalizer-fill text-lg"></i>
+                <span class="text-xs font-rye hidden md:inline">AUDIO MIX</span>
+            </button>
+
             <button id="muteToggleBtn" onclick="toggleAudioMute()" class="p-2 sm:p-2.5 rounded-full border border-[#5a4627] bg-[#0d0805]/80 text-[#c59b27] hover:text-[#ebdcb1] hover:border-[#c59b27] transition-all shadow-lg flex items-center gap-2">
                 <i id="muteIcon" class="ri-volume-up-fill text-lg"></i>
             </button>
@@ -276,10 +313,11 @@
         <div class="curtain right"></div>
     </div>
     
-    <main class="flex-grow flex items-center justify-center pt-24 sm:pt-32 pb-20 px-4 z-10 w-full max-w-4xl mx-auto">
+    <main class="flex-grow flex items-center justify-center pt-20 sm:pt-28 pb-16 px-2 sm:px-4 z-10 w-full max-w-5xl mx-auto">
         
+        <!-- Start Screen -->
         <section id="startScreen" class="flex flex-col items-center justify-center w-full my-auto transition-all duration-700">
-            <div class="w-32 h-32 sm:w-40 sm:h-40 mb-6 animate-float relative flex items-center justify-center cursor-pointer" onclick="startJourney()">
+            <div class="w-28 h-28 sm:w-40 sm:h-40 mb-6 animate-float relative flex items-center justify-center cursor-pointer" onclick="startJourney()">
                 <div class="absolute inset-2 rounded-full bg-[#c59b27]/25 blur-xl pointer-events-none z-0"></div>
                 <img src="../resources/multo/Logo.gif" alt="Multo Animated Logo" 
                 class="w-full h-full object-contain relative z-10"
@@ -304,7 +342,8 @@
             </div>
         </section>
         
-        <section id="nameFormSection" class="hidden flex-col items-center w-full max-w-lg ouija-card p-8 sm:p-10 rounded-2xl border border-[#5a4627]/60 shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-md transition-all duration-500">
+        <!-- Name Form Section -->
+        <section id="nameFormSection" class="hidden flex-col items-center w-full max-w-lg ouija-card p-6 sm:p-10 rounded-2xl border border-[#5a4627]/60 shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-md transition-all duration-500">
             <div class="text-center mb-8">
                 <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[#c59b27]/10 border border-[#c59b27]/30 flex items-center justify-center">
                     <i class="ri-quill-pen-line text-2xl text-[#c59b27]"></i>
@@ -332,8 +371,9 @@
             </div>
         </section>
         
+        <!-- Rationale Section -->
         <section id="rationaleSection" class="hidden flex-col items-center w-full max-w-2xl ouija-card p-6 sm:p-10 transition-all duration-500">
-            <h2 class="font-cinzel text-1xl sm:text-3xl text-[#ebdcb1] font-bold mb-2">ANO BA ANG "MULTO" PARA SA'YO?</h2>
+            <h2 class="font-cinzel text-xl sm:text-3xl text-[#ebdcb1] font-bold mb-2">ANO BA ANG "MULTO" PARA SA'YO?</h2>
             <div class="w-20 h-0.5 bg-[#5a4627] my-3"></div>
             
             <p class="font-crimson text-base sm:text-lg text-[#ebdcb1]/90 max-w-xl text-center mb-6 leading-relaxed">
@@ -343,7 +383,6 @@
             <div class="relative w-full mb-8">
                 <div id="rationaleCarousel" class="flex gap-4 overflow-x-auto snap-x snap-mandatory py-2 px-1 w-full scroll-smooth scrollbar-none">
                     
-                    <!-- Card 1 -->
                     <div class="snap-center flex-shrink-0 w-[85%] sm:w-[260px] p-5 rounded-xl bg-[#0a0604]/90 border border-[#5a4627]/60 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.6)] hover:border-[#c59b27]/60 transition-all cursor-pointer" onclick="playCardAudio('../resources/multo/vo1.mp3', 0)">
                         <div>
                             <div class="flex items-center gap-3 mb-3">
@@ -354,7 +393,6 @@
                         </div>
                     </div>
                     
-                    <!-- Card 2 -->
                     <div class="snap-center flex-shrink-0 w-[85%] sm:w-[260px] p-5 rounded-xl bg-[#0a0604]/90 border border-[#5a4627]/60 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.6)] hover:border-[#c59b27]/60 transition-all cursor-pointer" onclick="playCardAudio('../resources/multo/vo1.mp3', 2)">
                         <div>
                             <div class="flex items-center gap-3 mb-3">
@@ -365,7 +403,6 @@
                         </div>
                     </div>
                     
-                    <!-- Card 3 -->
                     <div class="snap-center flex-shrink-0 w-[85%] sm:w-[260px] p-5 rounded-xl bg-[#0a0604]/90 border border-[#5a4627]/60 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.6)] hover:border-[#c59b27]/60 transition-all cursor-pointer" onclick="playCardAudio('../resources/multo/vo1.mp3', 4)">
                         <div>
                             <div class="flex items-center gap-3 mb-3">
@@ -376,7 +413,6 @@
                         </div>
                     </div>
                     
-                    <!-- Card 4 -->
                     <div class="snap-center flex-shrink-0 w-[85%] sm:w-[260px] p-5 rounded-xl bg-[#0a0604]/90 border border-[#5a4627]/60 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.6)] hover:border-[#c59b27]/60 transition-all cursor-pointer" onclick="playCardAudio('../resources/multo/vo1.mp3', 6)">
                         <div>
                             <div class="flex items-center gap-3 mb-3">
@@ -402,6 +438,7 @@
             </button>
         </section>
         
+        <!-- Category Section -->
         <section id="categorySection" class="hidden flex-col items-center w-full max-w-3xl transition-all duration-500">
             <div class="text-center mb-8">
                 <span class="font-rye text-xs text-[#c59b27] tracking-[0.2em] uppercase">PUMILI NG BIBITAWAN MO</span>
@@ -413,7 +450,6 @@
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 w-full">
                 
-                <!-- Card 1: Person -->
                 <div onclick="selectCategory('tao'); playCardAudio('../resources/multo/vo3.mp3', 1, 11);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4">
@@ -432,7 +468,6 @@
                     </div>
                 </div>
                 
-                <!-- Card 2: What If -->
                 <div onclick="selectCategory('whatif'); playCardAudio('../resources/multo/vo3.mp3', 14, 20);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4">
@@ -451,7 +486,6 @@
                     </div>
                 </div>
                 
-                <!-- Card 3: Unspoken -->
                 <div onclick="selectCategory('nasabi'); playCardAudio('../resources/multo/vo3.mp3', 21, 30);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4">
@@ -470,7 +504,6 @@
                     </div>
                 </div>
                 
-                <!-- Card 4: Memory -->
                 <div onclick="selectCategory('nakaraan'); playCardAudio('../resources/multo/vo3.mp3', 31, 41);" class="ouija-card group p-6 rounded-xl bg-[#080503]/90 border border-[#5a4627]/70 hover:border-[#c59b27] transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4">
@@ -492,9 +525,8 @@
             </div>
         </section>
         
-        <section id="reflectionSection" class="hidden flex-col items-center w-full max-w-xl ouija-card p-8 sm:p-10 rounded-2xl bg-[#080503]/95 border border-[#5a4627]/80 shadow-[0_0_40px_rgba(0,0,0,0.9)] backdrop-blur-md text-center transition-all duration-500 relative overflow-hidden">
-            <div class="absolute inset-0 bg-radial-glow opacity-20 pointer-events-none"></div>
-            
+        <!-- Reflection Section -->
+        <section id="reflectionSection" class="hidden flex-col items-center w-full max-w-xl ouija-card p-6 sm:p-10 rounded-2xl bg-[#080503]/95 border border-[#5a4627]/80 shadow-[0_0_40px_rgba(0,0,0,0.9)] backdrop-blur-md text-center transition-all duration-500 relative overflow-hidden">
             <div class="relative w-20 h-20 sm:w-24 sm:h-24 mb-5 mx-auto flex items-center justify-center animate-float">
                 <div class="absolute inset-2 rounded-full bg-[#c59b27]/25 blur-xl pointer-events-none"></div>
                 <img src="../resources/multo/logo.png" alt="Multo Logo" 
@@ -509,10 +541,9 @@
                 </blockquote>
                 <i class="ri-double-quotes-r text-2xl sm:text-3xl text-[#5a4627]/60 absolute -bottom-4 right-0"></i>
             </div>
-            
+
             <div class="w-32 h-px bg-gradient-to-r from-transparent via-[#5a4627] to-transparent my-6"></div>
             
-            <!-- Mobile-responsive action buttons -->
             <div class="flex flex-col sm:flex-row gap-3 justify-center items-center w-full max-w-xs sm:max-w-md mx-auto">
                 <button onclick="goToCategorySelection()" class="w-full sm:w-auto px-6 py-3.5 rounded-lg border border-[#5a4627] hover:border-[#c59b27] bg-[#0d0805]/80 text-[#ebdcb1] font-rye text-xs sm:text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 cursor-pointer">
                     <i class="ri-arrow-left-line text-lg"></i>
@@ -525,7 +556,8 @@
             </div>
         </section>
         
-        <section id="storyFormSection" class="hidden flex-col items-center w-full max-w-xl ouija-card p-6 sm:p-8 rounded-lg bg-[#0a0604] border border-[#3b2d1d] transition-all duration-500">
+        <!-- Story Form Section -->
+        <section id="storyFormSection" class="hidden flex-col items-center w-full max-w-xl ouija-card p-5 sm:p-8 rounded-lg bg-[#0a0604] border border-[#3b2d1d] transition-all duration-500">
             
             <div class="text-center mb-6 w-full">
                 <span id="selectedCategoryBadge" class="font-rye text-[10px] sm:text-xs text-[#c59b27] tracking-[0.2em] uppercase border-b border-[#5a4627] pb-1 inline-block">MULTO</span>
@@ -542,7 +574,6 @@
                     placeholder="Isulat mo rito lahat ng gusto mong ilabas sa dibdib mo..."
                     class="w-full p-4 rounded bg-[#050301] border border-[#5a4627] focus:border-[#c59b27] text-[#ebdcb1] placeholder-[#ebdcb1]/30 font-crimson text-base sm:text-lg leading-relaxed resize-none focus:outline-none transition-colors duration-300"></textarea>
                     
-                    <!-- Profanity Error Message Box -->
                     <p id="profanityErrorMessage" class="hidden text-red-500 text-xs sm:text-sm font-crimson mt-1.5 text-left flex items-center gap-1.5 bg-red-950/40 p-2.5 border border-red-800/60 rounded">
                         <i class="ri-error-warning-fill text-base shrink-0"></i>
                         <span>Hindi maaasahang maipasa ang sulat dahil naglalaman ito ng hindi angkop na pananalita (inappropriate/profane words). Paki-ayos ang sulat.</span>
@@ -569,7 +600,6 @@
                 </div>
                 
                 <div class="w-full bg-[#080503]/80 p-3.5 rounded border border-[#5a4627]/40 space-y-2.5 text-left">
-                    <!-- Hide Option if Anonymous -->
                     <div id="showNameContainer" class="flex items-center gap-2.5">
                         <input type="checkbox" id="showNameToggle" class="accent-[#c59b27] w-4 h-4 cursor-pointer rounded-sm" checked>
                         <label for="showNameToggle" class="font-crimson text-sm text-[#ebdcb1]/90 cursor-pointer hover:text-[#ebdcb1]">
@@ -584,7 +614,6 @@
                         </label>
                     </div>
                     
-                    <!-- Data Privacy Consent Checkbox -->
                     <div class="flex items-start gap-2.5">
                         <input type="checkbox" id="privacyConsentToggle" required class="accent-[#c59b27] w-4 h-4 cursor-pointer rounded-sm mt-0.5">
                         <label for="privacyConsentToggle" class="font-crimson text-sm text-[#ebdcb1]/90 cursor-pointer hover:text-[#ebdcb1]">
@@ -601,14 +630,15 @@
             </form>
         </section>
         
-        <section id="thankYouSection" class="hidden flex-col items-center w-full max-w-4xl transition-all duration-500 space-y-8">
+        <!-- Memory Wall / Thank You Section -->
+        <section id="thankYouSection" class="hidden flex-col items-center w-full max-w-5xl transition-all duration-500 space-y-6">
             
             <div class="w-full flex justify-between items-center border-b border-[#3b2d1d] pb-4">
-                <button onclick="goBackToStart()" class="px-4 py-2 rounded border border-[#5a4627] hover:border-[#c59b27] bg-[#120b06] text-[#c59b27] font-rye text-xs tracking-widest uppercase transition-all flex items-center gap-2 cursor-pointer">
+                <button onclick="goBackToStart()" class="px-3.5 py-2 rounded border border-[#5a4627] hover:border-[#c59b27] bg-[#120b06] text-[#c59b27] font-rye text-xs tracking-widest uppercase transition-all flex items-center gap-2 cursor-pointer">
                     <i class="ri-arrow-left-line text-base"></i>
                     <span>BUMALIK</span>
                 </button>
-                <button onclick="redoRitual()" class="px-4 py-2 rounded border border-[#c59b27] bg-[#120b06] hover:bg-[#c59b27] hover:text-[#050301] text-[#c59b27] font-rye text-xs tracking-widest uppercase transition-all flex items-center gap-2 cursor-pointer">
+                <button onclick="redoRitual()" class="px-3.5 py-2 rounded border border-[#c59b27] bg-[#120b06] hover:bg-[#c59b27] hover:text-[#050301] text-[#c59b27] font-rye text-xs tracking-widest uppercase transition-all flex items-center gap-2 cursor-pointer">
                     <i class="ri-quill-pen-line text-base"></i>
                     <span>MAGBAHAGI ULIT</span>
                 </button>
@@ -625,29 +655,124 @@
                 </p>
             </div>
             
-            <div class="w-full space-y-5">
-                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-[#3b2d1d] pb-4">
-                    <div class="text-center sm:text-left">
-                        <h3 class="font-cinzel text-lg sm:text-xl text-[#c59b27] font-bold tracking-wide">MGA KWENTONG PINALAYA</h3>
-                        <p class="font-crimson italic text-xs sm:text-sm text-[#ebdcb1]/60">Mga alaalang inihinga rin ng iba.</p>
+            <!-- Controls & Memory Wall Filter Header -->
+            <div class="w-full space-y-4">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#3b2d1d] pb-4">
+                    <div class="text-center md:text-left">
+                        <h3 class="font-cinzel text-xl sm:text-2xl text-[#c59b27] font-bold tracking-wide">MGA KWENTONG PINALAYA</h3>
+                        <p class="font-crimson italic text-xs sm:text-sm text-[#ebdcb1]/60 mt-0.5">Mga alaalang inihinga rin ng iba.</p>
                     </div>
                     
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <button onclick="filterWall('all')" class="wall-filter-btn px-3 py-1 rounded border border-[#5a4627] font-rye text-[10px] text-[#c59b27] hover:border-[#c59b27] bg-[#120b06] transition-colors">LAHAT</button>
-                        <button onclick="filterWall('tao')" class="wall-filter-btn px-3 py-1 rounded border border-[#3b2d1d] font-rye text-[10px] text-[#ebdcb1]/70 hover:border-[#c59b27] transition-colors">TAO</button>
-                        <button onclick="filterWall('whatif')" class="wall-filter-btn px-3 py-1 rounded border border-[#3b2d1d] font-rye text-[10px] text-[#ebdcb1]/70 hover:border-[#c59b27] transition-colors">WHAT IF</button>
-                        <button onclick="filterWall('nasabi')" class="wall-filter-btn px-3 py-1 rounded border border-[#3b2d1d] font-rye text-[10px] text-[#ebdcb1]/70 hover:border-[#c59b27] transition-colors">HINDI NASABI</button>
-                        <button onclick="filterWall('nakaraan')" class="wall-filter-btn px-3 py-1 rounded border border-[#3b2d1d] font-rye text-[10px] text-[#ebdcb1]/70 hover:border-[#c59b27] transition-colors">ALAALA</button>
+                    <div class="w-full md:w-auto flex flex-col gap-3">
+                        <!-- Search Box -->
+                        <div class="relative w-full md:w-72">
+                            <input type="text" id="wallSearchInput" oninput="filterWallBySearch()" placeholder="Maghanap sa mga kwento..." class="w-full pl-9 pr-8 py-2 bg-[#080503] border border-[#5a4627] rounded-lg text-xs text-[#ebdcb1] placeholder-[#ebdcb1]/40 font-crimson focus:outline-none focus:border-[#c59b27] transition-all">
+                            <i class="ri-search-line absolute left-3 top-2.5 text-sm text-[#c59b27]/70"></i>
+                            <button id="clearSearchBtn" onclick="clearWallSearch()" class="hidden absolute right-2.5 top-2 text-xs text-[#ebdcb1]/40 hover:text-[#c59b27]">
+                                <i class="ri-close-circle-fill text-sm"></i>
+                            </button>
+                        </div>
+
+                        <!-- Category Filter Scroll/Pills -->
+                        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 max-w-full">
+                            <button onclick="filterWall('all')" id="filter-all" class="wall-filter-btn px-3 py-1.5 rounded-md border border-[#5a4627] font-rye text-[10px] sm:text-xs text-[#ebdcb1]/80 hover:border-[#c59b27] bg-[#120b06] active-filter">LAHAT</button>
+                            <button onclick="filterWall('tao')" id="filter-tao" class="wall-filter-btn px-3 py-1.5 rounded-md border border-[#3b2d1d] font-rye text-[10px] sm:text-xs text-[#ebdcb1]/80 hover:border-[#c59b27] bg-[#0a0604]">TAO</button>
+                            <button onclick="filterWall('whatif')" id="filter-whatif" class="wall-filter-btn px-3 py-1.5 rounded-md border border-[#3b2d1d] font-rye text-[10px] sm:text-xs text-[#ebdcb1]/80 hover:border-[#c59b27] bg-[#0a0604]">WHAT IF</button>
+                            <button onclick="filterWall('nasabi')" id="filter-nasabi" class="wall-filter-btn px-3 py-1.5 rounded-md border border-[#3b2d1d] font-rye text-[10px] sm:text-xs text-[#ebdcb1]/80 hover:border-[#c59b27] bg-[#0a0604]">HINDI NASABI</button>
+                            <button onclick="filterWall('nakaraan')" id="filter-nakaraan" class="wall-filter-btn px-3 py-1.5 rounded-md border border-[#3b2d1d] font-rye text-[10px] sm:text-xs text-[#ebdcb1]/80 hover:border-[#c59b27] bg-[#0a0604]">ALAALA</button>
+                        </div>
                     </div>
                 </div>
                 
-                <div id="spiritsWallGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-left">
+                <div id="spiritsWallGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-left items-start">
                 </div>
             </div>
         </section>
         
     </main>
     
+    <!-- Full Story Reader Modal -->
+    <div id="storyReadModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="ouija-card max-w-lg w-full p-6 sm:p-8 rounded-xl border border-[#c59b27] bg-[#0a0604] text-left relative space-y-4 shadow-[0_0_50px_rgba(0,0,0,0.95)]">
+            <button onclick="closeStoryModal()" class="absolute top-3 right-3 text-[#ebdcb1]/50 hover:text-[#c59b27] text-2xl transition-colors">
+                <i class="ri-close-line"></i>
+            </button>
+            <div class="flex justify-between items-center border-b border-[#5a4627]/50 pb-3">
+                <div>
+                    <span id="modalCategoryBadge" class="font-rye text-[10px] text-[#c59b27] tracking-widest uppercase block">TAONG LUMAYO</span>
+                    <span id="modalDate" class="font-crimson text-xs text-[#ebdcb1]/50 italic">Ngayon lang</span>
+                </div>
+                <span id="modalWeightBadge" class="text-[10px] font-rye text-[#c59b27] bg-[#140c06] px-2.5 py-1 rounded border border-[#5a4627]">BIGAT: 3/5</span>
+            </div>
+            
+            <div class="max-h-[60vh] overflow-y-auto pr-2">
+                <p id="modalStoryBody" class="font-crimson text-base sm:text-lg text-[#ebdcb1] italic leading-relaxed whitespace-pre-line">
+                    ...
+                </p>
+            </div>
+
+            <div class="pt-4 border-t border-[#5a4627]/40 flex justify-between items-center">
+                <span id="modalAuthor" class="font-crimson text-sm text-[#ebdcb1]/80">— Anonymous</span>
+                <button id="modalCandleBtn" class="candle-candle text-xs flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#140c06] border border-[#5a4627] text-[#c59b27]">
+                    🕯️ <span id="modalCandleCount" class="font-rye text-xs">0</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio & Ambient Settings Modal -->
+    <div id="audioMixModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="ouija-card max-w-md w-full p-6 rounded-xl border border-[#5a4627] bg-[#0a0604] text-left relative space-y-5 shadow-[0_0_50px_rgba(0,0,0,0.9)]">
+            <button onclick="toggleAudioControlModal()" class="absolute top-3 right-3 text-[#ebdcb1]/50 hover:text-[#c59b27] text-xl transition-colors">
+                <i class="ri-close-line"></i>
+            </button>
+            <div class="flex items-center gap-2 border-b border-[#5a4627]/50 pb-2">
+                <i class="ri-equalizer-line text-[#c59b27] text-xl"></i>
+                <h3 class="font-cinzel text-lg text-[#c59b27] font-bold tracking-wide">AUDIO & AMBIANCE MIX</h3>
+            </div>
+            
+            <div class="space-y-4 font-crimson">
+                <div>
+                    <div class="flex justify-between items-center mb-1 text-sm text-[#ebdcb1]">
+                        <span>🎶 Master Volume</span>
+                        <span id="masterVolValText" class="text-xs text-[#c59b27]">100%</span>
+                    </div>
+                    <input type="range" id="masterVolSlider" min="0" max="100" value="100" oninput="updateMasterVolume(this.value)" class="w-full">
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1 text-sm text-[#ebdcb1]">
+                        <span>📻 Music Volume ("Multo")</span>
+                        <span id="musicVolValText" class="text-xs text-[#c59b27]">70%</span>
+                    </div>
+                    <input type="range" id="musicVolSlider" min="0" max="100" value="70" oninput="updateMusicVolume(this.value)" class="w-full">
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1 text-sm text-[#ebdcb1]">
+                        <span>🔥 Ambient Fire & Crackle</span>
+                        <span id="fireVolValText" class="text-xs text-[#c59b27]">40%</span>
+                    </div>
+                    <input type="range" id="fireVolSlider" min="0" max="100" value="40" oninput="updateFireVolume(this.value)" class="w-full">
+                </div>
+
+                <div class="pt-2 border-t border-[#5a4627]/40 flex justify-between items-center">
+                    <span class="text-sm text-[#ebdcb1]/80">🔥 Fire Crackle Audio</span>
+                    <button id="fireToggleBtn" onclick="toggleFireAmbient()" class="px-3 py-1 rounded border border-[#5a4627] text-xs font-rye text-[#c59b27] bg-[#120b06] hover:border-[#c59b27]">
+                        NAKA-OFF
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-right pt-2 border-t border-[#5a4627]/40">
+                <button onclick="toggleAudioControlModal()" class="px-5 py-2 rounded bg-[#c59b27] text-[#050301] font-rye text-xs uppercase hover:bg-[#ebdcb1] transition-colors">
+                    ISARA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Privacy Modal -->
     <div id="privacyModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="ouija-card max-w-lg w-full p-6 rounded-xl border border-[#5a4627] bg-[#0a0604] text-left relative space-y-4 shadow-[0_0_50px_rgba(0,0,0,0.9)]">
             <button onclick="closePrivacyModal()" class="absolute top-3 right-3 text-[#ebdcb1]/50 hover:text-[#c59b27] text-xl transition-colors">
@@ -668,7 +793,7 @@
         </div>
     </div>
     
-    <footer class="w-full py-6 border-t border-[#3b2d1d] z-10 text-center space-y-1">
+    <footer class="w-full py-6 border-t border-[#3b2d1d] z-10 text-center space-y-1 mt-auto">
         <p class="font-rye text-[10px] sm:text-xs text-[#c59b27] tracking-[0.15em] uppercase">
             © 2026 BTLED ORGANIZATION
         </p>
@@ -678,6 +803,8 @@
     </footer>
     
     <script>
+
+
         let burnCanvas, burnCtx;
         
         let state = {
@@ -687,7 +814,15 @@
             weight: 3,
             isMuted: false,
             isPlayingSong: false,
+            masterVol: 1.0,
+            musicVol: 0.7,
+            fireVol: 0.4,
+            isFirePlaying: false,
+            currentFilterCat: 'all',
+            searchQuery: '',
             audioCtx: null,
+            fireNoiseNode: null,
+            fireGainNode: null,
             bgAudio: null,
             currentVoAudio: null,
             inSession: false
@@ -725,17 +860,12 @@
         function createSmartRegex(word) {
             const cleanWord = word.trim().toLowerCase();
             const words = cleanWord.split(/\s+/);
-            
             const pattern = words.map(w => {
                 return w.split('').map(char => {
                     const leet = LEET_MAP[char];
-                    if (leet) {
-                        return `${leet}+`;
-                    }
-                    return `${char.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}+`;
+                    return leet ? `${leet}+` : `${char.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}+`;
                 }).join('[\\s\\._\\-]*');
             }).join('[\\s\\._\\-]+');
-            
             return new RegExp(`(?<![a-zA-Z0-9])${pattern}(?![a-zA-Z0-9])`, 'gi');
         }
         
@@ -750,9 +880,7 @@
         }
         
         function censorMatch(match) {
-            if (match.length <= 2) {
-                return match[0] + '*';
-            }
+            if (match.length <= 2) return match[0] + '*';
             return match[0] + '*'.repeat(match.length - 2) + match[match.length - 1];
         }
         
@@ -765,7 +893,6 @@
             });
             return censoredText;
         }
-        
 
         window.addEventListener('DOMContentLoaded', () => {
             initPreloader();
@@ -790,9 +917,7 @@
                         
                         const startPos = textarea.selectionStart;
                         const endPos = textarea.selectionEnd;
-                        
                         textarea.value = censorProfanity(rawText);
-                        
                         textarea.setSelectionRange(startPos, endPos);
                     } else {
                         if (profanityError) profanityError.classList.add('hidden');
@@ -822,6 +947,24 @@
             }
         }
         
+        function showToast(msg, icon = 'ri-checkbox-circle-fill') {
+            const toast = document.getElementById('toastNotice');
+            const msgEl = document.getElementById('toastMsg');
+            const iconEl = document.getElementById('toastIcon');
+            if (!toast || !msgEl || !iconEl) return;
+
+            msgEl.textContent = msg;
+            iconEl.className = `${icon} text-[#c59b27] text-lg`;
+
+            toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+            }, 3000);
+        }
+
         function initPreloader() {
             let progress = 0;
             const progressBar = document.getElementById('load-progress');
@@ -845,16 +988,43 @@
         function initLocalAudio() {
             state.bgAudio = new Audio('../resources/multo/multo.mp3');
             state.bgAudio.loop = true;
-            state.bgAudio.volume = 0.7;
+            state.bgAudio.crossOrigin = "anonymous";
+            updateAudioVolumes();
+        }
+
+        function initWebAudio() {
+            if (state.audioCtx) return;
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                state.audioCtx = new AudioContext();
+            } catch(e){}
+        }
+
+        function updateAudioVolumes() {
+            const effectiveMusic = state.isMuted ? 0 : (state.musicVol * state.masterVol);
+            if (state.bgAudio) {
+                state.bgAudio.volume = Math.min(1.0, Math.max(0, effectiveMusic));
+            }
+            if (state.currentVoAudio) {
+                state.currentVoAudio.volume = Math.min(1.0, Math.max(0, effectiveMusic));
+            }
+            if (state.fireGainNode) {
+                const effectiveFire = state.isMuted ? 0 : (state.fireVol * state.masterVol);
+                state.fireGainNode.gain.value = state.isFirePlaying ? effectiveFire * 0.15 : 0;
+            }
         }
         
         function playSong() {
+            initWebAudio();
+            if (state.audioCtx && state.audioCtx.state === 'suspended') {
+                state.audioCtx.resume();
+            }
             if (state.bgAudio) {
                 state.bgAudio.play().then(() => {
                     state.isPlayingSong = true;
                     updateAudioUI();
                 }).catch(e => {
-                    console.log("Local audio play waiting for user action");
+                    console.log("Audio play waiting for interaction");
                 });
             }
         }
@@ -867,8 +1037,7 @@
                 state.bgAudio.pause();
                 state.isPlayingSong = false;
             } else {
-                state.bgAudio.play().catch(e => {});
-                state.isPlayingSong = true;
+                playSong();
             }
             updateAudioUI();
         }
@@ -876,12 +1045,7 @@
         function toggleAudioMute() {
             playWoodenTap();
             state.isMuted = !state.isMuted;
-            if (state.bgAudio) {
-                state.bgAudio.muted = state.isMuted;
-            }
-            if (state.currentVoAudio) {
-                state.currentVoAudio.muted = state.isMuted;
-            }
+            updateAudioVolumes();
             updateAudioUI();
         }
         
@@ -892,18 +1056,9 @@
             if (icon) {
                 icon.className = state.isMuted ? "ri-volume-mute-fill text-lg" : "ri-volume-up-fill text-lg";
             }
-            
             if (songIcon) {
                 songIcon.style.animationPlayState = state.isPlayingSong ? "running" : "paused";
             }
-        }
-        
-        function initWebAudio() {
-            if (state.audioCtx) return;
-            try {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                state.audioCtx = new AudioContext();
-            } catch(e){}
         }
         
         function playChime(freq = 523.25) {
@@ -914,7 +1069,8 @@
                 const gain = state.audioCtx.createGain();
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(freq, state.audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.12, state.audioCtx.currentTime);
+                const effectiveVol = state.masterVol * 0.12;
+                gain.gain.setValueAtTime(effectiveVol, state.audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + 1.2);
                 osc.connect(gain);
                 gain.connect(state.audioCtx.destination);
@@ -932,7 +1088,8 @@
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(140, state.audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(45, state.audioCtx.currentTime + 0.08);
-                gain.gain.setValueAtTime(0.2, state.audioCtx.currentTime);
+                const effectiveVol = state.masterVol * 0.2;
+                gain.gain.setValueAtTime(effectiveVol, state.audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, state.audioCtx.currentTime + 0.08);
                 osc.connect(gain);
                 gain.connect(state.audioCtx.destination);
@@ -940,32 +1097,99 @@
                 osc.stop(state.audioCtx.currentTime + 0.08);
             } catch(e) {}
         }
+
+        function playFireWhooshSound() {
+            initWebAudio();
+            if (!state.audioCtx || state.isMuted) return;
+            try {
+                const bufferSize = state.audioCtx.sampleRate * 2;
+                const buffer = state.audioCtx.createBuffer(1, bufferSize, state.audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = state.audioCtx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = state.audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(300, state.audioCtx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(1200, state.audioCtx.currentTime + 1.0);
+                filter.frequency.exponentialRampToValueAtTime(200, state.audioCtx.currentTime + 2.5);
+
+                const gain = state.audioCtx.createGain();
+                const peakGain = state.masterVol * 0.4;
+                gain.gain.setValueAtTime(0.01, state.audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(peakGain, state.audioCtx.currentTime + 0.8);
+                gain.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + 2.5);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(state.audioCtx.destination);
+
+                noise.start();
+                noise.stop(state.audioCtx.currentTime + 2.5);
+            } catch(e) {}
+        }
+
+        function toggleFireAmbient() {
+            initWebAudio();
+            playWoodenTap();
+            state.isFirePlaying = !state.isFirePlaying;
+            
+            const btn = document.getElementById('fireToggleBtn');
+            if (btn) {
+                btn.textContent = state.isFirePlaying ? "NAKA-ON 🔥" : "NAKA-OFF";
+                btn.className = state.isFirePlaying ? "px-3 py-1 rounded border border-[#c59b27] text-xs font-rye text-[#050301] bg-[#c59b27]" : "px-3 py-1 rounded border border-[#5a4627] text-xs font-rye text-[#c59b27] bg-[#120b06] hover:border-[#c59b27]";
+            }
+
+            if (state.isFirePlaying && !state.fireNoiseNode && state.audioCtx) {
+                try {
+                    const bufferSize = state.audioCtx.sampleRate * 5;
+                    const buffer = state.audioCtx.createBuffer(1, bufferSize, state.audioCtx.sampleRate);
+                    const output = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        output[i] = Math.random() * 2 - 1;
+                    }
+                    
+                    state.fireNoiseNode = state.audioCtx.createBufferSource();
+                    state.fireNoiseNode.buffer = buffer;
+                    state.fireNoiseNode.loop = true;
+
+                    const filter = state.audioCtx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 1000;
+
+                    state.fireGainNode = state.audioCtx.createGain();
+                    
+                    state.fireNoiseNode.connect(filter);
+                    filter.connect(state.fireGainNode);
+                    state.fireGainNode.connect(state.audioCtx.destination);
+                    state.fireNoiseNode.start();
+                } catch(e) {}
+            }
+
+            updateAudioVolumes();
+        }
         
         function playCardAudio(audioPath, startTime = 0, endTime = null) {
             if (state.isMuted) return;
+            initWebAudio();
             
             if (state.currentVoAudio) {
                 state.currentVoAudio.pause();
                 state.currentVoAudio.currentTime = 0;
-                if (state.bgAudio) state.bgAudio.volume = 0.7;
+                updateAudioVolumes();
             }
             
             try {
                 const vo = new Audio(audioPath);
-                vo.volume = 0.7;
                 vo.currentTime = startTime;
                 state.currentVoAudio = vo;
+                updateAudioVolumes();
                 
-                if (state.bgAudio) {
-                    state.bgAudio.volume = 0.3;
-                }
-                
-                const restoreVolume = () => {
-                    if (state.bgAudio) {
-                        state.bgAudio.volume = 0.7;
-                    }
-                };
-                
+                const restoreVolume = () => { updateAudioVolumes(); };
                 vo.onended = restoreVolume;
                 vo.onpause = restoreVolume;
                 
@@ -983,6 +1207,48 @@
             } catch(e) {}
         }
         
+        function toggleAudioControlModal() {
+            playWoodenTap();
+            const modal = document.getElementById('audioMixModal');
+            if (modal) {
+                if (modal.classList.contains('hidden')) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                } else {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            }
+        }
+
+        function updateMasterVolume(val) {
+            state.masterVol = val / 100;
+            document.getElementById('masterVolValText').textContent = `${val}%`;
+            updateAudioVolumes();
+        }
+
+        function updateMusicVolume(val) {
+            state.musicVol = val / 100;
+            document.getElementById('musicVolValText').textContent = `${val}%`;
+            updateAudioVolumes();
+        }
+
+        function updateFireVolume(val) {
+            state.fireVol = val / 100;
+            document.getElementById('fireVolValText').textContent = `${val}%`;
+            updateAudioVolumes();
+        }
+
+        function copyQuoteToClipboard() {
+            playWoodenTap();
+            const quoteText = document.getElementById('reflectionQuote').textContent.trim();
+            if (navigator.clipboard && quoteText) {
+                navigator.clipboard.writeText(quoteText).then(() => {
+                    showToast("Naikopya ang sebulong sa clipboard!", "ri-checkbox-circle-fill");
+                });
+            }
+        }
+
         function openPrivacyModal() {
             playWoodenTap();
             const modal = document.getElementById('privacyModal');
@@ -1118,7 +1384,7 @@
                 const data = await res.json();
                 if (data && data.status === 'success' && Array.isArray(data.stories)) {
                     spiritStories = data.stories;
-                    renderSpiritsWall('all');
+                    renderSpiritsWall(state.currentFilterCat);
                 }
             } catch (err) {
                 console.error("Failed to fetch stories from Apps Script:", err);
@@ -1147,6 +1413,7 @@
             }
             
             playCardAudio('../resources/multo/vo2.mp3', 2);
+            playFireWhooshSound();
             
             const cleanText = censorProfanity(text);
             state.storyText = cleanText;
@@ -1241,7 +1508,6 @@
                 textareaEl.style.opacity = '0.15';
             }, 1800);
             
-            // Magiging mukhang abo ang card kalahati ng aksyon
             setTimeout(() => {
                 containerEl.classList.remove('burning-card-effect');
                 containerEl.classList.add('burned-ash-effect');
@@ -1290,13 +1556,8 @@
             let minBurnDurationPassed = false;
             let uploadFinished = false;
             
-            setTimeout(() => {
-                minBurnDurationPassed = true;
-            }, 3800);
-            
-            uploadPromise.then(() => {
-                uploadFinished = true;
-            });
+            setTimeout(() => { minBurnDurationPassed = true; }, 3800);
+            uploadPromise.then(() => { uploadFinished = true; });
             
             let animationFrame;
             
@@ -1410,58 +1671,149 @@
                 }, 50);
             }
         }
+
+        function filterWallBySearch() {
+            const input = document.getElementById('wallSearchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            state.searchQuery = input ? input.value.trim().toLowerCase() : '';
+            
+            if (clearBtn) {
+                if (state.searchQuery) clearBtn.classList.remove('hidden');
+                else clearBtn.classList.add('hidden');
+            }
+            
+            renderSpiritsWall(state.currentFilterCat);
+        }
+
+        function clearWallSearch() {
+            const input = document.getElementById('wallSearchInput');
+            if (input) input.value = '';
+            filterWallBySearch();
+            playWoodenTap();
+        }
         
         function renderSpiritsWall(filterCat) {
+            state.currentFilterCat = filterCat;
             const grid = document.getElementById('spiritsWallGrid');
             if (!grid) return;
             grid.innerHTML = '';
             
+            document.querySelectorAll('.wall-filter-btn').forEach(btn => {
+                btn.classList.remove('active-filter');
+            });
+            const activeBtn = document.getElementById(`filter-${filterCat}`);
+            if (activeBtn) activeBtn.classList.add('active-filter');
+            
             if (spiritStories.length === 0) {
                 grid.innerHTML = `
-                <div class="col-span-full text-center py-8 text-[#ebdcb1]/50 font-crimson italic">
+                <div class="col-span-full text-center py-12 text-[#ebdcb1]/50 font-crimson italic">
                     Wala pang kwento rito. Ikaw muna ang unang mag-iwan ng sulat...
                 </div>
             `;
                 return;
             }
             
-            const filtered = filterCat === 'all' 
+            let filtered = filterCat === 'all' 
             ? spiritStories 
             : spiritStories.filter(s => s.category === filterCat);
+
+            if (state.searchQuery) {
+                filtered = filtered.filter(s => 
+                    (s.text && s.text.toLowerCase().includes(state.searchQuery)) ||
+                    (s.author && s.author.toLowerCase().includes(state.searchQuery))
+                );
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                <div class="col-span-full text-center py-12 text-[#ebdcb1]/50 font-crimson italic">
+                    Walang nahanap na kwento sa hinahanap mo...
+                </div>
+            `;
+                return;
+            }
             
             filtered.forEach(s => {
                 const card = document.createElement('div');
-                card.className = "ouija-card p-5 flex flex-col justify-between space-y-3 group hover:border-[#c59b27]";
+                card.className = "ouija-card p-5 flex flex-col justify-between space-y-3 group hover:border-[#c59b27] h-full";
                 
                 const catInfo = CATEGORIES[s.category] || { badge: "MULTO" };
                 const isLiked = localStorage.getItem(`multo_liked_story_${s.id}`);
                 const likedClass = isLiked ? "text-[#ffd700] opacity-80 cursor-default" : "text-[#c59b27] hover:text-[#ebdcb1] cursor-pointer";
                 
+                const rawText = s.text || "";
+                const isLongText = rawText.length > 200;
+
                 card.innerHTML = `
                 <div>
                     <div class="flex justify-between items-center text-[10px] font-rye text-[#c59b27] mb-2">
-                        <span>${catInfo.badge}</span>
-                        <span class="text-[#ebdcb1]/40">${s.date}</span>
+                        <span class="tracking-wider">${catInfo.badge}</span>
+                        <span class="text-[#ebdcb1]/40 font-crimson text-xs">${s.date}</span>
                     </div>
-                    <p class="font-crimson text-sm text-[#ebdcb1]/90 italic leading-relaxed">"${s.text}"</p>
+                    <div class="relative">
+                        <p class="font-crimson text-sm sm:text-base text-[#ebdcb1]/90 italic leading-relaxed ${isLongText ? 'line-clamp-4' : ''}">
+                            "${rawText}"
+                        </p>
+                        ${isLongText ? `
+                            <button onclick="openStoryModal('${s.id}')" class="mt-2 text-xs font-rye text-[#c59b27] hover:underline hover:text-[#ebdcb1] flex items-center gap-1 transition-colors">
+                                <span>MAGBASA PA</span>
+                                <i class="ri-arrow-right-s-line text-sm"></i>
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
-                <div class="flex justify-between items-center text-xs font-crimson border-t border-[#5a4627]/40 pt-2 text-[#ebdcb1]/60">
-                    <span>— ${s.author}</span>
-                    <div class="flex items-center gap-3">
+                <div class="flex justify-between items-center text-xs font-crimson border-t border-[#5a4627]/40 pt-3 text-[#ebdcb1]/60 mt-auto">
+                    <span class="truncate max-w-[120px] sm:max-w-[140px]">— ${s.author}</span>
+                    <div class="flex items-center gap-3 shrink-0">
                         <button onclick="reactToSpirit('${s.id}', this)" class="candle-candle ${likedClass} text-xs flex items-center gap-1" title="${isLiked ? 'Naka-alay na ang kandila' : 'Mag-alay ng kandila'}">
                             🕯️ <span class="candle-count font-rye text-[10px]">${s.likes || 0}</span>
                         </button>
-                        <span class="text-[10px] font-rye text-[#c59b27]">BIGAT: ${s.weight}/5</span>
+                        <span class="text-[10px] font-rye text-[#c59b27] bg-[#140c06] px-1.5 py-0.5 rounded border border-[#5a4627]/50">BIGAT: ${s.weight}/5</span>
                     </div>
                 </div>
             `;
                 grid.appendChild(card);
             });
-            
-            document.querySelectorAll('.wall-filter-btn').forEach(btn => {
-                btn.classList.remove('bg-[#1c120a]', 'text-[#c59b27]');
-                btn.classList.add('text-[#ebdcb1]/70');
-            });
+        }
+        
+        function openStoryModal(storyId) {
+            playWoodenTap();
+            const story = spiritStories.find(s => String(s.id) === String(storyId));
+            if (!story) return;
+
+            const modal = document.getElementById('storyReadModal');
+            const catInfo = CATEGORIES[story.category] || { badge: "MULTO" };
+            const isLiked = localStorage.getItem(`multo_liked_story_${story.id}`);
+
+            document.getElementById('modalCategoryBadge').textContent = catInfo.badge;
+            document.getElementById('modalDate').textContent = story.date || "Ngayon lang";
+            document.getElementById('modalWeightBadge').textContent = `BIGAT: ${story.weight}/5`;
+            document.getElementById('modalStoryBody').textContent = `"${story.text}"`;
+            document.getElementById('modalAuthor').textContent = `— ${story.author}`;
+            document.getElementById('modalCandleCount').textContent = story.likes || 0;
+
+            const candleBtn = document.getElementById('modalCandleBtn');
+            if (candleBtn) {
+                candleBtn.onclick = () => {
+                    const gridBtn = document.querySelector(`button[onclick*="'${story.id}'"]`);
+                    if (gridBtn) reactToSpirit(story.id, gridBtn);
+                    document.getElementById('modalCandleCount').textContent = parseInt(story.likes || 0) + (isLiked ? 0 : 1);
+                };
+            }
+
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeStoryModal() {
+            playWoodenTap();
+            const modal = document.getElementById('storyReadModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
         }
         
         async function reactToSpirit(storyId, btnEl) {
@@ -1480,8 +1832,15 @@
             btnEl.title = "Naka-alay na ang kandila";
             
             const countSpan = btnEl.querySelector('.candle-count');
-            let currentCount = parseInt(countSpan.textContent || "0");
-            countSpan.textContent = currentCount + 1;
+            if (countSpan) {
+                let currentCount = parseInt(countSpan.textContent || "0");
+                countSpan.textContent = currentCount + 1;
+            }
+
+            const spirit = spiritStories.find(s => String(s.id) === String(storyId));
+            if (spirit) spirit.likes = (parseInt(spirit.likes) || 0) + 1;
+
+            showToast("Nag-alay ka ng kandila sa kwentong ito.", "ri-candle-fill");
             
             try {
                 fetch(`${APPS_SCRIPT_URL_MULTO}?action=like&id=${storyId}&_t=${Date.now()}`, {
@@ -1539,7 +1898,7 @@
             }
             loop();
         }
-        
+
         function initBurnCanvas() {
             burnCanvas = document.getElementById('burnCanvas');
             if (burnCanvas) {
