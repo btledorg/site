@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTLED | Event Self-Registration Terminal</title>
+  <link rel="icon" type="image/png" href="../../resources/image/logo/2.png" />
+  <link rel="stylesheet" href="../../resources/css/landing.css" />
+  <link rel="stylesheet" href="../../resources/css/form.css" />
+  <style>
+    body {
+      background-color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .kiosk-wrapper {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Standby Card */
+    .standby-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 3rem 2.5rem;
+      text-align: center;
+      max-width: 580px;
+      width: 100%;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+
+    .standby-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+    }
+
+    .pulse-ring {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(29, 78, 216, 0.4); }
+      70% { box-shadow: 0 0 0 18px rgba(29, 78, 216, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(29, 78, 216, 0); }
+    }
+
+    /* Focused Registration Card */
+    .registration-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 2.25rem;
+      max-width: 720px;
+      width: 100%;
+      box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.1);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-header-badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e40af;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+      .auth-row { flex-direction: column; gap: 0; }
+    }
+
+    .auth-form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .auth-form-group label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .auth-form-group input, 
+    .auth-form-group select {
+      padding: 0.75rem;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .auth-form-group input:focus, 
+    .auth-form-group select:focus {
+      border-color: #1d4ed8;
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 0.9rem;
+      background: #1d4ed8;
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.2s ease;
+    }
+
+    .auth-btn:hover { background: #1e40af; }
+
+    .auth-alert {
+      padding: 0.85rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.25rem;
+      display: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    .auth-alert.error { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; display: block; }
+    .auth-alert.success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; display: block; }
+
+    /* Success Card */
+    .success-card {
+      background: #ffffff;
+      border: 2px solid #22c55e;
+      border-radius: 12px;
+      padding: 3rem 2rem;
+      text-align: center;
+      max-width: 540px;
+      width: 100%;
+      box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.15);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <main class="kiosk-wrapper">
+    <!-- 1. STANDBY STATE -->
+    <div id="standby-view" class="standby-card">
+      <div class="standby-icon pulse-ring">🪪</div>
+      <h2 style="color: #0f172a; margin-bottom: 0.5rem; font-size: 1.75rem;">BTLED Registration Terminal</h2>
+      <p style="color: #64748b; font-size: 1rem; line-height: 1.5; margin-bottom: 0;">
+        Please scan your Student ID barcode at the scanner on <strong>Terminal 1</strong>.<br>
+        If you are not yet registered, your form will automatically appear on this screen.
+      </p>
+    </div>
+
+    <!-- 2. ACTIVE REGISTRATION FORM STATE -->
+    <div id="registration-view" class="registration-card hidden">
+      <span class="card-header-badge">New Attendee Registration</span>
+      <h2 style="color: #0f172a; margin-top: 0; margin-bottom: 0.25rem;">Complete Student Profile</h2>
+      <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1.5rem;">
+        Fill out your details below to finalize event registration and complete your initial Time-In.
+      </p>
+
+      <div id="reg-alert" class="auth-alert"></div>
+
+      <form id="register-form">
+        <div class="auth-row">
+          <div class="auth-form-group">
+            <label>Student No.</label>
+            <input type="text" id="reg-id" required readonly style="background: #f1f5f9; font-weight: 700; color: #1e293b;" />
+          </div>
+          <div class="auth-form-group">
+            <label>Program & Section</label>
+            <input type="text" id="reg-program" required placeholder="e.g., BTLED-IA 2A" autofocus />
+          </div>
+        </div>
+
+        <div class="auth-row">
+          <div class="auth-form-group">
+            <label>First Name</label>
+            <input type="text" id="reg-name" required placeholder="First Name" />
+          </div>
+          <div class="auth-form-group">
+            <label>Surname</label>
+            <input type="text" id="reg-surname" required placeholder="Surname" />
+          </div>
+        </div>
+
+        <div class="auth-row">
+          <div class="auth-form-group">
+            <label>Middle Name</label>
+            <input type="text" id="reg-mname" placeholder="Middle Name (Optional)" />
+          </div>
+          <div class="auth-form-group">
+            <label>Sex</label>
+            <select id="reg-sex" required>
+              <option value="">Select Sex</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label>Birthdate</label>
+          <input type="date" id="reg-bdate" required />
+        </div>
+
+        <div class="auth-row">
+          <div class="auth-form-group">
+            <label>Street / Barangay</label>
+            <input type="text" id="reg-street" required placeholder="Street / Brgy" />
+          </div>
+          <div class="auth-form-group">
+            <label>Municipality / City</label>
+            <input type="text" id="reg-city" required placeholder="City" />
+          </div>
+        </div>
+
+        <div class="auth-row">
+          <div class="auth-form-group">
+            <label>Province</label>
+            <input type="text" id="reg-prov" required placeholder="Province" />
+          </div>
+          <div class="auth-form-group">
+            <label>Contact Number</label>
+            <input type="tel" id="reg-contact" required placeholder="09XXXXXXXXX" />
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label>E-mail Address</label>
+          <input type="email" id="reg-email" required placeholder="email@example.com" />
+        </div>
+
+        <!-- Honeypot anti-spam field -->
+        <div style="display: none">
+          <input type="text" id="reg-website" name="website" value="" />
+        </div>
+
+        <button type="submit" id="reg-btn" class="auth-btn">
+          <span>Register & Confirm Time-In</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- 3. SUCCESS STATE -->
+    <div id="success-view" class="success-card hidden">
+      <div style="font-size: 3.5rem; margin-bottom: 0.75rem;">🎉</div>
+      <h2 style="color: #15803d; margin-top: 0; margin-bottom: 0.5rem;">Registration Successful!</h2>
+      <p id="success-message-text" style="color: #334155; font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">
+        You have been registered and timed in successfully.
+      </p>
+      <span style="font-size: 0.85rem; color: #64748b;">Returning to Standby screen...</span>
+    </div>
+  </main>
+
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
+    const tapChannel = new BroadcastChannel("btled_tap_channel");
+
+    const standbyView = document.getElementById("standby-view");
+    const registrationView = document.getElementById("registration-view");
+    const successView = document.getElementById("success-view");
+
+    // Listen for unregistered barcode scan signals from Terminal 1 (Monitor 1)
+    tapChannel.onmessage = (event) => {
+      if (event.data && event.data.action === "PROMPT_REGISTRATION") {
+        showRegistrationForm(event.data.studentNo);
+      }
+    };
+
+    function showRegistrationForm(studentNo) {
+      document.getElementById("register-form").reset();
+      document.getElementById("reg-id").value = studentNo;
+      document.getElementById("reg-alert").className = "auth-alert";
+
+      standbyView.classList.add("hidden");
+      successView.classList.add("hidden");
+      registrationView.classList.remove("hidden");
+
+      setTimeout(() => {
+        document.getElementById("reg-program").focus();
+      }, 100);
+    }
+
+    function showStandbyView() {
+      registrationView.classList.add("hidden");
+      successView.classList.add("hidden");
+      standbyView.classList.remove("hidden");
+    }
+
+    function showSuccessView(name) {
+      registrationView.classList.add("hidden");
+      standbyView.classList.add("hidden");
+      
+      document.getElementById("success-message-text").innerText = `Welcome, ${name}! You are registered and Timed In.`;
+      successView.classList.remove("hidden");
+
+      // Auto return to standby after 3.5 seconds
+      setTimeout(() => {
+        showStandbyView();
+      }, 3500);
+    }
+
+    // Handle Form Submission
+    document.getElementById("register-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const alertBox = document.getElementById("reg-alert");
+      const submitBtn = document.getElementById("reg-btn");
+      alertBox.className = "auth-alert";
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Processing Registration...";
+
+      const payload = {
+        action: "register",
+        id: document.getElementById("reg-id").value.trim(),
+        name: document.getElementById("reg-name").value.trim(),
+        surname: document.getElementById("reg-surname").value.trim(),
+        middleName: document.getElementById("reg-mname").value.trim(),
+        program: document.getElementById("reg-program").value.trim(),
+        sex: document.getElementById("reg-sex").value,
+        birthdate: document.getElementById("reg-bdate").value,
+        street: document.getElementById("reg-street").value.trim(),
+        municipality: document.getElementById("reg-city").value.trim(),
+        province: document.getElementById("reg-prov").value.trim(),
+        contact: document.getElementById("reg-contact").value.trim(),
+        email: document.getElementById("reg-email").value.trim(),
+        website: document.getElementById("reg-website").value
+      };
+
+      try {
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.ok) {
+          const registeredMember = {
+            "ID": result.data.assignedId || payload.id,
+            "Student No.": payload.id,
+            "Surname": payload.surname,
+            "First Name": payload.name,
+            "Middle Name": payload.middleName,
+            "Program": payload.program,
+            "Sex": payload.sex,
+            "Birthdate": payload.birthdate,
+            "Street / Barangay": payload.street,
+            "Municipality / City": payload.municipality,
+            "Province": payload.province,
+            "Contact Number": payload.contact,
+            "E-mail Address": payload.email,
+            "Status": "Active"
+          };
+
+          // Notify Terminal 1 (Scanner Monitor) to trigger automatic Tap-In & Chime
+          tapChannel.postMessage({
+            action: "REGISTRATION_COMPLETE",
+            member: registeredMember
+          });
+
+          showSuccessView(`${payload.name} ${payload.surname}`);
+        } else {
+          alertBox.className = "auth-alert error";
+          alertBox.innerText = result.error || "Registration failed. Please check your information.";
+        }
+      } catch (err) {
+        alertBox.className = "auth-alert error";
+        alertBox.innerText = "Network error. Please try submitting again.";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Register & Confirm Time-In";
+      }
+    });
+  </script>
+</body>
+</html>

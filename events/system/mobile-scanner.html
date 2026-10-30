@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTLED | Wireless Mobile Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #0f172a; color: #fff; margin: 0; padding: 1rem; text-align: center; }
+    #reader { width: 100%; max-width: 450px; margin: 1rem auto; border-radius: 8px; overflow: hidden; }
+    .status-badge { padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 700; font-size: 0.9rem; display: inline-block; }
+    .connected { background: #16a34a; color: #fff; }
+    .disconnected { background: #dc2626; color: #fff; }
+  </style>
+</head>
+<body>
+  <h2>BTLED Wireless Scanner</h2>
+  <div id="connection-status" class="status-badge disconnected">Connecting to PC...</div>
+  
+  <div id="reader"></div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const peerId = urlParams.get('peer');
+    
+    if (!peerId) {
+      alert("Missing peer ID. Please scan the QR code displayed on Monitor 1.");
+    } else {
+      const peer = new Peer();
+      
+      peer.on('open', () => {
+        const conn = peer.connect(peerId);
+        
+        conn.on('open', () => {
+          document.getElementById('connection-status').className = "status-badge connected";
+          document.getElementById('connection-status').innerText = "🟢 Connected to Monitor 1";
+          startCameraScanner(conn);
+        });
+
+        conn.on('close', () => {
+          document.getElementById('connection-status').className = "status-badge disconnected";
+          document.getElementById('connection-status').innerText = "🔴 Disconnected";
+        });
+      });
+    }
+
+    function startCameraScanner(conn) {
+      let lastScanned = "";
+      let cooldown = false;
+
+      const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+      
+      html5QrcodeScanner.render((decodedText) => {
+        if (cooldown || decodedText === lastScanned) return;
+        
+        cooldown = true;
+        lastScanned = decodedText;
+        
+        // Send barcode data to PC Monitor 1
+        conn.send(decodedText);
+        
+        // Vibrate phone on scan
+        if (navigator.vibrate) navigator.vibrate(100);
+
+        // Reset cooldown after 1.5s to prevent accidental repeat scans
+        setTimeout(() => {
+          cooldown = false;
+          lastScanned = "";
+        }, 1500);
+      });
+    }
+  </script>
+</body>
+</html>
