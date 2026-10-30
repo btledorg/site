@@ -228,8 +228,8 @@
 
       // 2. Start directly with 'environment' facingMode (forces the rear camera on mobile)
       try {
-        await startScanner({ facingMode: "environment" });
-        currentCameraId = "environment";
+await startScanner("environment");
+currentCameraId = "environment";
 
         // 3. Populate physical camera list AFTER stream is granted so labels exist
         try {
@@ -267,22 +267,29 @@
       }
     }
 
-    function startScanner(cameraConfig) {
-      const config = { 
-        fps: 15, 
-        qrbox: { width: 250, height: 180 }, 
-        videoConstraints: { focusMode: "continuous" } 
-      };
+function startScanner(cameraSelection) {
+  const isFacingMode = cameraSelection === "environment" || cameraSelection === "user";
 
-      return html5QrCode.start(
-        cameraConfig,
-        config,
-        onScanSuccess,
-        () => {}
-      ).then(() => {
-        checkTorch();
-      });
-    }
+  // Camera choice must live INSIDE videoConstraints, or it gets ignored
+  const videoConstraints = isFacingMode
+    ? { facingMode: cameraSelection }
+    : { deviceId: { exact: cameraSelection } };
+
+  // Continuous focus goes in "advanced" (it's not a valid top-level constraint)
+  videoConstraints.advanced = [{ focusMode: "continuous" }];
+
+  const config = {
+    fps: 15,
+    qrbox: { width: 250, height: 180 },
+    videoConstraints
+  };
+
+  // First argument still needs to be valid, so pass an equivalent value
+  const cameraArg = isFacingMode ? { facingMode: cameraSelection } : cameraSelection;
+
+  return html5QrCode.start(cameraArg, config, onScanSuccess, () => {})
+    .then(() => checkTorch());
+}
 
     async function onCameraSelectChange(selectedVal) {
       if (!html5QrCode || !selectedVal || selectedVal === currentCameraId) return;
@@ -293,6 +300,7 @@
 
       try {
         await html5QrCode.stop();
+await startScanner(selectedVal);
         
         // Check if selection is a facingMode preset or a specific device ID
         if (selectedVal === "environment" || selectedVal === "user") {
