@@ -59,6 +59,29 @@
       outline: none;
     }
 
+    .manual-input-box {
+      width: 100%;
+      max-width: 450px;
+      margin: 0.5rem auto;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .manual-input {
+      flex: 1;
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid #334155;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .manual-input:focus {
+      border-color: #38bdf8;
+    }
+
     .controls-grid {
       width: 100%;
       max-width: 450px;
@@ -133,6 +156,18 @@
     </select>
   </div>
 
+  <!-- Manual Input Box -->
+  <div class="manual-input-box">
+    <input 
+      type="text" 
+      id="manual-id-input" 
+      class="manual-input" 
+      placeholder="Enter Student No. / Barcode..." 
+      onkeydown="if(event.key==='Enter') submitManualInput()" 
+    />
+    <button class="btn btn-accent" style="padding: 0 1.25rem;" onclick="submitManualInput()">Send</button>
+  </div>
+
   <div class="controls-grid">
     <button id="btn-torch" class="btn" onclick="toggleTorch()" disabled>⚡ Flashlight</button>
     <button class="btn" onclick="initPeerConnection()">🔌 Reconnect</button>
@@ -170,6 +205,24 @@
 
     // Offline Queue
     let offlineQueue = JSON.parse(localStorage.getItem("btled_mobile_queue") || "[]");
+
+    // Synthesized Audio Beep
+    function playBeep() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 880 Hz pitch
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.12); // 120ms beep
+      } catch (e) {
+        console.warn("Audio Context error:", e);
+      }
+    }
 
     // WebRTC Network Setup
     function initPeerConnection() {
@@ -215,29 +268,26 @@
       el.innerText = msg;
       setTimeout(() => { if (el.innerText === msg) el.innerText = ""; }, 4000);
     }
-// Camera Scanner Setup with Guaranteed Rear Camera Default
+
+    // Camera Scanner Setup
     async function initCameraScanner() {
       html5QrCode = new Html5Qrcode("reader");
       const selectEl = document.getElementById("camera-select");
 
-      // 1. Set initial presets in dropdown
       selectEl.innerHTML = `
         <option value="environment" selected>📷 Rear Camera (Back)</option>
         <option value="user">🤳 Front Camera (Selfie)</option>
       `;
 
-      // 2. Start directly with 'environment' facingMode (forces the rear camera on mobile)
       try {
-await startScanner("environment");
-currentCameraId = "environment";
+        await startScanner("environment");
+        currentCameraId = "environment";
 
-        // 3. Populate physical camera list AFTER stream is granted so labels exist
         try {
           availableCameras = await Html5Qrcode.getCameras();
           if (availableCameras && availableCameras.length > 0) {
             selectEl.innerHTML = "";
 
-            // Add Presets First
             const envOpt = document.createElement("option");
             envOpt.value = "environment";
             envOpt.innerText = "📷 Default Rear Camera";
@@ -248,7 +298,6 @@ currentCameraId = "environment";
             userOpt.innerText = "🤳 Default Front Camera";
             selectEl.appendChild(userOpt);
 
-            // Add Physical Lenses (Wide, Ultrawide, etc.)
             availableCameras.forEach((cam, idx) => {
               const opt = document.createElement("option");
               opt.value = cam.id;
@@ -267,29 +316,26 @@ currentCameraId = "environment";
       }
     }
 
-function startScanner(cameraSelection) {
-  const isFacingMode = cameraSelection === "environment" || cameraSelection === "user";
+    function startScanner(cameraSelection) {
+      const isFacingMode = cameraSelection === "environment" || cameraSelection === "user";
 
-  // Camera choice must live INSIDE videoConstraints, or it gets ignored
-  const videoConstraints = isFacingMode
-    ? { facingMode: cameraSelection }
-    : { deviceId: { exact: cameraSelection } };
+      const videoConstraints = isFacingMode
+        ? { facingMode: cameraSelection }
+        : { deviceId: { exact: cameraSelection } };
 
-  // Continuous focus goes in "advanced" (it's not a valid top-level constraint)
-  videoConstraints.advanced = [{ focusMode: "continuous" }];
+      videoConstraints.advanced = [{ focusMode: "continuous" }];
 
-  const config = {
-    fps: 15,
-    qrbox: { width: 250, height: 180 },
-    videoConstraints
-  };
+      const config = {
+        fps: 15,
+        qrbox: { width: 250, height: 180 },
+        videoConstraints
+      };
 
-  // First argument still needs to be valid, so pass an equivalent value
-  const cameraArg = isFacingMode ? { facingMode: cameraSelection } : cameraSelection;
+      const cameraArg = isFacingMode ? { facingMode: cameraSelection } : cameraSelection;
 
-  return html5QrCode.start(cameraArg, config, onScanSuccess, () => {})
-    .then(() => checkTorch());
-}
+      return html5QrCode.start(cameraArg, config, onScanSuccess, () => {})
+        .then(() => checkTorch());
+    }
 
     async function onCameraSelectChange(selectedVal) {
       if (!html5QrCode || !selectedVal || selectedVal === currentCameraId) return;
@@ -300,23 +346,18 @@ function startScanner(cameraSelection) {
 
       try {
         await html5QrCode.stop();
-await startScanner(selectedVal);
-        
-        // Check if selection is a facingMode preset or a specific device ID
-        if (selectedVal === "environment" || selectedVal === "user") {
-          await startScanner({ facingMode: selectedVal });
-        } else {
-          await startScanner(selectedVal);
-        }
+        await startScanner(selectedVal);
       } catch (err) {
         console.error("Error switching camera via dropdown:", err);
         showNotice("Failed to switch camera.");
       }
     }
+
     function onScanSuccess(decodedText) {
       if (scanCooldown) return;
       scanCooldown = true;
 
+      playBeep();
       if (navigator.vibrate) navigator.vibrate(80);
       currentPendingScan = decodedText;
 
@@ -325,13 +366,27 @@ await startScanner(selectedVal);
       setTimeout(() => { scanCooldown = false; }, 1500);
     }
 
+    function submitManualInput() {
+      const inputEl = document.getElementById("manual-id-input");
+      const code = inputEl.value.trim();
+      if (!code) return;
+
+      playBeep();
+      if (navigator.vibrate) navigator.vibrate(80);
+      currentPendingScan = code;
+
+      sendDataToPC({ action: "SCAN_BARCODE", code: code });
+      showNotice(`📤 Manual entry sent: ${code}`);
+      inputEl.value = "";
+    }
+
     function sendDataToPC(payload) {
       if (peerConn && peerConn.open) {
         peerConn.send(payload);
       } else {
         offlineQueue.push(payload);
         localStorage.setItem("btled_mobile_queue", JSON.stringify(offlineQueue));
-        showNotice("⚠️ Disconnected. Scan saved to offline queue.");
+        showNotice("⚠️ Disconnected. Entry saved to offline queue.");
       }
     }
 
