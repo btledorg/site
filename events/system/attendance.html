@@ -4,8 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BTLED | Event Tap Terminal</title>
-    <link rel="icon" type="image/png" href="../../resources/image/logo/2.png" />
-    <link rel="stylesheet" href="../../resources/css/landing.css" />
+    <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
+    <link rel="stylesheet" href="../resources/css/landing.css" />
+    
+    <!-- External WebRTC & QR Code Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
     <style>
         .tap-container { max-width: 1000px; margin: 2rem auto; padding: 0 1.5rem; }
         .tap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem; }
@@ -27,13 +32,31 @@
     </style>
 </head>
 <body>
-    
+    <header class="navbar" id="site-navbar" data-root="../"></header>
+    <script src="../resources/js/navbar.js"></script>
+
     <main class="tap-container">
         <div class="section-header">
             <span class="section-label">Terminal Screen (Monitor 1)</span>
             <h2>BTLED Tap-In / Tap-Out</h2>
         </div>
-        
+
+        <!-- Mobile Pairing Panel -->
+        <div id="pair-panel" style="background: #0f172a; padding: 1.25rem; border-radius: 8px; color: #fff; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1.5rem;">
+            <div id="qrcode-container" style="background: #fff; padding: 10px; border-radius: 8px; cursor: pointer;" onclick="openQrModal()" title="Click to enlarge">
+                <div id="qrcode"></div>
+                <span style="display: block; text-align: center; font-size: 0.65rem; color: #475569; margin-top: 4px; font-weight: 700;">🔍 Click to enlarge</span>
+            </div>
+            <div>
+                <h4 style="margin: 0 0 0.35rem 0; color: #38bdf8; font-size: 1.1rem;">Mobile Scanner Pairing</h4>
+                <p style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #cbd5e1; line-height: 1.4;">
+                    Scan this QR code using your phone camera to instantly connect it as a wireless barcode reader.
+                </p>
+                <span id="peer-status" style="font-size: 0.8rem; color: #f59e0b; font-weight: 700;">Generating Peer Key...</span>
+            </div>
+        </div>
+
+        <!-- Sync Bar -->
         <div class="sync-bar">
             <div>
                 Status: <strong id="db-status-text">Loading Database...</strong> | 
@@ -44,30 +67,32 @@
                 <button class="btn" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; background: #475569; color: white;" onclick="fetchMembersDatabase()">Refresh DB</button>
             </div>
         </div>
-        
+
         <div class="tap-grid">
+            <!-- Scanner Card -->
             <div class="tap-card">
                 <h3>Scanner Terminal</h3>
-                <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Scan barcode or enter Student ID. Unregistered IDs will trigger Display 2.</p>
-                
+                <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Scan barcode or enter Student ID. Unregistered IDs trigger Display 2.</p>
+
                 <form id="tap-form" onsubmit="handleBarcodeScan(event)">
                     <input 
-                    type="text" 
-                    id="barcode-input" 
-                    class="barcode-input" 
-                    placeholder="Scan Barcode / Enter Student No..." 
-                    autocomplete="off" 
-                    autofocus 
+                        type="text" 
+                        id="barcode-input" 
+                        class="barcode-input" 
+                        placeholder="Scan Barcode / Enter Student No..." 
+                        autocomplete="off" 
+                        autofocus 
                     />
                 </form>
-                
+
                 <div id="status-box" class="status-alert">Ready to scan...</div>
             </div>
-            
+
+            <!-- Recent Logs Card -->
             <div class="tap-card">
                 <h3>Recent Tap Logs</h3>
                 <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 0.5rem;">Stored locally and background synced.</p>
-                
+
                 <div style="max-height: 280px; overflow-y: auto;">
                     <table class="recent-table">
                         <thead>
@@ -86,185 +111,274 @@
             </div>
         </div>
     </main>
-    
-    <!-- Add in <head> of tap.html -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-        <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-        
-        <!-- Add inside .sync-bar or near Scanner Panel -->
-        <div id="pair-panel" style="background: #0f172a; padding: 1rem; border-radius: 8px; color: #fff; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
-            <div id="qrcode" style="background: #fff; padding: 6px; border-radius: 4px;"></div>
-            <div>
-                <h4 style="margin: 0 0 0.25rem 0; color: #38bdf8;">Mobile Scanner Pair</h4>
-                <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">Scan this QR code with your phone camera to pair it as a wireless barcode reader.</p>
-                <span id="peer-status" style="font-size: 0.75rem; color: #f59e0b; font-weight: 700;">Generating Peer Key...</span>
-            </div>
+
+    <!-- QR Zoom Modal -->
+    <div id="qr-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(4px);" onclick="closeQrModal()">
+        <div style="background: #ffffff; padding: 2rem; border-radius: 16px; text-align: center; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
+            <h3 style="margin: 0 0 0.5rem 0; color: #0f172a;">Scan with Phone Camera</h3>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1.25rem;">Point your phone camera at this code to connect instantly.</p>
+            <div id="qrcode-large" style="background: #ffffff; padding: 12px; border-radius: 8px; display: inline-block; border: 2px solid #e2e8f0;"></div>
+            <button onclick="closeQrModal()" style="display: block; width: 100%; margin-top: 1.25rem; padding: 0.75rem; background: #0f172a; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">Close Overlay</button>
         </div>
-        
-        <script>
-            const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec"; 
-            const EVENT_NAME = "BTLED Event 2026";
-            const VENUE_NAME = "URS Cainta Room 303";
-            
-            // Initialize Inter-Monitor Broadcast Channel
-            const tapChannel = new BroadcastChannel("btled_tap_channel");
-            
-            let membersMap = new Map();
-            let sessionAttendanceMap = new Map();
-            let pendingLogs = JSON.parse(localStorage.getItem("btled_pending_taps") || "[]");
-            let recentLogs = JSON.parse(localStorage.getItem("btled_recent_taps") || "[]");
-            
-            document.addEventListener("DOMContentLoaded", async () => {
-                loadCachedMembers();
-                rebuildSessionState();
-                updateSyncUI();
-                renderRecentLogs();
-                await fetchMembersDatabase();
-                
-                const inputEl = document.getElementById("barcode-input");
-                if (inputEl) inputEl.focus();
-                document.addEventListener("click", () => { if (inputEl) inputEl.focus(); });
+    </div>
+
+    <script>
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec"; 
+        const EVENT_NAME = "BTLED Event 2026";
+        const VENUE_NAME = "URS Cainta Room 303";
+
+        // Inter-Monitor Broadcast Channel
+        const tapChannel = new BroadcastChannel("btled_tap_channel");
+
+        // Initialize PeerJS Instance
+        const peer = new Peer();
+
+        let membersMap = new Map();
+        let sessionAttendanceMap = new Map();
+        let pendingLogs = JSON.parse(localStorage.getItem("btled_pending_taps") || "[]");
+        let recentLogs = JSON.parse(localStorage.getItem("btled_recent_taps") || "[]");
+        let mobileScannerUrl = "";
+
+        // Web Audio Synthesizer Engine
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playChime(type) {
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'TAP-IN') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.08);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'TAP-OUT') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(783.99, now);
+                    osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.08);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'ERROR') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(160, now);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch(e) { console.warn("Audio Context unlock required on user click."); }
+        }
+
+        // WebRTC Mobile Pair Handshake
+        peer.on('open', (id) => {
+            document.getElementById('peer-status').innerText = "Ready to pair";
+            mobileScannerUrl = `${window.location.origin}${window.location.pathname.replace('tap.html', 'mobile-scanner.html')}?peer=${id}`;
+
+            document.getElementById("qrcode").innerHTML = "";
+            document.getElementById("qrcode-large").innerHTML = "";
+
+            new QRCode(document.getElementById("qrcode"), {
+                text: mobileScannerUrl,
+                width: 220,
+                height: 220,
+                correctLevel: QRCode.CorrectLevel.H
             });
-            
-            // Listen for completed registration from Monitor 2
-            tapChannel.onmessage = (event) => {
-                if (event.data && event.data.action === "REGISTRATION_COMPLETE") {
-                    const newMember = event.data.member;
-                    const studentNoKey = String(newMember["Student No."] || newMember.id || "").trim().toLowerCase();
-                    
-                    // Add new registered member to local memory
-                    if (studentNoKey) {
-                        membersMap.set(studentNoKey, newMember);
-                        // Automatically execute TAP-IN for the newly registered member
-                        processTapAction(newMember, studentNoKey, true);
-                    }
-                }
-            };
-            
-            function rebuildSessionState() {
-                sessionAttendanceMap.clear();
-                const reversedLogs = [...recentLogs].reverse();
-                reversedLogs.forEach(log => {
-                    if (log.studentNo) sessionAttendanceMap.set(log.studentNo.toLowerCase(), log.type);
-                });
-            }
-            
-            function loadCachedMembers() {
-                const cached = localStorage.getItem("btled_members_db");
-                if (cached) {
-                    try {
-                        const list = JSON.parse(cached);
-                        membersMap.clear();
-                        list.forEach(m => {
-                            const studentNoKey = String(m["Student No."] || "").trim().toLowerCase();
-                            const idKey = String(m["ID"] || "").trim().toLowerCase();
-                            if (studentNoKey) membersMap.set(studentNoKey, m);
-                            if (idKey && idKey !== studentNoKey) membersMap.set(idKey, m);
-                        });
-                        document.getElementById("db-status-text").innerText = `DB Ready (${membersMap.size} Keys Loaded)`;
-                    } catch(e) { console.error("Error parsing DB:", e); }
-                }
-            }
-            
-            async function fetchMembersDatabase() {
-                try {
-                    document.getElementById("db-status-text").innerText = "Updating Members DB...";
-                    const res = await fetch(`${APPS_SCRIPT_URL}?module=allmembers`);
-                    const result = await res.json();
-                    if (result.ok && Array.isArray(result.data)) {
-                        localStorage.setItem("btled_members_db", JSON.stringify(result.data));
-                        loadCachedMembers();
-                        document.getElementById("db-status-text").innerText = `DB Synced (${result.data.length} Members)`;
-                    }
-                } catch (err) {
-                    document.getElementById("db-status-text").innerText = `Offline DB (${membersMap.size} Keys Loaded)`;
-                }
-            }
-            
-            function handleBarcodeScan(e) {
-                e.preventDefault();
+
+            new QRCode(document.getElementById("qrcode-large"), {
+                text: mobileScannerUrl,
+                width: 320,
+                height: 320,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        });
+
+        // Listen for Incoming Mobile Phone Camera Scans over WebRTC
+        peer.on('connection', (conn) => {
+            document.getElementById('peer-status').innerText = "🟢 Mobile Scanner Connected";
+            document.getElementById('peer-status').style.color = "#22c55e";
+
+            conn.on('data', (scannedCode) => {
                 const inputEl = document.getElementById("barcode-input");
-                const rawCode = inputEl.value.trim();
-                inputEl.value = "";
-                if (!rawCode) return;
-                
-                const searchKey = rawCode.toLowerCase();
-                const member = membersMap.get(searchKey);
-                const box = document.getElementById("status-box");
-                
-                if (!member) {
-                    // USER NOT FOUND -> BROADCAST TO MONITOR 2
-                    box.className = "status-alert warning";
-                    box.innerText = `⚠️ Unregistered ID: "${rawCode}". Registration Form sent to Display 2!`;
-                    
-                    tapChannel.postMessage({
-                        action: "PROMPT_REGISTRATION",
-                        studentNo: rawCode
-                    });
-                    return;
+                if (inputEl) {
+                    inputEl.value = scannedCode;
+                    const event = new Event('submit', { cancelable: true });
+                    document.getElementById("tap-form").dispatchEvent(event);
                 }
-                
-                processTapAction(member, searchKey, false);
+            });
+
+            conn.on('close', () => {
+                document.getElementById('peer-status').innerText = "🟡 Mobile Scanner Disconnected";
+                document.getElementById('peer-status').style.color = "#f59e0b";
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            loadCachedMembers();
+            rebuildSessionState();
+            updateSyncUI();
+            renderRecentLogs();
+            await fetchMembersDatabase();
+
+            const inputEl = document.getElementById("barcode-input");
+            if (inputEl) inputEl.focus();
+            document.addEventListener("click", () => {
+                initAudio();
+                if (inputEl) inputEl.focus();
+            });
+        });
+
+        // Listen for completed registration signal from Monitor 2
+        tapChannel.onmessage = (event) => {
+            if (event.data && event.data.action === "REGISTRATION_COMPLETE") {
+                const newMember = event.data.member;
+                const studentNoKey = String(newMember["Student No."] || newMember.id || "").trim().toLowerCase();
+                if (studentNoKey) {
+                    membersMap.set(studentNoKey, newMember);
+                    processTapAction(newMember, studentNoKey, true);
+                }
             }
-            
-            function processTapAction(member, searchKey, isJustRegistered) {
-                const box = document.getElementById("status-box");
-                const id = member["ID"] || "";
-                const studentNo = member["Student No."] || searchKey;
-                const surname = member["Surname"] || "";
-                const firstName = member["First Name"] || member["name"] || "";
-                const middleName = member["Middle Name"] || "";
-                const program = member["Program"] || "BTLED-IA";
-                const memberStatus = member["Status"] || "Active";
-                const fullName = `${firstName} ${surname}`.trim();
-                
-                const lastState = sessionAttendanceMap.get(studentNo.toLowerCase());
-                let actionType = (lastState === "TAP-IN") ? "TAP-OUT" : "TAP-IN";
-                
-                sessionAttendanceMap.set(studentNo.toLowerCase(), actionType);
-                
-                const timestampISO = new Date().toISOString();
-                const displayTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                
-                box.className = actionType === "TAP-IN" ? "status-alert success" : "status-alert info";
-                box.innerText = isJustRegistered 
+        };
+
+        function rebuildSessionState() {
+            sessionAttendanceMap.clear();
+            const reversedLogs = [...recentLogs].reverse();
+            reversedLogs.forEach(log => {
+                if (log.studentNo) sessionAttendanceMap.set(log.studentNo.toLowerCase(), log.type);
+            });
+        }
+
+        function loadCachedMembers() {
+            const cached = localStorage.getItem("btled_members_db");
+            if (cached) {
+                try {
+                    const list = JSON.parse(cached);
+                    membersMap.clear();
+                    list.forEach(m => {
+                        const studentNoKey = String(m["Student No."] || "").trim().toLowerCase();
+                        const idKey = String(m["ID"] || "").trim().toLowerCase();
+                        if (studentNoKey) membersMap.set(studentNoKey, m);
+                        if (idKey && idKey !== studentNoKey) membersMap.set(idKey, m);
+                    });
+                    document.getElementById("db-status-text").innerText = `DB Ready (${membersMap.size} Keys Loaded)`;
+                } catch(e) { console.error("Error parsing DB:", e); }
+            }
+        }
+
+        async function fetchMembersDatabase() {
+            try {
+                document.getElementById("db-status-text").innerText = "Updating Members DB...";
+                const res = await fetch(`${APPS_SCRIPT_URL}?module=allmembers`);
+                const result = await res.json();
+                if (result.ok && Array.isArray(result.data)) {
+                    localStorage.setItem("btled_members_db", JSON.stringify(result.data));
+                    loadCachedMembers();
+                    document.getElementById("db-status-text").innerText = `DB Synced (${result.data.length} Members)`;
+                }
+            } catch (err) {
+                document.getElementById("db-status-text").innerText = `Offline DB (${membersMap.size} Keys Loaded)`;
+            }
+        }
+
+        function handleBarcodeScan(e) {
+            e.preventDefault();
+            initAudio();
+            const inputEl = document.getElementById("barcode-input");
+            const rawCode = inputEl.value.trim();
+            inputEl.value = "";
+            if (!rawCode) return;
+
+            const searchKey = rawCode.toLowerCase();
+            const member = membersMap.get(searchKey);
+            const box = document.getElementById("status-box");
+
+            if (!member) {
+                playChime('ERROR');
+                box.className = "status-alert warning";
+                box.innerText = `⚠️ Unregistered ID: "${rawCode}". Registration Form sent to Display 2!`;
+
+                tapChannel.postMessage({
+                    action: "PROMPT_REGISTRATION",
+                    studentNo: rawCode
+                });
+                return;
+            }
+
+            processTapAction(member, searchKey, false);
+        }
+
+        function processTapAction(member, searchKey, isJustRegistered) {
+            const box = document.getElementById("status-box");
+            const id = member["ID"] || "";
+            const studentNo = member["Student No."] || searchKey;
+            const surname = member["Surname"] || "";
+            const firstName = member["First Name"] || member["name"] || "";
+            const middleName = member["Middle Name"] || "";
+            const program = member["Program"] || "BTLED-IA";
+            const memberStatus = member["Status"] || "Active";
+            const fullName = `${firstName} ${surname}`.trim();
+
+            const lastState = sessionAttendanceMap.get(studentNo.toLowerCase());
+            let actionType = (lastState === "TAP-IN") ? "TAP-OUT" : "TAP-IN";
+
+            playChime(actionType);
+            sessionAttendanceMap.set(studentNo.toLowerCase(), actionType);
+
+            const timestampISO = new Date().toISOString();
+            const displayTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            box.className = actionType === "TAP-IN" ? "status-alert success" : "status-alert info";
+            box.innerText = isJustRegistered 
                 ? `🎉 [NEW REGISTRATION] Tapped In: ${fullName} (${program})`
                 : `⏱️ [AUTO ${actionType}] ${fullName} (${program}) - ${displayTime}`;
-                
-                const tapRecord = {
-                    id, studentNo, surname, firstName, middleName, program,
-                    eventName: EVENT_NAME, venue: VENUE_NAME, type: actionType,
-                    timestamp: timestampISO, displayTime, status: memberStatus
-                };
-                
-                pendingLogs.push(tapRecord);
-                recentLogs.unshift(tapRecord);
-                if (recentLogs.length > 25) recentLogs.pop();
-                
-                saveState();
-                updateSyncUI();
-                renderRecentLogs();
-                autoBackgroundSync();
+
+            const tapRecord = {
+                id, studentNo, surname, firstName, middleName, program,
+                eventName: EVENT_NAME, venue: VENUE_NAME, type: actionType,
+                timestamp: timestampISO, displayTime, status: memberStatus
+            };
+
+            pendingLogs.push(tapRecord);
+            recentLogs.unshift(tapRecord);
+            if (recentLogs.length > 25) recentLogs.pop();
+
+            saveState();
+            updateSyncUI();
+            renderRecentLogs();
+            autoBackgroundSync();
+        }
+
+        function saveState() {
+            localStorage.setItem("btled_pending_taps", JSON.stringify(pendingLogs));
+            localStorage.setItem("btled_recent_taps", JSON.stringify(recentLogs));
+        }
+
+        function updateSyncUI() {
+            const badge = document.getElementById("pending-count-badge");
+            if (badge) badge.innerText = pendingLogs.length;
+        }
+
+        function renderRecentLogs() {
+            const tbody = document.getElementById("recent-logs-body");
+            if (!tbody) return;
+            if (recentLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #94a3b8;">No scans logged today.</td></tr>`;
+                return;
             }
-            
-            function saveState() {
-                localStorage.setItem("btled_pending_taps", JSON.stringify(pendingLogs));
-                localStorage.setItem("btled_recent_taps", JSON.stringify(recentLogs));
-            }
-            
-            function updateSyncUI() {
-                const badge = document.getElementById("pending-count-badge");
-                if (badge) badge.innerText = pendingLogs.length;
-            }
-            
-            function renderRecentLogs() {
-                const tbody = document.getElementById("recent-logs-body");
-                if (!tbody) return;
-                if (recentLogs.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #94a3b8;">No scans logged today.</td></tr>`;
-                    return;
-                }
-                tbody.innerHTML = recentLogs.map(log => `
+            tbody.innerHTML = recentLogs.map(log => `
                 <tr>
                     <td>${log.displayTime}</td>
                     <td><strong>${log.studentNo}</strong></td>
@@ -272,69 +386,42 @@
                     <td><span class="${log.type === 'TAP-IN' ? 'badge-in' : 'badge-out'}">${log.type}</span></td>
                 </tr>
             `).join('');
-            }
-            
-            let isSyncing = false;
-            async function autoBackgroundSync() {
-                if (isSyncing || pendingLogs.length === 0) return;
-                syncPendingTaps();
-            }
-            
-            async function syncPendingTaps() {
-                if (pendingLogs.length === 0) return;
-                isSyncing = true;
-                const batchToSend = [...pendingLogs];
-                try {
-                    const response = await fetch(APPS_SCRIPT_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "text/plain" },
-                        body: JSON.stringify({ action: "batchSyncTaps", records: batchToSend })
-                    });
-                    const result = await response.json();
-                    if (result.ok) {
-                        pendingLogs = pendingLogs.filter(item => !batchToSend.includes(item));
-                        saveState();
-                        updateSyncUI();
-                    }
-                } catch (e) {
-                    console.warn("Background sync error:", e);
-                } finally { isSyncing = false; }
-            }
-            
-            // Initialize WebRTC Receiver for Mobile Phone Scanner
-            const peer = new Peer();
-            
-            peer.on('open', (id) => {
-                document.getElementById('peer-status').innerText = "Ready to pair";
-                const mobileScannerUrl = `${window.location.origin}${window.location.pathname.replace('tap.html', 'mobile-scanner.html')}?peer=${id}`;
-                
-                // Render pairing QR code
-                new QRCode(document.getElementById("qrcode"), {
-                    text: mobileScannerUrl,
-                    width: 80,
-                    height: 80
+        }
+
+        let isSyncing = false;
+        async function autoBackgroundSync() {
+            if (isSyncing || pendingLogs.length === 0) return;
+            syncPendingTaps();
+        }
+
+        async function syncPendingTaps() {
+            if (pendingLogs.length === 0) return;
+            isSyncing = true;
+            const batchToSend = [...pendingLogs];
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({ action: "batchSyncTaps", records: batchToSend })
                 });
-            });
-            
-            peer.on('connection', (conn) => {
-                document.getElementById('peer-status').innerText = "🟢 Mobile Scanner Connected";
-                document.getElementById('peer-status').style.color = "#22c55e";
-                
-                conn.on('data', (scannedCode) => {
-                    const inputEl = document.getElementById("barcode-input");
-                    if (inputEl) {
-                        inputEl.value = scannedCode;
-                        // Trigger submission automatically
-                        const event = new Event('submit', { cancelable: true });
-                        document.getElementById("tap-form").dispatchEvent(event);
-                    }
-                });
-                
-                conn.on('close', () => {
-                    document.getElementById('peer-status').innerText = "🟡 Mobile Scanner Disconnected";
-                    document.getElementById('peer-status').style.color = "#f59e0b";
-                });
-            });
-        </script>
-    </body>
-    </html>
+                const result = await response.json();
+                if (result.ok) {
+                    pendingLogs = pendingLogs.filter(item => !batchToSend.includes(item));
+                    saveState();
+                    updateSyncUI();
+                }
+            } catch (e) {
+                console.warn("Background sync error:", e);
+            } finally { isSyncing = false; }
+        }
+
+        function openQrModal() {
+            document.getElementById("qr-modal").style.display = "flex";
+        }
+
+        function closeQrModal() {
+            document.getElementById("qr-modal").style.display = "none";
+        }
+    </script>
+</body>
+</html>
