@@ -2,74 +2,327 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BTLED | Wireless Mobile Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>BTLED | Smart Mobile Scanner</title>
+  
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
   <style>
-    body { font-family: sans-serif; background: #0f172a; color: #fff; margin: 0; padding: 1rem; text-align: center; }
-    #reader { width: 100%; max-width: 450px; margin: 1rem auto; border-radius: 8px; overflow: hidden; }
-    .status-badge { padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 700; font-size: 0.9rem; display: inline-block; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      margin: 0;
+      padding: 1rem;
+      text-align: center;
+      touch-action: manipulation;
+    }
+
+    .status-badge {
+      padding: 0.4rem 0.85rem;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
     .connected { background: #16a34a; color: #fff; }
     .disconnected { background: #dc2626; color: #fff; }
+    .connecting { background: #d97706; color: #fff; }
+
+    #reader {
+      width: 100%;
+      max-width: 450px;
+      margin: 0 auto;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .controls-grid {
+      width: 100%;
+      max-width: 450px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin: 1rem auto;
+    }
+
+    .btn {
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid #334155;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .btn:active { background: #334155; }
+    .btn-accent { background: #0047AB; }
+
+    /* Signature Modal Overlay */
+    .sig-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.95);
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .sig-box {
+      background: #fff;
+      color: #0f172a;
+      border-radius: 12px;
+      padding: 1.25rem;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    #sig-canvas {
+      border: 2px dashed #cbd5e1;
+      border-radius: 8px;
+      background: #f8fafc;
+      width: 100%;
+      height: 180px;
+      touch-action: none;
+      cursor: crosshair;
+    }
   </style>
 </head>
 <body>
-  <h2>BTLED Wireless Scanner</h2>
-  <div id="connection-status" class="status-badge disconnected">Connecting to PC...</div>
-  
+
+  <h2>BTLED Mobile Scanner</h2>
+  <div id="connection-status" class="status-badge connecting">Connecting...</div>
+
   <div id="reader"></div>
+
+  <div class="controls-grid">
+    <button id="btn-torch" class="btn" onclick="toggleTorch()" disabled>⚡ Flash</button>
+    <button id="btn-camera" class="btn" onclick="switchCamera()" disabled>🔄 Flip</button>
+    <button class="btn" onclick="initPeerConnection()">🔌 Reconnect</button>
+  </div>
+
+  <div id="status-notice" style="font-size: 0.9rem; color: #38bdf8; font-weight: 600; min-height: 1.2rem; margin-top: 0.5rem;"></div>
+
+  <!-- Signature Capture Modal -->
+  <div id="sig-modal" class="sig-modal">
+    <div class="sig-box">
+      <h3 style="margin: 0 0 0.25rem 0;" id="sig-student-name">Student Signature</h3>
+      <p style="margin: 0 0 0.75rem 0; font-size: 0.8rem; color: #64748b;">Please sign inside the box below to confirm attendance.</p>
+      
+      <canvas id="sig-canvas"></canvas>
+
+      <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+        <button class="btn" style="flex: 1; background: #64748b;" onclick="clearSignature()">Clear</button>
+        <button class="btn btn-accent" style="flex: 2;" onclick="submitSignature()">Confirm & Submit</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const peerId = urlParams.get('peer');
-    
-    if (!peerId) {
-      alert("Missing peer ID. Please scan the QR code displayed on Monitor 1.");
-    } else {
-      const peer = new Peer();
-      
+    const targetPeerId = urlParams.get('peer');
+
+    let peer = null;
+    let peerConn = null;
+    let html5QrCode = null;
+    let currentCameraId = null;
+    let availableCameras = [];
+    let isTorchOn = false;
+    let scanCooldown = false;
+    let currentPendingScan = null;
+
+    // Offline Queue
+    let offlineQueue = JSON.parse(localStorage.getItem("btled_mobile_queue") || "[]");
+
+    // WebRTC Network Setup
+    function initPeerConnection() {
+      if (!targetPeerId) {
+        alert("Missing Peer ID in URL. Please scan the QR code from Monitor 1.");
+        return;
+      }
+
+      updateStatus("connecting", "Connecting to PC...");
+      if (peer) peer.destroy();
+
+      peer = new Peer();
+
       peer.on('open', () => {
-        const conn = peer.connect(peerId);
-        
-        conn.on('open', () => {
-          document.getElementById('connection-status').className = "status-badge connected";
-          document.getElementById('connection-status').innerText = "🟢 Connected to Monitor 1";
-          startCameraScanner(conn);
+        peerConn = peer.connect(targetPeerId);
+
+        peerConn.on('open', () => {
+          updateStatus("connected", "🟢 Connected to Monitor 1");
+          flushOfflineQueue();
         });
 
-        conn.on('close', () => {
-          document.getElementById('connection-status').className = "status-badge disconnected";
-          document.getElementById('connection-status').innerText = "🔴 Disconnected";
+        // Handle Messages from Monitor 1 (PC)
+        peerConn.on('data', (msg) => {
+          if (msg.action === "REQUIRE_SIGNATURE") {
+            // Student exists -> Open Signature Pad
+            openSignatureModal(msg.studentNo, msg.name);
+          } else if (msg.action === "NOT_FOUND") {
+            // Unregistered ID -> Show notification and skip signature
+            showNotice(`⚠️ Unregistered ID (${msg.studentNo}). Sent to Terminal 2.`);
+          }
         });
+
+        peerConn.on('close', () => updateStatus("disconnected", "🔴 Disconnected"));
       });
     }
 
-    function startCameraScanner(conn) {
-      let lastScanned = "";
-      let cooldown = false;
-
-      const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-      
-      html5QrcodeScanner.render((decodedText) => {
-        if (cooldown || decodedText === lastScanned) return;
-        
-        cooldown = true;
-        lastScanned = decodedText;
-        
-        // Send barcode data to PC Monitor 1
-        conn.send(decodedText);
-        
-        // Vibrate phone on scan
-        if (navigator.vibrate) navigator.vibrate(100);
-
-        // Reset cooldown after 1.5s to prevent accidental repeat scans
-        setTimeout(() => {
-          cooldown = false;
-          lastScanned = "";
-        }, 1500);
-      });
+    function updateStatus(cls, text) {
+      const badge = document.getElementById("connection-status");
+      badge.className = `status-badge ${cls}`;
+      badge.innerText = text;
     }
+
+    function showNotice(msg) {
+      const el = document.getElementById("status-notice");
+      el.innerText = msg;
+      setTimeout(() => { if (el.innerText === msg) el.innerText = ""; }, 4000);
+    }
+
+    // Camera Scanner Setup
+    async function initCameraScanner() {
+      html5QrCode = new Html5Qrcode("reader");
+
+      try {
+        availableCameras = await Html5Qrcode.getCameras();
+        if (availableCameras && availableCameras.length > 0) {
+          let backCam = availableCameras.find(c => c.label.toLowerCase().includes("back") || c.label.toLowerCase().includes("environment"));
+          currentCameraId = backCam ? backCam.id : availableCameras[0].id;
+          if (availableCameras.length > 1) document.getElementById("btn-camera").disabled = false;
+          startScanner(currentCameraId);
+        }
+      } catch (err) { console.error("Camera error:", err); }
+    }
+
+    function startScanner(cameraId) {
+      html5QrCode.start(
+        cameraId,
+        { fps: 12, qrbox: 240, videoConstraints: { focusMode: "continuous" } },
+        onScanSuccess
+      ).then(() => checkTorch());
+    }
+
+    function onScanSuccess(decodedText) {
+      if (scanCooldown) return;
+      scanCooldown = true;
+
+      if (navigator.vibrate) navigator.vibrate(80);
+      currentPendingScan = decodedText;
+
+      // Send initial scan lookup request to Monitor 1
+      sendDataToPC({ action: "SCAN_BARCODE", code: decodedText });
+
+      setTimeout(() => { scanCooldown = false; }, 1500);
+    }
+
+    function sendDataToPC(payload) {
+      if (peerConn && peerConn.open) {
+        peerConn.send(payload);
+      } else {
+        // Queue offline if disconnected
+        offlineQueue.push(payload);
+        localStorage.setItem("btled_mobile_queue", JSON.stringify(offlineQueue));
+        showNotice("⚠️ Disconnected. Scan saved to offline queue.");
+      }
+    }
+
+    function flushOfflineQueue() {
+      if (offlineQueue.length === 0 || !peerConn || !peerConn.open) return;
+      offlineQueue.forEach(item => peerConn.send(item));
+      offlineQueue = [];
+      localStorage.removeItem("btled_mobile_queue");
+      showNotice("✅ Offline queue synced to Monitor 1!");
+    }
+
+    // Signature Pad Logic
+    const canvas = document.getElementById("sig-canvas");
+    const ctx = canvas.getContext("2d");
+    let isDrawing = false;
+
+    function resizeCanvas() {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      clearSignature();
+    }
+
+    function openSignatureModal(studentNo, name) {
+      document.getElementById("sig-student-name").innerText = `${name} (${studentNo})`;
+      document.getElementById("sig-modal").style.display = "flex";
+      resizeCanvas();
+    }
+
+    function clearSignature() {
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "#0f172a";
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = "round";
+    }
+
+    // Touch & Mouse Canvas Draw Event Listeners
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    canvas.addEventListener("touchstart", (e) => { isDrawing = true; const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); e.preventDefault(); });
+    canvas.addEventListener("touchmove", (e) => { if (!isDrawing) return; const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); e.preventDefault(); });
+    canvas.addEventListener("touchend", () => { isDrawing = false; });
+
+    canvas.addEventListener("mousedown", (e) => { isDrawing = true; const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); });
+    canvas.addEventListener("mousemove", (e) => { if (!isDrawing) return; const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); });
+    canvas.addEventListener("mouseup", () => { isDrawing = false; });
+
+    function submitSignature() {
+      const signatureDataUrl = canvas.toDataURL("image/png");
+      document.getElementById("sig-modal").style.display = "none";
+
+      // Transmit barcode + signature image to Monitor 1
+      sendDataToPC({
+        action: "SUBMIT_SIGNATURE",
+        code: currentPendingScan,
+        signature: signatureDataUrl
+      });
+
+      showNotice("✅ Signature submitted successfully!");
+      currentPendingScan = null;
+    }
+
+    // Camera Controls
+    function checkTorch() {
+      try {
+        const caps = html5QrCode.getRunningTrackCapabilities();
+        document.getElementById("btn-torch").disabled = !caps.torch;
+      } catch(e) {}
+    }
+
+    async function toggleTorch() {
+      isTorchOn = !isTorchOn;
+      await html5QrCode.applyVideoConstraints({ advanced: [{ torch: isTorchOn }] });
+    }
+
+    async function switchCamera() {
+      let idx = availableCameras.findIndex(c => c.id === currentCameraId);
+      currentCameraId = availableCameras[(idx + 1) % availableCameras.length].id;
+      await html5QrCode.stop();
+      startScanner(currentCameraId);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initPeerConnection();
+      initCameraScanner();
+    });
   </script>
 </body>
 </html>

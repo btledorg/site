@@ -10,9 +10,12 @@
   <style>
     body {
       background-color: #f8fafc;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      margin: 0;
+      padding: 0;
     }
     
     .kiosk-wrapper {
@@ -22,6 +25,19 @@
       align-items: center;
       padding: 2rem 1.5rem;
     }
+
+    .status-badge {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: #e2e8f0;
+      color: #475569;
+    }
+    .status-badge.online { background: #dcfce7; color: #15803d; }
 
     /* Standby Card */
     .standby-card {
@@ -58,7 +74,7 @@
       100% { box-shadow: 0 0 0 0 rgba(29, 78, 216, 0); }
     }
 
-    /* Focused Registration Card */
+    /* Registration Card */
     .registration-card {
       background: #ffffff;
       border: 1px solid #cbd5e1;
@@ -131,7 +147,7 @@
     .auth-btn {
       width: 100%;
       padding: 0.9rem;
-      background: #1d4ed8;
+      background: #0047AB;
       color: #ffffff;
       font-size: 1rem;
       font-weight: 700;
@@ -142,7 +158,7 @@
       transition: background 0.2s ease;
     }
 
-    .auth-btn:hover { background: #1e40af; }
+    .auth-btn:hover { background: #003380; }
 
     .auth-alert {
       padding: 0.85rem 1rem;
@@ -173,14 +189,16 @@
 </head>
 <body>
 
+  <div id="conn-badge" class="status-badge">Terminal 1: Linked</div>
+
   <main class="kiosk-wrapper">
     <!-- 1. STANDBY STATE -->
     <div id="standby-view" class="standby-card">
       <div class="standby-icon pulse-ring">🪪</div>
       <h2 style="color: #0f172a; margin-bottom: 0.5rem; font-size: 1.75rem;">BTLED Registration Terminal</h2>
       <p style="color: #64748b; font-size: 1rem; line-height: 1.5; margin-bottom: 0;">
-        Please scan your Student ID barcode at the scanner on <strong>Terminal 1</strong>.<br>
-        If you are not yet registered, your form will automatically appear on this screen.
+        Please scan your Student ID barcode at <strong>Terminal 1</strong>.<br>
+        If you are not yet registered, your form will automatically appear here.
       </p>
     </div>
 
@@ -264,7 +282,7 @@
           <input type="email" id="reg-email" required placeholder="email@example.com" />
         </div>
 
-        <!-- Honeypot anti-spam field -->
+        <!-- Honeypot field -->
         <div style="display: none">
           <input type="text" id="reg-website" name="website" value="" />
         </div>
@@ -288,18 +306,34 @@
 
   <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
+    
+    // Channel 1: BroadcastChannel
     const tapChannel = new BroadcastChannel("btled_tap_channel");
 
     const standbyView = document.getElementById("standby-view");
     const registrationView = document.getElementById("registration-view");
     const successView = document.getElementById("success-view");
 
-    // Listen for unregistered barcode scan signals from Terminal 1 (Monitor 1)
+    // Process incoming trigger from Terminal 1
+    function handleIncomingPrompt(studentNo) {
+      if (!studentNo) return;
+      showRegistrationForm(studentNo);
+    }
+
+    // 1. Primary Receiver via BroadcastChannel
     tapChannel.onmessage = (event) => {
       if (event.data && event.data.action === "PROMPT_REGISTRATION") {
-        showRegistrationForm(event.data.studentNo);
+        handleIncomingPrompt(event.data.studentNo);
       }
     };
+
+    // 2. Secondary Fallback Receiver via localStorage Event Listener
+    window.addEventListener("storage", (event) => {
+      if (event.key === "btled_prompt_registration" && event.newValue) {
+        handleIncomingPrompt(event.newValue);
+        localStorage.removeItem("btled_prompt_registration");
+      }
+    });
 
     function showRegistrationForm(studentNo) {
       document.getElementById("register-form").reset();
@@ -328,7 +362,6 @@
       document.getElementById("success-message-text").innerText = `Welcome, ${name}! You are registered and Timed In.`;
       successView.classList.remove("hidden");
 
-      // Auto return to standby after 3.5 seconds
       setTimeout(() => {
         showStandbyView();
       }, 3500);
@@ -388,11 +421,14 @@
             "Status": "Active"
           };
 
-          // Notify Terminal 1 (Scanner Monitor) to trigger automatic Tap-In & Chime
+          // Broadcast registration complete over primary channel
           tapChannel.postMessage({
             action: "REGISTRATION_COMPLETE",
             member: registeredMember
           });
+
+          // Backup trigger over localStorage
+          localStorage.setItem("btled_registration_complete", JSON.stringify(registeredMember));
 
           showSuccessView(`${payload.name} ${payload.surname}`);
         } else {
