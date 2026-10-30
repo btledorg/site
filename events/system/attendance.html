@@ -9,6 +9,9 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <!-- jsPDF & AutoTable for PDF Generation with Images -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         body {
@@ -44,6 +47,7 @@
             font-size: 0.85rem;
         }
         .btn-subtle { background: #334155; }
+        .btn-success { background: #16a34a; }
 
         .stats-row {
             display: grid;
@@ -69,6 +73,13 @@
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
         }
 
         .scan-input {
@@ -120,8 +131,9 @@
                 DB: <span id="db-status">Loading...</span> &nbsp;|&nbsp;
                 Mobile: <span id="peer-status" style="color: #f59e0b;">Offline</span>
             </div>
-            <div>
+            <div style="display: flex; gap: 0.4rem;">
                 <button class="btn btn-subtle" onclick="openQrModal()">📱 Pair Phone</button>
+                <button class="btn btn-success" onclick="exportLogsToPDF()">📄 Export PDF</button>
                 <button class="btn" onclick="syncPendingTaps()">Sync Now</button>
                 <button class="btn btn-subtle" onclick="fetchMembersDatabase()">Refresh DB</button>
             </div>
@@ -144,8 +156,11 @@
             </div>
 
             <div class="card">
-                <h2>Recent Scans</h2>
-                <p>Real-time activity log (Signatures captured).</p>
+                <div class="card-header">
+                    <h2 style="margin: 0;">Recent Scans</h2>
+                    <button class="btn btn-success" style="font-size: 0.75rem; padding: 4px 8px;" onclick="exportLogsToPDF()">📄 Export PDF</button>
+                </div>
+                <p style="margin-top: 0;">Real-time activity log (Signatures captured).</p>
                 <div style="max-height: 280px; overflow-y: auto;">
                     <table class="logs-table">
                         <thead>
@@ -244,10 +259,8 @@
 
                         if (member) {
                             const name = `${member["First Name"] || member["name"]} ${member["Surname"] || ""}`.trim();
-                            // Member Found -> Reply asking for signature
                             conn.send({ action: "REQUIRE_SIGNATURE", studentNo: data.code, name: name });
                         } else {
-                            // Member Not Found -> Trigger Monitor 2 & Tell phone to skip
                             playChime('ERROR');
                             const box = document.getElementById("status-box");
                             box.className = "alert-box warning";
@@ -257,14 +270,12 @@
                             conn.send({ action: "NOT_FOUND", studentNo: data.code });
                         }
                     } else if (data.action === "SUBMIT_SIGNATURE") {
-                        // Received barcode scan WITH signature data URL
                         const member = membersMap.get(data.code.toLowerCase());
                         if (member) {
                             processTapAction(member, data.code.toLowerCase(), false, data.signature);
                         }
                     }
                 } else if (typeof data === "string") {
-                    // Fallback for plain string barcode input
                     const input = document.getElementById("barcode-input");
                     if (input) {
                         input.value = data;
@@ -379,12 +390,12 @@
                 program, eventName: EVENT_NAME, venue: VENUE_NAME,
                 type: actionType, timestamp: new Date().toISOString(), displayTime,
                 status: member["Status"] || "Active",
-                signature: signatureDataUrl || null // Base64 signature saved here
+                signature: signatureDataUrl || null
             };
 
             pendingLogs.push(tapRecord);
             recentLogs.unshift(tapRecord);
-            if (recentLogs.length > 25) recentLogs.pop();
+            if (recentLogs.length > 50) recentLogs.pop();
 
             localStorage.setItem("btled_pending_taps", JSON.stringify(pendingLogs));
             localStorage.setItem("btled_recent_taps", JSON.stringify(recentLogs));
@@ -416,6 +427,75 @@
                     <td>${log.signature ? '<span style="color:#22c55e; font-weight:bold;">✍️ Signed</span>' : '<span style="color:#94a3b8;">None</span>'}</td>
                 </tr>
             `).join('');
+        }
+
+        // Export Recent Scans to PDF with Embedded Signatures
+        function exportLogsToPDF() {
+            if (recentLogs.length === 0) {
+                alert("No logs available to export.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+            // Title and Header Information
+            doc.setFontSize(16);
+            doc.setTextColor(15, 23, 42);
+            doc.text("BTLED Attendance & Signature Log", 14, 15);
+
+            doc.setFontSize(9);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Event: ${EVENT_NAME} | Venue: ${VENUE_NAME}`, 14, 21);
+            doc.text(`Generated: ${new Date().toLocaleString()} | Total Entries: ${recentLogs.length}`, 14, 26);
+
+            const tableColumn = ["Time", "Student ID", "Name", "Program", "Type", "Signature"];
+            const tableRows = [];
+
+            recentLogs.forEach(log => {
+                const fullName = `${log.firstName} ${log.surname}`.trim();
+                tableRows.push([
+                    log.displayTime || "",
+                    log.studentNo || "",
+                    fullName || "Unknown",
+                    log.program || "N/A",
+                    log.type || "",
+                    "" // Rendered inside didDrawCell hook
+                ]);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 30,
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2.5, verticalAlign: 'middle' },
+                headStyles: { fillColor: [0, 71, 171], textColor: [255, 255, 255], fontStyle: 'bold' },
+                columnStyles: {
+                    0: { cellWidth: 22 },
+                    1: { cellWidth: 28 },
+                    2: { cellWidth: 45 },
+                    3: { cellWidth: 28 },
+                    4: { cellWidth: 20 },
+                    5: { cellWidth: 35, minCellHeight: 14 }
+                },
+                didDrawCell: function(data) {
+                    if (data.column.index === 5 && data.cell.section === 'body') {
+                        const log = recentLogs[data.row.index];
+                        if (log && log.signature) {
+                            try {
+                                const posX = data.cell.x + 2;
+                                const posY = data.cell.y + 1;
+                                doc.addImage(log.signature, 'PNG', posX, posY, 30, 12);
+                            } catch (e) {
+                                console.error("Error drawing signature in PDF:", e);
+                            }
+                        }
+                    }
+                }
+            });
+
+            doc.save(`BTLED_Attendance_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
         }
 
         let isSyncing = false;
