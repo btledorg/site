@@ -215,46 +215,55 @@
       el.innerText = msg;
       setTimeout(() => { if (el.innerText === msg) el.innerText = ""; }, 4000);
     }
-
-    // Camera Scanner Setup with Dropdown Selection
+// Camera Scanner Setup with Guaranteed Rear Camera Default
     async function initCameraScanner() {
       html5QrCode = new Html5Qrcode("reader");
+      const selectEl = document.getElementById("camera-select");
 
+      // 1. Set initial presets in dropdown
+      selectEl.innerHTML = `
+        <option value="environment" selected>📷 Rear Camera (Back)</option>
+        <option value="user">🤳 Front Camera (Selfie)</option>
+      `;
+
+      // 2. Start directly with 'environment' facingMode (forces the rear camera on mobile)
       try {
-        availableCameras = await Html5Qrcode.getCameras();
-        const selectEl = document.getElementById("camera-select");
+        await startScanner({ facingMode: "environment" });
+        currentCameraId = "environment";
 
-        if (availableCameras && availableCameras.length > 0) {
-          selectEl.innerHTML = "";
+        // 3. Populate physical camera list AFTER stream is granted so labels exist
+        try {
+          availableCameras = await Html5Qrcode.getCameras();
+          if (availableCameras && availableCameras.length > 0) {
+            selectEl.innerHTML = "";
 
-          // Populate Dropdown
-          availableCameras.forEach((cam, idx) => {
-            const opt = document.createElement("option");
-            opt.value = cam.id;
-            opt.innerText = cam.label || `Camera ${idx + 1}`;
-            selectEl.appendChild(opt);
-          });
+            // Add Presets First
+            const envOpt = document.createElement("option");
+            envOpt.value = "environment";
+            envOpt.innerText = "📷 Default Rear Camera";
+            selectEl.appendChild(envOpt);
 
-          // Default to back/environment facing camera if found
-          let backCam = availableCameras.find(c => 
-            c.label && (
-              c.label.toLowerCase().includes("back") || 
-              c.label.toLowerCase().includes("environment") || 
-              c.label.toLowerCase().includes("rear")
-            )
-          );
+            const userOpt = document.createElement("option");
+            userOpt.value = "user";
+            userOpt.innerText = "🤳 Default Front Camera";
+            selectEl.appendChild(userOpt);
 
-          currentCameraId = backCam ? backCam.id : availableCameras[0].id;
-          selectEl.value = currentCameraId;
+            // Add Physical Lenses (Wide, Ultrawide, etc.)
+            availableCameras.forEach((cam, idx) => {
+              const opt = document.createElement("option");
+              opt.value = cam.id;
+              opt.innerText = cam.label ? `Lens: ${cam.label}` : `Camera Device ${idx + 1}`;
+              selectEl.appendChild(opt);
+            });
 
-          startScanner(currentCameraId);
-        } else {
-          selectEl.innerHTML = '<option value="environment">Default Rear Camera</option>';
-          startScanner({ facingMode: "environment" });
+            selectEl.value = "environment";
+          }
+        } catch (e) {
+          console.warn("Could not list hardware camera labels:", e);
         }
       } catch (err) {
-        console.warn("Camera enumeration error:", err);
-        startScanner({ facingMode: "environment" });
+        console.error("Failed to start rear camera:", err);
+        showNotice("⚠️ Camera access failed. Please check browser permissions.");
       }
     }
 
@@ -265,34 +274,37 @@
         videoConstraints: { focusMode: "continuous" } 
       };
 
-      html5QrCode.start(
+      return html5QrCode.start(
         cameraConfig,
         config,
         onScanSuccess,
         () => {}
       ).then(() => {
         checkTorch();
-      }).catch(err => {
-        console.error("Camera start failed:", err);
-        showNotice("⚠️ Selected camera unavailable.");
       });
     }
 
-    async function onCameraSelectChange(selectedId) {
-      if (!html5QrCode || !selectedId || selectedId === currentCameraId) return;
+    async function onCameraSelectChange(selectedVal) {
+      if (!html5QrCode || !selectedVal || selectedVal === currentCameraId) return;
 
-      currentCameraId = selectedId;
+      currentCameraId = selectedVal;
       isTorchOn = false;
       document.getElementById("btn-torch").disabled = true;
 
       try {
         await html5QrCode.stop();
-        startScanner(selectedId);
+        
+        // Check if selection is a facingMode preset or a specific device ID
+        if (selectedVal === "environment" || selectedVal === "user") {
+          await startScanner({ facingMode: selectedVal });
+        } else {
+          await startScanner(selectedVal);
+        }
       } catch (err) {
         console.error("Error switching camera via dropdown:", err);
+        showNotice("Failed to switch camera.");
       }
     }
-
     function onScanSuccess(decodedText) {
       if (scanCooldown) return;
       scanCooldown = true;
