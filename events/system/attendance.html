@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BTLED | Terminal 1</title>
-    <link rel="icon" type="image/png" href="../resources/image/logo/2.png" />
-    <link rel="stylesheet" href="../resources/css/landing.css" />
+    <link rel="icon" type="image/png" href="../../resources/image/logo/2.png" />
+    <link rel="stylesheet" href="../../resources/css/landing.css" />
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -228,7 +228,7 @@
         peer.on('open', (id) => {
             document.getElementById('peer-status').innerText = "Ready";
             document.getElementById('peer-status').style.color = "#38bdf8";
-            mobileScannerUrl = `${window.location.origin}${window.location.pathname.replace('tap.html', 'mobile-scanner.html')}?peer=${id}`;
+            mobileScannerUrl = `${window.location.origin}${window.location.pathname.replace('attendance.html', 'mobile-scanner.html')}?peer=${id}`;
         });
 
         peer.on('connection', (conn) => {

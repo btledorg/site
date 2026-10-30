@@ -38,6 +38,7 @@
       border-radius: 8px;
       overflow: hidden;
       background: #000;
+      border: 2px solid #334155;
     }
 
     .controls-grid {
@@ -58,8 +59,13 @@
       font-weight: 700;
       font-size: 0.8rem;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
     }
     .btn:active { background: #334155; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-accent { background: #0047AB; }
 
     /* Signature Modal Overlay */
@@ -104,7 +110,7 @@
 
   <div class="controls-grid">
     <button id="btn-torch" class="btn" onclick="toggleTorch()" disabled>⚡ Flash</button>
-    <button id="btn-camera" class="btn" onclick="switchCamera()" disabled>🔄 Flip</button>
+    <button id="btn-camera" class="btn" onclick="switchCamera()">🔄 Flip Cam</button>
     <button class="btn" onclick="initPeerConnection()">🔌 Reconnect</button>
   </div>
 
@@ -164,10 +170,8 @@
         // Handle Messages from Monitor 1 (PC)
         peerConn.on('data', (msg) => {
           if (msg.action === "REQUIRE_SIGNATURE") {
-            // Student exists -> Open Signature Pad
             openSignatureModal(msg.studentNo, msg.name);
           } else if (msg.action === "NOT_FOUND") {
-            // Unregistered ID -> Show notification and skip signature
             showNotice(`⚠️ Unregistered ID (${msg.studentNo}). Sent to Terminal 2.`);
           }
         });
@@ -188,27 +192,82 @@
       setTimeout(() => { if (el.innerText === msg) el.innerText = ""; }, 4000);
     }
 
-    // Camera Scanner Setup
+    // Camera Scanner Setup with Default Back-Camera Logic
     async function initCameraScanner() {
       html5QrCode = new Html5Qrcode("reader");
 
       try {
         availableCameras = await Html5Qrcode.getCameras();
+
         if (availableCameras && availableCameras.length > 0) {
-          let backCam = availableCameras.find(c => c.label.toLowerCase().includes("back") || c.label.toLowerCase().includes("environment"));
+          // Check for back/rear/environment facing camera
+          let backCam = availableCameras.find(c => 
+            c.label && (
+              c.label.toLowerCase().includes("back") || 
+              c.label.toLowerCase().includes("environment") || 
+              c.label.toLowerCase().includes("rear")
+            )
+          );
+
           currentCameraId = backCam ? backCam.id : availableCameras[0].id;
-          if (availableCameras.length > 1) document.getElementById("btn-camera").disabled = false;
           startScanner(currentCameraId);
+        } else {
+          // Fallback to environment facing mode directly
+          startScanner({ facingMode: "environment" });
         }
-      } catch (err) { console.error("Camera error:", err); }
+      } catch (err) {
+        console.warn("Camera enumeration error, falling back to facingMode constraint:", err);
+        startScanner({ facingMode: "environment" });
+      }
     }
 
-    function startScanner(cameraId) {
+    function startScanner(cameraConfig) {
+      const config = { 
+        fps: 15, 
+        qrbox: { width: 250, height: 180 }, 
+        videoConstraints: { focusMode: "continuous" } 
+      };
+
       html5QrCode.start(
-        cameraId,
-        { fps: 12, qrbox: 240, videoConstraints: { focusMode: "continuous" } },
-        onScanSuccess
-      ).then(() => checkTorch());
+        cameraConfig,
+        config,
+        onScanSuccess,
+        () => {} // Silent on non-code frames
+      ).then(() => {
+        checkTorch();
+      }).catch(err => {
+        console.error("Camera start failed:", err);
+        showNotice("⚠️ Could not open rear camera. Trying fallback...");
+      });
+    }
+
+    async function switchCamera() {
+      if (!html5QrCode) return;
+
+      try {
+        if (!availableCameras || availableCameras.length === 0) {
+          availableCameras = await Html5Qrcode.getCameras();
+        }
+
+        if (availableCameras.length < 2) {
+          showNotice("Only 1 camera detected on this device.");
+          return;
+        }
+
+        // Cycle through cameras
+        let currentIndex = availableCameras.findIndex(c => c.id === currentCameraId);
+        let nextIndex = (currentIndex + 1) % availableCameras.length;
+        currentCameraId = availableCameras[nextIndex].id;
+
+        isTorchOn = false;
+        document.getElementById("btn-torch").disabled = true;
+
+        await html5QrCode.stop();
+        startScanner(currentCameraId);
+        showNotice(`Switched to: ${availableCameras[nextIndex].label || 'Camera ' + (nextIndex + 1)}`);
+      } catch(err) {
+        console.error("Camera switch error:", err);
+      }
     }
 
     function onScanSuccess(decodedText) {
@@ -228,7 +287,6 @@
       if (peerConn && peerConn.open) {
         peerConn.send(payload);
       } else {
-        // Queue offline if disconnected
         offlineQueue.push(payload);
         localStorage.setItem("btled_mobile_queue", JSON.stringify(offlineQueue));
         showNotice("⚠️ Disconnected. Scan saved to offline queue.");
@@ -268,7 +326,6 @@
       ctx.lineCap = "round";
     }
 
-    // Touch & Mouse Canvas Draw Event Listeners
     function getPos(e) {
       const rect = canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -288,7 +345,6 @@
       const signatureDataUrl = canvas.toDataURL("image/png");
       document.getElementById("sig-modal").style.display = "none";
 
-      // Transmit barcode + signature image to Monitor 1
       sendDataToPC({
         action: "SUBMIT_SIGNATURE",
         code: currentPendingScan,
@@ -299,24 +355,23 @@
       currentPendingScan = null;
     }
 
-    // Camera Controls
+    // Flashlight Control
     function checkTorch() {
       try {
         const caps = html5QrCode.getRunningTrackCapabilities();
         document.getElementById("btn-torch").disabled = !caps.torch;
-      } catch(e) {}
+      } catch(e) {
+        document.getElementById("btn-torch").disabled = true;
+      }
     }
 
     async function toggleTorch() {
       isTorchOn = !isTorchOn;
-      await html5QrCode.applyVideoConstraints({ advanced: [{ torch: isTorchOn }] });
-    }
-
-    async function switchCamera() {
-      let idx = availableCameras.findIndex(c => c.id === currentCameraId);
-      currentCameraId = availableCameras[(idx + 1) % availableCameras.length].id;
-      await html5QrCode.stop();
-      startScanner(currentCameraId);
+      try {
+        await html5QrCode.applyVideoConstraints({ advanced: [{ torch: isTorchOn }] });
+      } catch(e) {
+        showNotice("Flashlight not supported on this camera.");
+      }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
