@@ -322,14 +322,14 @@
         </div>
         
         <div class="glass-card p-4 space-y-3">
-          <h2 class="text-sm font-bold text-gray-900">Statutory Deductions <span class="text-[11px] font-medium text-gray-400">(per cutoff)</span></h2>
+          <h2 class="text-sm font-bold text-gray-900">Statutory Deductions <span class="text-[11px] font-medium text-gray-400">(of gross earnings)</span></h2>
           <div class="flex justify-between items-center glass-btn p-3 rounded-xl">
             <p class="text-sm font-bold text-gray-800">SSS</p>
-            <div class="flex items-center gap-1"><span class="text-sm text-gray-500">₱</span><input type="number" inputmode="decimal" id="dedSSS" onchange="updateDeductions()" class="w-24 glass-input rounded-lg px-2 py-1.5 text-right text-sm font-bold" /></div>
+            <span class="text-sm font-extrabold text-brand">5%</span>
           </div>
           <div class="flex justify-between items-center glass-btn p-3 rounded-xl">
             <p class="text-sm font-bold text-gray-800">PhilHealth</p>
-            <div class="flex items-center gap-1"><span class="text-sm text-gray-500">₱</span><input type="number" inputmode="decimal" id="dedPhilHealth" onchange="updateDeductions()" class="w-24 glass-input rounded-lg px-2 py-1.5 text-right text-sm font-bold" /></div>
+            <span class="text-sm font-extrabold text-brand">2.5%</span>
           </div>
           <div class="flex justify-between items-center glass-btn p-3 rounded-xl">
             <p class="text-sm font-bold text-gray-800">Pag-IBIG <span class="text-[11px] font-medium text-gray-400">(auto, 2%)</span></p>
@@ -350,6 +350,16 @@
             </div>
             <button onclick="saveActualEarnings()" class="bg-brand text-white font-bold px-4 py-2.5 rounded-xl text-sm active:scale-95 transition">Set</button>
             <button onclick="clearActualEarnings()" class="glass-btn font-bold px-3 py-2.5 rounded-xl text-sm text-gray-600">Clear</button>
+          </div>
+          <div class="space-y-2 rounded-xl bg-gray-50 p-3" aria-label="Estimated and actual earnings comparison">
+            <div>
+              <div class="flex justify-between text-[11px] font-semibold mb-1"><span class="text-gray-500">Estimated</span><span class="text-gray-700">₱<span id="actualCompareEstimated">0.00</span></span></div>
+              <div class="h-2 rounded-full bg-gray-200 overflow-hidden"><div id="actualCompareEstimatedBar" class="h-full rounded-full bg-gray-400 transition-all" style="width:0%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-[11px] font-semibold mb-1"><span class="text-emerald-700">Actual</span><span id="actualCompareValue" class="text-emerald-700">Not set</span></div>
+              <div class="h-2 rounded-full bg-gray-200 overflow-hidden"><div id="actualCompareActualBar" class="h-full rounded-full bg-emerald-500 transition-all" style="width:0%"></div></div>
+            </div>
           </div>
           <p id="actualHint" class="text-[11px] text-gray-400 font-medium">If set, this becomes your base budget.</p>
         </div>
@@ -774,8 +784,6 @@
           appData = normalizeData(data.data);
           dataVer++;
           localStorage.setItem('archer_data', JSON.stringify(appData));
-          document.getElementById('dedSSS').value = appData.deductions.sss;
-          document.getElementById('dedPhilHealth').value = appData.deductions.philhealth;
           renderDashboard(); calculate13thMonth(); markSynced();
           if (manual === true) customAlert('Downloaded latest data.');
         } else if (manual === true) { customAlert(data.message || 'There is nothing new to download yet.', 'error'); }
@@ -793,8 +801,6 @@
     function loadLocalStorage() {
       const stored = localStorage.getItem('archer_data');
       if (stored) { try { appData = normalizeData(JSON.parse(stored)); } catch (e) {} }
-      document.getElementById('dedSSS').value = appData.deductions.sss || 225;
-      document.getElementById('dedPhilHealth').value = appData.deductions.philhealth || 125;
     }
     
     function saveData() {
@@ -862,7 +868,7 @@
     function periodStats(start, end) {
       const list = appData.shifts.filter(s => { const d = parseLocalDate(s.date); return d >= start && d <= end; });
       const gross = list.reduce((sum, s) => sum + (Number(s.totalPay) || 0), 0);
-      const gov = gross > 0 ? (appData.deductions.sss || 0) + (appData.deductions.philhealth || 0) + gross * 0.02 : 0;
+      const gov = gross * 0.095;
       return { list, count: list.length, gross, gov, takeHome: Math.max(gross - gov, 0) };
     }
     const budgetFrom = st => CONFIG.BUDGET_USES === 'gross' ? st.gross : st.takeHome;
@@ -909,7 +915,6 @@
     function clearActualEarnings() { const info = getSelectedCutoffInfo(); if (!info) return; delete appData.actualEarnings[info.id]; document.getElementById('actualEarningsInput').value = ''; saveData(); customAlert('Back to the calculated budget.'); }
     function saveOtherIncome() { const info = getSelectedCutoffInfo(); if (!info) return; const raw = document.getElementById('otherIncomeInput').value; const val = parseFloat(raw); if (raw === '' || isNaN(val) || val < 0) { customAlert('Please enter a valid amount.', 'error'); return; } appData.otherIncome[info.id] = val; saveData(); customAlert('Other income added to your budget!'); }
     function clearOtherIncome() { const info = getSelectedCutoffInfo(); if (!info) return; delete appData.otherIncome[info.id]; document.getElementById('otherIncomeInput').value = ''; saveData(); customAlert('Other income cleared.'); }
-    function updateDeductions() { appData.deductions.sss = parseFloat(document.getElementById('dedSSS').value) || 0; appData.deductions.philhealth = parseFloat(document.getElementById('dedPhilHealth').value) || 0; saveData(); }
     
     let undoSnap = null, undoTimer = null;
     function deleteWithUndo(kind, id, label) { const item = appData[kind].find(x => x.id === id); if (!item) return; undoSnap = { kind, item }; appData[kind] = appData[kind].filter(x => x.id !== id); saveData(); document.getElementById('undoMsg').textContent = label + ' deleted'; const bar = document.getElementById('undoBar'); bar.classList.remove('hidden'); clearTimeout(undoTimer); undoTimer = setTimeout(() => bar.classList.add('hidden'), 5000); }
@@ -949,6 +954,11 @@
       
       document.getElementById('actualFromLabel').textContent = prevInfo.label; document.getElementById('actualBadge').classList.toggle('hidden', !hasActual);
       document.getElementById('actualHint').textContent = hasActual ? `Using actual amount instead of calculated ₱${peso(calcBudget)}.` : `Calculated from logged shifts: ₱${peso(calcBudget)}.`;
+      const compareScale = Math.max(calcBudget, hasActual ? Number(actual) : 0, 1);
+      document.getElementById('actualCompareEstimated').textContent = peso(calcBudget);
+      document.getElementById('actualCompareEstimatedBar').style.width = `${Math.min(100, calcBudget / compareScale * 100)}%`;
+      document.getElementById('actualCompareValue').textContent = hasActual ? `₱${peso(actual)}` : 'Not set';
+      document.getElementById('actualCompareActualBar').style.width = hasActual ? `${Math.min(100, Number(actual) / compareScale * 100)}%` : '0%';
       if (document.activeElement !== document.getElementById('actualEarningsInput')) document.getElementById('actualEarningsInput').value = hasActual ? Number(actual) : '';
       
       if (document.getElementById('otherIncomeBadge')) document.getElementById('otherIncomeBadge').classList.toggle('hidden', !hasOther);
