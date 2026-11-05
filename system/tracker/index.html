@@ -612,7 +612,7 @@
       const u = document.getElementById('authUsername').value.trim();
       const p = document.getElementById('authPassword').value.trim();
       const err = document.getElementById('authError');
-      if (!u || !p) { showAuthError('Please fill all fields.'); return; }
+      if (!u || !p) { showAuthError('Please enter your username and password.'); return; }
       
       const btn = document.getElementById('authSubmitBtn');
       btn.disabled = true; btn.textContent = 'Please wait...'; err.classList.add('hidden');
@@ -629,10 +629,10 @@
           document.getElementById('authOverlay').classList.add('hidden');
           initApp();
         } else {
-          showAuthError(data.message || 'Authentication failed.');
+          showAuthError(data.message || 'We could not sign you in. Please check your details and try again.');
         }
       } catch (e) {
-        showAuthError('Network error. Try again.');
+        showAuthError('Looks like we are having trouble connecting. Please try again.');
       }
       btn.disabled = false; btn.textContent = authMode === 'login' ? 'Login' : 'Register';
     }
@@ -765,7 +765,7 @@
       try {
         if (isDirty()) {
           const pushed = await syncToCloud();
-          if (!pushed) { if (manual === true) customAlert('Changes waiting to upload. Check connection.', 'error'); return false; }
+          if (!pushed) { if (manual === true) customAlert('Your changes are waiting to sync. Please check your connection and try again.', 'error'); return false; }
         }
         const res = await fetch(CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'getData', user_id: currentUser.user_id }) });
         const data = await res.json();
@@ -778,10 +778,10 @@
           document.getElementById('dedPhilHealth').value = appData.deductions.philhealth;
           renderDashboard(); calculate13thMonth(); markSynced();
           if (manual === true) customAlert('Downloaded latest data.');
-        } else if (manual === true) { customAlert(data.message || 'Nothing to download yet.', 'error'); }
+        } else if (manual === true) { customAlert(data.message || 'There is nothing new to download yet.', 'error'); }
         return true;
       } catch (e) {
-        if (manual === true) customAlert('Could not reach server.', 'error'); return false;
+        if (manual === true) customAlert('We could not reach the server. Please try again in a moment.', 'error'); return false;
       } finally {
         if (showInitialSkeleton) {
           initialCloudLoad = false;
@@ -881,8 +881,8 @@
       document.getElementById('prevRegularHours').textContent = m.regularHours; document.getElementById('prevOTHours').textContent = m.otHours; document.getElementById('prevNDHours').textContent = m.ndHours; document.getElementById('prevTotalPay').textContent = m.totalPay.toFixed(2);
     }
     function saveShift() {
-      const date = document.getElementById('shiftDate').value; if (!date) { customAlert('Select a date.', 'error'); return; }
-      if (appData.shifts.filter(s => s.date === date).length >= 1) { customAlert('Max 1 shift per day allowed.', 'error'); return; }
+      const date = document.getElementById('shiftDate').value; if (!date) { customAlert('Please choose a date.', 'error'); return; }
+      if (appData.shifts.filter(s => s.date === date).length >= 1) { customAlert('A shift is already logged for this date.', 'error'); return; }
       const baseRate = parseFloat(document.getElementById('baseRate').value), mult = parseFloat(document.getElementById('shiftMultiplier').value);
       const m = calculateShiftMetrics(document.getElementById('startTime').value, document.getElementById('endTime').value, document.getElementById('otHours').value, baseRate, mult);
       appData.shifts.push({ id: Date.now().toString(), user_id: currentUser.user_id, date, start: document.getElementById('startTime').value, end: document.getElementById('endTime').value, baseRate, multiplier: mult, regularHours: parseFloat(m.regularHours), otHours: parseFloat(m.otHours), ndHours: parseFloat(m.ndHours), totalPay: m.totalPay });
@@ -897,7 +897,7 @@
     }
     function saveExpense() {
       if (saveExpense.busy) return; saveExpense.busy = true; setTimeout(() => saveExpense.busy = false, 600);
-      const amount = parseFloat(document.getElementById('expAmount').value); if (!amount || amount <= 0) { customAlert('Enter valid amount.', 'error'); return; }
+      const amount = parseFloat(document.getElementById('expAmount').value); if (!amount || amount <= 0) { customAlert('Please enter a valid amount.', 'error'); return; }
       appData.expenses.push({ id: Date.now().toString(), user_id: currentUser.user_id, amount, date: document.getElementById('expDate').value, category: selectedCategory, note: document.getElementById('expNote').value.trim() });
       document.getElementById('expAmount').value = ''; document.getElementById('expNote').value = ''; saveData(); customAlert('Expense logged!');
     }
@@ -905,9 +905,9 @@
     function onExpSearch() { clearTimeout(qTimer); qTimer = setTimeout(() => { expQuery = document.getElementById('expSearch').value.trim().toLowerCase(); listState.expenses.shown = 0; renderDashboard(); }, 200); }
     
     // ============ EDIT SETTINGS ============
-    function saveActualEarnings() { const info = getSelectedCutoffInfo(); if (!info) return; const raw = document.getElementById('actualEarningsInput').value; const val = parseFloat(raw); if (raw === '' || isNaN(val) || val < 0) { customAlert('Enter a valid amount.', 'error'); return; } appData.actualEarnings[info.id] = val; saveData(); customAlert('Actual earnings set as this cutoff\'s base budget!'); }
+    function saveActualEarnings() { const info = getSelectedCutoffInfo(); if (!info) return; const raw = document.getElementById('actualEarningsInput').value; const val = parseFloat(raw); if (raw === '' || isNaN(val) || val < 0) { customAlert('Please enter a valid amount.', 'error'); return; } appData.actualEarnings[info.id] = val; saveData(); customAlert('Actual earnings set as this cutoff\'s base budget!'); }
     function clearActualEarnings() { const info = getSelectedCutoffInfo(); if (!info) return; delete appData.actualEarnings[info.id]; document.getElementById('actualEarningsInput').value = ''; saveData(); customAlert('Back to the calculated budget.'); }
-    function saveOtherIncome() { const info = getSelectedCutoffInfo(); if (!info) return; const raw = document.getElementById('otherIncomeInput').value; const val = parseFloat(raw); if (raw === '' || isNaN(val) || val < 0) { customAlert('Enter a valid amount.', 'error'); return; } appData.otherIncome[info.id] = val; saveData(); customAlert('Other income added to your budget!'); }
+    function saveOtherIncome() { const info = getSelectedCutoffInfo(); if (!info) return; const raw = document.getElementById('otherIncomeInput').value; const val = parseFloat(raw); if (raw === '' || isNaN(val) || val < 0) { customAlert('Please enter a valid amount.', 'error'); return; } appData.otherIncome[info.id] = val; saveData(); customAlert('Other income added to your budget!'); }
     function clearOtherIncome() { const info = getSelectedCutoffInfo(); if (!info) return; delete appData.otherIncome[info.id]; document.getElementById('otherIncomeInput').value = ''; saveData(); customAlert('Other income cleared.'); }
     function updateDeductions() { appData.deductions.sss = parseFloat(document.getElementById('dedSSS').value) || 0; appData.deductions.philhealth = parseFloat(document.getElementById('dedPhilHealth').value) || 0; saveData(); }
     
