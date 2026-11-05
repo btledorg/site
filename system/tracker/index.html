@@ -40,7 +40,10 @@
     .nav-btn.active .nav-pill { background: rgba(79,70,229,0.12); }
     @keyframes authErrorShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
     .auth-box-shake { animation: authErrorShake .35s ease-in-out; }
+    @keyframes skeletonPulse { 50% { opacity: .45; } }
+    .skeleton { background: #e5e7eb; animation: skeletonPulse 1.2s ease-in-out infinite; }
     @media (prefers-reduced-motion: reduce) { .auth-box-shake { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
   </style>
 </head>
 <body class="text-gray-800 min-h-screen selection:bg-brandLight selection:text-white">
@@ -92,7 +95,7 @@
         <div class="flex items-center gap-2.5">
           <img src="logo.png" alt="ArcherStudio logo" class="w-9 h-9 rounded-xl object-cover shadow-lg shadow-brand/20" onerror="this.outerHTML='<div class=&quot;w-9 h-9 rounded-xl bg-gradient-to-tr from-brand to-indigo-500 flex items-center justify-center font-extrabold text-white text-lg shadow-lg shadow-brand/20&quot;>A</div>'">
           <div>
-            <h1 id="pageTitle" class="font-bold text-base text-gray-900 leading-tight tracking-tight">Dashboard</h1>
+            <h1 class="font-bold text-base text-gray-900 leading-tight tracking-tight">ArcherStudio</h1>
             <p id="userGreeting" class="text-[11px] text-gray-500 font-medium leading-tight">ArcherStudio Finance</p>
           </div>
         </div>
@@ -475,6 +478,7 @@
     let activeConfirmCallback = null;
     let viewAll = { shifts: false, expenses: false };
     let currentTab = 'dashboard';
+    let initialCloudLoad = false;
     const TAB_TITLES = { dashboard: 'Dashboard', shifts: 'Shift', expenses: 'Expenses', more: 'More' };
     let dataVer = 0, sortedCache = { ver: -1 };
     
@@ -658,6 +662,7 @@
       updateSoundToggle();
       renderDashboard();
       calculate13thMonth();
+      initialCloudLoad = !localStorage.getItem('archer_data');
       switchTab(localStorage.getItem('archer_tab') || 'dashboard', true);
       loadFromCloud();
       updateLastSynced();
@@ -692,7 +697,6 @@
         b.classList.toggle('text-brand', active);
         b.classList.toggle('text-gray-400', !active);
       });
-      document.getElementById('pageTitle').textContent = TAB_TITLES[name];
       document.getElementById('periodBar').classList.toggle('hidden', name === 'more');
       localStorage.setItem('archer_tab', name);
       renderActiveList();
@@ -757,6 +761,7 @@
     
     async function loadFromCloud(manual) {
       lastPull = Date.now();
+      const showInitialSkeleton = initialCloudLoad;
       try {
         if (isDirty()) {
           const pushed = await syncToCloud();
@@ -777,6 +782,11 @@
         return true;
       } catch (e) {
         if (manual === true) customAlert('Could not reach server.', 'error'); return false;
+      } finally {
+        if (showInitialSkeleton) {
+          initialCloudLoad = false;
+          renderDashboard();
+        }
       }
     }
     
@@ -979,6 +989,12 @@
     function renderList(kind) {
       const st = listState[kind], el = document.getElementById(kind === 'shifts' ? 'shiftsList' : 'expensesList'); listDirty[kind] = false;
       const old = document.getElementById(kind + 'Sentinel'); if (old && listIO) listIO.unobserve(old);
+      if (initialCloudLoad) {
+        el.setAttribute('aria-busy', 'true');
+        el.innerHTML = Array.from({ length: 4 }, () => '<div aria-hidden="true" class="glass-btn p-3 rounded-2xl flex items-center justify-between"><div class="flex-1 space-y-2"><div class="skeleton h-4 w-28 rounded"></div><div class="skeleton h-3 w-40 rounded"></div></div><div class="skeleton h-4 w-16 rounded"></div></div>').join('');
+        return;
+      }
+      el.removeAttribute('aria-busy');
       if (!st.items.length) { el.innerHTML = `<div class="glass-card p-5 text-center text-xs text-gray-400 font-medium">No ${kind === 'shifts' ? 'shifts' : 'expenses'} ${kind === 'expenses' && expQuery ? 'match your search' : 'logged'}.</div>`; return; }
       if (!('IntersectionObserver' in window)) st.shown = st.items.length; else if (!st.shown) st.shown = PAGE_SIZE;
       el.innerHTML = st.items.slice(0, st.shown).map(rowBuilder(kind)).join('') + (st.shown < st.items.length ? sentinelHtml(kind) : '');
