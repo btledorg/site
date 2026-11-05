@@ -377,6 +377,7 @@
             <button onclick="saveOtherIncome()" class="bg-brand text-white font-bold px-4 py-2.5 rounded-xl text-sm active:scale-95 transition">Add</button>
             <button onclick="clearOtherIncome()" class="glass-btn font-bold px-3 py-2.5 rounded-xl text-sm text-gray-600">Clear</button>
           </div>
+          <div id="otherIncomeEntries" class="space-y-1 text-xs"></div>
           <p class="text-[11px] text-gray-400 font-medium">Extra money to spend this cutoff.</p>
         </div>
         
@@ -494,10 +495,34 @@
     
     function sortedData() {
       if (sortedCache.ver !== dataVer) {
-        const f = (a, b) => parseLocalDate(b.date) - parseLocalDate(a.date);
-        sortedCache = { ver: dataVer, shifts: [...appData.shifts].sort(f), expenses: [...appData.expenses].sort(f) };
+        const indexByDate = items => {
+          const indexed = items.map(item => ({ item, time: parseLocalDate(item.date).getTime() }));
+          indexed.sort((a, b) => b.time - a.time);
+          return { items: indexed.map(entry => entry.item), times: indexed.map(entry => entry.time) };
+        };
+        const shifts = indexByDate(appData.shifts), expenses = indexByDate(appData.expenses);
+        const savings = appData.expenses.filter(e => e.category === 'Savings');
+        sortedCache = {
+          ver: dataVer,
+          shifts: shifts.items, shiftDates: shifts.times,
+          expenses: expenses.items, expenseDates: expenses.times,
+          totalSavings: savings.reduce((sum, e) => sum + (Number(e.amount) || 0), 0),
+          savingsCount: savings.length,
+          totalShiftPay: appData.shifts.reduce((sum, s) => sum + (Number(s.totalPay) || 0), 0)
+        };
       }
       return sortedCache;
+    }
+
+    function sortedDateRange(kind, start, end) {
+      const cache = sortedData(), dates = cache[kind === 'shifts' ? 'shiftDates' : 'expenseDates'];
+      const startTime = start.getTime(), endTime = end.getTime();
+      let low = 0, high = dates.length;
+      while (low < high) { const mid = (low + high) >>> 1; if (dates[mid] > endTime) low = mid + 1; else high = mid; }
+      const from = low;
+      high = dates.length;
+      while (low < high) { const mid = (low + high) >>> 1; if (dates[mid] >= startTime) low = mid + 1; else high = mid; }
+      return cache[kind].slice(from, low);
     }
     
     // ============ SOUND ============
@@ -866,7 +891,7 @@
       return { ...r, label: pt === 'A' ? `${mon} 1 - 15` : `${mon} 16 - ${r.end.getDate()}` };
     }
     function periodStats(start, end) {
-      const list = appData.shifts.filter(s => { const d = parseLocalDate(s.date); return d >= start && d <= end; });
+      const list = sortedDateRange('shifts', start, end);
       const gross = list.reduce((sum, s) => sum + (Number(s.totalPay) || 0), 0);
       const gov = gross * 0.095;
       return { list, count: list.length, gross, gov, takeHome: Math.max(gross - gov, 0) };
@@ -913,7 +938,9 @@
     // ============ EDIT SETTINGS ============
     function saveActualEarnings() { const info = getSelectedCutoffInfo(); if (!info) return; const raw = document.getElementById('actualEarningsInput').value; const val = parseFloat(raw); if (raw === '' || isNaN(val) || val < 0) { customAlert('Please enter a valid amount.', 'error'); return; } appData.actualEarnings[info.id] = val; saveData(); customAlert('Actual earnings set as this cutoff\'s base budget!'); }
     function clearActualEarnings() { const info = getSelectedCutoffInfo(); if (!info) return; delete appData.actualEarnings[info.id]; document.getElementById('actualEarningsInput').value = ''; saveData(); customAlert('Back to the calculated budget.'); }
-    function saveOtherIncome() { const info = getSelectedCutoffInfo(); if (!info) return; const raw = document.getElementById('otherIncomeInput').value; const val = parseFloat(raw); if (raw === '' || isNaN(val) || val < 0) { customAlert('Please enter a valid amount.', 'error'); return; } appData.otherIncome[info.id] = val; saveData(); customAlert('Other income added to your budget!'); }
+    function otherIncomeEntries(value) { return Array.isArray(value) ? value : value === undefined || value === null || value === '' ? [] : [value]; }
+    function saveOtherIncome() { const info = getSelectedCutoffInfo(); if (!info) return; const input = document.getElementById('otherIncomeInput'); const raw = input.value; const val = parseFloat(raw); if (raw === '' || isNaN(val) || val < 0) { customAlert('Please enter a valid amount.', 'error'); return; } appData.otherIncome[info.id] = [...otherIncomeEntries(appData.otherIncome[info.id]), val]; input.value = ''; saveData(); customAlert('Other income added to your budget!'); }
+    function removeOtherIncome(index) { const info = getSelectedCutoffInfo(); if (!info) return; const entries = otherIncomeEntries(appData.otherIncome[info.id]); entries.splice(index, 1); if (entries.length) appData.otherIncome[info.id] = entries; else delete appData.otherIncome[info.id]; saveData(); }
     function clearOtherIncome() { const info = getSelectedCutoffInfo(); if (!info) return; delete appData.otherIncome[info.id]; document.getElementById('otherIncomeInput').value = ''; saveData(); customAlert('Other income cleared.'); }
     
     let undoSnap = null, undoTimer = null;
@@ -928,13 +955,13 @@
       const byDateDesc = (a, b) => parseLocalDate(b.date) - parseLocalDate(a.date);
       const allShifts = sortedData().shifts, allExpenses = sortedData().expenses;
       const cur = periodStats(info.start, info.end), prevInfo = getPrevCutoffInfo(info), prev = periodStats(prevInfo.start, prevInfo.end);
-      const shifts = [...cur.list].sort(byDateDesc), expenses = allExpenses.filter(e => { const d = parseLocalDate(e.date); return d >= info.start && d <= info.end; });
+      const shifts = cur.list, expenses = sortedDateRange('expenses', info.start, info.end);
       
       const calcBudget = budgetFrom(prev), actual = appData.actualEarnings[info.id];
       const hasActual = actual !== undefined && actual !== null && actual !== '' && !isNaN(Number(actual));
       const baseBudget = hasActual ? Number(actual) : calcBudget;
-      const otherInc = appData.otherIncome[info.id], hasOther = otherInc !== undefined && otherInc !== null && !isNaN(Number(otherInc));
-      const extraIncome = hasOther ? Number(otherInc) : 0, budget = baseBudget + extraIncome;
+      const otherInc = appData.otherIncome[info.id], otherEntries = otherIncomeEntries(otherInc);
+      const extraIncome = otherEntries.reduce((sum, amount) => sum + (Number(amount) || 0), 0), hasOther = otherEntries.length > 0, budget = baseBudget + extraIncome;
       
       const totalExp = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0), balance = budget - totalExp, nextBudget = budgetFrom(cur);
       
@@ -962,14 +989,16 @@
       if (document.activeElement !== document.getElementById('actualEarningsInput')) document.getElementById('actualEarningsInput').value = hasActual ? Number(actual) : '';
       
       if (document.getElementById('otherIncomeBadge')) document.getElementById('otherIncomeBadge').classList.toggle('hidden', !hasOther);
-      if (document.activeElement !== document.getElementById('otherIncomeInput')) document.getElementById('otherIncomeInput').value = hasOther ? Number(otherInc) : '';
+      const incomeInput = document.getElementById('otherIncomeInput');
+      if (document.activeElement !== incomeInput && !incomeInput.value) incomeInput.value = '';
+      document.getElementById('otherIncomeEntries').innerHTML = otherEntries.map((amount, index) => `<div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"><span class="text-gray-600">Entry ${index + 1}</span><span class="flex items-center gap-2 font-bold text-gray-800">₱${peso(amount)}<button type="button" onclick="removeOtherIncome(${index})" aria-label="Remove other income entry ${index + 1}" class="text-lg leading-none text-gray-400 hover:text-rose-500">&times;</button></span></div>`).join('');
       
       document.getElementById('dispGrossPay').textContent = peso(cur.gross); document.getElementById('dispGovDeductions').textContent = peso(cur.gov);
       document.getElementById('dispNextBudget').textContent = peso(nextBudget); document.getElementById('dispShiftCount').textContent = `${cur.count} shift${cur.count === 1 ? '' : 's'}`;
       
-      const allSavings = appData.expenses.filter(e => e.category === 'Savings'), totalSavings = allSavings.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+      const totals = sortedData(), totalSavings = totals.totalSavings;
       const cutoffSavings = expenses.filter(e => e.category === 'Savings').reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-      document.getElementById('dispTotalSavings').textContent = peso(totalSavings); document.getElementById('dispCutoffSavings').textContent = peso(cutoffSavings); document.getElementById('dispSavingsCount').textContent = `${allSavings.length} deposit${allSavings.length === 1 ? '' : 's'}`;
+      document.getElementById('dispTotalSavings').textContent = peso(totalSavings); document.getElementById('dispCutoffSavings').textContent = peso(cutoffSavings); document.getElementById('dispSavingsCount').textContent = `${totals.savingsCount} deposit${totals.savingsCount === 1 ? '' : 's'}`;
       
       const byCat = {}; expenses.forEach(e => { byCat[e.category] = (byCat[e.category] || 0) + (Number(e.amount) || 0); });
       const catRows = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
@@ -980,7 +1009,7 @@
       listState.expenses.items = expQuery ? baseExp.filter(e => ((e.category || '') + ' ' + (e.note || '')).toLowerCase().includes(expQuery)) : baseExp;
       listDirty.shifts = listDirty.expenses = true;
       
-      document.getElementById('shiftsListTitle').textContent = viewAll.shifts ? `All Shifts · ${allShifts.length} · ₱${peso(allShifts.reduce((s, x) => s + (Number(x.totalPay) || 0), 0))}` : 'Logged Shifts (This Period)';
+      document.getElementById('shiftsListTitle').textContent = viewAll.shifts ? `All Shifts · ${allShifts.length} · ₱${peso(totals.totalShiftPay)}` : 'Logged Shifts (This Period)';
       document.getElementById('shiftsViewAllBtn').textContent = viewAll.shifts ? 'This Period' : 'View All';
       const expTotal = listState.expenses.items.reduce((s, x) => s + (Number(x.amount) || 0), 0);
       document.getElementById('expensesListTitle').textContent = viewAll.expenses ? `All Expenses · ${listState.expenses.items.length} · ₱${peso(expTotal)}` : (expQuery ? `Matches · ${listState.expenses.items.length} · ₱${peso(expTotal)}` : 'Expenses (This Period)');
