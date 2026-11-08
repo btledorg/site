@@ -401,7 +401,6 @@
             📤 Import Backup (JSON)
             <input type="file" onchange="importData(event)" accept=".json" class="hidden" />
           </label>
-          <button onclick="clearAllDataConfirm()" class="w-full text-rose-500 text-xs font-bold py-2.5 rounded-xl border border-rose-200 bg-rose-50/60">Clear Local Data</button>
         </div>
         
         <div class="glass-card p-4 space-y-3">
@@ -513,7 +512,7 @@
       }
       return sortedCache;
     }
-
+    
     function sortedDateRange(kind, start, end) {
       const cache = sortedData(), dates = cache[kind === 'shifts' ? 'shiftDates' : 'expenseDates'];
       const startTime = start.getTime(), endTime = end.getTime();
@@ -603,7 +602,7 @@
       document.getElementById('authPassword').setAttribute('autocomplete', authMode === 'login' ? 'current-password' : 'new-password');
       updatePasswordStrength();
     }
-
+    
     function togglePasswordVisibility() {
       const input = document.getElementById('authPassword'), button = document.getElementById('passwordToggle');
       const visible = input.type === 'password';
@@ -612,7 +611,7 @@
       button.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
       button.setAttribute('aria-pressed', String(visible));
     }
-
+    
     function updatePasswordStrength() {
       const password = document.getElementById('authPassword').value;
       const meter = document.getElementById('passwordStrength');
@@ -621,17 +620,17 @@
       const score = [password.length >= 8, /[a-z]/.test(password) && /[A-Z]/.test(password), /\d/.test(password), /[^A-Za-z0-9]/.test(password)].filter(Boolean).length;
       const bar = document.getElementById('passwordStrengthBar'), text = document.getElementById('passwordStrengthText');
       const levels = [
-        { label: 'Enter a password', color: 'bg-gray-300' },
-        { label: 'Weak', color: 'bg-rose-500' },
-        { label: 'Fair', color: 'bg-amber-500' },
-        { label: 'Good', color: 'bg-lime-600' },
-        { label: 'Strong', color: 'bg-emerald-500' }
+      { label: 'Enter a password', color: 'bg-gray-300' },
+      { label: 'Weak', color: 'bg-rose-500' },
+      { label: 'Fair', color: 'bg-amber-500' },
+      { label: 'Good', color: 'bg-lime-600' },
+      { label: 'Strong', color: 'bg-emerald-500' }
       ];
       bar.style.width = `${score * 25}%`;
       bar.className = `h-full rounded-full transition-all duration-200 ${levels[score].color}`;
       text.textContent = password ? `Password strength: ${levels[score].label}` : levels[0].label;
     }
-
+    
     function showAuthError(message) {
       const err = document.getElementById('authError');
       err.textContent = message;
@@ -1073,5 +1072,724 @@
       }; reader.readAsText(file);
     }
   </script>
-</body>
-</html>
+  
+  <script>
+    document.head.insertAdjacentHTML('beforeend', '<style>#axLbBody summary{list-style:none;cursor:pointer}#axLbBody summary::-webkit-details-marker{display:none}#axLbBody details[open] .ax-chev{transform:rotate(180deg)}.ax-chev{transition:transform .15s}.ax-key{height:3.4rem;border-radius:1rem;font-weight:800;font-size:1.15rem;user-select:none}.ax-key:active{transform:scale(.95)}</style>');
+    
+    /* ---------- 1. NUMBER-ONLY INPUTS (numeric keypad, no letters, max 2 decimals) ---------- */
+    function axNumericOnly(el) {
+      if (!el) return;
+      el.type = 'text';
+      el.setAttribute('inputmode', 'decimal');
+      el.setAttribute('pattern', '[0-9]*[.]?[0-9]*');
+      el.setAttribute('enterkeyhint', 'done');
+      el.setAttribute('autocomplete', 'off');
+      el.addEventListener('input', () => {
+        let v = el.value.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+        const i = v.indexOf('.');
+        if (i !== -1) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/\./g, '').slice(0, 2);
+        if (v !== el.value) el.value = v;
+      });
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+    }
+    ['expAmount', 'actualEarningsInput', 'otherIncomeInput'].forEach(id => axNumericOnly(document.getElementById(id)));
+    
+    /* ---------- 2. OVERLAY CALCULATOR FOR EXPENSES ---------- */
+    let axExpr = '', axDone = false;
+    function axEval(s) {
+      s = String(s).replace(/[+\-*/]+$/, '');
+      const t = s.match(/\d+\.?\d*|\.\d+|[+\-*/]/g) || []; let i = 0;
+      const num = () => { let sign = 1; while (t[i] === '-' || t[i] === '+') { if (t[i] === '-') sign = -sign; i++; } const n = parseFloat(t[i++]); return isNaN(n) ? 0 : sign * n; };
+      const term = () => { let v = num(); while (t[i] === '*' || t[i] === '/') { const o = t[i++], n = num(); v = o === '*' ? v * n : v / n; } return v; };
+      let v = term(); while (t[i] === '+' || t[i] === '-') { const o = t[i++], n = term(); v = o === '+' ? v + n : v - n; }
+      return v;
+    }
+    const axFmt = n => String(Math.round(n * 100) / 100);
+    const AX_KEYS = [
+    ['C','C','bg-rose-50 text-rose-500'],['B','⌫','bg-gray-100 text-gray-700'],['/','÷','bg-indigo-50 text-brand'],['*','×','bg-indigo-50 text-brand'],
+    ['7','7','bg-white text-gray-800'],['8','8','bg-white text-gray-800'],['9','9','bg-white text-gray-800'],['-','−','bg-indigo-50 text-brand'],
+    ['4','4','bg-white text-gray-800'],['5','5','bg-white text-gray-800'],['6','6','bg-white text-gray-800'],['+','+','bg-indigo-50 text-brand'],
+    ['1','1','bg-white text-gray-800'],['2','2','bg-white text-gray-800'],['3','3','bg-white text-gray-800'],['=','=','bg-brand text-white row-span-2 !h-auto'],
+    ['0','0','bg-white text-gray-800 col-span-2'],['.','.','bg-white text-gray-800']
+    ];
+    document.body.insertAdjacentHTML('beforeend', `
+<div id="axCalc" class="hidden fixed inset-0 z-[45] bg-gray-900/50 flex items-end sm:items-center justify-center">
+  <div class="glass-modal w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-4 space-y-3" style="padding-bottom:calc(1rem + env(safe-area-inset-bottom,0px))">
+    <div class="flex items-center justify-between">
+      <p class="text-sm font-bold text-gray-800"><i class="fas fa-calculator"></i> Calculator</p>
+      <button type="button" data-k="X" aria-label="Close calculator" class="w-9 h-9 text-xl text-gray-400">&times;</button>
+    </div>
+    <div class="bg-gray-50 rounded-2xl p-3 text-right">
+      <p id="axExpr" class="text-xs text-gray-400 font-semibold h-4 truncate"></p>
+      <p id="axRes" class="text-3xl font-extrabold text-gray-900 truncate">0</p>
+    </div>
+    <div class="grid grid-cols-4 gap-2">${AX_KEYS.map(k => `<button type="button" data-k="${k[0]}" class="ax-key glass-btn ${k[2]}">${k[1]}</button>`).join('')}</div>
+    <button type="button" id="axUseBtn" data-k="U" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl active:scale-[0.98] transition">Use amount</button>
+  </div>
+</div>`);
+    function axRenderCalc() {
+      const hasOp = /[+\-*/]/.test(axExpr.replace(/^-/, ''));
+      const r = hasOp ? axEval(axExpr) : (parseFloat(axExpr) || 0);
+      const ok = isFinite(r);
+      document.getElementById('axExpr').textContent = hasOp ? axExpr.replace(/\*/g, '×').replace(/\//g, '÷').replace(/-/g, '−') : '';
+      document.getElementById('axRes').textContent = ok ? (hasOp ? axFmt(r) : (axExpr || '0')) : '—';
+      document.getElementById('axUseBtn').textContent = ok && r > 0 ? 'Use ₱' + peso(r) : 'Use amount';
+    }
+    function axKey(k) {
+      const seg = axExpr.split(/[+\-*/]/).pop();
+      if (k === 'X') return axCloseCalc();
+      if (k === 'U') return axUseCalc();
+      if (k === 'C') { axExpr = ''; axDone = false; }
+      else if (k === 'B') { axExpr = axExpr.slice(0, -1); axDone = false; }
+      else if (k === '=') { const r = axEval(axExpr); if (isFinite(r)) { axExpr = axFmt(r); axDone = true; } }
+      else if ('+-*/'.includes(k)) {
+        if (!axExpr) { if (k === '-') axExpr = '-'; }
+        else if (axExpr === '-') { /* ignore */ }
+        else if (/[+\-*/]$/.test(axExpr)) axExpr = axExpr.slice(0, -1) + k;
+        else axExpr += k;
+        axDone = false;
+      }
+      else if (k === '.') { if (axDone) { axExpr = '0.'; axDone = false; } else if (!seg.includes('.')) axExpr += seg === '' ? '0.' : '.'; }
+      else { if (axDone) { axExpr = k; axDone = false; } else if (seg === '0') axExpr = axExpr.slice(0, -1) + k; else axExpr += k; }
+      axRenderCalc();
+    }
+    function axCalcKeyboard(e) {
+      const k = e.key; let m = null;
+      if (/^[0-9]$/.test(k) || '+-*/'.includes(k)) m = k;
+      else if (k === '.' || k === ',') m = '.';
+      else if (k === 'x' || k === 'X') m = '*';
+      else if (k === 'Enter' || k === '=') m = '=';
+      else if (k === 'Backspace') m = 'B';
+      else if (k === 'Escape') m = 'X';
+      else if (k === 'c' || k === 'C') m = 'C';
+      if (m) { e.preventDefault(); axKey(m); }
+    }
+    function axOpenCalc() {
+      const v = document.getElementById('expAmount').value;
+      axExpr = v ? axFmt(parseFloat(v) || 0) : ''; axDone = !!axExpr;
+      if (document.activeElement) document.activeElement.blur();
+      document.getElementById('axCalc').classList.remove('hidden');
+      document.addEventListener('keydown', axCalcKeyboard);
+      axRenderCalc();
+    }
+    function axCloseCalc() { document.getElementById('axCalc').classList.add('hidden'); document.removeEventListener('keydown', axCalcKeyboard); }
+    function axUseCalc() {
+      const r = axEval(axExpr);
+      if (!isFinite(r) || r <= 0) { customAlert('Enter an amount above zero.', 'error'); return; }
+      const el = document.getElementById('expAmount'); el.value = r.toFixed(2);
+      axCloseCalc();
+    }
+    document.getElementById('axCalc').addEventListener('click', e => {
+      if (e.target.id === 'axCalc') return axCloseCalc();
+      const b = e.target.closest('[data-k]'); if (b) axKey(b.dataset.k);
+    });
+    (() => {
+      const el = document.getElementById('expAmount'), w = document.createElement('div');
+      w.className = 'relative'; el.parentNode.insertBefore(w, el); w.appendChild(el); el.classList.add('pr-11');
+      const b = document.createElement('button');
+      b.type = 'button'; b.setAttribute('aria-label', 'Open calculator'); b.textContent = '🧮';
+      b.className = 'absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-brand/10 text-base active:scale-95';
+      b.onclick = axOpenCalc; w.appendChild(b);
+    })();
+    
+    /* ---------- 3. CONFIRM FOR ALL CRITICAL ACTIONS ---------- */
+    let axBypass = false;
+    const AX_RULES = [
+    [/deleteShift\(/, 'Delete this shift? This cannot be undone after a few seconds.'],
+    [/deleteExpense\(/, 'Delete this expense?'],
+    [/removeOtherIncome\(/, 'Remove this other income entry?'],
+    [/clearOtherIncome\(/, 'Clear ALL other income for this cutoff?'],
+    [/clearActualEarnings\(/, 'Clear the actual earnings and go back to the calculated budget?'],
+    [/saveActualEarnings\(/, 'Use this amount as the base budget for this cutoff?'],
+    [/loadFromCloud\(true\)/, 'Download the latest cloud data? It will replace the data on this device.'],
+    [/syncToCloud\(\)/, 'Upload your data to the cloud now? It will overwrite the cloud copy.'],
+    [/axRemoveFriend\(/, 'Remove this friend (or cancel the request)? You will stop seeing each other\'s expenses.'],
+    [/axRespond\([^)]*false/, 'Decline this friend request?']
+    ];
+    document.addEventListener('click', e => {
+      if (axBypass) return;
+      const t = e.target;
+      if (t.matches && t.matches('input[type=file]') && /importData/.test(t.getAttribute('onchange') || '')) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        customConfirm('Import this backup? It will replace the data on this device.', () => setTimeout(() => { axBypass = true; try { t.click(); } finally { axBypass = false; } }, 60));
+        return;
+      }
+      const b = t.closest && t.closest('[onclick]'); if (!b) return;
+      const rule = AX_RULES.find(r => r[0].test(b.getAttribute('onclick') || '')); if (!rule) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      customConfirm(rule[1], () => setTimeout(() => { axBypass = true; try { b.click(); } finally { axBypass = false; } }, 60));
+    }, true);
+    
+    /* ---------- 4. CUSTOMIZABLE ADD SOUNDS (shift + expense) ---------- */
+    const AX_PRESETS = {
+      chime:    { label: 'Chime (default)', type: 'sine',     vol: .15, n: [[1046.5,0,.14],[1318.5,.11,.22]] },
+      coin:     { label: 'Coin',            type: 'square',   vol: .07, n: [[988,0,.07],[1319,.07,.35]] },
+      pop:      { label: 'Pop',             type: 'sine',     vol: .20, n: [[500,0,.05],[880,.04,.09]] },
+      ding:     { label: 'Ding',            type: 'sine',     vol: .18, n: [[880,0,.5]] },
+      levelup:  { label: 'Level up',        type: 'triangle', vol: .18, n: [[523,0,.09],[659,.09,.09],[784,.18,.09],[1047,.27,.3]] },
+      register: { label: 'Cash register',   type: 'square',   vol: .06, n: [[2093,0,.04],[1568,.06,.04],[1047,.12,.35]] },
+      paldooo:  { label: 'Paldooo',         type: 'mp3',      vol: 1.0, src: 'assets/paldo-sarap.mp3' },
+      araykooo: { label: 'Aray Kooo',       type: 'mp3',      vol: 1.0, src: 'assets/malupiton-aray-ko.mp3' },
+      off:      { label: 'Silent',          type: 'sine',     vol: 0,   n: [] }
+    };
+    
+    const axSndPick = kind => localStorage.getItem('archer_snd_' + kind) || 'chime';
+    
+    function axPlayPreset(key) {
+      const p = AX_PRESETS[key]; 
+      if (!p) return;
+      
+      const m = parseFloat(localStorage.getItem('archer_snd_vol')) || 1;
+      
+      // Handle MP3 files
+      if (p.type === 'mp3') {
+        if (!p.src) return;
+        const audio = new Audio(p.src);
+        // HTML5 Audio volume must be between 0.0 and 1.0
+        audio.volume = Math.min(p.vol * m, 1.0); 
+        audio.play().catch(e => console.log('Audio blocked:', e));
+        return;
+      }
+      
+      // Handle standard oscillators (chime, coin, etc.)
+      if (!p.n || !p.n.length) return;
+      try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        p.n.forEach(([f, s, d]) => playTone(f, s, d, p.type, Math.min(p.vol * m, 0.6)));
+      } catch (e) {}
+    }
+    
+    const axOrigPlaySound = playSound;
+    playSound = function (kind) {
+      if (kind === 'success' && window.__axAdd) { if (soundEnabled()) axPlayPreset(axSndPick(window.__axAdd)); return; }
+      return axOrigPlaySound(kind);
+    };
+    
+    const axOrigSaveShift = saveShift, axOrigSaveExpense = saveExpense;
+    saveShift = function () { window.__axAdd = 'shift'; try { return axOrigSaveShift.apply(this, arguments); } finally { window.__axAdd = null; } };
+    saveExpense = function () { window.__axAdd = 'expense'; try { return axOrigSaveExpense.apply(this, arguments); } finally { window.__axAdd = null; } };
+    
+    (() => {
+      const opts = k => Object.entries(AX_PRESETS).map(([v, p]) => `<option value="${v}" ${axSndPick(k) === v ? 'selected' : ''}>${p.label}</option>`).join('');
+      const row = (k, label) => `<div class="flex items-center gap-2 glass-btn p-3 rounded-xl"><p class="text-sm font-bold text-gray-800 flex-1 min-w-0">${label}</p><select data-snd="${k}" class="glass-input text-xs font-semibold px-2 py-1.5 rounded-lg">${opts(k)}</select><button type="button" data-prev="${k}" class="text-[11px] font-bold text-brand bg-brand/10 border border-brand/20 px-2.5 py-1.5 rounded-lg">▶</button></div>`;
+      const card = document.createElement('div');
+      card.className = 'glass-card p-4 space-y-3';
+      card.innerHTML = `<h2 class="text-sm font-bold text-gray-900">🔔 Add Sound Effects</h2>
+    <p class="text-[11px] text-gray-400 font-medium">Choose what plays when you save. Requires “Sounds” above to be on.</p>
+    ${row('shift', 'Shift saved')}${row('expense', 'Expense logged')}
+    <div class="glass-btn p-3 rounded-xl"><div class="flex justify-between text-xs font-bold text-gray-800 mb-1"><span>Volume</span></div><input type="range" id="axVol" min="0.3" max="2" step="0.1" value="${parseFloat(localStorage.getItem('archer_snd_vol')) || 1}" class="w-full accent-indigo-600" /></div>`;
+      card.addEventListener('change', e => { const k = e.target.dataset && e.target.dataset.snd; if (k) { localStorage.setItem('archer_snd_' + k, e.target.value); axPlayPreset(e.target.value); } });
+      card.addEventListener('click', e => { const b = e.target.closest('[data-prev]'); if (b) axPlayPreset(card.querySelector(`[data-snd="${b.dataset.prev}"]`).value); });
+      card.querySelector('#axVol').addEventListener('input', e => localStorage.setItem('archer_snd_vol', e.target.value));
+      card.querySelector('#axVol').addEventListener('change', () => axPlayPreset(axSndPick('expense')));
+      const dm = [...document.querySelectorAll('#page-more h2')].find(h => h.textContent.includes('Data Management'));
+      const anchor = dm && dm.closest('.glass-card');
+      anchor ? anchor.parentNode.insertBefore(card, anchor) : document.getElementById('page-more').appendChild(card);
+    })();
+    /* ---------- 5. LEADERBOARD TAB (friends' expenses) ---------- */
+    let axLb = { mode: 'cutoff', sort: 'least', data: null, loading: false, error: '', token: 0, open: {} };
+    TAB_TITLES.leaderboard = 'Leaderboard';
+    (() => {
+      const nav = document.querySelector('nav .grid');
+      nav.classList.replace('grid-cols-4', 'grid-cols-5');
+      const b = document.createElement('button');
+      b.dataset.tab = 'leaderboard'; b.setAttribute('onclick', "switchTab('leaderboard')");
+      b.className = 'nav-btn flex flex-col items-center gap-0.5 py-1 text-gray-400 transition-colors';
+      b.innerHTML = '<span class="nav-pill px-5 py-1 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span><span class="text-[10px] font-bold">Leaderboard</span>';
+      nav.insertBefore(b, nav.querySelector('[data-tab="more"]'));
+      
+      const sec = document.createElement('section');
+      sec.id = 'page-leaderboard'; sec.className = 'page space-y-4 hidden';
+      sec.innerHTML = `
+    <div class="glass-card p-4 space-y-3">
+      <div class="flex items-center justify-between"><h2 class="text-sm font-bold text-gray-900 flex items-center gap-1.5">🏆 Friends Leaderboard</h2><button onclick="loadLeaderboard()" class="text-[11px] font-bold text-brand bg-brand/10 border border-brand/20 px-3 py-1.5 rounded-full active:scale-95 transition-transform">Refresh</button></div>
+      <p id="axLbPeriod" class="text-[11px] text-gray-500 font-medium"></p>
+      <div id="axLbChips" class="flex flex-wrap gap-2"></div>
+    </div>
+    <div class="glass-card p-4 space-y-3">
+      <p class="text-xs font-bold text-gray-800">Add a friend</p>
+      <div class="flex gap-2"><input id="axFriendName" type="text" placeholder="Friend's username" autocapitalize="none" autocorrect="off" autocomplete="off" class="flex-1 min-w-0 glass-input rounded-xl px-3 py-2.5 text-sm font-medium focus:ring-2 focus:ring-brand/50 outline-none transition-shadow" /><button onclick="axAddFriend()" class="bg-brand text-white font-bold px-4 py-2.5 rounded-xl text-sm active:scale-95 transition-transform hover:opacity-90">Add</button></div>
+      <p class="text-[11px] text-gray-400 font-medium leading-relaxed">After you both accept, friends see your spending totals, categories and latest 5 expenses (never your notes).</p>
+    </div>
+    <div id="axLbBody" class="space-y-3"></div>`;
+      document.querySelector('main').insertBefore(sec, document.getElementById('page-more'));
+      sec.querySelector('#axFriendName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); axAddFriend(); } });
+      document.getElementById('cutoffSelect').addEventListener('change', () => { if (currentTab === 'leaderboard' && axLb.mode === 'cutoff') loadLeaderboard(); });
+    })();
+    const axSwitchTab = switchTab;
+    switchTab = function (n, s) { axSwitchTab(n, s); if (n === 'leaderboard') loadLeaderboard(); };
+    
+    async function axApi(body) { const r = await fetch(CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(body) }); return r.json(); }
+    function axRange() {
+      if (axLb.mode === 'all') return { start: '0000-01-01', end: '9999-12-31', label: 'All time' };
+      const i = getSelectedCutoffInfo();
+      return i ? { start: localISODate(i.start), end: localISODate(i.end), label: i.payoutDesc } : { start: '0000-01-01', end: '9999-12-31', label: '' };
+    }
+    async function loadLeaderboard() {
+      if (!currentUser) return;
+      const t = ++axLb.token; axLb.loading = true; axLb.error = ''; axRenderLb();
+      try {
+        if (isDirty()) await syncToCloud();
+        const r = axRange();
+        const d = await axApi({ action: 'leaderboard', user_id: currentUser.user_id, start: r.start, end: r.end });
+        if (t !== axLb.token) return;
+        if (d.status === 'success') axLb.data = d; else axLb.error = d.message || 'Could not load the leaderboard.';
+      } catch (e) { if (t !== axLb.token) return; axLb.error = 'Looks like we are having trouble connecting.'; }
+      axLb.loading = false; axRenderLb();
+    }
+    function axSetSort(s) { axLb.sort = s; axRenderLb(); }
+    function axSetMode(m) { axLb.mode = m; loadLeaderboard(); }
+    async function axAct(body, okMsg) {
+      try {
+        const d = await axApi(body);
+        if (d.status === 'success') { customAlert(d.message || okMsg); loadLeaderboard(); return true; }
+        customAlert(d.message || 'Something went wrong.', 'error');
+      } catch (e) { customAlert('We could not reach the server. Please try again.', 'error'); }
+      return false;
+    }
+    async function axAddFriend() {
+      const el = document.getElementById('axFriendName'), name = el.value.trim();
+      if (!name) { customAlert('Enter your friend\'s username.', 'error'); return; }
+      if (await axAct({ action: 'friendRequest', user_id: currentUser.user_id, username: name }, 'Friend request sent!')) el.value = '';
+    }
+    const axRespond = (id, accept) => axAct({ action: 'friendRespond', user_id: currentUser.user_id, from_id: id, accept }, accept ? 'Friend added!' : 'Request declined.');
+    const axRemoveFriend = id => axAct({ action: 'friendRemove', user_id: currentUser.user_id, friend_id: id }, 'Removed.');
+    
+    function axRenderLb() {
+      const chip = (label, on, fn) => `<button onclick="${fn}" class="text-[11px] font-bold px-3.5 py-2 rounded-full transition-all active:scale-95 ${on ? 'bg-brand text-white shadow-md shadow-brand/20' : 'glass-btn text-gray-600 hover:bg-white/60'}">${label}</button>`;
+      document.getElementById('axLbPeriod').textContent = axRange().label ? 'Period: ' + axRange().label : '';
+      document.getElementById('axLbChips').innerHTML =
+      chip('This cutoff', axLb.mode === 'cutoff', "axSetMode('cutoff')") + chip('All time', axLb.mode === 'all', "axSetMode('all')") +
+      '<span class="w-full h-0"></span>' +
+      chip('Least spent', axLb.sort === 'least', "axSetSort('least')") + chip('Most spent', axLb.sort === 'most', "axSetSort('most')") + chip('Most saved', axLb.sort === 'saved', "axSetSort('saved')");
+      
+      const body = document.getElementById('axLbBody');
+      if (axLb.loading && !axLb.data) { body.innerHTML = Array.from({ length: 3 }, () => '<div aria-hidden="true" class="glass-btn p-3 rounded-2xl flex items-center justify-between"><div class="flex-1 space-y-2"><div class="skeleton h-4 w-28 rounded"></div><div class="skeleton h-3 w-40 rounded"></div></div><div class="skeleton h-4 w-16 rounded"></div></div>').join(''); return; }
+      if (axLb.error) { body.innerHTML = `<div class="glass-card p-5 text-center space-y-3"><p class="text-xs font-bold text-rose-500">${esc(axLb.error)}</p><button onclick="loadLeaderboard()" class="glass-btn px-4 py-2 rounded-xl text-xs font-bold text-brand active:scale-95 transition">Try again</button></div>`; return; }
+      const d = axLb.data; if (!d) { body.innerHTML = ''; return; }
+      
+      let html = '';
+      if ((d.incoming || []).length || (d.outgoing || []).length) {
+        html += '<div class="glass-card p-4 space-y-2"><p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Friend requests</p>';
+          html += (d.incoming || []).map(u => `<div class="flex items-center justify-between glass-btn p-3 rounded-xl"><span class="text-sm font-bold text-gray-800 truncate">${esc(u.username)}</span><span class="flex gap-2 shrink-0"><button onclick="axRespond('${esc(u.user_id)}',true)" class="bg-brand text-white text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition">Accept</button><button onclick="axRespond('${esc(u.user_id)}',false)" class="glass-btn text-xs font-bold px-3 py-1.5 rounded-lg text-gray-600 active:scale-95 transition">Decline</button></span></div>`).join('');
+          html += (d.outgoing || []).map(u => `<div class="flex items-center justify-between glass-btn p-3 rounded-xl"><span class="text-sm font-bold text-gray-800 truncate">${esc(u.username)} <span class="text-[10px] font-semibold text-amber-600 ml-1">· pending</span></span><button onclick="axRemoveFriend('${esc(u.user_id)}')" class="glass-btn text-xs font-bold px-3 py-1.5 rounded-lg text-gray-600 active:scale-95 transition">Cancel</button></div>`).join('');
+          html += '</div>';
+        }
+        const board = [...(d.board || [])];
+        const val = u => axLb.sort === 'saved' ? u.saved : u.spent;
+        board.sort((a, b) => axLb.sort === 'least' ? a.spent - b.spent : val(b) - val(a));
+        
+        const mx = Math.max(1, ...board.map(val)), medals = ['🥇', '🥈', '🥉'];
+        html += '<div class="space-y-3">' + board.map((u, i) => {
+          const cats = Object.entries(u.cats || {}).sort((a, b) => b[1] - a[1]);
+          const detail = `<div class="pt-4 mt-3 border-t border-gray-200/70 space-y-3">
+      <div class="space-y-1.5">${cats.length ? cats.map(([c, a]) => `<div class="flex justify-between text-[11px] font-semibold text-gray-700"><span>${catIcon(c)} ${esc(c)}</span><span>₱${peso(a)}</span></div>`).join('') : '<p class="text-[11px] text-gray-400">No expenses in this period.</p>'}</div>
+      ${(u.recent || []).length ? `<div class="space-y-1.5 pt-2"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Latest</p>${u.recent.map(r => `<div class="flex justify-between text-[11px] text-gray-600"><span>${catIcon(r.category)} ${esc(r.category)} <span class="text-gray-400 mx-1">·</span> ${esc(fmtDate(r.date))}</span><span class="font-bold">₱${peso(r.amount)}</span></div>`).join('')}</div>` : ''}
+      ${u.me ? '' : `<div class="pt-2"><button onclick="axRemoveFriend('${esc(u.user_id)}')" class="text-[11px] font-bold text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg active:scale-95 transition">Remove friend</button></div>`}</div>`;
+            
+            return `<details class="group glass-btn rounded-2xl p-3.5 transition-all ${u.me ? 'ring-2 ring-brand/40 shadow-sm' : ''}"><summary class="flex items-center gap-3 cursor-pointer outline-none select-none list-none [&::-webkit-details-marker]:hidden">
+      <span class="w-8 text-center text-2xl font-extrabold text-gray-400 drop-shadow-sm">${i < 3 ? medals[i] : `<span class="text-base">#${i + 1}</span>`}</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2"><span class="font-bold text-sm text-gray-800 truncate">${esc(u.username)}</span>${u.me ? '<span class="text-[10px] font-bold text-brand bg-brand/10 px-2 py-0.5 rounded-full shrink-0">You</span>' : ''}</div>
+        <div class="h-1.5 rounded-full bg-gray-200 overflow-hidden mt-2"><div class="h-full rounded-full bg-brand/80 transition-all duration-500 ease-out" style="width:${Math.round(val(u) / mx * 100)}%"></div></div>
+        <p class="text-[10px] text-gray-400 font-medium mt-1.5">${u.count} expense${u.count === 1 ? '' : 's'} · saved ₱${peso(u.saved)}</p></div>
+      <div class="text-right shrink-0 ml-1">
+        <div class="font-extrabold text-[15px] ${axLb.sort === 'saved' ? 'text-pink-600' : 'text-rose-500'} tracking-tight">₱${peso(axLb.sort === 'saved' ? u.saved : u.spent)}</div>
+        <div class="text-[10px] text-gray-400 font-medium">${axLb.sort === 'saved' ? 'saved' : 'spent'}</div>
+      </div>
+      <span class="ax-chev text-gray-300 text-xs ml-1 transition-transform duration-300 group-open:rotate-180">▼</span></summary>${detail}</details>`;
+            }).join('') + '</div>';
+            if (board.length <= 1) html += '<div class="glass-card p-6 flex flex-col items-center justify-center text-center space-y-2"><span class="text-3xl">🫱🏼‍🫲🏽</span><p class="text-sm font-bold text-gray-800">It\'s quiet here!</p><p class="text-[11px] text-gray-500 font-medium max-w-[200px]">Add a friend above to start comparing your spending habits.</p></div>';
+            body.innerHTML = html;
+          }
+          axRenderLb();
+          
+          document.head.insertAdjacentHTML('beforeend', '<style id="axDarkCss">' + String.raw`
+html.dark{color-scheme:dark}
+.dark body{background:linear-gradient(180deg,#0b1020 0%,#111827 100%);color:#e5e7eb}
+.dark .glass-card{background:rgba(31,41,55,.92);border-color:rgba(255,255,255,.06);box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.dark .glass-input{background:#111827;border-color:#374151;color:#f3f4f6}
+.dark .glass-input:focus{border-color:#818CF8;box-shadow:0 0 0 3px rgba(129,140,248,.25)}
+.dark .glass-input::placeholder{color:#6b7280}
+.dark .glass-btn{background:#1f2937;border-color:#374151;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.dark .glass-modal{background:#1f2937;border-color:#374151;box-shadow:0 20px 40px rgba(0,0,0,.6)}
+.dark .skeleton{background:#374151}
+.dark .bg-white:not(#spendBar){background-color:#1f2937}
+.dark .bg-white\/95{background-color:rgba(17,24,39,.95)}
+.dark .bg-white\/70{background-color:rgba(31,41,55,.7)}
+.dark .border-white\/80{border-color:#374151}
+.dark .bg-gray-50{background-color:#111827}
+.dark .bg-gray-100{background-color:#374151}
+.dark .bg-gray-200{background-color:#374151}
+.dark .bg-gray-200\/70{background-color:rgba(75,85,99,.5)}
+.dark .bg-gray-300{background-color:#4b5563}
+.dark .bg-gray-900:not(.fixed){background-color:#374151}
+.dark .border-gray-200,.dark .border-gray-200\/60,.dark .border-gray-200\/70{border-color:#374151}
+.dark .text-gray-900,.dark .text-gray-800{color:#f3f4f6}
+.dark .text-gray-700{color:#e5e7eb}
+.dark .text-gray-600{color:#d1d5db}
+.dark .text-gray-500{color:#9ca3af}
+.dark .text-gray-400{color:#8b94a3}
+.dark .text-gray-300{color:#6b7280}
+.dark .text-brand{color:#a5b4fc}
+.dark .text-indigo-600,.dark .text-indigo-500{color:#a5b4fc}
+.dark .text-emerald-700,.dark .text-emerald-800{color:#6ee7b7}
+.dark .bg-emerald-50{background-color:rgba(16,185,129,.14)}
+.dark .border-emerald-100,.dark .border-emerald-200{border-color:rgba(16,185,129,.3)}
+.dark .bg-rose-50,.dark .bg-rose-50\/60{background-color:rgba(244,63,94,.12)}
+.dark .border-rose-200{border-color:rgba(244,63,94,.35)}
+.dark .bg-indigo-50{background-color:rgba(99,102,241,.16)}
+.dark .bg-pink-100{background-color:rgba(236,72,153,.2)}
+.dark .nav-btn.active .nav-pill{background:rgba(129,140,248,.2)}
+.dark .selection\:bg-brandLight *::selection{background:#818CF8}
+` + '</style>');
+            
+            /* ---------- THEME LOGIC ---------- */
+            function axThemeStored() { try { return localStorage.getItem('archer_theme'); } catch (e) { return null; } }
+            function axIsDark() {
+              const t = axThemeStored();
+              return t ? t === 'dark' : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+            function axApplyTheme() {
+              const dark = axIsDark();
+              document.documentElement.classList.toggle('dark', dark);
+              const meta = document.querySelector('meta[name="theme-color"]');
+              if (meta) meta.setAttribute('content', dark ? '#111827' : '#4F46E5');
+              const t = document.getElementById('darkToggle');
+              if (t) {
+                t.classList.toggle('bg-brand', dark);
+                t.classList.toggle('bg-gray-300', !dark);
+                t.setAttribute('aria-pressed', String(dark));
+                document.getElementById('darkKnob').style.transform = dark ? 'translateX(20px)' : 'translateX(0)';
+              }
+            }
+            function toggleDarkMode() {
+              try { localStorage.setItem('archer_theme', axIsDark() ? 'light' : 'dark'); } catch (e) {}
+              axApplyTheme();
+            }
+            
+            (() => {
+              const soundRow = document.getElementById('soundToggle').closest('.glass-btn');
+              const row = document.createElement('div');
+              row.className = 'flex justify-between items-center glass-btn p-3 rounded-xl';
+              row.innerHTML = `<div><p class="text-sm font-bold text-gray-800">Dark mode</p><p class="text-[11px] text-gray-400 font-medium">Easier on the eyes at night</p></div>
+    <button id="darkToggle" onclick="toggleDarkMode()" role="switch" aria-label="Dark mode" class="relative w-12 h-7 rounded-full transition-colors bg-gray-300">
+      <span id="darkKnob" class="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform"></span>
+    </button>`;
+              soundRow.after(row);
+              axApplyTheme();
+              
+              if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (!axThemeStored()) axApplyTheme(); });
+            })();
+          </script>
+         
+<script>
+/* ============ SHARED HELPERS ============ */
+const AXC = ['#4F46E5', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#8b5cf6', '#84cc16', '#f97316', '#64748b'];
+const axDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const axAddDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const axSum = (arr, f) => arr.reduce((s, x) => s + (Number(f(x)) || 0), 0);
+const axK = n => n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : String(Math.round(n));
+const axT = s => { const [h, m] = String(s).split(':').map(Number); return (h % 12 || 12) + (m ? ':' + pad2(m) : '') + (h >= 12 ? 'p' : 'a'); };
+const axNum = id => { const el = document.getElementById(id); if (el && typeof axNumericOnly === 'function') axNumericOnly(el); };
+function axStore() {
+  if (!appData.mayaSavings || typeof appData.mayaSavings !== 'object' || Array.isArray(appData.mayaSavings)) appData.mayaSavings = {};
+  const a = appData.mayaSavings.__ax = appData.mayaSavings.__ax || {};
+  a.roster = a.roster || []; a.goals = a.goals || []; a.tagFunds = a.tagFunds || {}; a.stash = a.stash || {};
+  a.split = a.split || { needs: 50, wants: 30, goals: 20 };
+  return a;
+}
+function axBudget(info) {
+  const p = getPrevCutoffInfo(info), calc = budgetFrom(periodStats(p.start, p.end)), act = appData.actualEarnings[info.id];
+  const hasAct = act !== undefined && act !== null && act !== '' && !isNaN(Number(act));
+  return (hasAct ? Number(act) : calc) + otherIncomeEntries(appData.otherIncome[info.id]).reduce((s, x) => s + (Number(x) || 0), 0);
+}
+const AX_TAG = /#[\p{L}\p{N}_]+/gu;
+const axTags = note => [...new Set((String(note || '').match(AX_TAG) || []).map(t => t.toLowerCase()))];
+const axCard = (id, cls) => { const d = document.createElement('div'); d.id = id; d.className = cls || 'glass-card p-4 space-y-3'; return d; };
+if (typeof AX_RULES !== 'undefined') AX_RULES.push([/axDelPlan\(/, 'Remove this planned shift?'], [/axDelGoal\(/, 'Delete this goal? Its deposits stay in your savings.']);
+
+/* generic bottom sheet (plan editor, goals, deposits) */
+document.body.insertAdjacentHTML('beforeend', '<div id="axSheet" class="hidden fixed inset-0 z-[46] bg-gray-900/50 flex items-end sm:items-center justify-center"><div id="axSheetBox" class="glass-modal w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-4 space-y-3 overflow-y-auto" style="max-height:92vh;padding-bottom:calc(1rem + env(safe-area-inset-bottom,0px))"></div></div>');
+const axSheet = html => { document.getElementById('axSheetBox').innerHTML = html; document.getElementById('axSheet').classList.remove('hidden'); };
+const axCloseSheet = () => document.getElementById('axSheet').classList.add('hidden');
+document.getElementById('axSheet').addEventListener('click', e => { if (e.target.id === 'axSheet') axCloseSheet(); });
+const axSheetHead = t => `<div class="flex items-center justify-between"><p class="text-sm font-bold text-gray-800">${t}</p><button type="button" onclick="axCloseSheet()" aria-label="Close" class="w-9 h-9 text-xl text-gray-400">&times;</button></div>`;
+const axLbl = t => `<label class="text-[11px] font-semibold text-gray-500 block mb-1">${t}</label>`;
+
+/* ============ 1. ROSTER & SHIFT PLANNING (Shift tab) ============ */
+let axWeek = 0;
+function axPlanPay(p) {
+  const m = calculateShiftMetrics(p.start, p.end, p.ot, p.baseRate, p.mult);
+  return { pay: m.totalPay, reg: parseFloat(m.regularHours) };
+}
+const axLogged = date => appData.shifts.find(s => s.date === date);
+function axOpenPlan(date) {
+  const ex = axStore().roster.find(r => r.date === date);
+  const d = Object.assign({ start: '06:00', end: '12:00', baseRate: 80, mult: 1, ot: 0 }, ex || {});
+  const sel = (id, opts, v) => `<select id="${id}" onchange="axPlanPreview()" class="w-full glass-input rounded-xl px-2 py-2.5 text-xs font-bold">${opts.map(([val, l]) => `<option value="${val}" ${String(val) === String(v) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  const pre = (l, s, e, c) => `<button type="button" onclick="axPreset('${s}','${e}')" class="glass-btn p-2 rounded-xl text-center"><span class="font-bold text-[11px] ${c} block">${l}</span><span class="text-[9px] text-gray-500">${axT(s)}–${axT(e)}</span></button>`;
+  axSheet(`${axSheetHead('🗓️ ' + esc(fmtDate(date)))}
+    <div class="grid grid-cols-4 gap-1.5">${pre('Opener', '06:00', '12:00', 'text-amber-500')}${pre('Mid', '12:00', '18:00', 'text-orange-500')}${pre('Closer', '18:00', '00:00', 'text-indigo-500')}${pre('Grave', '00:00', '06:00', 'text-purple-600')}</div>
+    <div class="grid grid-cols-2 gap-2"><div>${axLbl('Start')}<input type="time" id="axpS" value="${d.start}" onchange="axPlanPreview()" class="w-full glass-input rounded-xl px-3 py-2 text-sm font-medium" /></div><div>${axLbl('End')}<input type="time" id="axpE" value="${d.end}" onchange="axPlanPreview()" class="w-full glass-input rounded-xl px-3 py-2 text-sm font-medium" /></div></div>
+    <div class="grid grid-cols-2 gap-2"><div>${axLbl('Overtime')}${sel('axpO', [[0, 'No OT'], [0.5, '+30 mins'], [1, '+1 hr'], [1.5, '+1.5 hrs'], [2, '+2 hrs']], d.ot)}</div>
+      <div>${axLbl('Base rate')}${sel('axpR', [[80, '₱80 / hr'], [75, '₱75 / hr (Old)']], d.baseRate)}</div><div>${axLbl('Multiplier')}${sel('axpM', [[1, 'Regular (1x)'], [1.3, 'Holiday (+30%)'], [2, 'Double (2x)']], d.mult)}</div></div>
+    <div class="bg-white/70 p-3 rounded-xl border border-white/80 flex justify-between items-center text-xs"><span class="text-gray-600">Paid hours: <strong id="axpHrs" class="text-gray-900">0</strong>h</span><span class="font-bold text-emerald-600 text-sm bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">₱<span id="axpPay">0.00</span></span></div>
+    <button onclick="axSavePlan('${date}')" class="w-full bg-brand text-white font-bold py-3.5 rounded-xl active:scale-[0.98] transition shadow-lg shadow-brand/30">${ex ? 'Update plan' : 'Save plan'}</button>
+    ${ex ? `<button onclick="axDelPlan('${esc(ex.id)}')" class="w-full text-rose-500 text-xs font-bold py-2.5 rounded-xl border border-rose-200 bg-rose-50/60">Remove planned shift</button>` : ''}`);
+  axPlanPreview();
+}
+function axReadPlan() {
+  const v = id => document.getElementById(id).value;
+  return { start: v('axpS'), end: v('axpE'), ot: Number(v('axpO')), baseRate: Number(v('axpR')), mult: Number(v('axpM')) };
+}
+function axPlanPreview() { const r = axPlanPay(axReadPlan()); document.getElementById('axpPay').textContent = peso(r.pay); document.getElementById('axpHrs').textContent = r.reg.toFixed(2); }
+function axPreset(s, e) { document.getElementById('axpS').value = s; document.getElementById('axpE').value = e; document.getElementById('axpO').value = '0'; axPlanPreview(); }
+function axSavePlan(date) {
+  const p = axReadPlan();
+  if (!p.start || !p.end) { customAlert('Please fill in the shift times.', 'error'); return; }
+  if (axLogged(date)) { customAlert('A shift is already logged for this date.', 'error'); return; }
+  const a = axStore(), i = a.roster.findIndex(r => r.date === date), rec = Object.assign({ id: i >= 0 ? a.roster[i].id : Date.now().toString(), date }, p);
+  if (i >= 0) a.roster[i] = rec; else a.roster.push(rec);
+  axCloseSheet(); saveData(); customAlert('Shift planned!');
+}
+function axDelPlan(id) { const a = axStore(); a.roster = a.roster.filter(r => r.id !== id); axCloseSheet(); saveData(); }
+function axLogPlan(id) {
+  const a = axStore(), p = a.roster.find(r => r.id === id); if (!p) return;
+  if (axLogged(p.date)) { customAlert('A shift is already logged for this date.', 'error'); return; }
+  const r = axPlanPay(p), nd = calculateShiftMetrics(p.start, p.end, p.ot, p.baseRate, p.mult).ndHours;
+  appData.shifts.push({ id: Date.now().toString(), user_id: currentUser.user_id, date: p.date, start: p.start, end: p.end, baseRate: p.baseRate, multiplier: p.mult, regularHours: Number(r.reg.toFixed(2)), otHours: p.ot, ndHours: parseFloat(nd), totalPay: r.pay });
+  a.roster = a.roster.filter(x => x.id !== id); saveData(); customAlert('Planned shift logged!');
+}
+function axWeekNav(n) { axWeek = n === 0 ? 0 : axWeek + n; axRenderRoster(); }
+function axRenderRoster() {
+  const el = document.getElementById('axRoster'); if (!el) return;
+  const today = axDay(new Date()), dow = (today.getDay() + 6) % 7, ws = axAddDays(today, -dow + axWeek * 7), we = axAddDays(ws, 6);
+  const roster = axStore().roster, byDate = {}; roster.forEach(r => byDate[r.date] = r);
+  let planned = 0, logged = 0, n = 0, cells = '', list = '';
+  for (let i = 0; i < 7; i++) {
+    const d = axAddDays(ws, i), iso = localISODate(d), p = byDate[iso], l = axLogged(iso), isT = d.getTime() === today.getTime();
+    let inner = '<span class="text-[10px] text-gray-300">＋</span>';
+    if (l) { logged += Number(l.totalPay) || 0; inner = '<span class="text-[11px] font-extrabold text-emerald-500">✓</span><span class="text-[9px] text-gray-400 font-semibold">₱' + axK(l.totalPay) + '</span>'; }
+    else if (p) {
+      const pay = axPlanPay(p).pay; planned += pay; n++;
+      inner = `<span class="text-[9px] font-bold text-brand leading-tight">${axT(p.start)}–${axT(p.end)}</span><span class="text-[9px] text-gray-400 font-semibold">₱${axK(pay)}</span>`;
+      list += `<div class="flex items-center justify-between glass-btn p-2.5 rounded-xl text-xs"><div class="min-w-0"><div class="font-bold text-gray-800">${esc(fmtDate(iso))}</div><p class="text-[10px] text-gray-500">${fmtTime(p.start)} – ${fmtTime(p.end)} · ₱${peso(pay)}</p></div>${d <= today ? `<button onclick="axLogPlan('${esc(p.id)}')" class="text-[11px] font-bold text-brand bg-brand/10 border border-brand/20 px-2.5 py-1.5 rounded-lg shrink-0">Log it</button>` : ''}</div>`;
+    }
+    cells += `<button type="button" onclick="axOpenPlan('${iso}')" class="glass-btn rounded-xl py-2 px-0.5 flex flex-col items-center gap-0.5 min-h-[76px] ${isT ? 'ring-2 ring-brand/40' : ''} ${l ? 'opacity-80' : ''}"><span class="text-[9px] font-bold text-gray-400 uppercase">${'MTWTFSS'[i]}</span><span class="text-sm font-extrabold text-gray-800">${d.getDate()}</span>${inner}</button>`;
+  }
+  const fmtD = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  el.innerHTML = `<div class="flex items-center justify-between"><h2 class="text-sm font-bold text-gray-800">🗓️ Roster Planner</h2><div class="flex items-center gap-1.5"><button onclick="axWeekNav(-1)" aria-label="Previous week" class="w-8 h-8 glass-btn rounded-lg font-bold text-gray-600">‹</button><button onclick="axWeekNav(0)" class="text-[11px] font-bold text-brand px-1">${fmtD(ws)} – ${fmtD(we)}</button><button onclick="axWeekNav(1)" aria-label="Next week" class="w-8 h-8 glass-btn rounded-lg font-bold text-gray-600">›</button></div></div>
+    <div class="grid grid-cols-7 gap-1">${cells}</div>
+    <div class="flex justify-between text-[11px] font-semibold text-gray-500"><span>Planned: <b class="text-brand">₱${peso(planned)}</b> (${n})</span><span>Logged: <b class="text-emerald-600">₱${peso(logged)}</b></span></div>
+    ${list ? '<div class="space-y-1.5">' + list + '</div>' : '<p class="text-[11px] text-gray-400 font-medium">Tap a day to plan a shift.</p>'}`;
+}
+(() => { const c = axCard('axRoster'); document.getElementById('page-shifts').children[0].after(c); })();
+
+/* ============ 2. HASHTAG LEDGERS (Expenses tab hints + Dashboard card) ============ */
+let axLed = { sel: null };
+function axTagMap() {
+  const m = {};
+  appData.expenses.forEach(e => {
+    if (e.category === 'Savings') return;
+    const seen = new Set();
+    (String(e.note || '').match(AX_TAG) || []).forEach(raw => {
+      const k = raw.toLowerCase(); if (seen.has(k)) return; seen.add(k);
+      const t = m[k] = m[k] || { key: k, label: raw, total: 0, count: 0, items: [] };
+      t.total += Number(e.amount) || 0; t.count++; t.items.push(e);
+    });
+  });
+  return m;
+}
+function axSelTag(k) { axLed.sel = axLed.sel === k ? null : k; axRefreshLedger(); }
+function axSetFunds() {
+  const k = axLed.sel, raw = document.getElementById('axFunds').value, v = parseFloat(raw);
+  if (!k || raw === '' || isNaN(v) || v < 0) { customAlert('Please enter a valid amount.', 'error'); return; }
+  axStore().tagFunds[k] = v; saveData();
+}
+function axInsertTag(t) { const el = document.getElementById('expNote'); el.value = (el.value.trim() + ' ' + t).trim(); el.focus(); }
+function axRefreshLedger() {
+  const el = document.getElementById('axLedger'); if (!el) return;
+  const tags = Object.values(axTagMap()).sort((a, b) => b.total - a.total);
+  if (axLed.sel && !tags.find(t => t.key === axLed.sel)) axLed.sel = null;
+  let html = `<p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">🏷️ Event &amp; Project Ledgers</p>`;
+  if (!tags.length) html += '<p class="text-xs text-gray-400 font-medium">Add hashtags to expense notes (e.g. <b>Snacks #TeachersDay</b>) and they are grouped here automatically.</p>';
+  else {
+    html += '<div class="flex flex-wrap gap-2">' + tags.slice(0, 16).map(t => `<button onclick="axSelTag('${t.key}')" class="text-[11px] font-bold px-3 py-1.5 rounded-full ${axLed.sel === t.key ? 'bg-brand text-white' : 'glass-btn text-gray-700'}">${esc(t.label)} · ₱${axK(t.total)}</button>`).join('') + '</div>';
+    const t = tags.find(x => x.key === axLed.sel);
+    if (t) {
+      const funds = axStore().tagFunds[t.key], has = funds !== undefined, pl = has ? funds - t.total : null;
+      const cats = {}; t.items.forEach(e => cats[e.category] = (cats[e.category] || 0) + (Number(e.amount) || 0));
+      html += `<div class="rounded-xl bg-gray-50 p-3 space-y-3">
+        <div class="flex justify-between items-center"><span class="text-sm font-extrabold text-gray-800">${esc(t.label)}</span><span class="text-[11px] text-gray-500 font-semibold">${t.count} expense${t.count === 1 ? '' : 's'}</span></div>
+        <div class="flex items-center gap-2"><div class="relative flex-1 min-w-0"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">₱</span><input id="axFunds" type="text" inputmode="decimal" placeholder="Funds / revenue for this event" value="${has ? funds : ''}" class="w-full glass-input rounded-xl pl-7 pr-3 py-2.5 text-gray-900 font-bold text-sm" /></div><button onclick="axSetFunds()" class="bg-brand text-white font-bold px-4 py-2.5 rounded-xl text-sm">Set</button></div>
+        <div class="space-y-1 text-xs font-semibold"><div class="flex justify-between text-gray-600"><span>Funds</span><span>${has ? '₱' + peso(funds) : '—'}</span></div><div class="flex justify-between text-gray-600"><span>Total spent</span><span class="text-rose-500">−₱${peso(t.total)}</span></div>
+          <div class="flex justify-between border-t border-gray-200/70 pt-1.5 text-sm font-extrabold"><span class="text-gray-800">${has ? (pl >= 0 ? 'Left over' : 'Over by') : 'Net'}</span><span class="${has && pl >= 0 ? 'text-emerald-600' : 'text-rose-500'}">${has ? '₱' + peso(Math.abs(pl)) : '−₱' + peso(t.total)}</span></div></div>
+        <div class="space-y-1">${Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([c, a]) => `<div class="flex justify-between text-[11px] font-semibold text-gray-700"><span>${catIcon(c)} ${esc(c)}</span><span>₱${peso(a)}</span></div>`).join('')}</div>
+        <div class="space-y-1 max-h-48 overflow-y-auto">${t.items.slice().sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date)).map(e => `<div class="flex justify-between text-[11px] text-gray-600"><span class="truncate pr-2">${esc(fmtDate(e.date))} · ${esc(e.note || '')}</span><span class="font-bold shrink-0">₱${peso(e.amount)}</span></div>`).join('')}</div></div>`;
+    }
+  }
+  el.innerHTML = html;
+  const inp = document.getElementById('axFunds'); if (inp) axNum('axFunds');
+  const sug = document.getElementById('axTagSug');
+  if (sug) sug.innerHTML = tags.slice(0, 6).map(t => `<button type="button" onclick="axInsertTag('${t.label}')" class="text-[11px] font-bold text-brand bg-brand/10 border border-brand/20 px-2.5 py-1 rounded-full">${esc(t.label)}</button>`).join('');
+}
+document.getElementById('expNote').insertAdjacentHTML('afterend', '<div id="axTagSug" class="flex flex-wrap gap-1.5 mt-2"></div>');
+
+/* ============ 3. SAFE-TO-SPEND PACING CURVE ============ */
+function axRefreshPace(info) {
+  const el = document.getElementById('axPace'); if (!el) return;
+  const budget = axBudget(info), exps = sortedDateRange('expenses', info.start, info.end);
+  const sD = axDay(info.start), eD = axDay(info.end), N = Math.round((eD - sD) / 864e5) + 1, t = axDay(new Date());
+  const k = t < sD ? 0 : t > eD ? N : Math.round((t - sD) / 864e5) + 1;
+  const per = new Array(N).fill(0);
+  exps.forEach(e => { const i = Math.round((parseLocalDate(e.date) - sD) / 864e5); if (i >= 0 && i < N) per[i] += Number(e.amount) || 0; });
+  const rem = [budget]; let c = 0; for (let i = 0; i < k; i++) { c += per[i]; rem.push(budget - c); }
+  const ideal = i => budget * (N - i) / N, diff = rem[k] - ideal(k), ok = diff >= 0;
+  const maxY = Math.max(budget, 1, ...rem), minY = Math.min(0, ...rem), rng = (maxY - minY) || 1;
+  const X = i => 14 + 272 * i / N, Y = v => 8 + 86 * (maxY - v) / rng, col = ok ? '#10b981' : '#ef4444';
+  const left = N - k, limit = left > 0 ? Math.max(budget - c, 0) / left : 0;
+  const msg = k === 0 ? 'This cutoff has not started yet.' : left === 0 ? 'This cutoff has ended.' : ok ? `You are ₱${peso(diff)} ahead of pace. Safe to spend ≈ ₱${peso(limit)} / day for ${left} more day${left === 1 ? '' : 's'}.` : `You are ₱${peso(-diff)} over pace. Dial back to ≈ ₱${peso(limit)} / day for the next ${left} day${left === 1 ? '' : 's'}.`;
+  el.innerHTML = `<div class="flex items-center justify-between"><p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Safe-to-spend pace</p><span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${k === 0 ? 'text-gray-500 border-gray-200' : ok ? 'text-emerald-700 bg-emerald-50 border-emerald-100' : 'text-rose-600 bg-rose-50 border-rose-200'}">${k === 0 ? 'Not started' : ok ? 'On pace' : 'Over pace'}</span></div>
+    <svg viewBox="0 0 300 110" class="w-full h-28" role="img" aria-label="Budget pacing chart"><line x1="14" x2="286" y1="${Y(0)}" y2="${Y(0)}" stroke="#9ca3af" stroke-width="0.6" opacity=".5"/><line x1="${X(0)}" y1="${Y(budget)}" x2="${X(N)}" y2="${Y(0)}" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 3"/>${k > 0 ? `<polyline points="${rem.map((v, i) => X(i) + ',' + Y(v)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(k)}" cy="${Y(rem[k])}" r="4" fill="${col}"/>` : ''}<text x="14" y="107" font-size="8" fill="#9ca3af">Day 1</text><text x="286" y="107" font-size="8" fill="#9ca3af" text-anchor="end">Day ${N}</text></svg>
+    <div class="flex gap-3 text-[10px] font-semibold text-gray-400"><span>┄ Target</span><span style="color:${col}">━ Your balance</span></div>
+    <p class="text-xs font-semibold text-gray-700">${msg}</p>`;
+}
+
+/* ============ 4. PROJECTED UPCOMING BUDGET ============ */
+function axRefreshProj(info) {
+  const el = document.getElementById('axProj'); if (!el) return;
+  const cur = periodStats(info.start, info.end), logged = new Set(appData.shifts.map(s => s.date));
+  const plans = axStore().roster.filter(r => { const d = parseLocalDate(r.date); return d >= info.start && d <= info.end && !logged.has(r.date); });
+  const pg = axSum(plans, r => axPlanPay(r).pay), g = cur.gross + pg, gov = g * 0.095;
+  const est = budgetFrom({ gross: g, takeHome: Math.max(g - gov, 0) });
+  el.innerHTML = `<p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Estimated upcoming budget</p>
+    <div class="space-y-2 text-xs text-gray-600 font-medium">
+      <div class="flex justify-between"><span>Logged earnings</span><span class="font-bold text-gray-800">₱${peso(cur.gross)}</span></div>
+      <div class="flex justify-between"><span>+ Planned shifts (${plans.length})</span><span class="font-bold text-brand">₱${peso(pg)}</span></div>
+      <div class="flex justify-between"><span>− SSS, PhilHealth, Pag-IBIG</span><span class="font-bold text-gray-800">${CONFIG.BUDGET_USES === 'gross' ? '₱0.00' : '−₱' + peso(gov)}</span></div>
+      <div class="flex justify-between items-center border-t border-gray-200/70 pt-2"><span class="font-bold text-gray-800">Projected next budget</span><span class="font-extrabold text-brand text-sm">₱${peso(est)}</span></div></div>
+    <p class="text-[11px] text-gray-400 font-medium">${plans.length ? `₱${peso(est - budgetFrom(cur))} more than logged-only.` : 'Plan shifts in the Shift tab to see a projection before the cutoff ends.'}</p>`;
+}
+
+/* ============ 5. 50/30/20 ONE-TAP STASH ============ */
+const AX_NEEDS = ['Food', 'Move-It', 'Transpo', 'School', 'Bills', 'Load', 'Health', 'Services'], AX_WANTS = ['Shopping', 'Subscriptions', 'Entertainment', 'Grooming', 'Gifts', 'Others'];
+let axSplitEdit = false;
+function axToggleSplit() { axSplitEdit = !axSplitEdit; axRefreshAll(); }
+function axSaveSplit() {
+  const v = id => parseFloat(document.getElementById(id).value) || 0, n = v('axsN'), w = v('axsW'), g = v('axsG');
+  if (Math.abs(n + w + g - 100) > 0.01) { customAlert('Percentages must add up to 100.', 'error'); return; }
+  axStore().split = { needs: n, wants: w, goals: g }; axSplitEdit = false; saveData(); customAlert('Split saved!');
+}
+function axStash() {
+  const info = getSelectedCutoffInfo(); if (!info) return;
+  const b = axBudget(info), s = axStore().split;
+  axStore().stash[info.id] = { budget: b, needs: b * s.needs / 100, wants: b * s.wants / 100, goals: b * s.goals / 100, at: localISODate() };
+  saveData(); customAlert('Budget stashed into Needs, Wants and Goals!');
+}
+function axRefreshStash(info) {
+  const el = document.getElementById('axStashCard'); if (!el) return;
+  const a = axStore(), s = a.split, b = axBudget(info), st = a.stash[info.id], exps = sortedDateRange('expenses', info.start, info.end);
+  const spent = f => axSum(exps.filter(e => f(e.category)), e => e.amount);
+  const rows = [['🏠 Needs', 'needs', s.needs, spent(c => AX_NEEDS.includes(c)), '#4F46E5'], ['🎉 Wants', 'wants', s.wants, spent(c => AX_WANTS.includes(c) || !AX_NEEDS.includes(c) && c !== 'Savings'), '#f59e0b'], ['🐷 Goals', 'goals', s.goals, spent(c => c === 'Savings'), '#ec4899']];
+  el.innerHTML = `<div class="flex items-center justify-between"><p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">${s.needs}/${s.wants}/${s.goals} budget stash</p><button onclick="axToggleSplit()" class="text-[11px] font-bold text-brand">${axSplitEdit ? 'Cancel' : 'Edit split'}</button></div>
+    ${axSplitEdit ? `<div class="grid grid-cols-3 gap-2">${[['axsN', 'Needs %', s.needs], ['axsW', 'Wants %', s.wants], ['axsG', 'Goals %', s.goals]].map(([id, l, v]) => `<div>${axLbl(l)}<input id="${id}" type="text" inputmode="decimal" value="${v}" class="w-full glass-input rounded-xl px-3 py-2.5 text-sm font-bold" /></div>`).join('')}</div><button onclick="axSaveSplit()" class="w-full bg-brand text-white font-bold py-3 rounded-xl text-sm">Save split</button>` : ''}
+    <div class="space-y-3">${rows.map(([l, key, pct, sp, color]) => { const alloc = st ? st[key] : b * pct / 100, left = alloc - sp, share = alloc > 0 ? Math.min(100, sp / alloc * 100) : (sp > 0 ? 100 : 0); return `<div><div class="flex justify-between text-xs font-semibold text-gray-700 mb-1"><span>${l} · ${pct}%</span><span>₱${peso(alloc)}</span></div><div class="h-2 rounded-full bg-gray-200/70 overflow-hidden"><div class="h-full rounded-full" style="width:${share}%;background:${left < 0 ? '#ef4444' : color}"></div></div><p class="text-[10px] font-medium mt-1 ${left < 0 ? 'text-rose-500' : 'text-gray-400'}">Spent ₱${peso(sp)} · ${left < 0 ? 'over by ₱' + peso(-left) : '₱' + peso(left) + ' left'}</p></div>`; }).join('')}</div>
+    <button onclick="axStash()" class="w-full ${st ? 'glass-btn text-brand' : 'bg-brand text-white shadow-lg shadow-brand/30'} font-bold py-3 rounded-xl text-sm active:scale-[0.98] transition">${st ? '✓ Stashed ' + esc(fmtDate(st.at)) + ' · Re-stash' : '💼 Stash my budget'}</button>
+    ${st && Math.abs(st.budget - b) > 0.5 ? `<p class="text-[10px] text-amber-600 font-semibold">Budget changed from ₱${peso(st.budget)} to ₱${peso(b)}. Re-stash to update.</p>` : ''}`;
+}
+
+/* ============ 6. TARGETED SAVINGS GOALS ============ */
+const axGoalSaved = g => axSum(appData.expenses.filter(e => e.category === 'Savings' && axTags(e.note).includes('#' + g.tag.toLowerCase())), e => e.amount);
+function axOpenGoal() {
+  axSheet(`${axSheetHead('🎯 New savings goal')}<div>${axLbl('Goal name')}<input id="axgN" type="text" maxlength="30" placeholder="e.g. Hand Tools" class="w-full glass-input rounded-xl px-3 py-2.5 text-sm font-medium" /></div><div>${axLbl('Target amount (₱)')}<input id="axgT" type="text" inputmode="decimal" placeholder="0.00" class="w-full glass-input rounded-xl px-3 py-2.5 text-sm font-bold" /></div><button onclick="axSaveGoal()" class="w-full bg-brand text-white font-bold py-3.5 rounded-xl">Create goal</button>`);
+  axNum('axgT');
+}
+function axSaveGoal() {
+  const name = document.getElementById('axgN').value.trim(), target = parseFloat(document.getElementById('axgT').value), tag = name.replace(/[^\p{L}\p{N}]/gu, '');
+  if (!name || !tag || !target || target <= 0) { customAlert('Enter a goal name and a target above zero.', 'error'); return; }
+  const a = axStore(); if (a.goals.some(g => g.tag.toLowerCase() === tag.toLowerCase())) { customAlert('You already have a goal with that name.', 'error'); return; }
+  a.goals.push({ id: Date.now().toString(), name, tag, target }); axCloseSheet(); saveData(); customAlert('Goal created!');
+}
+function axOpenDeposit(id) {
+  const g = axStore().goals.find(x => x.id === id); if (!g) return;
+  axSheet(`${axSheetHead('🐷 Deposit to ' + esc(g.name))}<div>${axLbl('Amount (₱)')}<input id="axdA" type="text" inputmode="decimal" placeholder="0.00" class="w-full glass-input rounded-xl px-3 py-2.5 text-sm font-bold" /></div><button onclick="axSaveDeposit('${esc(id)}')" class="w-full bg-brand text-white font-bold py-3.5 rounded-xl">Add deposit</button><p class="text-[11px] text-gray-400 font-medium">Logged as a Savings expense tagged #${esc(g.tag)}.</p>`);
+  axNum('axdA');
+}
+function axSaveDeposit(id) {
+  const g = axStore().goals.find(x => x.id === id), amt = parseFloat(document.getElementById('axdA').value);
+  if (!g || !amt || amt <= 0) { customAlert('Please enter a valid amount.', 'error'); return; }
+  appData.expenses.push({ id: Date.now().toString(), user_id: currentUser.user_id, amount: amt, date: localISODate(), category: 'Savings', note: 'Deposit #' + g.tag });
+  axCloseSheet(); saveData(); customAlert('Deposit added!');
+}
+function axDelGoal(id) { const a = axStore(); a.goals = a.goals.filter(g => g.id !== id); saveData(); }
+function axRefreshGoals() {
+  const el = document.getElementById('axGoals'); if (!el) return;
+  const gs = axStore().goals;
+  el.innerHTML = `<div class="flex items-center justify-between"><p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">🎯 Savings goals</p><button onclick="axOpenGoal()" class="text-[11px] font-bold text-brand bg-brand/10 border border-brand/20 px-3 py-1.5 rounded-full">＋ New goal</button></div>` +
+    (gs.length ? gs.map(g => { const s = axGoalSaved(g), pct = Math.min(100, Math.round(s / g.target * 100)), done = s >= g.target; return `<div class="glass-btn rounded-2xl p-3 space-y-2"><div class="flex justify-between items-center"><span class="text-sm font-bold text-gray-800 truncate">${done ? '🎉' : '🎯'} ${esc(g.name)}</span><button onclick="axDelGoal('${esc(g.id)}')" aria-label="Delete goal" class="w-8 h-8 text-lg text-gray-400">&times;</button></div><div class="h-2.5 rounded-full bg-gray-200/70 overflow-hidden"><div class="h-full rounded-full transition-all" style="width:${pct}%;background:${done ? '#10b981' : '#ec4899'}"></div></div><div class="flex justify-between items-center text-[11px] font-semibold text-gray-500"><span>₱${peso(s)} of ₱${peso(g.target)} · ${pct}%</span><button onclick="axOpenDeposit('${esc(g.id)}')" class="text-brand font-bold bg-brand/10 border border-brand/20 px-2.5 py-1 rounded-lg">＋ Deposit</button></div></div>`; }).join('') : '<p class="text-xs text-gray-400 font-medium">Create a goal (hand tools, components, event materials) and give your savings a purpose.</p>');
+}
+
+/* ============ 7. NO-SPEND CALENDAR ============ */
+let axCal = { off: 0 };
+function axCalNav(n) { axCal.off = n === 0 ? 0 : axCal.off + n; axRefreshAll(); }
+function axRefreshCal(info) {
+  const el = document.getElementById('axCalCard'); if (!el) return;
+  const ref = new Date(info.start.getFullYear(), info.start.getMonth() + axCal.off, 1), y = ref.getFullYear(), m = ref.getMonth(), nd = new Date(y, m + 1, 0).getDate(), key = y + '-' + pad2(m + 1);
+  const spend = new Array(nd + 1).fill(0);
+  appData.expenses.forEach(e => { if (e.category !== 'Savings' && String(e.date).slice(0, 7) === key) spend[Number(String(e.date).slice(8, 10))] += Number(e.amount) || 0; });
+  const today = axDay(new Date()), isCur = today.getFullYear() === y && today.getMonth() === m, past = today > new Date(y, m, nd), upto = past ? nd : isCur ? today.getDate() : 0;
+  const active = spend.slice(1, upto + 1).filter(v => v > 0), avg = active.length ? axSum(active, v => v) / active.length : 0;
+  let best = 0, run = 0, noSpend = 0; for (let d = 1; d <= upto; d++) { if (spend[d] === 0) { run++; noSpend++; best = Math.max(best, run); } else run = 0; }
+  const streak = run;
+  let cells = '<span class="col-span-7 grid grid-cols-7 gap-1 text-center text-[9px] font-bold text-gray-400">' + 'SMTWTFS'.split('').map(d => `<span>${d}</span>`).join('') + '</span>';
+  for (let i = 0; i < ref.getDay(); i++) cells += '<span></span>';
+  for (let d = 1; d <= nd; d++) {
+    const v = spend[d], isT = isCur && d === today.getDate();
+    let st = 'background:rgba(156,163,175,.18);color:#9ca3af';
+    if (d <= upto) st = v === 0 ? 'background:#4F46E5;color:#fff' : v <= avg ? 'background:#c7d2fe;color:#3730a3' : v <= avg * 1.5 ? 'background:#fcd34d;color:#78350f' : 'background:#f43f5e;color:#fff';
+    cells += `<span title="${v ? '₱' + peso(v) : 'No spend'}" class="aspect-square rounded-lg flex items-center justify-center text-[11px] font-bold" style="${st}${isT ? ';box-shadow:0 0 0 2px #a5b4fc' : ''}">${d}</span>`;
+  }
+  el.innerHTML = `<div class="flex items-center justify-between"><p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">No-spend calendar</p><div class="flex items-center gap-1.5"><button onclick="axCalNav(-1)" aria-label="Previous month" class="w-8 h-8 glass-btn rounded-lg font-bold text-gray-600">‹</button><button onclick="axCalNav(0)" class="text-[11px] font-bold text-brand px-1">${ref.toLocaleString('en-US', { month: 'long', year: 'numeric' })}</button><button onclick="axCalNav(1)" aria-label="Next month" class="w-8 h-8 glass-btn rounded-lg font-bold text-gray-600">›</button></div></div>
+    <div class="grid grid-cols-7 gap-1">${cells}</div>
+    <div class="flex justify-between text-[11px] font-semibold text-gray-500"><span>🔥 Streak: <b class="text-brand">${streak} day${streak === 1 ? '' : 's'}</b> · Best ${best}</span><span>${noSpend} no-spend day${noSpend === 1 ? '' : 's'}</span></div>
+    <div class="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-400 font-medium"><span><i class="inline-block w-2 h-2 rounded-sm align-middle" style="background:#4F46E5"></i> ₱0</span><span><i class="inline-block w-2 h-2 rounded-sm align-middle" style="background:#c7d2fe"></i> light</span><span><i class="inline-block w-2 h-2 rounded-sm align-middle" style="background:#fcd34d"></i> above avg</span><span><i class="inline-block w-2 h-2 rounded-sm align-middle" style="background:#f43f5e"></i> heavy</span></div>`;
+}
+
+/* ============ 8. CSS DONUT BESIDE THE CATEGORY BREAKDOWN ============ */
+function axRefreshDonut(info) {
+  const box = document.getElementById('axDonut'), list = document.getElementById('catBreakdown'); if (!box) return;
+  const by = {}; sortedDateRange('expenses', info.start, info.end).forEach(e => by[e.category] = (by[e.category] || 0) + (Number(e.amount) || 0));
+  const rows = Object.entries(by).sort((a, b) => b[1] - a[1]), tot = axSum(rows, r => r[1]);
+  if (!rows.length || tot <= 0) { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  let acc = 0; const stops = rows.map(([, a], i) => { const s = acc / tot * 100; acc += a; return `${AXC[i % AXC.length]} ${s}% ${acc / tot * 100}%`; });
+  box.style.background = `conic-gradient(${stops.join(',')})`;
+  document.getElementById('axDonutTotal').textContent = '₱' + axK(tot);
+  [...list.children].forEach((row, i) => { const sp = row.querySelector('span'); if (sp && rows[i]) sp.insertAdjacentHTML('afterbegin', `<i class="inline-block w-2 h-2 rounded-full mr-1 align-middle" style="background:${AXC[i % AXC.length]}"></i>`); });
+}
+
+/* ============ WIRING ============ */
+(() => {
+  const dash = document.getElementById('page-dashboard'), q = id => document.getElementById(id).closest('.glass-card');
+  const pace = axCard('axPace'), goals = axCard('axGoals'), proj = axCard('axProj'), stash = axCard('axStashCard'), led = axCard('axLedger'), cal = axCard('axCalCard');
+  dash.children[0].after(pace); q('dispTotalSavings').after(goals); q('dispGrossPay').after(proj); proj.after(stash); q('catBreakdown').after(led); led.after(cal);
+  const cat = document.getElementById('catBreakdown'), wrap = document.createElement('div');
+  wrap.className = 'flex items-center gap-4'; cat.parentNode.insertBefore(wrap, cat);
+  wrap.insertAdjacentHTML('beforeend', '<div id="axDonut" class="hidden shrink-0 relative rounded-full" style="width:92px;height:92px" role="img" aria-label="Spending by category chart"><div class="bg-white absolute rounded-full flex items-center justify-center text-[11px] font-extrabold text-gray-700" style="inset:22%"><span id="axDonutTotal"></span></div></div>');
+  wrap.appendChild(cat); cat.classList.add('flex-1', 'min-w-0');
+})();
+function axRefreshAll() {
+  const info = getSelectedCutoffInfo();
+  const run = f => { try { f(); } catch (e) { console.error('ax:', e); } };
+  run(axRenderRoster); run(axRefreshGoals); run(axRefreshLedger);
+  if (!info) return;
+  run(() => axRefreshPace(info)); run(() => axRefreshProj(info)); run(() => axRefreshStash(info)); run(() => axRefreshCal(info)); run(() => axRefreshDonut(info));
+}
+const axOrigRender = renderDashboard;
+renderDashboard = function () { axOrigRender.apply(this, arguments); axRefreshAll(); };
+axRefreshAll();
+</script>
+        </body>
+        </html>
