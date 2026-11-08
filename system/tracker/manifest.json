@@ -1,0 +1,15 @@
+{
+  "name": "ArcherStudio Tracker",
+  "short_name": "ArcherStudio",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f7fb",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
