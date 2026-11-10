@@ -16,20 +16,41 @@
       justify-content: center; align-items: center; color: #0f172a;
     }
     .pad-card {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 14px;
-    padding: 24px;
-    height: 95vh;
-    /* max-width: 500px; */
-    width: 100%;
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1);
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column-reverse;
-}
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 24px;
+      height: 95vh;
+      width: 100%;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1);
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column-reverse;
+      position: relative; /* Added for absolute positioning of the fullscreen button */
+    }
+
+    /* Fullscreen Button */
+    .fs-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #475569;
+      cursor: pointer;
+      transition: 0.2s;
+      z-index: 10;
+    }
+    .fs-btn:hover { background: #e2e8f0; color: #0f172a; }
 
     .status-badge {
       display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
@@ -66,6 +87,11 @@
 <body>
 
   <div class="pad-card">
+    <!-- Fullscreen Toggle Button -->
+    <button class="fs-btn" id="fs-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen">
+      <i class="ri-fullscreen-line"></i>
+    </button>
+
     <div id="status" class="status-badge"><i class="ri-loader-4-line ri-spin"></i> Connecting...</div>
     
     <!-- IDLE STATE -->
@@ -190,6 +216,25 @@
       setStatus("connected", '<i class="ri-check-line"></i> Sent!');
       setTimeout(resetToIdle, 1000);
     }
+
+    // Fullscreen Logic
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(e => console.error("Fullscreen failed:", e));
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    // Update Fullscreen Icon on State Change
+    document.addEventListener("fullscreenchange", () => {
+      const icon = document.querySelector("#fs-btn i");
+      if (document.fullscreenElement) {
+        icon.className = "ri-fullscreen-exit-line";
+      } else {
+        icon.className = "ri-fullscreen-line";
+      }
+    });
   </script>
 </body>
 </html>
