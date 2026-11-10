@@ -113,6 +113,39 @@
       box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.12);
     }
 
+    .sig-box-wrapper {
+      position: relative;
+      margin-top: 0.25rem;
+    }
+
+    #reg-sig-canvas {
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 8px;
+      width: 100%;
+      height: 160px;
+      background: #f8fafc;
+      cursor: crosshair;
+      touch-action: none;
+      box-sizing: border-box;
+      display: block;
+    }
+
+    .clear-sig-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #e2e8f0;
+      color: #475569;
+      border: none;
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .clear-sig-btn:hover { background: #cbd5e1; }
+
     .auth-btn {
       width: 100%;
       padding: 0.9rem;
@@ -140,8 +173,6 @@
     }
     .auth-alert.error { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; display: block; }
     .auth-alert.success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; display: block; }
-
-    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -230,6 +261,15 @@
           <input type="email" id="reg-email" required placeholder="email@example.com" />
         </div>
 
+        <!-- Digital Signature Field -->
+        <div class="auth-form-group">
+          <label>Digital Signature <span style="color:#dc2626">*</span></label>
+          <div class="sig-box-wrapper">
+            <canvas id="reg-sig-canvas" width="600" height="200"></canvas>
+            <button type="button" class="clear-sig-btn" onclick="clearRegSignature()">Clear</button>
+          </div>
+        </div>
+
         <!-- Honeypot field for bot protection -->
         <div style="display: none" aria-hidden="true">
           <input type="text" id="reg-website" name="website" tabindex="-1" autocomplete="off" />
@@ -245,10 +285,10 @@
   <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
 
-    // BroadcastChannel for same-device cross-tab communication
+    // 1. BroadcastChannel for same-device cross-tab communication
     const tapChannel = new BroadcastChannel("btled_tap_channel");
 
-    // Setup PeerJS connection if opened via scanned QR code (with ?peer=ID)
+    // 2. PeerJS Setup (Restored)
     const targetPeerId = new URLSearchParams(window.location.search).get("peer");
     let peer = null, conn = null;
 
@@ -259,20 +299,78 @@
       });
     }
 
+    /* ---------- Signature Pad Logic ---------- */
+    const sigCanvas = document.getElementById("reg-sig-canvas");
+    const sigCtx = sigCanvas.getContext("2d");
+    let isDrawing = false, hasSigned = false;
+
+    sigCtx.lineWidth = 3;
+    sigCtx.lineCap = "round";
+    sigCtx.lineJoin = "round";
+    sigCtx.strokeStyle = "#0047AB";
+
+    function getCanvasPos(e) {
+      const rect = sigCanvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * (sigCanvas.width / rect.width),
+        y: (clientY - rect.top) * (sigCanvas.height / rect.height)
+      };
+    }
+
+    function startDraw(e) {
+      isDrawing = true;
+      hasSigned = true;
+      const p = getCanvasPos(e);
+      sigCtx.beginPath();
+      sigCtx.moveTo(p.x, p.y);
+      e.preventDefault();
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const p = getCanvasPos(e);
+      sigCtx.lineTo(p.x, p.y);
+      sigCtx.stroke();
+      e.preventDefault();
+    }
+
+    function stopDraw() { isDrawing = false; }
+
+    sigCanvas.addEventListener("mousedown", startDraw);
+    sigCanvas.addEventListener("mousemove", draw);
+    sigCanvas.addEventListener("mouseup", stopDraw);
+    sigCanvas.addEventListener("mouseleave", stopDraw);
+    sigCanvas.addEventListener("touchstart", startDraw, { passive: false });
+    sigCanvas.addEventListener("touchmove", draw, { passive: false });
+    sigCanvas.addEventListener("touchend", stopDraw);
+
+    function clearRegSignature() {
+      sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+      hasSigned = false;
+    }
+
+    /* ---------- Submit Form ---------- */
     document.getElementById("register-form").addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const alertBox = document.getElementById("reg-alert");
       const submitBtn = document.getElementById("reg-btn");
 
-      // Honeypot check
-      if (document.getElementById("reg-website").value) {
+      if (document.getElementById("reg-website").value) return;
+
+      if (!hasSigned) {
+        alertBox.className = "auth-alert error";
+        alertBox.innerText = "Signature required. Please sign in the canvas above.";
         return;
       }
 
       alertBox.className = "auth-alert";
       submitBtn.disabled = true;
       submitBtn.innerText = "Submitting Registration...";
+
+      const signatureDataUrl = sigCanvas.toDataURL("image/png");
 
       const payload = {
         action: "register",
@@ -287,7 +385,8 @@
         municipality: document.getElementById("reg-city").value.trim(),
         province: document.getElementById("reg-prov").value.trim(),
         contact: document.getElementById("reg-contact").value.trim(),
-        email: document.getElementById("reg-email").value.trim()
+        email: document.getElementById("reg-email").value.trim(),
+        signature: signatureDataUrl
       };
 
       try {
@@ -314,15 +413,16 @@
             "Province": payload.province,
             "Contact Number": payload.contact,
             "E-mail Address": payload.email,
+            "Signature": signatureDataUrl,
             "Status": "Active"
           };
 
-          // 1. Send to Terminal over PeerJS (if connected)
+          // 1. Send via PeerJS to terminal (if connected)
           if (conn && conn.open) {
             conn.send({ action: "REGISTRATION_COMPLETE", member: registeredMember });
           }
 
-          // 2. Broadcast across tabs (if on same device)
+          // 2. Send via BroadcastChannel (same device)
           tapChannel.postMessage({ action: "REGISTRATION_COMPLETE", member: registeredMember });
 
           // 3. Fallback via LocalStorage
@@ -331,13 +431,14 @@
           alertBox.className = "auth-alert success";
           alertBox.innerText = `Registration successful! Record synced for ${payload.name} ${payload.surname}.`;
           document.getElementById("register-form").reset();
+          clearRegSignature();
         } else {
           alertBox.className = "auth-alert error";
-          alertBox.innerText = result.error || "Registration failed. Please check your information and try again.";
+          alertBox.innerText = result.error || "Registration failed. Please try again.";
         }
       } catch (err) {
         alertBox.className = "auth-alert error";
-        alertBox.innerText = "Network error. Unable to connect to the server. Please try again.";
+        alertBox.innerText = "Network error. Unable to connect to server.";
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerText = "Submit Registration";

@@ -6,8 +6,8 @@
 <title>BTLED | Terminal 1</title>
 <link rel="icon" type="image/png" href="../../resources/image/logo/2.png" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
@@ -27,39 +27,34 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 .tab{display:none;&.on{display:block}}
 .layout{display:grid;grid-template-columns:280px 1fr;gap:16px;@media(max-width:800px){grid-template-columns:1fr}}
 .card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px;h3{margin:0 0 4px;display:flex;gap:6px;align-items:center}p.sub{margin:0 0 12px;color:var(--mute);font-size:.85rem}}
-.qr-wrap{text-align:center;#qrcode,#qrcode-reg{width:200px;height:200px;margin:10px auto;padding:8px;background:#fff;border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center}}
-.btn{background:var(--brand);color:#fff;border:0;padding:9px 14px;border-radius:9px;font-weight:700;cursor:pointer;display:inline-flex;gap:6px;align-items:center;font-size:.85rem;&:hover{background:var(--brand-d)}
+.qr-wrap{text-align:center;.qrcode-box{width:200px;height:200px;margin:10px auto;padding:8px;background:#fff;border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center}}
+.btn{background:var(--brand);color:#fff;border:0;padding:9px 14px;border-radius:99px;font-weight:700;cursor:pointer;display:inline-flex;gap:6px;align-items:center;font-size:.85rem;&:hover{background:var(--brand-d)}
   &.ghost{background:#e2e8f0;color:var(--ink)}&.danger{background:var(--bad)}&.block{width:100%;justify-content:center;margin-top:6px}}
 .scan{width:100%;padding:16px;font:1.3rem monospace;border:2px solid #cbd5e1;border-radius:12px;outline:none;&:focus{border-color:var(--brand);box-shadow:0 0 0 4px #0047ab22}}
 .result{margin-top:16px;border-radius:var(--r);padding:34px 20px;text-align:center;border:2px dashed var(--line);color:var(--mute);transition:.2s;min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
   i{font-size:3.4rem}h2{margin:0;font-size:1.6rem}p{margin:0}
   &.ok{background:#dcfce7;border:2px solid #86efac;color:#166534}
   &.info{background:#dbeafe;border:2px solid #93c5fd;color:#1e40af}
-  &.bad{background:#fee2e2;border:2px solid #fca5a5;color:#991b1b;animation:shake .4s}
-  &.wait{background:#fef3c7;border:2px solid #fcd34d;color:#92400e;i{animation:pulse 1s infinite}}}
+  &.bad{background:#fee2e2;border:2px solid #fca5a5;color:#991b1b;animation:shake .4s}}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-@keyframes pulse{50%{opacity:.35}}
 .lock{display:none}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
 .field{display:block;margin-bottom:10px;font-size:.8rem;font-weight:700;color:var(--mute);input{display:block;width:100%;margin-top:4px;padding:9px;border:1px solid #cbd5e1;border-radius:8px;font-size:.9rem}}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;div{background:var(--bg);border-radius:10px;padding:10px;text-align:center;b{display:block;font-size:1.5rem;color:var(--brand)}small{color:var(--mute)}}}
 table{width:100%;border-collapse:collapse;font-size:.82rem;th,td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--line)}}
 .scroll{max-height:320px;overflow:auto}
-
-/* Modal for Local Signature Pad */
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a99;display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:.2s;backdrop-filter:blur(2px)}
-.modal.show{opacity:1;pointer-events:auto}
-.modal-content{background:#fff;padding:24px;border-radius:var(--r);width:90%;max-width:440px;text-align:center;box-shadow:0 10px 25px -5px #0005}
-#sig-pad{border:2px dashed var(--line);border-radius:10px;width:100%;height:200px;background:#f8fafc;cursor:crosshair;margin:12px 0;touch-action:none;box-sizing:border-box}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="brand"><img src="../../resources/image/logo/2.png" alt="BTLED" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTIyIDEyQzIyIDE3LjUyMjggMTcuNTIyOCAyMiAxMiAyMkM2LjQ3NzE1IDIyIDIgMTcuNTIyOCAyIDEyQzIgNi40NzcxNSA2LjQ3NzE1IDIgMTIgMkMxNy41MjI4IDIgMjIgNi40NzcxNSAyMiAxMlpNMTYuODA3OSAxMS41QzE2Ljg1NTggMTEuMjczMSAxNi45MTk3IDExLjA4NyAxNi45kxMS44QzE3LjQzMzEgOS4zMTI3NSAxNi40Nzg0IDcuOTU2MjggMTUuMjYxMiA3LjQ2OTgzQzEzLjg1OTkgNi40MTAwNSAxMS4yMjc0IDYuNDk5OTkgOC43OTY2MiA2LjQ5OTk5QzUuOTY0MzcgNi40OTk5OSA1LjI5NTEzIDguNTYzMDUgNS4yOTUxMyA4LjU2MzA1TDEwLjIzNzIgMTAuNDVDMTAuMjM3MiAxMC40NSAxMC41MDY3IDkuNTY3NTEgMTEuMjAyMiA5LjI1NzQ4QzEyLjEzODQgOC44Mzk4MiAxMy40NTE2IDguNjcxMjIgMTQuMTk4MiA5LjEzNEMxNC43MjAzIDkuNDU3MzkgMTQuOTA1MyAxMC4wMTAzIDE0LjgwNDcgMTAuNTExQzE0Ljc1MzYgMTAuNzY0OSAxNC42NDIxIDExLjA4NyAxNC40NTI5IDExLjQ2MzFDMTMuOTE1NiAxMi41Mjk3IDEyLjMyMjUgMTMuMjcwOCAxMS4wNzA3IDEzLjk4NUMxMC43MDU2IDE0LjE5MyAxMC4zNxE5IDE0LjM5MzkgMTAuMDQyIDE0LjYwMzRDOC45ODEyIDE1LjI5ODggOC4wNzIzNSAxNi4zNjYzIDcuNDg4MDQgMTcuNjUxTDcuMTUxMzEgMTguMzkzMkwxMS44MTk2IDE4LjM5MzJDMTEuODE5NiAxOC4zOTMyIDExLjgxMDggMTguMjc3NSAxMS44ODIzIDE4LjEyNTJDMTEuOTM1OSAxOC4wMTEyIDEyLjAwMzUgMTcuODc0NCAxMi4wODE3IDE3LjcyNzRDMTIuMjg5MiAxNy4zMzcgMTIuNjIyNCAxNi44MTc5IDEzLjA5MiAxNi40NDczQzEzLjUzMTggMTYuMDk5MyAxNC4wNDEyIDE1LjgzNTEgMTQuNTcxMSAxNS41Mjk1QzE0LjYyNzQgMTUuNDk3MSAxNC42ODM5IDE1LjQ2NCAxNC43NDA0IDE1LjQzMDdDMTUuODEwNCAxNC43OTgzIDE2LjUyNCAxMy44MzI1IDE2LjY0MDcgMTIuNDg1QzE2Ljc1NjEgMTEuMTU0NyAxNi44MDc5IDExLjUgMTYuODA3OSAxMS41WiIvPjwvc3ZnPg=='"/><div><b>BTLED Attendance</b><small>Terminal 1 · <span id="ev-name"></span></small></div></div>
+    <div class="brand">
+      <img src="../../resources/image/logo/2.png" alt="BTLED" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiM2NDc0OGIiLz48L3N2Zz4='"/>
+      <div><b>BTLED Attendance</b><small>Terminal 1 · <span id="ev-name"></span></small></div>
+    </div>
     <div class="pills">
+      <span class="pill"><i class="ri-cellphone-line"></i><span id="peer-status">Pad Offline</span></span>
       <span class="pill"><i class="ri-database-2-line"></i><span id="db-status">Loading…</span></span>
-      <span class="pill"><i class="ri-smartphone-line"></i><span id="peer-status" style="color:#f59e0b">Offline</span></span>
       <span class="pill btn" onclick="toggleFullscreen()" title="Toggle Fullscreen"><i id="fs-icon" class="ri-fullscreen-line"></i></span>
     </div>
   </header>
@@ -73,14 +68,16 @@ table{width:100%;border-collapse:collapse;font-size:.82rem;th,td{padding:7px 8px
   <section id="tab-att" class="tab on">
     <div class="layout">
       <aside class="card qr-wrap">
-        <h3 style="justify-content:center"><i class="ri-user-add-line"></i>Register Here</h3>
-        <p class="sub">Not in the list? Scan this QR to open the registration form, then scan your ID again.</p>
-        <div id="qrcode-reg"></div>
+        <h3 style="justify-content:center"><i class="ri-user-add-line"></i>Member Registration</h3>
+        <p class="sub">Not in the list? Scan to open the registration form.</p>
+        <div id="qrcode-reg" class="qrcode-box"></div>
       </aside>
       <main class="card">
         <h3><i class="ri-barcode-box-line"></i>Scanner</h3>
-        <p class="sub">Scan with the barcode scanner or type a Student ID. A signature pad opens on the paired phone (or this screen) after each scan.</p>
-        <form id="tap-form"><input id="barcode-input" class="scan" placeholder="Scan barcode / ID…" autocomplete="off" autofocus /></form>
+        <p class="sub">Scan with barcode scanner or tap box to type ID.</p>
+        <form id="tap-form">
+          <input id="barcode-input" class="scan" inputmode="none" placeholder="Scan barcode / ID…" autocomplete="off" autofocus />
+        </form>
         <div id="result" class="result"><i class="ri-user-follow-line"></i><h2>Ready to scan</h2><p>Waiting for the next student…</p></div>
       </main>
     </div>
@@ -100,21 +97,24 @@ table{width:100%;border-collapse:collapse;font-size:.82rem;th,td{padding:7px 8px
         <div><b id="st-active">0</b><small>Timed in</small></div>
         <div><b id="st-pending">0</b><small>Pending sync</small></div>
       </div>
-      <div class="layout" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
-        <div class="card qr-wrap">
-          <h3 style="justify-content:center"><i class="ri-smartphone-line"></i>Connect Phone</h3>
-          <p class="sub">Scan with the phone to use it as scanner &amp; remote signature pad.</p>
-          <div id="qrcode"></div>
-          <button class="btn block" onclick="downloadQR('qrcode','BTLED_Pairing_QR.png')"><i class="ri-image-line"></i>Download PNG</button>
-          <button class="btn ghost block" onclick="copyLink(mobileUrl)"><i class="ri-links-line"></i>Copy Link</button>
+      <div class="layout" style="grid-template-columns:300px 1fr">
+        
+        <!-- SIGNATURE PAD CONNECTION CARD -->
+        <div class="card qr-wrap" style="grid-column:1; height:fit-content">
+          <h3 style="justify-content:center"><i class="ri-smartphone-line"></i>Signature Pad</h3>
+          <p class="sub">Scan to connect phone.</p>
+          <div id="qrcode-sig" class="qrcode-box"></div>
+          <div style="margin-top:10px;font-size:0.85rem">Status: <b id="set-peer-status" style="color:var(--bad)">Disconnected</b></div>
         </div>
+
+        <!-- SETTINGS CONTROLS CARD -->
         <div class="card">
           <h3><i class="ri-equalizer-line"></i>Controls</h3>
-          <label class="field">Registration form URL<input id="s-reg" placeholder="https://…/registration.html" /></label>
+          <label class="field">Registration Peer URL<input id="s-reg" placeholder="https://…/registration.html" /></label>
+          <label class="field">Signature Pad URL<input id="s-sig" placeholder="https://…/signature.html" /></label>
           <label class="field">Event name<input id="s-event" /></label>
           <label class="field">Venue<input id="s-venue" /></label>
           <label class="field">New admin PIN<input id="s-pin" type="password" placeholder="Leave blank to keep" /></label>
-          <div class="row"><span>Require signature</span><input type="checkbox" id="s-sig" /></div>
           <div class="row"><span>Sound effects</span><input type="checkbox" id="s-sound" /></div>
           <button class="btn block" onclick="saveSettings()"><i class="ri-save-3-line"></i>Save settings</button>
           <button class="btn ghost block" onclick="generatePDF()"><i class="ri-file-pdf-2-line"></i>Download PDF Report</button>
@@ -123,6 +123,8 @@ table{width:100%;border-collapse:collapse;font-size:.82rem;th,td{padding:7px 8px
           <button class="btn danger block" onclick="resetSession()"><i class="ri-delete-bin-6-line"></i>Reset session (time-in state)</button>
           <button class="btn ghost block" onclick="lockAdmin()"><i class="ri-lock-line"></i>Lock</button>
         </div>
+        
+        <!-- MEMBER LIST CARD -->
         <div class="card" style="grid-column:1/-1">
           <h3><i class="ri-team-line"></i>Member List</h3>
           <input class="scan" style="font-size:.9rem;padding:9px;margin:8px 0" id="m-search" placeholder="Search name or ID…" oninput="renderMembers()" />
@@ -133,51 +135,80 @@ table{width:100%;border-collapse:collapse;font-size:.82rem;th,td{padding:7px 8px
   </section>
 </div>
 
-<!-- Local Signature Modal Overlay -->
-<div id="local-sig" class="modal">
-  <div class="modal-content">
-    <h3 style="margin:0 0 5px"><i class="ri-pen-nib-line"></i> Signature Required</h3>
-    <p class="sub" id="sig-name" style="margin:0 0 10px;color:var(--brand);font-weight:bold;"></p>
-    <canvas id="sig-pad" width="400" height="200"></canvas>
-    <div class="row" style="border:0;padding:0">
-      <button class="btn danger" onclick="cancelLocalSig()"><i class="ri-close-line"></i>Cancel</button>
-      <button class="btn ghost" onclick="clearLocalSig()"><i class="ri-eraser-line"></i>Clear</button>
-      <button class="btn" onclick="submitLocalSig()"><i class="ri-check-line"></i>Submit</button>
-    </div>
-  </div>
-</div>
-
 <script>
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
 const TRY_AGAIN_MP3 = "../../resources/audio/try-again.mp3"; 
-const SIG_TIMEOUT = 60000;
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const J = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 
-const peer = new Peer();
-let conn = null, membersMap = new Map(), membersList = [];
+let membersMap = new Map(), membersList = [];
 let pendingLogs = J("btled_pending_taps", []);
 let state = J("btled_session_state", {});            
 let dailyLogs = J("btled_daily_logs", []);
-let settings = Object.assign({ event: "BTLED Event 2026", venue: "URS Cainta Room 303", pin: "1218", regUrl: "", sound: true, requireSig: true }, J("btled_settings", {}));
-let busy = null, busyTimer = null, resetTimer = null, mobileUrl = "", qr = null;
+let settings = Object.assign({ event: "BTLED Event 2026", venue: "URS Cainta Room 303", pin: "1218", regUrl: "", sigUrl: "", sound: true }, J("btled_settings", {}));
 
-// Cross-tab / Local Broadcast Listener for instant dynamic member updates
+let resetTimer = null;
+let currentPendingTap = null;
+let activePeerConn = null; // Tracks the active phone connection
+
+$("barcode-input").addEventListener("dblclick", () => {
+  $("barcode-input").setAttribute("inputmode", "text");
+});
+
+/* ---------- PeerJS Initialization ---------- */
+let peer = new Peer();
+let terminalPeerId = "";
+peer.on("open", (id) => {
+  terminalPeerId = id;
+  updatePeerUI("Ready");
+  drawQRCodes();
+});
+
+peer.on("connection", (conn) => {
+  activePeerConn = conn;
+  updatePeerUI("Connected");
+  
+  conn.on("data", (data) => {
+    if (!data) return;
+    if ((data.action === "REGISTRATION_COMPLETE" || data.action === "REGISTER_MEMBER") && data.member) {
+      addOrUpdateMember(data.member, true);
+    }
+    if (data.action === "SIGNATURE_SUBMITTED" && data.signature) {
+      handlePeerSignatureReceived(data.signature);
+    }
+  });
+  
+  conn.on("close", () => {
+    activePeerConn = null;
+    updatePeerUI("Ready");
+  });
+});
+
+function updatePeerUI(status) {
+  $("peer-status").innerText = status === "Connected" ? "Pad Connected" : "Pad " + status;
+  const setStatus = $("set-peer-status");
+  if(setStatus) {
+    setStatus.innerText = status;
+    setStatus.style.color = status === "Connected" ? "var(--ok)" : "var(--warn)";
+  }
+}
+
+function handlePeerSignatureReceived(sigDataUrl) {
+  if (currentPendingTap) {
+    const { member, key } = currentPendingTap;
+    currentPendingTap = null;
+    finish(member, key, sigDataUrl);
+  }
+}
+
+// Broadcast Channel Listener (Fallback for registration on another tab)
 const tapChannel = new BroadcastChannel("btled_tap_channel");
 tapChannel.onmessage = (e) => {
-  if (e.data && (e.data.action === "REGISTRATION_COMPLETE" || e.data.action === "REGISTER_MEMBER") && e.data.member) {
+  if (e.data && e.data.action === "REGISTRATION_COMPLETE" && e.data.member) {
     addOrUpdateMember(e.data.member, true);
   }
 };
-window.addEventListener("storage", (e) => {
-  if (e.key === "btled_registration_complete" && e.newValue) {
-    try {
-      const m = JSON.parse(e.newValue);
-      if (m) addOrUpdateMember(m, true);
-    } catch {}
-  }
-});
 
 /* ---------- Tabs & UI ---------- */
 document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
@@ -185,7 +216,7 @@ document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.id === "tab-" + b.dataset.tab));
   if (b.dataset.tab === "att") focusScan(); else refreshAdmin();
 });
-const focusScan = () => { if ($("tab-att").classList.contains("on") && !$("local-sig").classList.contains("show")) $("barcode-input").focus(); };
+const focusScan = () => { if ($("tab-att").classList.contains("on") && !currentPendingTap) $("barcode-input").focus(); };
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
@@ -194,9 +225,6 @@ function toggleFullscreen() {
     document.exitFullscreen();
   }
 }
-document.addEventListener("fullscreenchange", () => {
-  $("fs-icon").className = document.fullscreenElement ? "ri-fullscreen-exit-line" : "ri-fullscreen-line";
-});
 
 /* ---------- Audio ---------- */
 let ac = null;
@@ -217,16 +245,17 @@ function playSound(type) {
   else tone(660, 0, "sine", .15);
 }
 
-/* ---------- Result card ---------- */
+/* ---------- Result Card ---------- */
 function show(cls, icon, title, sub, autoReset = true) {
   const r = $("result"); r.className = "result " + cls;
-  r.innerHTML = `<i class="${icon}"></i><h2>${esc(title)}</h2><p>${esc(sub)}</p>` +
-    (cls === "wait" ? `<button class="btn danger" style="margin-top:10px" onclick="cancelWait()"><i class="ri-close-line"></i>Cancel</button>` : "");
+  r.innerHTML = `<i class="${icon}"></i><h2>${esc(title)}</h2><p>${esc(sub)}</p>`;
   clearTimeout(resetTimer);
-  if (autoReset) resetTimer = setTimeout(() => show("", "ri-user-follow-line", "Ready to scan", "Waiting for the next student…", false), 4000);
+  if (autoReset) resetTimer = setTimeout(() => {
+    if(!currentPendingTap) show("", "ri-user-follow-line", "Ready to scan", "Waiting for the next student…", false);
+  }, 4000);
 }
 
-/* ---------- Dynamic Member Insertion (No Manual DB Refresh Needed) ---------- */
+/* ---------- Member Insertion ---------- */
 function addOrUpdateMember(member, autoScan = false) {
   if (!member) return;
   const sNum = String(member["Student No."] || member.id || "").trim().toLowerCase();
@@ -235,7 +264,6 @@ function addOrUpdateMember(member, autoScan = false) {
   if (sNum) membersMap.set(sNum, member);
   if (sysId && sysId !== sNum) membersMap.set(sysId, member);
 
-  // Update membersList
   const idx = membersList.findIndex(x => String(x["Student No."]).trim().toLowerCase() === sNum);
   if (idx >= 0) membersList[idx] = member;
   else membersList.unshift(member);
@@ -247,112 +275,55 @@ function addOrUpdateMember(member, autoScan = false) {
   if (autoScan && sNum) {
     const fullName = `${member["First Name"] || member["name"] || ""} ${member["Surname"] || ""}`.trim();
     show("ok", "ri-user-add-line", "Registered & Added!", `${fullName} — Auto-timing in...`, true);
-    setTimeout(() => handleScan(sNum, true), 600);
+    setTimeout(() => handleScan(sNum), 600);
   }
 }
 
-/* ---------- Local Signature Logic ---------- */
-const cvs = $("sig-pad"), ctx = cvs?.getContext("2d");
-let isDrawing = false;
-if (cvs && ctx) {
-  ctx.lineWidth = 3.5;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.strokeStyle = "#000000";
+/* ---------- Scan Flow ---------- */
+$("tap-form").onsubmit = e => { 
+  e.preventDefault(); 
+  const v = $("barcode-input").value.trim(); 
+  $("barcode-input").value = ""; 
+  if (v) handleScan(v); 
+};
 
-  const getPos = (e) => {
-    const rect = cvs.getBoundingClientRect();
-    const evt = e.touches ? e.touches[0] : e;
-    return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
-  };
-  const startDraw = (e) => { isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); e.preventDefault(); };
-  const draw = (e) => { if (!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
-  const stopDraw = () => { isDrawing = false; };
-  
-  const opts = { passive: false };
-  cvs.addEventListener("mousedown", startDraw); cvs.addEventListener("mousemove", draw); cvs.addEventListener("mouseup", stopDraw); cvs.addEventListener("mouseout", stopDraw);
-  cvs.addEventListener("touchstart", startDraw, opts); cvs.addEventListener("touchmove", draw, opts); cvs.addEventListener("touchend", stopDraw);
-}
-function clearLocalSig() { if (ctx) ctx.clearRect(0, 0, cvs.width, cvs.height); }
-function cancelLocalSig() { $("local-sig").classList.remove("show"); cancelWait(true); }
-function submitLocalSig() {
-  if (!busy) return;
-  const dataUrl = cvs.toDataURL("image/png");
-  $("local-sig").classList.remove("show");
-  finish(busy.member, busy.key, dataUrl);
-}
-
-/* ---------- Peer / Phone Integration ---------- */
-peer.on("open", id => {
-  $("peer-status").innerText = "Ready"; $("peer-status").style.color = "#38bdf8";
-  mobileUrl = location.href.split("?")[0].replace(/[^/]*$/, "mobile-scanner.html") + "?peer=" + id;
-  qr = new QRCode($("qrcode"), { text: mobileUrl, width: 184, height: 184 });
-  drawRegQR(); // Redraw registration QR to append peer ID
-});
-peer.on("connection", c => {
-  conn = c;
-  c.on("open", () => setPeer("Connected", "#22c55e"));
-  c.on("data", d => {
-    if (!d || typeof d !== "object") { if (typeof d === "string") handleScan(d, true); return; }
-    if (d.action === "SCAN_BARCODE") handleScan(d.code, true);
-    else if (d.action === "SUBMIT_SIGNATURE" && busy && busy.key === String(d.code).toLowerCase()) finish(busy.member, busy.key, d.signature);
-    else if (d.action === "CANCEL_SIGNATURE") cancelWait(true);
-    else if (d.action === "REGISTRATION_COMPLETE" || d.action === "REGISTER_MEMBER") {
-      const m = d.member || d.data;
-      if (m) addOrUpdateMember(m, true);
-    }
-  });
-  c.on("close", () => { setPeer("Offline", "#f59e0b"); conn = null; if (busy && !$("local-sig").classList.contains("show")) cancelWait(true); });
-});
-const setPeer = (t, c) => { $("peer-status").innerText = t; $("peer-status").style.color = c; };
-const phoneOn = () => conn && conn.open;
-const send = m => { if (phoneOn()) conn.send(m); };
-
-/* ---------- Scan flow ---------- */
-$("tap-form").onsubmit = e => { e.preventDefault(); const v = $("barcode-input").value.trim(); $("barcode-input").value = ""; if (v) handleScan(v, false); };
-
-function handleScan(raw, fromPhone) {
+function handleScan(raw) {
   initAudio();
   const code = String(raw).trim(); if (!code) return;
-  if (busy) { tone(330, 0, "square", .12); if (!fromPhone && !$("local-sig").classList.contains("show")) show("wait", "ri-pen-nib-line", "Please wait…", `Waiting for ${busy.name} to sign.`, false); return; }
   
   const key = code.toLowerCase(), member = membersMap.get(key);
   if (!member) {
     playSound("ERROR");
-    show("bad", "ri-error-warning-line", "Not registered", `"${code}" — scan the Register QR on the left, then try again.`);
-    send({ action: "NOT_FOUND", studentNo: code });
+    show("bad", "ri-error-warning-line", "Not registered", `"${code}" — scan Registration QR on the left.`);
+    return;
+  }
+
+  const signature = member["Signature"] || member["signature"] || null;
+  const fullName = `${member["First Name"] || member["name"] || ""} ${member["Surname"] || ""}`.trim();
+
+  // If missing signature, send request to phone
+  if (!signature) {
+    if (!activePeerConn || !activePeerConn.open) {
+      playSound("ERROR");
+      show("bad", "ri-smartphone-line", "Phone Not Connected", "A signature is required. Please connect the Signature Pad from Settings first.");
+      return;
+    }
+    
+    currentPendingTap = { member, key };
+    activePeerConn.send({ action: "REQUEST_SIGNATURE", name: fullName });
+    show("info", "ri-pencil-line", "Action Required", `Waiting for ${fullName} to sign on the phone...`, false);
     return;
   }
   
-  const name = `${member["First Name"] || member["name"] || ""} ${member["Surname"] || ""}`.trim();
-  
-  if (settings.requireSig) {
-    busy = { member, key, name };
-    if (phoneOn()) {
-      playSound("SCAN");
-      show("wait", "ri-pen-nib-line", name, "Signature pad sent to phone. Waiting for signature…", false);
-      send({ action: "REQUIRE_SIGNATURE", studentNo: code, name });
-      busyTimer = setTimeout(() => cancelWait(), SIG_TIMEOUT);
-    } else {
-      playSound("SCAN");
-      $("sig-name").innerText = name;
-      clearLocalSig();
-      $("local-sig").classList.add("show");
-      show("wait", "ri-pen-nib-line", name, "Please sign on the screen…", false);
-    }
-  } else finish(member, key, null);
-}
-
-function cancelWait(silent) {
-  if (!busy) return;
-  clearTimeout(busyTimer); busy = null; send({ action: "CLOSE_SIGNATURE" });
-  $("local-sig").classList.remove("show");
-  show("bad", "ri-close-circle-line", "Cancelled", "Signature not completed. Scan again.");
-  if (!silent) playSound("ERROR"); focusScan();
+  finish(member, key, signature);
 }
 
 function finish(member, key, signature) {
-  clearTimeout(busyTimer); busy = null;
+  if (signature && (!member["Signature"] && !member["signature"])) {
+    member["Signature"] = signature;
+    addOrUpdateMember(member, false);
+  }
+  
   const studentNo = String(member["Student No."] || key);
   const first = member["First Name"] || member["name"] || "", sur = member["Surname"] || "";
   const program = member["Program"] || "BTLED-IA", fullName = `${first} ${sur}`.trim();
@@ -363,15 +334,12 @@ function finish(member, key, signature) {
   playSound(type);
   show(type === "TAP-IN" ? "ok" : "info", type === "TAP-IN" ? "ri-login-circle-line" : "ri-logout-circle-line",
        fullName, `${type === "TAP-IN" ? "Timed IN" : "Timed OUT"} · ${program} · ${displayTime}`);
-  send({ action: "DONE", text: `${fullName} — ${type}` });
   
-  // Save for API Sync
   pendingLogs.push({ id: member["ID"] || "", studentNo, surname: sur, firstName: first, middleName: member["Middle Name"] || "",
     program, eventName: settings.event, venue: settings.venue, type, timestamp: new Date().toISOString(), displayTime,
-    status: member["Status"] || "Active", signature: signature || null });
+    status: member["Status"] || "Active", signature: signature });
     
-  // Save to daily permanent logs for PDF Generator
-  dailyLogs.push({ studentNo, name: fullName, program, type, time: displayTime, date: new Date().toLocaleDateString(), signature });
+  dailyLogs.push({ studentNo, name: fullName, program, type, time: displayTime, date: new Date().toLocaleDateString(), signature: signature });
   
   localStorage.setItem("btled_pending_taps", JSON.stringify(pendingLogs));
   localStorage.setItem("btled_session_state", JSON.stringify(state));
@@ -380,7 +348,7 @@ function finish(member, key, signature) {
   syncPendingTaps(); focusScan();
 }
 
-/* ---------- Data ---------- */
+/* ---------- Data Fetching ---------- */
 function loadCachedMembers() {
   membersList = J("btled_members_db", []); membersMap.clear();
   membersList.forEach(m => {
@@ -409,25 +377,22 @@ async function syncPendingTaps() {
 
 /* ---------- PDF Generation ---------- */
 async function generatePDF() {
-  if (typeof window.jspdf === "undefined") return alert("PDF library is still loading. Please try again in a moment.");
+  if (typeof window.jspdf === "undefined") return alert("PDF library is loading. Please try again.");
   
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ format: 'legal', unit: 'mm' });
   
-  const margin = 12.7; // 0.5 inches
+  const margin = 12.7;
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const printableWidth = pageWidth - (margin * 2);
 
-  // Auto-calculating Academic Year (Rolls over every August)
   const now = new Date();
   const currentYear = now.getFullYear();
-  const ayStart = now.getMonth() >= 7 ? currentYear : currentYear - 1; // 7 = August (0-indexed)
+  const ayStart = now.getMonth() >= 7 ? currentYear : currentYear - 1;
   const ayFooterText = `BTLED ORG ${ayStart}-${ayStart + 1}`;
 
-  // Pre-load header image asynchronously
-  let headerImg = null;
-  let imgHeight = 0;
+  let headerImg = null, imgHeight = 0;
   try {
     const img = new Image();
     img.src = 'image.png';
@@ -441,18 +406,17 @@ async function generatePDF() {
     imgHeight = 0;
   }
 
-  // Exact header height for table offset calculation
   const headerTotalHeight = margin + (imgHeight ? imgHeight + 3 : 0) + 12;
 
   const map = new Map();
   dailyLogs.forEach(l => {
-    if (!map.has(l.studentNo)) map.set(l.studentNo, { id: l.studentNo, name: l.name, pgm: l.program, in: "-", out: "-", sig: null });
+    if (!map.has(l.studentNo)) map.set(l.studentNo, { id: l.studentNo, name: l.name, pgm: l.program, in: "-", out: "-", sig: l.signature || null });
     if (l.type === "TAP-IN") { map.get(l.studentNo).in = l.time; if (l.signature) map.get(l.studentNo).sig = l.signature; }
     if (l.type === "TAP-OUT") { map.get(l.studentNo).out = l.time; if (l.signature) map.get(l.studentNo).sig = l.signature; }
   });
   
   const records = Array.from(map.values());
-  const rows = records.map(m => [m.id, m.name, m.pgm, m.in, m.out].map(value => String(value ?? "").toUpperCase()).concat(""));
+  const rows = records.map(m => [m.id, m.name, m.pgm, m.in, m.out].map(v => String(v ?? "").toUpperCase()).concat(""));
   const eventTitle = String(settings.event ?? "").toUpperCase();
 
   doc.autoTable({
@@ -465,16 +429,12 @@ async function generatePDF() {
     alternateRowStyles: { fillColor: [241, 245, 249] },
     styles: { valign: 'middle', cellPadding: 1.5, fontSize: 8.5 }, 
     bodyStyles: { minCellHeight: 10 },
-    didDrawPage: function(data) {
+    didDrawPage: function() {
       let currentY = margin;
-      
-      // Header Image (Exact same width as table)
       if (headerImg) {
         doc.addImage(headerImg, 'PNG', margin, currentY, printableWidth, imgHeight);
         currentY += imgHeight + 6;
       }
-
-      // Title & Subtitle (Repeats every page without consuming excess whitespace)
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(15, 23, 42);
@@ -482,7 +442,6 @@ async function generatePDF() {
       currentY += 4.5;
       doc.text(eventTitle, pageWidth / 2, currentY, { align: "center" });
 
-      // Footer - Right-aligned dynamic AY string (Repeats every page)
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
@@ -492,7 +451,7 @@ async function generatePDF() {
       if (data.column.index === 5 && data.section === 'body') {
         const sig = records[data.row.index]?.sig;
         if (sig) {
-          doc.addImage(sig, 'PNG', data.cell.x + 2, data.cell.y + 0.8, 18, 8.4);
+          try { doc.addImage(sig, 'PNG', data.cell.x + 2, data.cell.y + 0.8, 18, 8.4); } catch {}
         }
       }
     }
@@ -501,19 +460,22 @@ async function generatePDF() {
   doc.save(`Attendance_${eventTitle.replace(/\s+/g, '_')}.pdf`);
 }
 
-/* ---------- QR ---------- */
-const regUrl = () => {
-  const base = settings.regUrl || location.href.split("?")[0].replace(/[^/]*$/, "registration.html");
-  return peer && peer.id ? base + (base.includes("?") ? "&" : "?") + "peer=" + peer.id : base;
-};
-function drawRegQR() { const el = $("qrcode-reg"); el.innerHTML = ""; new QRCode(el, { text: regUrl(), width: 184, height: 184 }); }
-function downloadQR(id, name) {
-  const c = $(id).querySelector("canvas"); if (!c) return;
-  const a = document.createElement("a"); a.href = c.toDataURL("image/png"); a.download = name; a.click();
+/* ---------- Dedicated QR Generation ---------- */
+function getPeerUrl(mode) {
+  let base = mode === "reg" ? settings.regUrl : settings.sigUrl;
+  if (!base) base = location.href.split("?")[0].replace(/[^/]*$/, mode === "reg" ? "registration.html" : "signature.html");
+  if (terminalPeerId) base += (base.includes("?") ? "&" : "?") + "peer=" + encodeURIComponent(terminalPeerId);
+  return base;
 }
-function copyLink(url) { if (url) { navigator.clipboard.writeText(url); show("info", "ri-links-line", "Link copied", "Copied to clipboard."); } }
 
-/* ---------- Admin ---------- */
+function drawQRCodes() {
+  const regEl = $("qrcode-reg");
+  const sigEl = $("qrcode-sig");
+  if(regEl) { regEl.innerHTML = ""; new QRCode(regEl, { text: getPeerUrl("reg"), width: 184, height: 184 }); }
+  if(sigEl) { sigEl.innerHTML = ""; new QRCode(sigEl, { text: getPeerUrl("sig"), width: 184, height: 184 }); }
+}
+
+/* ---------- Admin Control ---------- */
 function unlock() {
   if ($("pin-input").value === settings.pin) { sessionStorage.setItem("btled_admin", "1"); $("pin-input").value = ""; applyLock(); }
   else { playSound("ERROR"); $("pin-input").value = ""; $("pin-input").placeholder = "Wrong PIN"; }
@@ -526,8 +488,9 @@ function applyLock() {
 function refreshAdmin() {
   $("st-members").innerText = membersMap.size; $("st-pending").innerText = pendingLogs.length;
   $("st-active").innerText = Object.values(state).filter(t => t === "TAP-IN").length;
-  $("s-event").value = settings.event; $("s-reg").value = settings.regUrl; $("s-venue").value = settings.venue;
-  $("s-sig").checked = settings.requireSig; $("s-sound").checked = settings.sound; renderMembers();
+  $("s-event").value = settings.event; $("s-reg").value = settings.regUrl; 
+  $("s-sig").value = settings.sigUrl; $("s-venue").value = settings.venue;
+  $("s-sound").checked = settings.sound; renderMembers();
 }
 function renderMembers() {
   const q = $("m-search").value.toLowerCase();
@@ -539,22 +502,23 @@ function renderMembers() {
   }).join("") || `<tr><td colspan="3" style="color:#94a3b8">No members.</td></tr>`;
 }
 function saveSettings() {
-  settings.event = $("s-event").value.trim() || settings.event; settings.venue = $("s-venue").value.trim() || settings.venue;
-  settings.regUrl = $("s-reg").value.trim(); settings.requireSig = $("s-sig").checked; settings.sound = $("s-sound").checked;
+  settings.event = $("s-event").value.trim() || settings.event; 
+  settings.venue = $("s-venue").value.trim() || settings.venue;
+  settings.regUrl = $("s-reg").value.trim(); settings.sigUrl = $("s-sig").value.trim(); 
+  settings.sound = $("s-sound").checked;
   if ($("s-pin").value) settings.pin = $("s-pin").value; $("s-pin").value = "";
-  localStorage.setItem("btled_settings", JSON.stringify(settings)); $("ev-name").innerText = settings.event; drawRegQR();
+  localStorage.setItem("btled_settings", JSON.stringify(settings)); $("ev-name").innerText = settings.event; drawQRCodes();
 }
 function resetSession() { 
   if (confirm("Reset everyone's time-in state and clear local session logs?")) { 
     state = {}; dailyLogs = [];
-    localStorage.removeItem("btled_session_state"); 
-    localStorage.removeItem("btled_daily_logs");
+    localStorage.removeItem("btled_session_state"); localStorage.removeItem("btled_daily_logs");
     refreshAdmin(); 
   } 
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  $("ev-name").innerText = settings.event; drawRegQR(); loadCachedMembers(); applyLock(); fetchMembersDatabase(); focusScan();
+  $("ev-name").innerText = settings.event; drawQRCodes(); loadCachedMembers(); applyLock(); fetchMembersDatabase(); focusScan();
   document.addEventListener("click", e => { initAudio(); if (!e.target.closest("input,button,textarea,canvas")) focusScan(); });
   setInterval(() => { if (!document.activeElement || document.activeElement === document.body) focusScan(); }, 1500);
 });
