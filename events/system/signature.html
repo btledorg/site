@@ -28,7 +28,7 @@
       align-items: center;
       justify-content: center;
       flex-direction: column-reverse;
-      position: relative; /* Added for absolute positioning of the fullscreen button */
+      position: relative;
     }
 
     /* Fullscreen Button */
@@ -226,7 +226,6 @@
       }
     }
 
-    // Update Fullscreen Icon on State Change
     document.addEventListener("fullscreenchange", () => {
       const icon = document.querySelector("#fs-btn i");
       if (document.fullscreenElement) {
