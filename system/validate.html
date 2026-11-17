@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BTLED | Attendance &amp; Clearance Lookup</title>
+<link rel="icon" type="image/png" href="/resources/image/logo/2.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff;--soft:#f5f5f3;--line:#ebebe7;--text:#17171a;--muted:#6f6f76;
+  --accent:#eab308;--accent-ink:#17171a;--accent-soft:#fdf3c8;
+  --ok:#1b7a3d;--ok-soft:#e5f4ea;--bad:#b4321f;
+  --nav-h:68px;--r:16px;
+  --sans:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e0e10;--soft:#1a1a1d;--line:#26262a;--text:#f4f4f5;--muted:#9a9aa2;--accent-soft:#2b2410;--ok-soft:#12281a;--ok:#5fd08a;--bad:#ff8a75}}
+:root[data-theme="dark"]{--bg:#0e0e10;--soft:#1a1a1d;--line:#26262a;--text:#f4f4f5;--muted:#9a9aa2;--accent-soft:#2b2410;--ok-soft:#12281a;--ok:#5fd08a;--bad:#ff8a75}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:calc(var(--nav-h) + 24px + env(safe-area-inset-bottom,0px))}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{width:100%;max-width:720px;margin:0 auto;padding:0 1.1rem}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:58px}
+.brand{display:flex;align-items:center;gap:.65rem;min-width:0}
+.logo{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--soft);flex:none}
+.brand b{display:block;font-size:.98rem;line-height:1.1;letter-spacing:-.2px}
+.brand small{display:block;font-size:.72rem;color:var(--muted)}
+.icon-btn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line)}
+.icon-btn:hover{background:var(--soft)}
+svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;display:block}
+
+/* search */
+.hero{padding:1.6rem 0 .6rem}
+h1{font-size:clamp(1.7rem,7vw,2.4rem);line-height:1.1;letter-spacing:-1px;font-weight:800}
+.lede{color:var(--muted);font-size:.93rem;margin-top:.5rem;max-width:46ch}
+.finder{margin-top:1.2rem;display:grid;gap:.6rem}
+.field{position:relative}
+.field input{width:100%;height:56px;border:1.5px solid var(--line);border-radius:14px;background:var(--soft);color:var(--text);font:800 1.05rem var(--sans);letter-spacing:.4px;text-transform:uppercase;padding:0 3.6rem 0 1rem}
+.field input::placeholder{text-transform:none;font-weight:600;letter-spacing:0;color:var(--muted)}
+.field input:focus{outline:none;border-color:var(--accent);background:var(--bg)}
+.field .scan{position:absolute;right:6px;top:6px;width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line)}
+.go{height:54px;border-radius:14px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:1rem}
+.go:disabled{opacity:.6;cursor:wait}
+.recent{display:flex;gap:.45rem;flex-wrap:wrap;align-items:center;margin-top:.8rem;font-size:.8rem;color:var(--muted)}
+.chip{border:1px solid var(--line);border-radius:999px;padding:.3rem .75rem;font-size:.8rem;font-weight:700;background:var(--bg)}
+
+/* result */
+#result{display:none;padding-top:1.2rem}
+#result.on{display:block}
+.card{border:1px solid var(--line);border-radius:var(--r);background:var(--bg);padding:1.1rem}
+.student{display:flex;gap:1rem;align-items:center}
+.ring{--p:0;flex:none;width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--line) 0)}
+.ring>div{width:72px;height:72px;border-radius:50%;background:var(--bg);display:grid;place-items:center;text-align:center;line-height:1}
+.ring b{font-size:1.5rem;font-weight:800}
+.ring small{display:block;font-size:.62rem;color:var(--muted);margin-top:2px}
+.who{min-width:0}
+.name{font-size:1.2rem;font-weight:800;letter-spacing:-.4px;line-height:1.2;overflow-wrap:anywhere}
+.meta{font-size:.84rem;color:var(--muted);margin-top:.15rem}
+.verdict{margin-top:1rem;padding:.7rem .9rem;border-radius:12px;font-weight:800;font-size:.9rem;display:flex;gap:.6rem;align-items:center}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)}
+.verdict.no{background:var(--accent-soft)}
+.verdict svg{width:20px;height:20px;flex:none}
+details{margin-top:.8rem;font-size:.82rem;color:var(--muted)}
+summary{cursor:pointer;list-style:none;font-weight:700}
+summary::-webkit-details-marker{display:none}
+details label{display:flex;gap:.6rem;align-items:center;margin-top:.6rem}
+details input{width:64px;padding:.4rem .5rem;border:1px solid var(--line);border-radius:8px;background:var(--soft);color:var(--text);font:800 .9rem var(--sans)}
+
+.list-head{display:flex;justify-content:space-between;align-items:center;margin:1.6rem 0 .7rem;gap:.6rem}
+.list-head h2{font-size:1.05rem;font-weight:800}
+.row-tools{display:flex;gap:.5rem;flex-wrap:wrap}
+.pill{border:1px solid var(--line);border-radius:999px;padding:.4rem .85rem;font-size:.8rem;font-weight:700;background:var(--bg)}
+.pill:hover{background:var(--soft)}
+.search{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;background:var(--soft);color:var(--text);font:600 .92rem var(--sans);padding:0 .9rem;margin-bottom:.8rem}
+.search:focus{outline:none;border-color:var(--accent)}
+ul.events{list-style:none;display:grid;gap:.6rem}
+.ev{display:grid;grid-template-columns:4px 1fr auto;gap:.85rem;align-items:center;border:1px solid var(--line);border-radius:14px;padding:.85rem .95rem .85rem 0;overflow:hidden}
+.ev::before{content:"";align-self:stretch;background:var(--accent)}
+.ev h3{font-size:.95rem;font-weight:800;line-height:1.3}
+.ev p{font-size:.8rem;color:var(--muted);margin-top:.15rem}
+.badge{font-size:.72rem;font-weight:800;padding:.22rem .6rem;border-radius:999px;background:var(--ok-soft);color:var(--ok);width: max-content;}
+.msg{padding:1.6rem 1rem;text-align:center;color:var(--muted);font-size:.9rem;border:1px dashed var(--line);border-radius:14px;    }
+.msg.err{color:var(--bad)}
+.sk{height:64px;border-radius:14px;background:linear-gradient(90deg,var(--soft) 25%,var(--line) 50%,var(--soft) 75%);background-size:200% 100%;animation:pulse 1.4s infinite}
+@keyframes pulse{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.sk{animation:none}html{scroll-behavior:auto}}
+.empty{margin-top:2rem;padding:1.2rem;border-radius:var(--r);background:var(--soft);font-size:.88rem;color:var(--muted)}
+.empty b{display:block;color:var(--text);margin-bottom:.2rem}
+
+/* bottom nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav .in{max-width:720px;margin:0 auto;height:var(--nav-h);display:grid;grid-template-columns:repeat(4,1fr);align-items:center}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.7rem;font-weight:700;color:var(--muted);height:100%;justify-content:center}
+.nav button.on{color:var(--text)}
+.nav button.on svg{stroke:var(--text)}
+.nav button.on span{box-shadow:0 2px 0 var(--accent)}
+.nav .mid span{width:52px;height:52px;margin-top:-22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;box-shadow:0 6px 16px rgba(234,179,8,.4)!important}
+.nav .mid svg{stroke:var(--accent-ink)}
+.nav .mid{color:var(--text)}
+
+/* scanner */
+dialog{border:0;background:#000;color:#fff;width:100%;max-width:none;height:100%;max-height:none;padding:0;margin:0}
+dialog::backdrop{background:#000}
+.scan-top{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:calc(.9rem + env(safe-area-inset-top,0px)) 1rem .9rem;background:linear-gradient(#000a,transparent)}
+.scan-top .icon-btn{border-color:#fff5;color:#fff}
+dialog video{width:100%;height:100%;object-fit:cover}
+.reticle{position:absolute;left:8%;right:8%;top:30%;height:26%;border:2px solid var(--accent);border-radius:14px;box-shadow:0 0 0 999px #0007}
+.reticle::after{content:"";position:absolute;left:6px;right:6px;top:50%;height:2px;background:var(--accent);animation:sweep 1.6s ease-in-out infinite alternate}
+@keyframes sweep{from{top:12%}to{top:88%}}
+.scan-bot{position:absolute;left:0;right:0;bottom:0;padding:1.2rem 1rem calc(1.4rem + env(safe-area-inset-bottom,0px));text-align:center;font-size:.9rem;background:linear-gradient(transparent,#000b);display:grid;gap:.7rem;justify-items:center}
+.scan-bot .pill{background:#fff2;border-color:#fff4;color:#fff}
+
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:.6rem 1.1rem;border-radius:999px;font-size:.85rem;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s;z-index:40;white-space:nowrap}
+.toast.on{opacity:1}
+
+@media (min-width:760px){
+  .ev-grid{grid-template-columns:1fr 1fr}
+  ul.events{grid-template-columns:1fr 1fr}
+  .nav{left:50%;right:auto;transform:translateX(-50%);bottom:16px;width:420px;border:1px solid var(--line);border-radius:22px;padding-bottom:0;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+}
+
+/* print slip */
+.print-only{display:none}
+@media print{
+  .top,.hero,.nav,.toast,.empty,.row-tools,.search,dialog,details,.recent{display:none!important}
+  .print-only{display:block}
+  body{padding:0;color:#000;background:#fff}
+  .card,.ev{border-color:#000;break-inside:avoid}
+  .slip-head{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem;border-bottom:2px solid #000;padding-bottom:.6rem}
+  .sign{margin-top:2.5rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem;font-size:.8rem}
+  .sign div{border-top:1px solid #000;padding-top:.3rem;text-align:center}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <img class="logo" src="/resources/image/logo/2.png" alt="BTLED logo" onerror="this.style.visibility='hidden'">
+      <div><b>BTLED Attendance</b><small>Event records &amp; clearance</small></div>
+    </div>
+    <button class="icon-btn" id="theme" type="button" aria-label="Toggle dark mode">
+      <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero" id="search">
+    <h1>Check your event attendance</h1>
+    <p class="lede">Enter or scan your URS Student ID to see the BTLED events you attended and whether you meet the clearance requirement.</p>
+    <form class="finder" id="form" autocomplete="off">
+      <div class="field">
+        <input id="sid" placeholder="Student ID (C2026-0151)" required aria-label="Student ID" autocapitalize="characters" enterkeyhint="search">
+        <button class="scan" type="button" id="scan-open" aria-label="Scan ID barcode">
+          <svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 9v6M11 9v6M15 9v6M18 9v6"/></svg>
+        </button>
+      </div>
+      <button class="go" type="submit" id="go">Check attendance</button>
+    </form>
+    <div class="recent" id="recent" hidden></div>
+  </section>
+
+  <section id="result" aria-live="polite">
+    <div class="print-only slip-head"><img class="logo" src="/resources/image/logo/2.png" alt=""><div><b>BTLED Attendance Record</b><br><small id="stamp"></small></div></div>
+    <div class="card">
+      <div class="student">
+        <div class="ring" id="ring"><div><span><b id="ring-n">0</b><small>attended</small></span></div></div>
+        <div class="who"><div class="name" id="p-name">—</div><div class="meta" id="p-meta"></div></div>
+      </div>
+      <div class="verdict" id="verdict"></div>
+      <details><summary>Change required events</summary>
+        <label>Events needed for clearance <input id="need" type="number" min="1" max="99" value="5" inputmode="numeric"></label>
+      </details>
+    </div>
+
+    <div class="list-head" id="records">
+      <h2>Events attended</h2>
+      <div class="row-tools">
+        <button class="pill" type="button" id="csv">CSV</button>
+        <button class="pill" type="button" id="share">Copy link</button>
+      </div>
+    </div>
+    <input class="search" type="search" id="filter" placeholder="Filter by event, venue or date" aria-label="Filter events">
+    <ul class="events" id="list"></ul>
+    <div class="print-only sign"><div>Student signature</div><div>Adviser / Officer signature</div></div>
+  </section>
+
+  <section class="empty" id="empty"><b>Your records will show here.</b>Logs sync from the official BTLED attendance sheet. If an event is missing, send proof of attendance to your org officer.</section>
+</main>
+
+<nav class="nav" aria-label="Main">
+  <div class="in">
+    <button type="button" data-go="search" class="on"><span><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>Search</button>
+    <button type="button" data-go="records"><span><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></span>Records</button>
+    <button type="button" data-go="scan" class="mid"><span><svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16"/></svg></span>Scan</button>
+    <button type="button" data-go="slip"><span><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M7 14h10v7H7z"/></svg></span>Print</button>
+  </div>
+</nav>
+
+<dialog id="scanner">
+  <div class="scan-top"><b>Scan ID barcode</b><button class="icon-btn" id="scan-close" type="button" aria-label="Close scanner"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <video id="cam" playsinline muted></video>
+  <div class="reticle"></div>
+  <div class="scan-bot"><span id="scan-msg">Align the barcode inside the frame.</span><button class="pill" id="torch" type="button" hidden>Turn on light</button></div>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<script>
+const BASE_URL="https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let current=null;
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2200)}
+
+/* theme */
+(function(){const s=store.get('btled-theme',null);if(s)document.documentElement.dataset.theme=s})();
+$('theme').onclick=()=>{const d=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()==='#0e0e10';const n=d?'light':'dark';document.documentElement.dataset.theme=n;store.set('btled-theme',n)};
+
+/* recent */
+function renderRecent(){const l=store.get('btled-recent',[]),b=$('recent');if(!l.length){b.hidden=true;return}b.hidden=false;b.innerHTML='<span>Recent</span>'+l.map(i=>`<button type="button" class="chip" data-id="${esc(i)}">${esc(i)}</button>`).join('')+'<button type="button" class="chip" data-clear="1">Clear</button>'}
+$('recent').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.clear){store.set('btled-recent',[]);renderRecent();return}lookup(b.dataset.id)};
+function remember(id){const l=store.get('btled-recent',[]).filter(x=>x!==id);l.unshift(id);store.set('btled-recent',l.slice(0,4));renderRecent()}
+
+/* lookup */
+const normalize=v=>String(v||'').trim().toUpperCase().replace(/\s+/g,'');
+async function lookup(raw){
+  const id=normalize(raw);if(!id)return;$('sid').value=id;$('sid').blur();
+  $('empty').hidden=true;$('result').classList.add('on');
+  $('p-name').textContent='Looking up…';$('p-meta').textContent=id;$('verdict').className='verdict';$('verdict').textContent='';
+  $('ring').style.setProperty('--p',0);$('ring-n').textContent='–';
+  $('list').innerHTML='<li class="sk"></li><li class="sk"></li><li class="sk"></li>';
+  const b=$('go');b.disabled=true;b.textContent='Searching…';
+  $('result').scrollIntoView({behavior:'smooth',block:'start'});
+  try{
+    const res=await fetch(`${BASE_URL}?module=attendanceviewer&studentId=${encodeURIComponent(id)}`,{redirect:'follow'});
+    const text=await res.text();let json;
+    try{json=JSON.parse(text)}catch(e){throw new Error('The server sent an unexpected reply. Check that the Apps Script web app is deployed to "Anyone" and handles module=attendanceviewer.')}
+    if(!json.ok)throw new Error(json.error||'Could not load attendance records.');
+    if(!json.found||!Array.isArray(json.entries)||!json.entries.length){
+      current=null;$('p-name').textContent='No records found';$('p-meta').textContent='Student ID '+id;$('ring-n').textContent='0';
+      $('list').innerHTML=`<li class="msg">Nothing found for <b>${esc(id)}</b>. Check the ID for typos, or ask your officer to confirm you were logged.</li>`;return;
+    }
+    current={id,profile:json.profile,entries:json.entries,total:json.totalJoined??json.entries.length};
+    store.set('btled-last',current);remember(id);history.replaceState(null,'','?id='+encodeURIComponent(id));draw();
+  }catch(err){
+    const c=store.get('btled-last',null);
+    $('p-name').textContent='Could not load';$('p-meta').textContent=id;
+    $('list').innerHTML=`<li class="msg err">${esc(err.message)}${c&&c.id===id?'<br><br><button class="pill" id="use-cache" type="button">Show last saved copy</button>':''}</li>`;
+    const u=$('use-cache');if(u)u.onclick=()=>{current=c;draw();toast('Showing saved copy')};
+  }finally{b.disabled=false;b.textContent='Check attendance'}
+}
+function draw(){
+  const p=current.profile;$('p-name').textContent=p.fullName;$('p-meta').textContent=`${p.studentId} · ${p.section}`;
+  $('need').value=store.get('btled-need',5);status();
+  $('stamp').textContent='Printed '+new Date().toLocaleString()+' · '+p.fullName+' ('+p.studentId+')';
+  renderRows();
+}
+function status(){
+  if(!current)return;
+  const need=Math.max(1,parseInt($('need').value)||1),n=current.total;store.set('btled-need',need);
+  $('ring').style.setProperty('--p',Math.min(100,n/need*100));$('ring-n').textContent=n;
+  const v=$('verdict'),ok=n>=need;
+  v.className='verdict '+(ok?'ok':'no');
+  v.innerHTML=(ok?'<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>Requirement met · ':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>')+(ok?`${n} of ${need} events`:`${need-n} more ${need-n===1?'event':'events'} needed · ${n} of ${need}`);
+}
+function renderRows(){
+  if(!current)return;const q=$('filter').value.trim().toLowerCase();
+  const r=current.entries.filter(e=>!q||(e.eventName+' '+e.venue+' '+e.date).toLowerCase().includes(q));
+  $('list').innerHTML=r.length?r.map(e=>`<li class="ev"><span></span><div><h3>${esc(e.eventName)}</h3><p>${esc(e.venue)} · ${esc(e.date)}</p></div><span class="badge">${esc(e.status)}</span></li>`).join(''):'<li class="msg">No events match your filter.</li>';
+}
+$('need').oninput=status;$('filter').oninput=renderRows;
+$('form').onsubmit=e=>{e.preventDefault();lookup($('sid').value)};
+
+/* actions */
+$('share').onclick=async()=>{if(!current)return;try{await navigator.clipboard.writeText(location.origin+location.pathname+'?id='+encodeURIComponent(current.id));toast('Link copied')}catch(e){toast('Copy failed')}};
+$('csv').onclick=()=>{if(!current)return;const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const rows=[['Student ID','Name','Section','Event','Venue','Date','Status'].map(q).join(',')].concat(current.entries.map(e=>[current.profile.studentId,current.profile.fullName,current.profile.section,e.eventName,e.venue,e.date,e.status].map(q).join(',')));
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download='attendance-'+current.id+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+
+/* bottom nav */
+const navBtns=[...document.querySelectorAll('.nav button')];
+function setOn(k){navBtns.forEach(b=>b.classList.toggle('on',b.dataset.go===k))}
+navBtns.forEach(b=>b.onclick=()=>{
+  const k=b.dataset.go;
+  if(k==='scan'){openScan();return}
+  if(k==='search'){window.scrollTo({top:0,behavior:'smooth'});$('sid').focus({preventScroll:true});setOn('search');return}
+  if(!current){toast('Search a Student ID first');return}
+  if(k==='records'){$('records').scrollIntoView({behavior:'smooth'});setOn('records')}
+  if(k==='slip'){window.print()}
+});
+
+/* scanner */
+const dlg=$('scanner'),video=$('cam');let stream=null,raf=0,zx=null,scanning=false;
+function stopScan(){scanning=false;cancelAnimationFrame(raf);if(zx){try{zx.reset()}catch(e){}zx=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}video.srcObject=null;$('torch').hidden=true}
+function onCode(t){const id=normalize(t);if(!id)return;stopScan();if(dlg.open)dlg.close();if(navigator.vibrate)navigator.vibrate(60);lookup(id)}
+async function startScan(){
+  $('scan-msg').textContent='Starting camera…';
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('scan-msg').textContent='Camera unavailable. Use HTTPS or type your ID.';return}
+  scanning=true;
+  try{
+    if('BarcodeDetector' in window){
+      const det=new BarcodeDetector({formats:['code_128','code_39','ean_13','ean_8','itf','codabar','qr_code']});
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280}}});
+      video.srcObject=stream;await video.play();
+      const tick=async()=>{if(!scanning)return;try{const r=await det.detect(video);if(r.length){onCode(r[0].rawValue);return}}catch(e){}raf=requestAnimationFrame(tick)};tick();
+    }else if(window.ZXing){
+      zx=new ZXing.BrowserMultiFormatReader();
+      await zx.decodeFromConstraints({video:{facingMode:{ideal:'environment'}}},video,r=>{if(r&&scanning)onCode(r.getText())});
+      stream=video.srcObject;
+    }else throw new Error('none');
+    $('scan-msg').textContent='Align the barcode inside the frame.';
+    const tr=stream&&stream.getVideoTracks()[0];
+    if(tr&&tr.getCapabilities&&tr.getCapabilities().torch){let on=false;$('torch').hidden=false;$('torch').onclick=async()=>{on=!on;try{await tr.applyConstraints({advanced:[{torch:on}]});$('torch').textContent=on?'Turn off light':'Turn on light'}catch(e){}}}
+  }catch(err){stopScan();$('scan-msg').textContent=err.name==='NotAllowedError'?'Camera blocked. Allow camera access in browser settings, then try again.':'Could not start the scanner. Type your ID instead.'}
+}
+function openScan(){dlg.showModal();startScan()}
+$('scan-open').onclick=openScan;
+$('scan-close').onclick=()=>{stopScan();dlg.close()};
+dlg.addEventListener('close',()=>{stopScan();setOn(current?'records':'search')});
+
+/* init */
+renderRecent();
+const urlId=new URLSearchParams(location.search).get('id');
+if(urlId)lookup(urlId);
+</script>
+</body>
+</html>
