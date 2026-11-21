@@ -1,7 +1,7 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
 const APPS_SCRIPT_URL_MULTO = "https://script.google.com/macros/s/AKfycbyIT7E-p-ajGH5Mn8VXWgJoa_c3RsnKXPDGzjOo6DWM8Th0Xu8Z0EC6dc_pWmoAoR0/exec";
 const TERM = "2627";;
-const SEMESTER = "1";
+const SEMESTER = "2";
         const PROFANITY_WORDS = [
             "fuck", "fucking", "fucked", "fucker", "fuckin", "shit", "bitch", "asshole", "bastard", "cunt", 
             "dick", "pussy", "motherfucker", "cock", "douche", "prick", "whore", "slut", "nigga", "nigger",
@@ -21,7 +21,7 @@ const SEMESTER = "1";
             'u': '[uvVµU]', 'v': '[v\\/V]', 'w': '[wvvW]', 'x': '[xXK]',
             'y': '[yY]', 'z': '[z2Z]'
         };
-// BTLED Session Management and Activity Logging
+
 (function () {
   "use strict";
 
