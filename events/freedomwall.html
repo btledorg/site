@@ -65,13 +65,14 @@
       left: 0;
       right: 0;
       height: 60px;
-      padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+      padding: 0 max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
       background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 8px;
       z-index: 100;
     }
 
@@ -82,7 +83,7 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       text-decoration: none;
       color: var(--ink);
       cursor: pointer;
@@ -90,24 +91,31 @@
       border: none;
       font-family: inherit;
       padding: 4px 0;
+      min-width: 0;
+      flex-shrink: 1;
     }
 
     .brand img {
-      height: 30px;
+      height: 28px;
       width: auto;
       object-fit: contain;
+      flex-shrink: 0;
     }
 
     .brand-text {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex-shrink: 0;
     }
 
     .btn {
@@ -115,7 +123,7 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 9px 14px;
+      padding: 8px 12px;
       border-radius: 8px;
       font-size: 13px;
       font-weight: 600;
@@ -125,6 +133,7 @@
       color: var(--ink);
       transition: all 0.15s ease;
       font-family: inherit;
+      white-space: nowrap;
     }
 
     .btn:hover {
@@ -137,8 +146,8 @@
     }
 
     .btn-icon {
-      padding: 9px 11px;
-      min-width: 38px;
+      padding: 8px 10px;
+      min-width: 36px;
     }
 
     .btn-icon svg {
@@ -194,6 +203,13 @@
       border-color: var(--accent);
       color: var(--accent);
       background: #eff6ff;
+    }
+
+    @media (max-width: 400px) {
+      .brand-text { font-size: 12.5px; letter-spacing: 0.01em; }
+      .nav-actions { gap: 4px; }
+      .nav-actions .btn { padding: 7px 9px; font-size: 12px; }
+      .nav-actions .btn-icon { padding: 7px 8px; min-width: 34px; }
     }
 
     /* Views */
@@ -305,22 +321,6 @@
       width: 100%;
     }
 
-    .landing-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
-      border-radius: 999px;
-      background: #f8fafc;
-      border: 1px solid var(--border);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 16px;
-    }
-
     .landing-title {
       font-size: clamp(40px, 8vw, 76px);
       font-weight: 900;
@@ -375,8 +375,6 @@
       #view-landing { padding: 84px 20px 88px; }
       .landing-buttons { flex-direction: column; }
       .landing-buttons .btn { width: 100%; }
-      .brand-text { font-size: 14px; }
-      .nav-actions .btn { padding: 8px 10px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -399,13 +397,14 @@
       max-width: 460px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .studio-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 8px;
     }
 
     .studio-header h2 {
@@ -414,17 +413,79 @@
       letter-spacing: -0.02em;
     }
 
+    .studio-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Drawing Canvas Zoom Controls */
+    .studio-zoom-group {
+      display: inline-flex;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .studio-zoom-btn {
+      border: none;
+      background: transparent;
+      color: var(--ink);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      height: 26px;
+      padding: 0 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s ease;
+    }
+
+    .studio-zoom-btn:hover {
+      background: #e2e8f0;
+    }
+
+    .studio-zoom-btn:active {
+      background: #cbd5e1;
+    }
+
+    .studio-zoom-level {
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      min-width: 44px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
     .canvas-frame {
       position: relative;
       width: 100%;
       aspect-ratio: 1 / 1;
-      background-color: #ffffff;
+      background-color: #f8fafc;
+      background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+      background-size: 14px 14px;
       border: 2px solid var(--ink);
       border-radius: 12px;
+      overflow: hidden;
       touch-action: none;
     }
 
-    .canvas-frame.show-grid {
+    .canvas-stage {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #ffffff;
+      transform-origin: 0 0;
+      will-change: transform;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+    }
+
+    .canvas-frame.show-grid .canvas-stage {
       background-image:
         linear-gradient(to right, #f1f5f9 1px, transparent 1px),
         linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
@@ -436,7 +497,14 @@
       height: 100%;
       display: block;
       cursor: crosshair;
-      border-radius: 10px;
+    }
+
+    .canvas-frame.pan-ready #draw-canvas {
+      cursor: grab;
+    }
+
+    .canvas-frame.panning #draw-canvas {
+      cursor: grabbing;
     }
 
     /* Draggable / editable text layer */
@@ -524,8 +592,8 @@
     }
 
     .swatch {
-      width: 23px;
-      height: 23px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       border: 2px solid transparent;
       cursor: pointer;
@@ -540,8 +608,8 @@
     /* Color Pad (Millions of Colors Picker) */
     .color-pad-wrap {
       position: relative;
-      width: 24px;
-      height: 24px;
+      width: 23px;
+      height: 23px;
       border-radius: 50%;
       background: conic-gradient(#ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #a855f7, #ec4899, #ef4444);
       border: 2px solid #ffffff;
@@ -613,20 +681,20 @@
       align-items: center;
     }
 
-    .text-tools .btn { padding: 8px 11px; }
+    .text-tools .btn { padding: 8px 10px; }
     .text-tools .grow { flex: 1; }
 
     .font-select {
-      padding: 8px 10px;
+      padding: 8px 8px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: #ffffff;
       color: var(--ink);
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      max-width: 132px;
+      max-width: 124px;
     }
 
     /* Studio Controls Row: Undo, Redo + Icon-only Clear, Replay, Save + Options */
@@ -639,8 +707,8 @@
 
     .studio-controls .btn-hist {
       flex: 1;
-      padding-left: 10px;
-      padding-right: 10px;
+      padding-left: 8px;
+      padding-right: 8px;
     }
 
     /* Options Popover */
@@ -720,6 +788,7 @@
       position: relative;
       width: 100%;
       height: 100vh;
+      height: 100dvh;
       overflow: hidden;
       background: #ffffff;
       padding-top: 60px;
@@ -729,6 +798,7 @@
       position: relative;
       width: 100%;
       height: calc(100vh - 60px);
+      height: calc(100dvh - 60px);
       overflow: hidden;
       background: #ffffff;
       cursor: grab;
@@ -794,6 +864,9 @@
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
+    .wall-stage-bordered .wall-tile {
+      border: 1px solid #f1f5f9;
+    }
 
     .wall-tile:hover {
       z-index: 20;
@@ -841,25 +914,31 @@
       opacity: 1;
     }
 
-    /* Floating Bottom Dock on Wall */
+    /* Organized Floating Bottom Dock on Wall */
     .wall-dock {
       position: fixed;
-      bottom: 20px;
+      bottom: max(14px, env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
       align-items: center;
-      gap: 4px;
-      padding: 6px 10px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(8px);
+      gap: 6px;
+      padding: 7px 10px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
       border: 1px solid var(--border);
-      border-radius: 24px;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
       z-index: 90;
-      max-width: calc(100vw - 16px);
+      width: max-content;
+      max-width: calc(100vw - 20px);
+    }
+
+    .dock-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
 
     .dock-stat {
@@ -867,13 +946,32 @@
       font-size: 11px;
       font-weight: 600;
       color: var(--muted);
-      padding: 0 10px;
+      padding: 0 6px;
       white-space: nowrap;
     }
 
+    .dock-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .dock-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--border);
+      margin: 0 2px;
+      flex-shrink: 0;
+    }
+
     .dock-btn {
-      padding: 7px 12px;
-      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      height: 34px;
+      padding: 0 10px;
+      border-radius: 10px;
       border: none;
       background: transparent;
       color: var(--ink);
@@ -881,26 +979,95 @@
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
+      white-space: nowrap;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .dock-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.1;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
     }
 
     .dock-btn:hover {
       background: #f1f5f9;
     }
 
-    .dock-btn:disabled { opacity: 0.5; pointer-events: none; }
-
-    .dock-btn.primary {
-      background: var(--ink);
-      color: #ffffff;
+    .dock-btn:active {
+      transform: scale(0.95);
     }
 
-    .dock-btn.primary:hover {
-      background: #1e293b;
+    .dock-btn:disabled { opacity: 0.45; pointer-events: none; }
+
+    .dock-btn.zoom-btn {
+      width: 34px;
+      padding: 0;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      font-size: 15px;
+      font-weight: 700;
     }
 
     .dock-btn.amber {
       background: #fef3c7;
       color: #92400e;
+      height: 26px;
+      padding: 0 9px;
+      font-size: 11px;
+      border-radius: 999px;
+    }
+
+    /* Mobile-optimized structured 2-tier dock */
+    @media (max-width: 640px) {
+      .wall-dock {
+        flex-direction: column;
+        align-items: stretch;
+        width: calc(100vw - 24px);
+        max-width: 400px;
+        padding: 8px 10px;
+        gap: 6px;
+      }
+
+      .dock-meta {
+        padding: 0 2px 4px;
+        border-bottom: 1px solid #f1f5f9;
+      }
+
+      .dock-stat {
+        padding: 0;
+      }
+
+      .dock-divider {
+        display: none;
+      }
+
+      .dock-controls {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+        width: 100%;
+      }
+
+      .dock-btn {
+        flex-direction: column;
+        height: 44px;
+        padding: 4px 2px;
+        gap: 2px;
+        font-size: 10.5px;
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+      }
+
+      .dock-btn.zoom-btn {
+        width: 100%;
+        height: 44px;
+        font-size: 16px;
+      }
     }
 
     /* Lightbox Modal */
@@ -1011,7 +1178,6 @@
       <button class="btn" id="nav-wall-btn" onclick="switchView('wall')">View wall</button>
       <button class="btn btn-primary" id="nav-draw-btn" onclick="switchView('draw')">+ Draw</button>
       <button class="btn btn-icon" id="mute-btn" onclick="toggleMusic()" aria-label="Toggle background music" title="Background Music (Muted)">
-        <!-- Muted speaker icon by default -->
         <svg id="mute-icon" viewBox="0 0 24 24">
           <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
           <line x1="23" y1="9" x2="17" y2="15"></line>
@@ -1059,18 +1225,26 @@
     <div class="studio-wrap">
       <div class="studio-header">
         <h2>Your Canvas</h2>
-        <span style="font-size:12px;color:var(--muted);" id="stroke-counter">0 strokes</span>
+        <div class="studio-header-right">
+          <div class="studio-zoom-group" role="group" aria-label="Canvas zoom controls">
+            <button type="button" class="studio-zoom-btn" onclick="zoomStudio(0.8)" aria-label="Zoom out canvas" title="Zoom out">&minus;</button>
+            <button type="button" class="studio-zoom-btn studio-zoom-level" id="studio-zoom-label" onclick="resetStudioZoom()" title="Reset zoom & pan">100%</button>
+            <button type="button" class="studio-zoom-btn" onclick="zoomStudio(1.25)" aria-label="Zoom in canvas" title="Zoom in">+</button>
+          </div>
+          <span style="font-size:12px;color:var(--muted);" id="stroke-counter">0 strokes</span>
+        </div>
       </div>
 
       <div class="canvas-frame" id="canvas-frame">
-        <canvas id="draw-canvas" width="500" height="500"></canvas>
-        <div class="text-layer" id="text-layer"></div>
+        <div class="canvas-stage" id="canvas-stage">
+          <canvas id="draw-canvas" width="500" height="500"></canvas>
+          <div class="text-layer" id="text-layer"></div>
+        </div>
       </div>
 
       <!-- Colors (Presets + Color Pad) & Brush Sizes -->
       <div class="toolbar">
         <div class="swatches" id="swatch-list">
-          <!-- Preset swatches injected here + Color Pad below -->
           <label class="color-pad-wrap" id="color-pad-btn" title="Color Pad (Millions of Colors)" aria-label="Color Pad">
             <input type="color" id="color-pad-input" value="#1d4ed8" />
           </label>
@@ -1097,7 +1271,6 @@
         <button class="btn btn-hist" id="undo-btn" onclick="undoStroke()">Undo</button>
         <button class="btn btn-hist" id="redo-btn" onclick="redoStroke()" disabled>Redo</button>
 
-        <!-- Icon-only: Clear -->
         <button class="btn btn-icon" onclick="clearCanvas()" aria-label="Clear canvas" title="Clear">
           <svg viewBox="0 0 24 24">
             <polyline points="3 6 5 6 21 6"></polyline>
@@ -1108,14 +1281,12 @@
           </svg>
         </button>
 
-        <!-- Icon-only: Replay -->
         <button class="btn btn-icon" onclick="previewDrawing()" aria-label="Replay drawing" title="Replay">
           <svg viewBox="0 0 24 24">
             <polygon points="5 3 19 12 5 21 5 3"></polygon>
           </svg>
         </button>
 
-        <!-- Icon-only: Save PNG -->
         <button class="btn btn-icon" onclick="saveStudioPNG()" aria-label="Save PNG" title="Save PNG">
           <svg viewBox="0 0 24 24">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1124,7 +1295,6 @@
           </svg>
         </button>
 
-        <!-- Options Toggle -->
         <button class="btn btn-icon" id="options-btn" onclick="toggleOptions(event)" aria-label="Canvas options" title="Options">
           <svg viewBox="0 0 24 24">
             <line x1="4" y1="21" x2="4" y2="14"></line>
@@ -1163,7 +1333,7 @@
       </div>
 
       <p class="studio-note" id="studio-note">
-        Tap <b>Add text</b>, pick a font, then drag the ✥ handle to move it.<br>
+        Pinch with two fingers (or scroll wheel) to zoom in on details.<br>
         Posts upload automatically when online, or save locally if offline.
         <span id="pending-note" hidden></span>
       </p>
@@ -1182,16 +1352,33 @@
       </div>
     </div>
 
-    <div class="wall-dock">
-      <span class="dock-stat" id="wall-count">Loading...</span>
-      <button class="dock-btn" onclick="replayAllDrawings()">Play All</button>
-      <button class="dock-btn" id="refresh-btn" onclick="refreshWall()">Refresh</button>
-      <button class="dock-btn" onclick="resetFit()">Fit</button>
-      <button class="dock-btn" onclick="zoomWall(1.25)">+</button>
-      <button class="dock-btn" onclick="zoomWall(0.8)">&minus;</button>
-      <button class="dock-btn" onclick="saveWallPNG()">Save PNG</button>
-      <button class="dock-btn amber" id="dock-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
-      <button class="dock-btn primary" onclick="switchView('draw')">+ Draw</button>
+    <!-- Organized Mobile-First Floating Bottom Dock -->
+    <div class="wall-dock" role="toolbar" aria-label="Wall controls">
+      <div class="dock-meta">
+        <span class="dock-stat" id="wall-count">Loading...</span>
+        <button class="dock-btn amber" id="dock-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
+      </div>
+      <div class="dock-divider"></div>
+      <div class="dock-controls">
+        <button class="dock-btn" onclick="replayAllDrawings()" title="Replay all drawings">
+          <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>Play</span>
+        </button>
+        <button class="dock-btn" id="refresh-btn" onclick="refreshWall()" title="Sync wall">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+          <span>Sync</span>
+        </button>
+        <button class="dock-btn" onclick="resetFit()" title="Fit wall to screen">
+          <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+          <span>Fit</span>
+        </button>
+        <button class="dock-btn zoom-btn" onclick="zoomWall(0.8)" aria-label="Zoom out" title="Zoom out">&minus;</button>
+        <button class="dock-btn zoom-btn" onclick="zoomWall(1.25)" aria-label="Zoom in" title="Zoom in">+</button>
+        <button class="dock-btn" onclick="saveWallPNG()" title="Save 16:9 PNG">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Save</span>
+        </button>
+      </div>
     </div>
   </section>
 
@@ -1432,6 +1619,18 @@
     let isDrawing = false;
     let isPreviewing = false;
 
+    // Studio Zoom & Pan state
+    let studioScale = 1;
+    let studioPanX = 0;
+    let studioPanY = 0;
+    let isStudioPanning = false;
+    let studioPanStartX = 0;
+    let studioPanStartY = 0;
+    let spacePressed = false;
+    let studioPinchDist = null;
+    let studioPinchMidX = 0;
+    let studioPinchMidY = 0;
+
     let serverEntries = [];
     let pending = [];
     let wallEntries = [];
@@ -1439,7 +1638,7 @@
     let loadingWall = false;
     let uploading = false;
 
-    // Pan & Zoom state
+    // Wall Pan & Zoom state
     let panX = 0, panY = 0, scale = 1;
     let isPanning = false, startPanX = 0, startPanY = 0;
     let userMoved = false;
@@ -1474,6 +1673,7 @@
     const drawCanvas = document.getElementById("draw-canvas");
     const drawCtx = drawCanvas.getContext("2d");
     const canvasFrame = document.getElementById("canvas-frame");
+    const canvasStage = document.getElementById("canvas-stage");
     const textLayer = document.getElementById("text-layer");
 
     function selectColor(col, isCustomPad = false) {
@@ -1509,7 +1709,6 @@
         swatchList.insertBefore(btn, padBtn);
       });
 
-      // Millions of colors picker
       const padInput = document.getElementById("color-pad-input");
       padInput.addEventListener("input", (e) => {
         selectColor(e.target.value, true);
@@ -1548,6 +1747,7 @@
 
       if (viewName === "draw") {
         syncUnit();
+        applyStudioTransform();
       }
 
       if (viewName === "wall") {
@@ -1556,6 +1756,81 @@
         loadWallEntries({ autoPlay: true });
       }
     }
+
+    // =========================================================================
+    // DRAWING CANVAS ZOOM & PAN
+    // =========================================================================
+    function clampStudioPan() {
+      const w = canvasFrame.clientWidth || 460;
+      const h = canvasFrame.clientHeight || 460;
+      const minX = w - w * studioScale;
+      const minY = h - h * studioScale;
+      studioPanX = Math.min(0, Math.max(minX, studioPanX));
+      studioPanY = Math.min(0, Math.max(minY, studioPanY));
+    }
+
+    function applyStudioTransform() {
+      if (studioScale <= 1.001) {
+        studioScale = 1;
+        studioPanX = 0;
+        studioPanY = 0;
+      } else {
+        clampStudioPan();
+      }
+      canvasStage.style.transform = `translate(${studioPanX}px, ${studioPanY}px) scale(${studioScale})`;
+      document.getElementById("studio-zoom-label").textContent = Math.round(studioScale * 100) + "%";
+    }
+
+    function zoomStudioAt(newScale, anchorX, anchorY) {
+      const clampedScale = Math.min(4, Math.max(1, newScale));
+      const frameRect = canvasFrame.getBoundingClientRect();
+      const cx = anchorX !== undefined ? anchorX : frameRect.width / 2;
+      const cy = anchorY !== undefined ? anchorY : frameRect.height / 2;
+
+      studioPanX = cx - ((cx - studioPanX) / studioScale) * clampedScale;
+      studioPanY = cy - ((cy - studioPanY) / studioScale) * clampedScale;
+      studioScale = clampedScale;
+      applyStudioTransform();
+    }
+
+    function zoomStudio(factor) {
+      zoomStudioAt(studioScale * factor);
+    }
+
+    function resetStudioZoom() {
+      studioScale = 1;
+      studioPanX = 0;
+      studioPanY = 0;
+      applyStudioTransform();
+    }
+
+    // Mouse wheel zoom on drawing canvas
+    canvasFrame.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const rect = canvasFrame.getBoundingClientRect();
+      const ax = e.clientX - rect.left;
+      const ay = e.clientY - rect.top;
+      zoomStudioAt(studioScale * (e.deltaY < 0 ? 1.15 : 0.85), ax, ay);
+    }, { passive: false });
+
+    // Spacebar hold for desktop pan mode
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" && document.activeElement.tagName !== "INPUT" && !document.activeElement.isContentEditable) {
+        if (document.getElementById("view-draw").classList.contains("active")) {
+          e.preventDefault();
+          spacePressed = true;
+          canvasFrame.classList.add("pan-ready");
+        }
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (e.code === "Space") {
+        spacePressed = false;
+        isStudioPanning = false;
+        canvasFrame.classList.remove("pan-ready", "panning");
+      }
+    });
 
     // =========================================================================
     // OPTIONS POPOVER
@@ -1584,7 +1859,7 @@
     });
 
     // =========================================================================
-    // TEXT & FONT CHOOSER (draggable + editable)
+    // TEXT & FONT CHOOSER (draggable + editable, zoom-aware)
     // =========================================================================
     let texts = [];
     let selectedText = null;
@@ -1594,6 +1869,7 @@
     }
     function syncUnit() {
       canvasFrame.style.setProperty("--u", frameUnit() + "px");
+      applyStudioTransform();
     }
     if (window.ResizeObserver) new ResizeObserver(syncUnit).observe(canvasFrame);
     window.addEventListener("resize", syncUnit);
@@ -1682,7 +1958,7 @@
         e.stopPropagation();
         selectText(item);
         handle.setPointerCapture(e.pointerId);
-        const u = frameUnit();
+        const u = frameUnit() * studioScale;
         const sx = e.clientX, sy = e.clientY, ox = item.x, oy = item.y;
         const move = (ev) => {
           item.x = clamp(ox + (ev.clientX - sx) / u, 0, 470);
@@ -1755,9 +2031,10 @@
     });
 
     // =========================================================================
-    // DRAWING ENGINE + UNDO / REDO
+    // DRAWING ENGINE + UNDO / REDO + ZOOM-ACCURATE COORDINATES
     // =========================================================================
     function getCanvasPoint(e) {
+      // getBoundingClientRect on drawCanvas automatically accounts for CSS scale & translate!
       const rect = drawCanvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -1768,6 +2045,41 @@
 
     function startDraw(e) {
       if (isPreviewing) return;
+
+      // Two-finger pinch/pan on touch devices
+      if (e.touches && e.touches.length >= 2) {
+        e.preventDefault();
+        // Cancel accidental single-dot stroke started right before 2nd finger landed
+        if (isDrawing && currentStroke && currentStroke.p.length <= 2) {
+          strokes.pop();
+          redrawStudio();
+          updateHistoryUI();
+        }
+        isDrawing = false;
+        currentStroke = null;
+
+        const rect = canvasFrame.getBoundingClientRect();
+        studioPinchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        studioPinchMidX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+        studioPinchMidY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+        return;
+      }
+
+      // Desktop pan via Space+Click or Middle Mouse Button
+      if (!e.touches && (spacePressed || e.button === 1)) {
+        e.preventDefault();
+        isStudioPanning = true;
+        studioPanStartX = e.clientX - studioPanX;
+        studioPanStartY = e.clientY - studioPanY;
+        canvasFrame.classList.add("panning");
+        return;
+      }
+
+      if (e.button !== undefined && e.button !== 0) return;
+
       e.preventDefault();
       deselectText();
       isDrawing = true;
@@ -1780,17 +2092,59 @@
     }
 
     function moveDraw(e) {
+      // Handle 2-finger pinch zoom & pan on touch
+      if (e.touches && e.touches.length >= 2 && studioPinchDist) {
+        e.preventDefault();
+        const rect = canvasFrame.getBoundingClientRect();
+        const newDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const newMidX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+        const newMidY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+
+        // Pan by midpoint delta
+        studioPanX += (newMidX - studioPinchMidX);
+        studioPanY += (newMidY - studioPinchMidY);
+
+        // Zoom around new midpoint
+        const factor = newDist / studioPinchDist;
+        zoomStudioAt(studioScale * factor, newMidX, newMidY);
+
+        studioPinchDist = newDist;
+        studioPinchMidX = newMidX;
+        studioPinchMidY = newMidY;
+        return;
+      }
+
+      // Handle desktop Space+Drag pan
+      if (isStudioPanning) {
+        e.preventDefault();
+        studioPanX = e.clientX - studioPanStartX;
+        studioPanY = e.clientY - studioPanStartY;
+        applyStudioTransform();
+        return;
+      }
+
       if (!isDrawing || !currentStroke || isPreviewing) return;
       e.preventDefault();
       const pt = getCanvasPoint(e);
       const last = currentStroke.p[currentStroke.p.length - 1];
-      if (Math.hypot(pt[0] - last[0], pt[1] - last[1]) >= 2) {
+      const minStep = studioScale > 1.5 ? 1 : 2;
+      if (Math.hypot(pt[0] - last[0], pt[1] - last[1]) >= minStep) {
         currentStroke.p.push(pt);
         redrawStudio();
       }
     }
 
-    function endDraw() {
+    function endDraw(e) {
+      if (e && e.touches && e.touches.length < 2) {
+        studioPinchDist = null;
+      }
+      if (isStudioPanning) {
+        isStudioPanning = false;
+        canvasFrame.classList.remove("panning");
+      }
       if (!isDrawing) return;
       isDrawing = false;
       currentStroke = null;
@@ -1808,7 +2162,7 @@
     window.addEventListener("mousemove", moveDraw);
     window.addEventListener("mouseup", endDraw);
 
-    drawCanvas.addEventListener("touchstart", startDraw, { passive: false });
+    canvasFrame.addEventListener("touchstart", startDraw, { passive: false });
     window.addEventListener("touchmove", moveDraw, { passive: false });
     window.addEventListener("touchend", endDraw);
 
@@ -1886,6 +2240,7 @@
       strokes = [];
       redoStack = [];
       clearTexts();
+      resetStudioZoom();
       redrawStudio();
       updateHistoryUI();
     }
@@ -1975,6 +2330,7 @@
       const all = strokes.concat(getTextItems());
       if (all.length === 0 || isPreviewing) return;
       deselectText();
+      resetStudioZoom();
       isPreviewing = true;
       textLayer.style.visibility = "hidden";
       animateStrokes(drawCtx, all, 500, 1, () => {
@@ -2323,7 +2679,7 @@
     function updateWallCount(extra = "") {
       const n = wallEntries.length;
       let txt = `${n} ${n === 1 ? "drawing" : "drawings"}`;
-      if (pending.length) txt += ` · ${pending.length} not uploaded`;
+      if (pending.length) txt += ` · ${pending.length} pending`;
       document.getElementById("wall-count").textContent = txt + extra;
     }
 
@@ -2439,7 +2795,7 @@
     }
 
     // =========================================================================
-    // AUTO-FIT, PAN & ZOOM
+    // AUTO-FIT, PAN & ZOOM (WALL)
     // =========================================================================
     function applyStageTransform() {
       const stage = document.getElementById("wall-stage");
