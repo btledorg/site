@@ -1209,6 +1209,32 @@
 
     .modal-actions .btn { flex: 1; }
 
+    /* Confirmation dialog for destructive actions */
+    .confirm-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 220;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(3px);
+    }
+
+    .confirm-box {
+      width: 100%;
+      max-width: 360px;
+      padding: 22px;
+      border-radius: 14px;
+      background: #ffffff;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .confirm-box h2 { font-size: 17px; margin-bottom: 8px; }
+    .confirm-box p { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
     /* Toast */
     .toast {
       position: fixed;
@@ -1519,6 +1545,17 @@
         <button class="btn" id="modal-save-btn">Save PNG</button>
       </div>
     </div>
+  </div>
+
+  <div class="confirm-backdrop" id="confirm-overlay" hidden role="presentation" onclick="if(event.target===this) cancelCriticalAction()">
+    <section class="confirm-box" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+      <h2 id="confirm-title">Clear your canvas?</h2>
+      <p id="confirm-message">This will permanently remove the drawing and text currently on your canvas.</p>
+      <div class="confirm-actions">
+        <button class="btn" type="button" onclick="cancelCriticalAction()">Cancel</button>
+        <button class="btn btn-danger" id="confirm-continue" type="button" onclick="continueCriticalAction()">Continue</button>
+      </div>
+    </section>
   </div>
 
   <canvas id="confetti-canvas"></canvas>
@@ -2753,8 +2790,46 @@
       updateHistoryUI();
     }
 
-    function clearCanvas() {
+    let pendingCriticalAction = null;
+
+    function confirmCriticalAction(title, message, action) {
+      if (pendingCriticalAction) return;
+      document.getElementById("confirm-title").textContent = title;
+      document.getElementById("confirm-message").textContent = message;
+      pendingCriticalAction = action;
+      document.getElementById("confirm-overlay").hidden = false;
+      document.getElementById("confirm-continue").focus();
+    }
+
+    function cancelCriticalAction() {
+      pendingCriticalAction = null;
+      document.getElementById("confirm-overlay").hidden = true;
+    }
+
+    function continueCriticalAction() {
+      const action = pendingCriticalAction;
+      cancelCriticalAction();
+      if (action) action();
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && pendingCriticalAction) cancelCriticalAction();
+    });
+
+    function clearCanvas(confirmed = false) {
       if (isPreviewing) return;
+      if (!confirmed) {
+        if (strokes.length === 0 && texts.length === 0) {
+          showToast("Canvas is already clear.");
+          return;
+        }
+        confirmCriticalAction(
+          "Clear your canvas?",
+          "This will permanently remove the drawing and text currently on your canvas.",
+          () => clearCanvas(true)
+        );
+        return;
+      }
       strokes = [];
       redoStack = [];
       clearTexts();
@@ -3101,7 +3176,7 @@
 
       rebuildEntries();
       setUploadUI();
-      clearCanvas();
+      clearCanvas(true);
       document.getElementById("author-input").value = "";
       switchView("wall");
       launchConfetti();
@@ -3206,19 +3281,22 @@
       loadWallEntries({ autoPlay: false });
     }
 
-    function setUploadUI() {
-      const n = pending.length;
-      const label = uploading ? "Uploading..." : `Upload (${n})`;
-      ["nav-upload-btn", "dock-upload-btn"].forEach(id => {
-        const b = document.getElementById(id);
-        b.hidden = n === 0;
-        b.textContent = label;
-        b.disabled = uploading;
-      });
-      const note = document.getElementById("pending-note");
-      note.hidden = n === 0;
-      note.innerHTML = n ? `<br><b>${n} drawing${n === 1 ? "" : "s"} waiting to upload.</b>` : "";
-    }
+function setUploadUI() {
+  const n = pending.length;
+  const label = uploading ? "Uploading..." : `Upload (${n})`;
+  ["nav-upload-btn", "dock-upload-btn"].forEach(id => {
+    const b = document.getElementById(id);
+    if (!b) return;
+    b.hidden = n === 0;
+    b.textContent = label;
+    b.disabled = uploading;
+  });
+  const note = document.getElementById("pending-note");
+  if (note) {
+    note.hidden = n === 0;
+    note.innerHTML = n ? `<br><b>${n} drawing${n === 1 ? "" : "s"} waiting to upload.</b>` : "";
+  }
+}
 
     // =========================================================================
     // WALL SYNC
