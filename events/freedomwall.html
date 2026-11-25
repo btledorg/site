@@ -4,13 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>ARCHERSTUDIO</title>
-    <meta name="description" content="The Freedom Wall by ARCHERSTUDIO and BTLED ORG. Draw on your own tile and watch it replay on the shared wall." />
+    <meta name="description" content="The ARTcher by ARCHERSTUDIO and BTLED ORG. Draw on your own tile and watch it replay on the shared wall." />
     <meta name="theme-color" content="#ffffff" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     
     <link rel="icon" type="image/png" href="../resources/image/logo/logo4.png" />
     <link rel="apple-touch-icon" href="../resources/image/logo/logo4.png" />
     
-    <meta property="og:title" content="ARCHERSTUDIO — The Freedom Wall" />
+    <meta property="og:title" content="ARCHERSTUDIO — The ARTcher" />
     <meta property="og:description" content="Draw on your own tile and watch it replay on the shared wall." />
     <meta property="og:image" content="../resources/image/banner/freedom.png" />
     
@@ -24,8 +26,10 @@
             --ink: #0f172a;
             --muted: #64748b;
             --border: #e2e8f0;
+            --soft: #f8fafc;
             --accent: #1d4ed8;
             --accent-hover: #1e40af;
+            --accent-soft: #eff6ff;
             --d-blue: #1d4ed8;
             --d-red: #dc2626;
             --d-green: #16a34a;
@@ -33,1277 +37,430 @@
             --d-violet: #7c3aed;
             --d-pink: #db2777;
             --d-cyan: #0891b2;
+            --hdr: 52px;
+            --nav: 62px;
+            --safe-t: env(safe-area-inset-top, 0px);
+            --safe-b: env(safe-area-inset-bottom, 0px);
+            --top: calc(var(--hdr) + var(--safe-t));
+            --bottom: calc(var(--nav) + var(--safe-b));
         }
         
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         [hidden] { display: none !important; }
         
         html, body {
             width: 100%;
             height: 100%;
-            background-color: var(--bg);
+            overflow: hidden;
+            background: var(--bg);
             color: var(--ink);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+            overscroll-behavior: none;
         }
         
-        :focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 2px;
-        }
+        button { font-family: inherit; }
+        :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         
+        /* ============ TOP BAR ============ */
         .topbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            padding: 0 max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
-            background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: blur(8px);
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--top);
+            padding: var(--safe-t) max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
+            background: rgba(255,255,255,.94);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
             z-index: 100;
         }
-        
-        @media (min-width: 700px) {
-            .topbar { padding-left: 28px; padding-right: 28px; }
-        }
-        
         .brand {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            color: var(--ink);
-            cursor: pointer;
-            background: none;
-            border: none;
-            font-family: inherit;
-            padding: 4px 0;
-            min-width: 0;
-            flex-shrink: 1;
+            display: flex; align-items: center; gap: 9px;
+            background: none; border: none; color: var(--ink);
+            cursor: pointer; min-width: 0; padding: 4px 0;
         }
-        
-        .brand img {
-            height: 28px;
-            width: auto;
-            object-fit: contain;
-            flex-shrink: 0;
-        }
-        
-        .brand-text {
-            font-size: 14px;
-            font-weight: 800;
-            letter-spacing: 0.03em;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-shrink: 0;
-        }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
+        .brand img { height: 26px; width: auto; object-fit: contain; flex-shrink: 0; }
+        .brand-text { font-size: 14px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
+        .live-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 8px; border-radius: 999px; background: var(--soft);
             border: 1px solid var(--border);
-            background: #ffffff;
-            color: var(--ink);
-            transition: all 0.15s ease;
-            font-family: inherit;
-            white-space: nowrap;
+            color: var(--muted); font-size: 11px; font-weight: 600; white-space: nowrap;
         }
+        .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
         
-        .btn:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
+        /* ============ BUTTONS ============ */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px 14px; min-height: 40px;
+            border-radius: 10px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: 1px solid var(--border);
+            background: #fff; color: var(--ink);
+            transition: background .15s, transform .1s; white-space: nowrap;
         }
+        .btn:active { transform: scale(.97); background: #f1f5f9; }
+        .btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .btn-icon { padding: 0; width: 40px; }
+        .btn-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+        .btn-primary:active { background: #1e293b; }
+        .btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-accent:active { background: var(--accent-hover); }
+        .btn-amber { background: #fffbeb; color: #92400e; border-color: #fcd34d; min-height: 32px; padding: 6px 12px; font-size: 12px; }
+        .btn-danger { color: var(--d-red); border-color: #fecaca; background: #fef2f2; }
+        .btn-lg { min-height: 48px; font-size: 15px; border-radius: 12px; }
+        .btn-block { width: 100%; }
+        .btn:disabled { opacity: .4; pointer-events: none; }
         
-        .btn:active {
-            transform: scale(0.97);
+        /* ============ BOTTOM NAV ============ */
+        .bottom-nav {
+            position: fixed; left: 0; right: 0; bottom: 0;
+            height: var(--bottom);
+            padding-bottom: var(--safe-b);
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            background: rgba(255,255,255,.96);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
+            z-index: 100;
         }
-        
-        .btn-icon {
-            padding: 8px 10px;
-            min-width: 36px;
-        }
-        
-        .btn-icon svg {
-            width: 17px;
-            height: 17px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            display: block;
-        }
-        
-        .btn-primary {
-            background: var(--ink);
-            color: #ffffff;
-            border-color: var(--ink);
-        }
-        
-        .btn-primary:hover {
-            background: #1e293b;
-            border-color: #1e293b;
-        }
-        
-        .btn-accent {
-            background: var(--accent);
-            color: #ffffff;
-            border-color: var(--accent);
-        }
-        
-        .btn-accent:hover {
-            background: var(--accent-hover);
-        }
-        
-        .btn-amber {
-            background: #fffbeb;
-            color: #92400e;
-            border-color: #fcd34d;
-        }
-        
-        .btn-amber:hover {
-            background: #fef3c7;
-            border-color: #f59e0b;
-        }
-        
-        .btn-danger {
-            color: var(--d-red);
-            border-color: #fecaca;
-            background: #fef2f2;
-        }
-        
-        .btn-danger:hover {
-            background: #fee2e2;
-            border-color: #fca5a5;
-        }
-        
-        .btn:disabled {
-            opacity: 0.45;
-            pointer-events: none;
-        }
-        
-        #mute-btn.playing {
-            border-color: var(--accent);
-            color: var(--accent);
-            background: #eff6ff;
-        }
-        
-        @media (max-width: 400px) {
-            .brand-text { font-size: 12.5px; letter-spacing: 0.01em; }
-            .nav-actions { gap: 4px; }
-            .nav-actions .btn { padding: 7px 9px; font-size: 12px; }
-            .nav-actions .btn-icon { padding: 7px 8px; min-width: 34px; }
-        }
-        
-        .view {
-            display: none;
-            min-height: 100vh;
-            min-height: 100dvh;
-            padding-top: 60px;
-        }
-        
-        .view.active {
-            display: flex;
-        }
-        
-        #view-landing {
+        .nav-item {
             position: relative;
-            overflow: hidden;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 84px 24px 96px;
-            text-align: center;
-            background-color: #ffffff;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+            background: none; border: none; color: var(--muted);
+            font-size: 10.5px; font-weight: 600; cursor: pointer;
+        }
+        .nav-item .ico {
+            display: flex; align-items: center; justify-content: center;
+            width: 56px; height: 30px; border-radius: 999px;
+            transition: background .2s, color .2s;
+        }
+        .nav-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .nav-item.active { color: var(--accent); }
+        .nav-item.active .ico { background: var(--accent-soft); }
+        .nav-badge {
+            position: absolute; top: 6px; left: calc(50% + 8px);
+            min-width: 16px; height: 16px; padding: 0 4px;
+            border-radius: 999px; background: #f59e0b; color: #fff;
+            font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+            border: 2px solid #fff;
+        }
+        
+        /* ============ VIEWS ============ */
+        .view {
+            position: fixed; inset: 0;
+            display: none;
+            overflow-y: auto; overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding-top: var(--top);
+            padding-bottom: var(--bottom);
+            background: #fff;
+        }
+        .view.active { display: flex; animation: viewIn .2s ease; }
+        @keyframes viewIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* ---- HOME ---- */
+        #view-home {
+            flex-direction: column; align-items: center; justify-content: center;
+            padding-left: 22px; padding-right: 22px; text-align: center;
+            background-color: #fff;
             background-image: radial-gradient(#cbd5e13d 1.35px, transparent 1.35px);
             background-size: 22px 22px;
         }
-        
-        .doodles {
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-        }
-        
+        .doodles { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
         .doodle {
-            position: absolute;
-            overflow: visible;
-            fill: none;
-            stroke-width: 3.2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            opacity: 0.9;
-            pointer-events: auto;
-            cursor: pointer;
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: absolute; overflow: visible; fill: none; stroke: currentColor;
+            stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round;
+            opacity: .75; pointer-events: auto; cursor: pointer;
+            transition: transform .25s cubic-bezier(.34,1.56,.64,1);
         }
-        
-        .doodle:hover {
-            transform: scale(1.18) rotate(8deg) !important;
-        }
-        
-        .doodle path,
-        .doodle circle,
-        .doodle ellipse {
-            stroke-dasharray: 1;
-            stroke-dashoffset: 1;
-            animation: draw 1.4s cubic-bezier(.4, .1, .2, 1) forwards;
-            animation-delay: var(--d, 0s);
-        }
-        
-        .doodle .dot {
-            fill: currentColor;
-            stroke: none;
-            stroke-dasharray: none;
-            stroke-dashoffset: 0;
-            opacity: 0;
-            animation: pop 0.35s ease forwards;
-            animation-delay: var(--d, 0s);
-        }
-        
+        .doodle path, .doodle circle { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.4s cubic-bezier(.4,.1,.2,1) forwards; animation-delay: var(--d, 0s); }
+        .doodle .dot { fill: currentColor; stroke: none; stroke-dasharray: none; stroke-dashoffset: 0; opacity: 0; animation: pop .35s ease forwards; animation-delay: var(--d, 0s); }
         @keyframes draw { to { stroke-dashoffset: 0; } }
         @keyframes pop { to { opacity: 1; } }
-        
-        .doodle { stroke: currentColor; }
-        
-        .d1  { top: 14%;  left: 5%;   width: clamp(70px, 11vw, 150px); color: var(--d-blue);   transform: rotate(-8deg); }
-        .d2  { top: 12%;  right: 7%;  width: clamp(48px, 7vw, 96px);   color: var(--d-amber);  transform: rotate(12deg); }
-        .d3  { top: 46%;  left: 3%;   width: clamp(52px, 8vw, 110px);  color: var(--d-pink);   transform: rotate(-10deg); }
-        .d4  { top: 40%;  right: 4%;  width: clamp(70px, 10vw, 140px); color: var(--d-green);  transform: rotate(6deg); }
-        .d5  { bottom: 12%; left: 9%; width: clamp(60px, 9vw, 120px);  color: var(--d-violet); transform: rotate(8deg); }
-        .d6  { bottom: 14%; right: 10%; width: clamp(60px, 9vw, 120px); color: var(--d-red);   transform: rotate(-12deg); }
-        .d7  { top: 26%;  left: 22%;  width: clamp(30px, 4vw, 52px);   color: var(--d-cyan);   transform: rotate(20deg); }
-        .d8  { top: 24%;  right: 22%; width: clamp(60px, 8vw, 110px);  color: var(--d-violet); transform: rotate(-6deg); }
-        .d9  { bottom: 28%; left: 24%; width: clamp(34px, 4vw, 56px);  color: var(--d-amber);  }
-        .d10 { bottom: 26%; right: 24%; width: clamp(30px, 4vw, 52px); color: var(--d-blue);   transform: rotate(15deg); }
-        
-        @media (max-width: 760px) {
-            .d7, .d8, .d9, .d10 { display: none; }
-            .d1 { top: 11%; left: 4%; }
-            .d2 { top: 10%; right: 5%; }
-            .d3 { top: auto; bottom: 22%; left: 4%; }
-            .d4 { top: auto; bottom: 20%; right: 4%; }
-            .d5 { bottom: 7%; left: 18%; }
-            .d6 { bottom: 6%; right: 18%; }
-            .doodle { opacity: 0.6; }
+        .d1 { top: 11%; left: 5%; width: clamp(64px, 22vw, 130px); color: var(--d-blue); transform: rotate(-8deg); }
+        .d2 { top: 10%; right: 6%; width: clamp(44px, 14vw, 90px); color: var(--d-amber); transform: rotate(12deg); }
+        .d3 { bottom: 20%; left: 5%; width: clamp(48px, 16vw, 100px); color: var(--d-pink); transform: rotate(-10deg); }
+        .d4 { bottom: 18%; right: 5%; width: clamp(60px, 20vw, 120px); color: var(--d-green); transform: rotate(6deg); }
+        .d5 { bottom: 5%; left: 24%; width: clamp(40px, 12vw, 80px); color: var(--d-violet); transform: rotate(8deg); }
+        .d6 { bottom: 5%; right: 24%; width: clamp(40px, 12vw, 80px); color: var(--d-red); transform: rotate(-12deg); }
+        .d7, .d8, .d9, .d10 { display: none; }
+        @media (min-width: 761px) {
+            .d7, .d8, .d9, .d10 { display: block; }
+            .d7 { top: 26%; left: 22%; width: 46px; color: var(--d-cyan); transform: rotate(20deg); }
+            .d8 { top: 24%; right: 22%; width: 100px; color: var(--d-violet); }
+            .d9 { bottom: 30%; left: 24%; width: 52px; color: var(--d-amber); }
+            .d10 { bottom: 28%; right: 24%; width: 48px; color: var(--d-blue); transform: rotate(15deg); }
         }
-        
-        .landing-card {
-            position: relative;
-            z-index: 1;
-            max-width: 620px;
-            width: 100%;
+        .landing-card { position: relative; z-index: 1; max-width: 560px; width: 100%; }
+        .landing-title { font-size: clamp(38px, 11vw, 72px); font-weight: 900; letter-spacing: -.04em; line-height: 1; margin-bottom: 16px; }
+        .landing-desc { font-size: clamp(15px, 4vw, 18px); line-height: 1.6; color: var(--muted); max-width: 40ch; margin: 0 auto 28px; }
+        .landing-buttons { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
+        .landing-stats {
+            display: inline-flex; gap: 6px; align-items: center; margin: 22px auto 0;
+            padding: 7px 14px; border-radius: 999px; background: rgba(255,255,255,.9);
+            border: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--muted);
         }
-        
-        .landing-title {
-            font-size: clamp(40px, 8vw, 76px);
-            font-weight: 900;
-            letter-spacing: -0.04em;
-            line-height: 1;
-            margin-bottom: 18px;
-            color: var(--ink);
-        }
-        
-        .landing-desc {
-            font-size: clamp(15px, 2.2vw, 18px);
-            line-height: 1.6;
-            color: var(--muted);
-            max-width: 46ch;
-            margin: 0 auto 30px;
-        }
-        
-        .landing-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: center;
-        }
-        
-        .landing-buttons .btn {
-            padding: 14px 26px;
-            font-size: 15px;
-            border-radius: 10px;
-        }
-        
         .landing-credit {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 22px;
-            z-index: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--muted);
+            position: absolute; left: 0; right: 0; bottom: calc(var(--bottom) + 10px); z-index: 1;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            font-size: 11.5px; font-weight: 500; color: var(--muted);
         }
+        .landing-credit img { height: 16px; width: auto; }
+        @media (max-height: 640px) { .landing-credit { display: none; } }
         
-        .landing-credit img {
-            height: 18px;
-            width: auto;
+        /* ---- DRAW ---- */
+        #view-draw { flex-direction: column; align-items: center; padding-left: 12px; padding-right: 12px; }
+        .studio-wrap { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 8px; margin: auto; padding: 8px 0; }
+        .studio-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .history { display: flex; gap: 6px; }
+        .chip-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+            height: 36px; min-width: 36px; padding: 0 10px; border-radius: 10px;
+            border: 1px solid var(--border); background: #fff; color: var(--ink);
+            font-size: 12px; font-weight: 700; cursor: pointer;
         }
+        .chip-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+        .chip-btn:active { background: #f1f5f9; }
+        .chip-btn:disabled { opacity: .35; pointer-events: none; }
+        .studio-zoom-group { display: inline-flex; align-items: center; background: var(--soft); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .studio-zoom-btn { border: none; background: transparent; color: var(--ink); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; height: 34px; min-width: 36px; padding: 0 8px; cursor: pointer; }
+        .studio-zoom-btn:active { background: #e2e8f0; }
+        .studio-zoom-level { border-left: 1px solid var(--border); border-right: 1px solid var(--border); min-width: 50px; font-size: 11px; color: var(--muted); }
         
-        @media (max-width: 480px) {
-            #view-landing { padding: 84px 20px 88px; }
-            .landing-buttons { flex-direction: column; }
-            .landing-buttons .btn { width: 100%; }
-        }
-        
-        @media (prefers-reduced-motion: reduce) {
-            .doodle path,
-            .doodle circle,
-            .doodle ellipse { animation: none; stroke-dashoffset: 0; }
-            .doodle .dot { animation: none; opacity: 1; }
-        }
-        
-        #view-draw {
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 72px 14px 28px;
-        }
-        
-        .studio-wrap {
-            width: 100%;
-            max-width: 480px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        
-        .studio-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-        
-        .studio-header h2 {
-            font-size: 17px;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-        }
-        
-        .studio-header-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .studio-stats {
-            font-size: 12px;
-            color: var(--muted);
-            white-space: nowrap;
-        }
-        
-        .studio-zoom-group {
-            display: inline-flex;
-            align-items: center;
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        .studio-zoom-btn {
-            border: none;
-            background: transparent;
-            color: var(--ink);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            font-weight: 700;
-            height: 26px;
-            padding: 0 8px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.12s ease;
-        }
-        
-        .studio-zoom-btn:hover { background: #e2e8f0; }
-        .studio-zoom-btn:active { background: #cbd5e1; }
-        
-        .studio-zoom-level {
-            border-left: 1px solid var(--border);
-            border-right: 1px solid var(--border);
-            min-width: 44px;
-            font-size: 11px;
-            color: var(--muted);
-        }
-        
-        .tool-dock {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 4px;
-            padding: 5px;
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-        }
-        
+        .tool-dock { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; padding: 4px; background: var(--soft); border: 1px solid var(--border); border-radius: 12px; }
         .tool-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 2px;
-            height: 42px;
-            border: 1px solid transparent;
-            border-radius: 7px;
-            background: transparent;
-            color: var(--muted);
-            font-size: 9.5px;
-            font-weight: 700;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.12s ease;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+            height: 46px; border: 1px solid transparent; border-radius: 9px;
+            background: transparent; color: var(--muted); font-size: 9px; font-weight: 700; cursor: pointer;
+            transition: background .12s, color .12s;
         }
-        
-        .tool-btn svg {
-            width: 16px;
-            height: 16px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2.1;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-        
-        .tool-btn:hover {
-            background: #ffffff;
-            color: var(--ink);
-        }
-        
-        .tool-btn.active {
-            background: var(--ink);
-            color: #ffffff;
-            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
-        }
+        .tool-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+        .tool-btn.active { background: var(--ink); color: #fff; box-shadow: 0 2px 6px rgba(15,23,42,.18); }
         
         .canvas-frame {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            background-color: #f8fafc;
+            position: relative; aspect-ratio: 1 / 1;
+            width: min(100%, calc(100dvh - var(--top) - var(--bottom) - 255px));
+            min-width: 250px; margin: 0 auto;
+            background-color: var(--soft);
             background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
             background-size: 14px 14px;
-            border: 2px solid var(--ink);
-            border-radius: 12px;
-            overflow: hidden;
-            touch-action: none;
+            border: 2px solid var(--ink); border-radius: 14px;
+            overflow: hidden; touch-action: none;
         }
-        
-        .canvas-stage {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #ffffff;
-            transform-origin: 0 0;
-            will-change: transform;
-            box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
-        }
-        
+        .canvas-stage { position: absolute; inset: 0; width: 100%; height: 100%; background-color: #fff; transform-origin: 0 0; will-change: transform; }
         .canvas-frame.show-grid .canvas-stage {
-            background-image:
-            linear-gradient(to right, #f1f5f9 1px, transparent 1px),
-            linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+            background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
             background-size: 10% 10%;
         }
-        
-        #draw-canvas,
-        #preview-canvas {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        
+        #draw-canvas, #preview-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
         #draw-canvas { cursor: crosshair; }
         #preview-canvas { pointer-events: none; }
+        .canvas-frame.mode-hand #draw-canvas, .canvas-frame.pan-ready #draw-canvas { cursor: grab; }
+        .canvas-frame.panning #draw-canvas { cursor: grabbing; }
+        .canvas-frame.mode-eraser #draw-canvas { cursor: cell; }
+        .canvas-frame.mode-eyedropper #draw-canvas, .canvas-frame.mode-fill #draw-canvas { cursor: copy; }
         
-        .canvas-frame.mode-hand #draw-canvas,
-        .canvas-frame.pan-ready #draw-canvas {
-            cursor: grab;
+        .text-layer { position: absolute; inset: 0; pointer-events: none; }
+        .canvas-frame.mode-hand .text-box { cursor: move; }
+        .text-box { position: absolute; pointer-events: auto; font-size: calc(var(--fs, 30) * var(--u, 1px)); font-family: var(--ff, 'Inter', sans-serif); font-weight: 700; line-height: 1.2; }
+        .text-content { display: block; min-width: calc(24 * var(--u, 1px)); min-height: 1.2em; white-space: pre; outline: none; padding: 0; cursor: text; -webkit-user-select: text; user-select: text; }
+        .text-content:empty::before { content: "Type here"; opacity: .3; }
+        .text-box.selected .text-content { outline: 1.5px dashed var(--accent); outline-offset: 4px; }
+        .text-handle, .text-del {
+            display: none; position: absolute; top: -38px; width: 32px; height: 32px;
+            align-items: center; justify-content: center; border-radius: 50%;
+            border: 1px solid var(--border); background: #fff; color: var(--ink);
+            font-size: 15px; font-weight: 700; line-height: 1;
+            box-shadow: 0 2px 8px rgba(15,23,42,.15); cursor: pointer;
         }
-        
-        .canvas-frame.panning #draw-canvas {
-            cursor: grabbing;
-        }
-        
-        .canvas-frame.mode-eraser #draw-canvas {
-            cursor: cell;
-        }
-        
-        .canvas-frame.mode-eyedropper #draw-canvas,
-        .canvas-frame.mode-fill #draw-canvas {
-            cursor: copy;
-        }
-        
-        .text-layer {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-        }
-        
-        .canvas-frame.mode-hand .text-box {
-            cursor: move;
-        }
-        
-        .text-box {
-            position: absolute;
-            pointer-events: auto;
-            font-size: calc(var(--fs, 30) * var(--u, 1px));
-            font-family: var(--ff, 'Inter', sans-serif);
-            font-weight: 700;
-            line-height: 1.2;
-        }
-        
-        .text-content {
-            display: block;
-            min-width: calc(24 * var(--u, 1px));
-            min-height: 1.2em;
-            white-space: pre;
-            outline: none;
-            padding: 0;
-            cursor: text;
-            -webkit-user-select: text;
-            user-select: text;
-        }
-        
-        .text-content:empty::before {
-            content: "Type here";
-            opacity: 0.3;
-        }
-        
-        .text-box.selected .text-content {
-            outline: 1.5px dashed var(--accent);
-            outline-offset: 4px;
-        }
-        
-        .text-handle,
-        .text-del {
-            display: none;
-            position: absolute;
-            top: -34px;
-            width: 28px;
-            height: 28px;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            border: 1px solid var(--border);
-            background: #ffffff;
-            color: var(--ink);
-            font-size: 14px;
-            font-weight: 700;
-            font-family: 'Inter', sans-serif;
-            line-height: 1;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
-            cursor: pointer;
-        }
-        
         .text-handle { left: -4px; cursor: move; touch-action: none; }
-        .text-del { left: 30px; color: var(--d-red); }
+        .text-del { left: 34px; color: var(--d-red); }
+        .text-box.selected .text-handle, .text-box.selected .text-del { display: flex; }
         
-        .text-box.selected .text-handle,
-        .text-box.selected .text-del { display: flex; }
-        
-        .toolbar {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            background: #ffffff;
+        /* sheet with sub-tabs */
+        .sheet { border: 1px solid var(--border); border-radius: 14px; background: #fff; overflow: hidden; }
+        .sheet-tabs { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--soft); border-bottom: 1px solid var(--border); }
+        .sheet-tab {
+            height: 38px; border: none; background: transparent; color: var(--muted);
+            font-size: 12.5px; font-weight: 700; cursor: pointer; position: relative;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
         }
+        .sheet-tab svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+        .sheet-tab.active { color: var(--ink); background: #fff; }
+        .sheet-tab.active::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--ink); }
+        .sheet-pane { display: none; padding: 12px; flex-direction: column; gap: 12px; }
+        .sheet-pane.active { display: flex; }
         
-        .toolbar-top {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-        
-        .swatches {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-        
-        .swatch {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        
-        .swatch.active {
-            transform: scale(1.18);
-            box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--ink);
-        }
-        
+        .row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+        .swatches { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+        .swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform .1s; }
+        .swatch.active { transform: scale(1.12); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--ink); }
         .color-pad-wrap {
-            position: relative;
-            width: 23px;
-            height: 23px;
-            border-radius: 50%;
+            position: relative; width: 29px; height: 29px; border-radius: 50%;
             background: conic-gradient(#ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #a855f7, #ec4899, #ef4444);
-            border: 2px solid #ffffff;
-            box-shadow: 0 0 0 1px #cbd5e1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.1s;
+            border: 2px solid #fff; box-shadow: 0 0 0 1px #cbd5e1; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
         }
+        .color-pad-wrap.active { transform: scale(1.12); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--ink); }
+        .color-pad-wrap::after { content: "+"; font-size: 15px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.55); pointer-events: none; line-height: 1; }
+        #color-pad-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: none; padding: 0; }
+        .sizes { display: flex; align-items: center; gap: 6px; }
+        .size-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border); background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .size-btn.active { border-color: var(--ink); background: #f1f5f9; }
+        .size-dot { border-radius: 50%; background: var(--ink); }
+        .opacity-row { display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 600; color: var(--muted); }
+        .opacity-row input[type="range"] { flex: 1; height: 28px; accent-color: var(--ink); cursor: pointer; }
+        .opacity-val { font-family: 'JetBrains Mono', monospace; font-size: 11px; min-width: 38px; text-align: right; color: var(--ink); }
         
-        .color-pad-wrap.active {
-            transform: scale(1.18);
-            box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--ink);
-        }
-        
-        .color-pad-wrap::after {
-            content: "+";
-            font-size: 13px;
-            font-weight: 800;
-            color: #ffffff;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
-            pointer-events: none;
-            line-height: 1;
-        }
-        
-        #color-pad-input {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            border: none;
-            padding: 0;
-        }
-        
-        .sizes {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .size-btn {
-            width: 26px;
-            height: 26px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        
-        .size-btn.active {
-            border-color: var(--ink);
-            background: #f1f5f9;
-        }
-        
-        .size-dot {
-            border-radius: 50%;
-            background: var(--ink);
-        }
-        
-        .opacity-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-top: 6px;
-            border-top: 1px solid #f1f5f9;
-            font-size: 11.5px;
-            font-weight: 600;
-            color: var(--muted);
-        }
-        
-        .opacity-row input[type="range"] {
-            flex: 1;
-            height: 5px;
-            accent-color: var(--ink);
-            cursor: pointer;
-        }
-        
-        .opacity-val {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            min-width: 36px;
-            text-align: right;
-            color: var(--ink);
-        }
-        
-        .text-tools {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-        
-        .text-tools .btn { padding: 8px 10px; }
-        .text-tools .grow { flex: 1; }
-        
+        .text-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .text-tools .full { grid-column: 1 / -1; }
+        .text-tools .pair { display: grid; grid-template-columns: 1fr 1fr 44px; gap: 8px; grid-column: 1 / -1; }
         .font-select {
-            padding: 8px 8px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: #ffffff;
-            color: var(--ink);
-            font-size: 12.5px;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            max-width: 118px;
+            padding: 0 10px; min-height: 40px; border: 1px solid var(--border); border-radius: 10px;
+            background: #fff; color: var(--ink); font-size: 14px; font-weight: 600; font-family: inherit; width: 100%;
         }
         
-        .studio-controls {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            position: relative;
-        }
-        
-        .studio-controls .btn-hist {
-            flex: 1;
-            padding-left: 8px;
-            padding-right: 8px;
-        }
-        
-        .options-popover {
-            position: absolute;
-            right: 0;
-            bottom: calc(100% + 8px);
-            width: 240px;
-            background: #ffffff;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .opt-title {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--muted);
-        }
-        
-        .opt-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--ink);
-            cursor: pointer;
-            user-select: none;
-        }
-        
-        .opt-row input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            accent-color: var(--accent);
-            cursor: pointer;
-        }
-        
-        .submit-row {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .name-input {
-            flex: 1;
-            min-width: 0;
-            padding: 10px 14px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-            outline: none;
-        }
-        
+        .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .action-grid .btn { flex-direction: column; gap: 4px; min-height: 52px; font-size: 11.5px; }
+        .name-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; font-size: 16px; font-family: inherit; outline: none; }
         .name-input:focus { border-color: var(--ink); }
+        .studio-stats { font-size: 12px; color: var(--muted); font-weight: 600; text-align: center; }
         
-        #view-wall {
-            position: relative;
-            width: 100%;
-            height: 100vh;
-            height: 100dvh;
-            overflow: hidden;
-            background: #ffffff;
-            padding-top: 60px;
-        }
-        
-        #wall-viewport {
-            position: relative;
-            width: 100%;
-            height: calc(100vh - 60px);
-            height: calc(100dvh - 60px);
-            overflow: hidden;
-            background: #ffffff;
-            cursor: grab;
-            touch-action: none;
-        }
-        
+        /* ---- WALL ---- */
+        #view-wall { flex-direction: column; overflow: hidden; }
+        #wall-viewport { position: relative; flex: 1; width: 100%; overflow: hidden; background: #fff; cursor: grab; touch-action: none; }
         #wall-viewport:active { cursor: grabbing; }
-        
-        #wall-stage {
-            position: absolute;
-            top: 0;
-            left: 0;
-            transform-origin: 0 0;
-            will-change: transform;
-        }
-        
-        .center-monument {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            background: #ffffff;
-            user-select: none;
-            pointer-events: none;
-            z-index: 5;
-            padding: 16px;
-        }
-        
-        .center-monument img {
-            max-width: 120px;
-            max-height: 90px;
-            object-fit: contain;
-            margin-bottom: 12px;
-        }
-        
-        .center-event-title {
-            font-size: 28px;
-            font-weight: 900;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            color: #0f172a;
-            line-height: 1.05;
-        }
-        
-        .center-event-sub {
-            margin-top: 6px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: #64748b;
-        }
-        
-        .wall-tile {
-            position: absolute;
-            background: #ffffff;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        
+        #wall-stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+        .center-monument { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #fff; user-select: none; pointer-events: none; z-index: 5; padding: 16px; }
+        .center-monument img { max-width: 120px; max-height: 90px; object-fit: contain; margin-bottom: 12px; }
+        .center-event-title { font-size: 28px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; line-height: 1.05; }
+        .center-event-sub { margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+        .wall-tile { position: absolute; background: #fff; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; }
         .wall-stage-bordered .wall-tile { border: 1px solid #f1f5f9; }
-        
-        .wall-tile:hover {
-            z-index: 20;
-            transform: scale(1.04);
-            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
-            border-radius: 8px;
-        }
-        
-        .wall-tile.just-arrived {
-            box-shadow: 0 0 0 3px var(--accent), 0 12px 28px rgba(29, 78, 216, 0.22);
-            border-radius: 8px;
-            z-index: 15;
-        }
-        
-        .wall-tile canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        
-        .wall-tile.pending::after {
-            content: "";
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #f59e0b;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
-        }
-        
-        .wall-tile-tag {
-            position: absolute;
-            bottom: 4px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.85);
-            color: #ffffff;
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 999px;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.15s ease;
-        }
-        
+        .wall-tile:hover { z-index: 20; transform: scale(1.04); box-shadow: 0 10px 28px rgba(15,23,42,.08); border-radius: 8px; }
+        .wall-tile.just-arrived { box-shadow: 0 0 0 3px var(--accent), 0 12px 28px rgba(29,78,216,.22); border-radius: 8px; z-index: 15; }
+        .wall-tile canvas { width: 100%; height: 100%; display: block; }
+        .wall-tile.pending::after { content: ""; position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,.25); }
+        .wall-tile-tag { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,.85); color: #fff; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; }
         .wall-tile:hover .wall-tile-tag { opacity: 1; }
         
-        .wall-dock {
-            position: fixed;
-            bottom: max(14px, env(safe-area-inset-bottom));
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 7px 10px;
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
-            z-index: 90;
-            width: max-content;
-            max-width: calc(100vw - 20px);
+        .wall-hud {
+            position: absolute; z-index: 20;
+            top: calc(var(--top) + 10px); left: 12px;
+            display: flex; align-items: center; gap: 8px; max-width: calc(100% - 24px);
         }
-        
-        .dock-meta {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
+        .hud-pill {
+            padding: 8px 13px; border-radius: 999px; background: rgba(255,255,255,.95);
+            border: 1px solid var(--border); box-shadow: 0 4px 14px rgba(15,23,42,.08);
+            font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap;
         }
-        
-        .dock-stat {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--muted);
-            padding: 0 6px;
-            white-space: nowrap;
+        .wall-fab {
+            position: absolute; z-index: 20; right: 12px; bottom: calc(var(--bottom) + 14px);
+            display: flex; flex-direction: column; gap: 8px;
+            padding: 6px; border-radius: 18px; background: rgba(255,255,255,.95);
+            border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(15,23,42,.12);
         }
-        
-        .dock-controls {
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .fab-btn {
+            width: 44px; height: 44px; border-radius: 13px; border: none; background: transparent; color: var(--ink);
+            display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; font-weight: 700;
         }
+        .fab-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+        .fab-btn:active { background: #f1f5f9; }
+        .fab-btn:disabled { opacity: .4; pointer-events: none; }
+        .fab-sep { height: 1px; background: var(--border); margin: 0 6px; }
         
-        .dock-divider {
-            width: 1px;
-            height: 18px;
-            background: var(--border);
-            margin: 0 2px;
-            flex-shrink: 0;
+        /* ---- MORE ---- */
+        #view-more { flex-direction: column; align-items: center; padding-left: 14px; padding-right: 14px; }
+        .more-wrap { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 14px; padding: 16px 0 22px; margin: 0 auto auto; }
+        .more-title { font-size: 24px; font-weight: 900; letter-spacing: -.03em; }
+        .card { border: 1px solid var(--border); border-radius: 16px; background: #fff; overflow: hidden; }
+        .card-head { padding: 12px 16px 6px; font-size: 12px; font-weight: 700; color: var(--muted); }
+        .list-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 13px 16px; min-height: 54px; border-top: 1px solid #f1f5f9;
+            font-size: 14.5px; font-weight: 600; background: none; border-left: 0; border-right: 0; border-bottom: 0;
+            width: 100%; color: var(--ink); text-align: left; cursor: pointer;
         }
+        .card-head + .list-row { border-top: none; }
+        .list-row small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 2px; }
+        .list-row .lead { display: flex; align-items: center; gap: 12px; }
+        .list-row .lead svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .list-row:active { background: var(--soft); }
+        #mute-btn.playing { color: var(--accent); }
+        .switch { position: relative; width: 46px; height: 28px; flex-shrink: 0; }
+        .switch input { appearance: none; -webkit-appearance: none; width: 46px; height: 28px; border-radius: 999px; background: #cbd5e1; position: relative; cursor: pointer; transition: background .2s; }
+        .switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
+        .switch input:checked { background: var(--accent); }
+        .switch input:checked::after { transform: translateX(18px); }
+        .more-credit { text-align: center; font-size: 12px; color: var(--muted); font-weight: 500; padding-top: 4px; }
         
-        .dock-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            height: 34px;
-            padding: 0 10px;
-            border-radius: 10px;
-            border: none;
-            background: transparent;
-            color: var(--ink);
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-            white-space: nowrap;
-            transition: background 0.15s ease, transform 0.1s ease;
-        }
-        
-        .dock-btn svg {
-            width: 15px;
-            height: 15px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2.1;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            flex-shrink: 0;
-        }
-        
-        .dock-btn:hover { background: #f1f5f9; }
-        .dock-btn:active { transform: scale(0.95); }
-        .dock-btn:disabled { opacity: 0.45; pointer-events: none; }
-        
-        .dock-btn.zoom-btn {
-            width: 34px;
-            padding: 0;
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            font-size: 15px;
-            font-weight: 700;
-        }
-        
-        .dock-btn.amber {
-            background: #fef3c7;
-            color: #92400e;
-            height: 26px;
-            padding: 0 9px;
-            font-size: 11px;
-            border-radius: 999px;
-        }
-        
-        @media (max-width: 640px) {
-            .wall-dock {
-                flex-direction: column;
-                align-items: stretch;
-                width: calc(100vw - 24px);
-                max-width: 400px;
-                padding: 8px 10px;
-                gap: 6px;
-            }
-            
-            .dock-meta {
-                padding: 0 2px 4px;
-                border-bottom: 1px solid #f1f5f9;
-            }
-            
-            .dock-stat { padding: 0; }
-            .dock-divider { display: none; }
-            
-            .dock-controls {
-                display: grid;
-                grid-template-columns: repeat(6, 1fr);
-                gap: 4px;
-                width: 100%;
-            }
-            
-            .dock-btn {
-                flex-direction: column;
-                height: 44px;
-                padding: 4px 2px;
-                gap: 2px;
-                font-size: 10.5px;
-                background: #f8fafc;
-                border: 1px solid #f1f5f9;
-            }
-            
-            .dock-btn.zoom-btn {
-                width: 100%;
-                height: 44px;
-                font-size: 16px;
-            }
-        }
-        
-        .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.45);
-            backdrop-filter: blur(3px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 200;
-        }
-        
+        /* ---- MODALS ---- */
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.45); backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 200; }
         .modal-backdrop.open { display: flex; }
-        
-        .modal-box {
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 20px;
-            max-width: 400px;
-            width: 100%;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        
-        .modal-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .modal-head h3 { font-size: 15px; font-weight: 700; }
-        
-        .modal-canvas-wrap {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        
-        #modal-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        
-        .modal-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
+        .modal-box { background: #fff; border-radius: 18px; padding: 18px; max-width: 400px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,.15); display: flex; flex-direction: column; gap: 14px; }
+        .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .modal-head h3 { font-size: 16px; font-weight: 800; }
+        .modal-canvas-wrap { width: 100%; aspect-ratio: 1 / 1; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        #modal-canvas { width: 100%; height: 100%; display: block; }
+        .modal-actions { display: flex; gap: 8px; }
         .modal-actions .btn { flex: 1; }
-        
-        .confirm-backdrop {
-            position: fixed;
-            inset: 0;
-            z-index: 220;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(3px);
+        @media (max-width: 640px) {
+            .modal-backdrop { align-items: flex-end; padding: 0; }
+            .modal-box { max-width: none; border-radius: 22px 22px 0 0; padding: 18px 18px calc(18px + var(--safe-b)); animation: sheetUp .25s ease; }
+            .confirm-backdrop { align-items: flex-end !important; padding: 0 !important; }
+            .confirm-box { max-width: none !important; border-radius: 22px 22px 0 0 !important; padding-bottom: calc(22px + var(--safe-b)) !important; animation: sheetUp .25s ease; }
         }
+        @keyframes sheetUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
         
-        .confirm-box {
-            width: 100%;
-            max-width: 360px;
-            padding: 22px;
-            border-radius: 14px;
-            background: #ffffff;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        }
-        
+        .confirm-backdrop { position: fixed; inset: 0; z-index: 220; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(15,23,42,.5); backdrop-filter: blur(3px); }
+        .confirm-box { width: 100%; max-width: 360px; padding: 22px; border-radius: 16px; background: #fff; box-shadow: 0 20px 40px rgba(0,0,0,.2); }
         .confirm-box h2 { font-size: 17px; margin-bottom: 8px; }
-        .confirm-box p { color: var(--muted); font-size: 13px; line-height: 1.5; }
-        .confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+        .confirm-box p { color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+        .confirm-actions { display: flex; gap: 8px; margin-top: 20px; }
+        .confirm-actions .btn { flex: 1; min-height: 46px; }
         
         .toast {
-            position: fixed;
-            top: 74px;
-            left: 50%;
+            position: fixed; top: calc(var(--top) + 10px); left: 50%;
             transform: translateX(-50%) translateY(-12px);
-            background: var(--ink);
-            color: #ffffff;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 10px 18px;
-            border-radius: 999px;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.2s ease;
-            z-index: 300;
-            max-width: calc(100vw - 24px);
-            text-align: center;
+            background: var(--ink); color: #fff; font-size: 13px; font-weight: 600;
+            padding: 10px 18px; border-radius: 999px; opacity: 0; pointer-events: none;
+            transition: all .2s ease; z-index: 300; max-width: calc(100vw - 24px); text-align: center;
         }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 250; }
         
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
+        @media (min-width: 900px) {
+            .studio-wrap { max-width: 520px; }
+            .wall-fab { flex-direction: row; right: 50%; transform: translateX(50%); }
+            .fab-sep { width: 1px; height: auto; margin: 6px 0; }
         }
-        
-        #confetti-canvas {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 250;
-        }
-        .live-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 0;
-            background: none;
-            border: 0;
-            color: var(--muted);
-            font-family: inherit;
-            font-size: 11px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        
-        .live-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #22c55e;
-        }
-        
-        @keyframes pulseLive {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 1; }
+        @media (prefers-reduced-motion: reduce) {
+            .doodle path, .doodle circle { animation: none; stroke-dashoffset: 0; }
+            .doodle .dot { animation: none; opacity: 1; }
+            .view.active, .modal-box, .confirm-box { animation: none; }
         }
     </style>
 </head>
 <body>
     
+    <!-- TOP BAR -->
     <header class="topbar">
-        <button class="brand" onclick="switchView('landing')" aria-label="ARCHERSTUDIO home">
+        <button class="brand" onclick="switchView('home')" aria-label="ARCHERSTUDIO home">
             <img src="../resources/image/logo/logo4.png" alt="" onerror="this.style.display='none'">
             <span class="brand-text">ARCHERSTUDIO</span>
+        </button>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <button class="btn btn-amber" id="nav-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
             <span class="live-pill" id="online-pill" title="Users currently viewing or drawing">
                 <span class="live-dot"></span>
                 <span id="online-count">1 online</span>
             </span>
-        </button>
-        <div class="nav-actions">
-            <button class="btn btn-amber" id="nav-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
-            <button class="btn" id="nav-wall-btn" onclick="switchView('wall')">View wall</button>
-            <button class="btn btn-primary" id="nav-draw-btn" onclick="switchView('draw')">+ Draw</button>
-            <button class="btn btn-icon" id="mute-btn" onclick="toggleMusic()" aria-label="Toggle background music" title="Background Music (Muted)">
-                <svg id="mute-icon" viewBox="0 0 24 24">
-                    <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
-                    <line x1="23" y1="9" x2="17" y2="15"></line>
-                    <line x1="17" y1="9" x2="23" y2="15"></line>
-                </svg>
-            </button>
         </div>
     </header>
     
-    <main id="view-landing" class="view active">
+    <!-- HOME TAB -->
+    <main id="view-home" class="view active">
         <div class="doodles" aria-hidden="true">
             <svg class="doodle d1" onclick="popDoodle(this)" viewBox="0 0 100 40"><path pathLength="1" style="--d:.1s" d="M4 24 C14 2, 22 2, 30 20 S46 38, 54 20 S72 2, 80 20 S92 34, 97 18"/></svg>
             <svg class="doodle d2" onclick="popDoodle(this)" viewBox="0 0 100 100"><path pathLength="1" style="--d:.4s" d="M50 8 L61 38 L93 40 L68 60 L77 92 L50 74 L23 92 L32 60 L7 40 L39 38 Z"/></svg>
@@ -1318,68 +475,63 @@
         </div>
         
         <div class="landing-card">
-            <h1 class="landing-title">The Freedom Wall</h1>
-            <p class="landing-desc">
-                Draw, write, post it, and watch it replay stroke by stroke.
-            </p>
+            <h1 class="landing-title">The ARTcher</h1>
+            <p class="landing-desc">Draw, write, post it, and watch it replay.</p>
             <div class="landing-buttons">
-                <button class="btn btn-primary" onclick="switchView('draw')">Start drawing</button>
-                <button class="btn" onclick="switchView('wall')">View the wall</button>
+                <button class="btn btn-primary btn-lg" onclick="switchView('draw')">Start drawing</button>
+                <button class="btn btn-lg" onclick="switchView('wall')">View the wall</button>
             </div>
         </div>
         
-        <div class="landing-credit">
+        <div style="display:none;" class="landing-credit">
             <img src="../resources/image/logo/logo4.png" alt="" onerror="this.style.display='none'">
-            <span>ARCHERSTUDIO &times; BTLED ORG</span>
+            <span>ARCHERSTUDIO</span>
         </div>
     </main>
     
+    <!-- DRAW TAB -->
     <section id="view-draw" class="view">
         <div class="studio-wrap">
-            <div class="studio-header">
-                <h2>Your Canvas</h2>
-                <div class="studio-header-right">
-                    <div class="studio-zoom-group" role="group" aria-label="Canvas zoom controls">
-                        <button type="button" class="studio-zoom-btn" onclick="zoomStudio(0.8)" aria-label="Zoom out canvas" title="Zoom out">&minus;</button>
-                        <button type="button" class="studio-zoom-btn studio-zoom-level" id="studio-zoom-label" onclick="resetStudioZoom()" title="Reset zoom & pan">100%</button>
-                        <button type="button" class="studio-zoom-btn" onclick="zoomStudio(1.25)" aria-label="Zoom in canvas" title="Zoom in">+</button>
-                    </div>
-                    <span class="studio-stats" id="studio-stats">0 strokes · 0 on wall</span>
+            <div class="studio-bar">
+                <div class="history">
+                    <button class="chip-btn" id="undo-btn" onclick="undoStroke()" aria-label="Undo">
+                        <svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>
+                    </button>
+                    <button class="chip-btn" id="redo-btn" onclick="redoStroke()" aria-label="Redo" disabled>
+                        <svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg>
+                    </button>
+                </div>
+                <div class="studio-zoom-group" role="group" aria-label="Canvas zoom controls">
+                    <button type="button" class="studio-zoom-btn" onclick="zoomStudio(0.8)" aria-label="Zoom out canvas">&minus;</button>
+                    <button type="button" class="studio-zoom-btn studio-zoom-level" id="studio-zoom-label" onclick="resetStudioZoom()" title="Reset zoom & pan">100%</button>
+                    <button type="button" class="studio-zoom-btn" onclick="zoomStudio(1.25)" aria-label="Zoom in canvas">+</button>
                 </div>
             </div>
             
             <div class="tool-dock" role="toolbar" aria-label="Drawing tools">
                 <button type="button" class="tool-btn active" data-tool="brush" onclick="setTool('brush')" title="Brush (B)">
-                    <svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>
-                    <span>Brush</span>
+                    <svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg><span>Brush</span>
                 </button>
-                <button type="button" class="tool-btn" data-tool="eraser" onclick="setTool('eraser')" title="Eraser Brush (E)">
-                    <svg viewBox="0 0 24 24"><path d="M20 20H7L3 16c-.8-.8-.8-2 0-2.8L13.4 2.8c.8-.8 2-.8 2.8 0L21 7.6c.8.8.8 2 0 2.8L11.4 20"></path><path d="M6 11l7 7"></path></svg>
-                    <span>Eraser</span>
+                <button type="button" class="tool-btn" data-tool="eraser" onclick="setTool('eraser')" title="Eraser (E)">
+                    <svg viewBox="0 0 24 24"><path d="M20 20H7L3 16c-.8-.8-.8-2 0-2.8L13.4 2.8c.8-.8 2-.8 2.8 0L21 7.6c.8.8.8 2 0 2.8L11.4 20"></path><path d="M6 11l7 7"></path></svg><span>Eraser</span>
                 </button>
                 <button type="button" class="tool-btn" data-tool="hand" onclick="setTool('hand')" title="Hand / Pan & Select Text (H)">
-                    <svg viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>
-                    <span>Hand</span>
+                    <svg viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg><span>Hand</span>
                 </button>
-                <button type="button" class="tool-btn" data-tool="line" onclick="setTool('line')" title="Straight Line (L)">
-                    <svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5"></line></svg>
-                    <span>Line</span>
+                <button type="button" class="tool-btn" data-tool="line" onclick="setTool('line')" title="Line (L)">
+                    <svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5"></line></svg><span>Line</span>
                 </button>
                 <button type="button" class="tool-btn" data-tool="rect" onclick="setTool('rect')" title="Rectangle (R)">
-                    <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg>
-                    <span>Box</span>
+                    <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg><span>Box</span>
                 </button>
-                <button type="button" class="tool-btn" data-tool="circle" onclick="setTool('circle')" title="Circle / Oval (O)">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg>
-                    <span>Circle</span>
+                <button type="button" class="tool-btn" data-tool="circle" onclick="setTool('circle')" title="Circle (O)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg><span>Circle</span>
                 </button>
-                <button type="button" class="tool-btn" data-tool="fill" onclick="setTool('fill')" title="Bucket Fill (G)">
-                    <svg viewBox="0 0 24 24"><path d="M19 11l-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 .8 2.8 0L19 11z"></path><path d="M5 2l5 5"></path><path d="M2 13h15"></path><path d="M22 20a2 2 0 1 1-4 0c0-1.6 1.7-2.4 2-4 .3 1.6 2 2.4 2 4z"></path></svg>
-                    <span>Fill</span>
+                <button type="button" class="tool-btn" data-tool="fill" onclick="setTool('fill')" title="Fill (G)">
+                    <svg viewBox="0 0 24 24"><path d="M19 11l-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 .8 2.8 0L19 11z"></path><path d="M5 2l5 5"></path><path d="M2 13h15"></path><path d="M22 20a2 2 0 1 1-4 0c0-1.6 1.7-2.4 2-4 .3 1.6 2 2.4 2 4z"></path></svg><span>Fill</span>
                 </button>
                 <button type="button" class="tool-btn" data-tool="eyedropper" onclick="setTool('eyedropper')" title="Pick Color (I)">
-                    <svg viewBox="0 0 24 24"><path d="M2 22l1-1h3l9-9"></path><path d="M3 21v-3l9-9"></path><path d="M15 6l3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4z"></path></svg>
-                    <span>Picker</span>
+                    <svg viewBox="0 0 24 24"><path d="M2 22l1-1h3l9-9"></path><path d="M3 21v-3l9-9"></path><path d="M15 6l3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4z"></path></svg><span>Picker</span>
                 </button>
             </div>
             
@@ -1391,159 +543,197 @@
                 </div>
             </div>
             
-            <div class="toolbar">
-                <div class="toolbar-top">
-                    <div class="swatches" id="swatch-list">
-                        <label class="color-pad-wrap" id="color-pad-btn" title="Color Pad (Millions of Colors)" aria-label="Color Pad">
-                            <input type="color" id="color-pad-input" value="#1d4ed8" />
-                        </label>
+            <div class="sheet">
+                <div class="sheet-tabs" role="tablist">
+                    <button class="sheet-tab active" data-pane="style" role="tab" onclick="setDrawTab('style')">
+                        <svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-8.8-10-8.8z"/></svg>Style
+                    </button>
+                    <button class="sheet-tab" data-pane="text" role="tab" onclick="setDrawTab('text')">
+                        <svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>Text
+                    </button>
+                    <button class="sheet-tab" data-pane="post" role="tab" onclick="setDrawTab('post')">
+                        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Post
+                    </button>
+                </div>
+                
+                <div class="sheet-pane active" id="pane-style">
+                    <div class="row-between">
+                        <div class="swatches" id="swatch-list">
+                            <label class="color-pad-wrap" id="color-pad-btn" title="Color Pad (Millions of Colors)" aria-label="Color Pad">
+                                <input type="color" id="color-pad-input" value="#1d4ed8" />
+                            </label>
+                        </div>
                     </div>
                     <div class="sizes" id="size-list"></div>
+                    <div class="opacity-row">
+                        <span>Opacity</span>
+                        <input type="range" id="opacity-slider" min="10" max="100" step="5" value="100" oninput="setOpacity(this.value)" />
+                        <span class="opacity-val" id="opacity-val">100%</span>
+                    </div>
                 </div>
-                <div class="opacity-row">
-                    <span>Opacity</span>
-                    <input type="range" id="opacity-slider" min="10" max="100" step="5" value="100" oninput="setOpacity(this.value)" />
-                    <span class="opacity-val" id="opacity-val">100%</span>
+                
+                <div class="sheet-pane" id="pane-text">
+                    <div class="text-tools">
+                        <button class="btn btn-primary full" onclick="addText()">T&nbsp; Add text</button>
+                        <select id="font-select" class="font-select full" onchange="changeTextFont(this.value)" aria-label="Choose font">
+                            <option value="Inter">Sans (Inter)</option>
+                            <option value="Caveat">Handwriting</option>
+                            <option value="Playfair Display">Serif</option>
+                            <option value="Press Start 2P">Pixel</option>
+                            <option value="JetBrains Mono">Mono</option>
+                        </select>
+                        <div class="pair">
+                            <button class="btn" onclick="changeTextSize(-1)" aria-label="Smaller text">A&minus; Smaller</button>
+                            <button class="btn" onclick="changeTextSize(1)" aria-label="Bigger text">A+ Bigger</button>
+                            <button class="btn btn-danger btn-icon" id="del-text-btn" onclick="removeSelectedOrAllText()" aria-label="Delete text" title="Remove selected text (or clear all text)">
+                                <svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M18 7l-1 13H7L6 7"></path></svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="text-tools">
-                <button class="btn grow" onclick="addText()">T&nbsp; Add text</button>
-                <select id="font-select" class="font-select" onchange="changeTextFont(this.value)" aria-label="Choose font" title="Choose Font">
-                    <option value="Inter">Sans (Inter)</option>
-                    <option value="Caveat">Handwriting</option>
-                    <option value="Playfair Display">Serif</option>
-                    <option value="Press Start 2P">Pixel</option>
-                    <option value="JetBrains Mono">Mono</option>
-                </select>
-                <button class="btn" onclick="changeTextSize(-1)" aria-label="Smaller text" title="Smaller text">A&minus;</button>
-                <button class="btn" onclick="changeTextSize(1)" aria-label="Bigger text" title="Bigger text">A+</button>
-                <button class="btn btn-danger btn-icon" id="del-text-btn" onclick="removeSelectedOrAllText()" aria-label="Delete text" title="Remove selected text (or clear all text)">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 7h16"></path>
-                        <path d="M9 7V4h6v3"></path>
-                        <path d="M18 7l-1 13H7L6 7"></path>
-                    </svg>
-                </button>
-            </div>
-            
-            <div class="studio-controls">
-                <button class="btn btn-hist" id="undo-btn" onclick="undoStroke()">Undo</button>
-                <button class="btn btn-hist" id="redo-btn" onclick="redoStroke()" disabled>Redo</button>
                 
-                <button class="btn btn-icon" onclick="clearCanvas()" aria-label="Clear canvas" title="Clear All">
-                    <svg viewBox="0 0 24 24">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                        <path d="M10 11v6"></path>
-                        <path d="M14 11v6"></path>
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-                    </svg>
-                </button>
-                
-                <button class="btn btn-icon" onclick="previewDrawing()" aria-label="Replay drawing" title="Replay">
-                    <svg viewBox="0 0 24 24">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                </button>
-                
-                <button class="btn btn-icon" onclick="saveStudioPNG()" aria-label="Save PNG" title="Save PNG">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                </button>
-                
-                <button class="btn btn-icon" id="options-btn" onclick="toggleOptions(event)" aria-label="Canvas options" title="Options">
-                    <svg viewBox="0 0 24 24">
-                        <line x1="4" y1="21" x2="4" y2="14"></line>
-                        <line x1="4" y1="10" x2="4" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12" y2="3"></line>
-                        <line x1="20" y1="21" x2="20" y2="16"></line>
-                        <line x1="20" y1="12" x2="20" y2="3"></line>
-                        <line x1="1" y1="14" x2="7" y2="14"></line>
-                        <line x1="9" y1="8" x2="15" y2="8"></line>
-                        <line x1="17" y1="16" x2="23" y2="16"></line>
-                    </svg>
-                </button>
-                
-                <div class="options-popover" id="options-popover" hidden>
-                    <div class="opt-title">Studio Options</div>
-                    <label class="opt-row">
-                        <span>Canvas Grid Guide</span>
-                        <input type="checkbox" id="opt-grid" onchange="applyOptions()">
-                    </label>
-                    <label class="opt-row">
-                        <span>Smooth Brush Strokes</span>
-                        <input type="checkbox" id="opt-smooth" checked onchange="applyOptions()">
-                    </label>
-                    <label class="opt-row">
-                        <span>Wall Tile Borders</span>
-                        <input type="checkbox" id="opt-borders" onchange="applyOptions()">
-                    </label>
+                <div class="sheet-pane" id="pane-post">
+                    <div class="action-grid">
+                        <button class="btn" onclick="previewDrawing()">
+                            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Replay
+                        </button>
+                        <button class="btn" onclick="saveStudioPNG()">
+                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Save PNG
+                        </button>
+                        <button class="btn btn-danger" onclick="clearCanvas()">
+                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>Clear
+                        </button>
+                    </div>
+                    <input type="text" id="author-input" class="name-input" maxlength="24" placeholder="Your name or alias (optional)" />
+                    <button class="btn btn-accent btn-lg btn-block" id="submit-btn" onclick="submitToWall()">Post to wall</button>
+                    <div class="studio-stats" id="studio-stats">0 strokes · 0 on wall</div>
                 </div>
-            </div>
-            
-            <div class="submit-row">
-                <input type="text" id="author-input" class="name-input" maxlength="24" placeholder="Your name or alias (optional)" />
-                <button class="btn btn-accent" id="submit-btn" onclick="submitToWall()">Post to Wall</button>
             </div>
         </div>
     </section>
     
+    <!-- WALL TAB -->
     <section id="view-wall" class="view">
         <div id="wall-viewport">
             <div id="wall-stage">
                 <div class="center-monument" id="center-monument">
                     <img src="../resources/image/logo/freedom.png" alt="Event Logo" onerror="this.style.display='none'">
-                    <div class="center-event-title">THE FREEDOM WALL</div>
-                    <div class="center-event-sub">ARCHERSTUDIO &times; BTLED ORG</div>
+                    <div class="center-event-title">THE ARTcher</div>
+                    <div class="center-event-sub">ARCHERSTUDIO</div>
                 </div>
             </div>
         </div>
         
-        <div class="wall-dock" role="toolbar" aria-label="Wall controls">
-            <div class="dock-meta">
-                <span class="dock-stat" id="wall-count">Loading...</span>
-                <button class="dock-btn amber" id="dock-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
-            </div>
-            <div class="dock-divider"></div>
-            <div class="dock-controls">
-                <button class="dock-btn" onclick="replayAllDrawings()" title="Replay all drawings">
-                    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                    <span>Play</span>
-                </button>
-                <button class="dock-btn" id="refresh-btn" onclick="refreshWall()" title="Sync wall">
-                    <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                    <span>Sync</span>
-                </button>
-                <button class="dock-btn" onclick="resetFit()" title="Fit wall to screen">
-                    <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                    <span>Fit</span>
-                </button>
-                <button class="dock-btn zoom-btn" onclick="zoomWall(0.8)" aria-label="Zoom out" title="Zoom out">&minus;</button>
-                <button class="dock-btn zoom-btn" onclick="zoomWall(1.25)" aria-label="Zoom in" title="Zoom in">+</button>
-                <button class="dock-btn" onclick="saveWallPNG()" title="Save 16:9 PNG">
-                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>Save</span>
-                </button>
-            </div>
+        <div class="wall-hud">
+            <span class="hud-pill" id="wall-count">Loading...</span>
+            <button class="btn btn-amber" id="dock-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
+        </div>
+        
+        <div class="wall-fab" role="toolbar" aria-label="Wall controls">
+            <button class="fab-btn" onclick="replayAllDrawings()" title="Replay all drawings" aria-label="Replay all drawings">
+                <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
+            <button class="fab-btn" id="refresh-btn" onclick="refreshWall()" title="Sync wall" aria-label="Sync wall">
+                <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            </button>
+            <button class="fab-btn" onclick="resetFit()" title="Fit wall to screen" aria-label="Fit wall to screen">
+                <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+            </button>
+            <div class="fab-sep"></div>
+            <button class="fab-btn" onclick="zoomWall(1.25)" aria-label="Zoom in">+</button>
+            <button class="fab-btn" onclick="zoomWall(0.8)" aria-label="Zoom out">&minus;</button>
         </div>
     </section>
     
+    <!-- MORE TAB -->
+    <section id="view-more" class="view">
+        <div class="more-wrap">
+            <h2 class="more-title">More</h2>
+            
+            <div class="card">
+                <div class="card-head">Sound</div>
+                <button class="list-row" id="mute-btn" onclick="toggleMusic()" aria-label="Toggle background music">
+                    <span class="lead">
+                        <svg id="mute-icon" viewBox="0 0 24 24">
+                            <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+                            <line x1="23" y1="9" x2="17" y2="15"></line>
+                            <line x1="17" y1="9" x2="23" y2="15"></line>
+                        </svg>
+                        <span>Background music<small id="music-status">Off</small></span>
+                    </span>
+                </button>
+            </div>
+            
+            <div class="card">
+                <div class="card-head">Wall</div>
+                <button class="list-row" onclick="saveWallPNG()">
+                    <span class="lead">
+                        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Save wall as image<small>16:9 PNG of the whole wall</small></span>
+                    </span>
+                </button>
+                <div class="list-row" style="cursor:default;">
+                    <span class="lead">
+                        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span>Uploads<small id="more-upload-status">Nothing waiting</small></span>
+                    </span>
+                    <button class="btn btn-amber" id="more-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-head">Options</div>
+                <label class="list-row">
+                    <span>Canvas grid guide</span>
+                    <span class="switch"><input type="checkbox" id="opt-grid" onchange="applyOptions()"></span>
+                </label>
+                <label class="list-row">
+                    <span>Smooth brush strokes</span>
+                    <span class="switch"><input type="checkbox" id="opt-smooth" checked onchange="applyOptions()"></span>
+                </label>
+                <label class="list-row">
+                    <span>Wall tile borders</span>
+                    <span class="switch"><input type="checkbox" id="opt-borders" onchange="applyOptions()"></span>
+                </label>
+            </div>
+            
+            <div class="more-credit">ARCHERSTUDIO &times; BTLED ORG</div>
+        </div>
+    </section>
+    
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav" aria-label="Main navigation">
+        <button class="nav-item active" data-view="home" onclick="switchView('home')">
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" data-view="draw" onclick="switchView('draw')">
+            <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
+            <span>Draw</span>
+        </button>
+        <button class="nav-item" data-view="wall" onclick="switchView('wall')">
+            <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+            <span>Wall</span>
+        </button>
+        <button class="nav-item" data-view="more" onclick="switchView('more')">
+            <span class="ico"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></span>
+            <span>More</span>
+            <span class="nav-badge" id="nav-badge" hidden>0</span>
+        </button>
+    </nav>
+    
+    <!-- TILE MODAL -->
     <div class="modal-backdrop" id="tile-modal" onclick="if(event.target===this) closeModal()">
         <div class="modal-box">
             <div class="modal-head">
                 <h3 id="modal-author">Anonymous</h3>
-                <button class="btn" style="padding:4px 10px;" onclick="closeModal()">Close</button>
+                <button class="btn" onclick="closeModal()">Close</button>
             </div>
             <div class="modal-canvas-wrap">
                 <canvas id="modal-canvas" width="500" height="500"></canvas>
             </div>
             <div class="modal-actions">
-                <button class="btn btn-primary" id="modal-replay-btn">Replay Strokes</button>
+                <button class="btn btn-primary" id="modal-replay-btn">Replay strokes</button>
                 <button class="btn" id="modal-save-btn">Save PNG</button>
             </div>
         </div>
@@ -1574,6 +764,7 @@
         const LS_QUEUE = "fw_pending_v1";
         const LS_CACHE = "fw_cache_v1";
         const LS_MUSIC_TIME = "fw_music_time_v1";
+        const LS_OPTIONS = "fw_options_v1";
         
         const LOFI_MP3_PATH = "../resources/audio/song1.mp3";
         
@@ -1586,12 +777,8 @@
         
         function saveMusicTime() {
             if (!lofiAudio || !Number.isFinite(lofiAudio.currentTime)) return;
-            try {
-                localStorage.setItem(LS_MUSIC_TIME, String(lofiAudio.currentTime));
-            } catch (error) {
-            }
+            try { localStorage.setItem(LS_MUSIC_TIME, String(lofiAudio.currentTime)); } catch (error) {}
         }
-        
         window.addEventListener("beforeunload", saveMusicTime);
         
         const LOFI_CHORDS = [
@@ -1608,21 +795,16 @@
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 const filter = audioCtx.createBiquadFilter();
-                
                 osc.type = idx === 0 ? "sine" : "triangle";
                 osc.frequency.setValueAtTime(freq, now + idx * 0.04);
-                
                 filter.type = "lowpass";
                 filter.frequency.setValueAtTime(680, now);
-                
                 gain.gain.setValueAtTime(0.0001, now + idx * 0.04);
                 gain.gain.exponentialRampToValueAtTime(0.018, now + idx * 0.04 + 0.35);
                 gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
-                
                 osc.connect(filter);
                 filter.connect(gain);
                 gain.connect(audioCtx.destination);
-                
                 osc.start(now + idx * 0.04);
                 osc.stop(now + 2.6);
             });
@@ -1631,22 +813,21 @@
         function updateMuteIcon() {
             const btn = document.getElementById("mute-btn");
             const icon = document.getElementById("mute-icon");
+            const status = document.getElementById("music-status");
             if (musicPlaying) {
                 btn.classList.add("playing");
-                btn.title = "Mute Background Music";
+                if (status) status.textContent = "Playing";
                 icon.innerHTML = `
                     <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                `;
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>`;
             } else {
                 btn.classList.remove("playing");
-                btn.title = "Play Background Music";
+                if (status) status.textContent = "Off";
                 icon.innerHTML = `
                     <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
                     <line x1="23" y1="9" x2="17" y2="15"></line>
-                    <line x1="17" y1="9" x2="23" y2="15"></line>
-                `;
+                    <line x1="17" y1="9" x2="23" y2="15"></line>`;
             }
         }
         
@@ -1668,8 +849,7 @@
                                     ? Math.min(savedTime, Math.max(0, lofiAudio.duration - 0.1))
                                     : savedTime;
                                 }
-                            } catch (error) {
-                            }
+                            } catch (error) {}
                         }, { once: true });
                         lofiAudio.addEventListener("timeupdate", saveMusicTime);
                         lofiAudio.addEventListener("pause", saveMusicTime);
@@ -1687,9 +867,7 @@
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     audioCtx = new AudioContext();
                 }
-                if (audioCtx.state === "suspended") {
-                    audioCtx.resume();
-                }
+                if (audioCtx.state === "suspended") audioCtx.resume();
                 playChord(LOFI_CHORDS[chordStep % LOFI_CHORDS.length]);
                 chordStep++;
                 musicTimer = setInterval(() => {
@@ -1724,6 +902,10 @@
             osc.stop(now + 0.12);
         }
         
+        function haptic(ms = 8) {
+            try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
+        }
+        
         function popDoodle(el) {
             playPopTone(440 + Math.random() * 260);
             el.animate([
@@ -1738,7 +920,6 @@
             const ctx = cvs.getContext("2d");
             cvs.width = window.innerWidth;
             cvs.height = window.innerHeight;
-            
             const palette = ["#1d4ed8", "#dc2626", "#16a34a", "#d97706", "#7c3aed", "#db2777", "#0891b2"];
             const pieces = Array.from({ length: 70 }, () => ({
                 x: cvs.width * (0.25 + Math.random() * 0.5),
@@ -1750,15 +931,11 @@
                 rot: Math.random() * Math.PI * 2,
                 vrot: (Math.random() - 0.5) * 0.25
             }));
-            
             let frame = 0;
             function tick() {
                 ctx.clearRect(0, 0, cvs.width, cvs.height);
                 for (const p of pieces) {
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.vy += 0.45;
-                    p.rot += p.vrot;
+                    p.x += p.vx; p.y += p.vy; p.vy += 0.45; p.rot += p.vrot;
                     ctx.save();
                     ctx.translate(p.x, p.y);
                     ctx.rotate(p.rot);
@@ -1850,7 +1027,7 @@
         }
         
         // =========================================================================
-        // SUPABASE REALTIME CHANNEL (INSTANT WALL SYNC & NOTIFICATIONS)
+        // SUPABASE REALTIME CHANNEL
         // =========================================================================
         let wallChannel = null;
         const myPresenceKey = "user_" + Math.random().toString(36).slice(2, 9);
@@ -1873,9 +1050,7 @@
             });
             
             wallChannel
-            .on("presence", { event: "sync" }, () => {
-                updateOnlineUI();
-            })
+            .on("presence", { event: "sync" }, () => { updateOnlineUI(); })
             .on("broadcast", { event: "new-tile" }, ({ payload }) => {
                 if (!payload || !payload.id) return;
                 if (wallEntries.some(e => e.id === payload.id)) return;
@@ -1937,10 +1112,14 @@
             if (tool === "eraser") canvasFrame.classList.add("mode-eraser");
             if (tool === "fill") canvasFrame.classList.add("mode-fill");
             if (tool === "eyedropper") canvasFrame.classList.add("mode-eyedropper");
-            
-            if (tool !== "hand") {
-                deselectText();
-            }
+            if (tool !== "hand") deselectText();
+            haptic(6);
+        }
+        
+        function setDrawTab(name) {
+            document.querySelectorAll(".sheet-tab").forEach(t => t.classList.toggle("active", t.dataset.pane === name));
+            document.querySelectorAll(".sheet-pane").forEach(p => p.classList.toggle("active", p.id === "pane-" + name));
+            haptic(6);
         }
         
         function setOpacity(val) {
@@ -1986,9 +1165,7 @@
             });
             
             const padInput = document.getElementById("color-pad-input");
-            padInput.addEventListener("input", (e) => {
-                selectColor(e.target.value, true);
-            });
+            padInput.addEventListener("input", (e) => { selectColor(e.target.value, true); });
             
             const sizeList = document.getElementById("size-list");
             SIZES.forEach((sz, i) => {
@@ -1997,8 +1174,8 @@
                 btn.setAttribute("aria-label", "Brush size " + sz);
                 const dot = document.createElement("span");
                 dot.className = "size-dot";
-                dot.style.width = Math.max(4, Math.min(18, sz * 0.7)) + "px";
-                dot.style.height = Math.max(4, Math.min(18, sz * 0.7)) + "px";
+                dot.style.width = Math.max(4, Math.min(20, sz * 0.7)) + "px";
+                dot.style.height = Math.max(4, Math.min(20, sz * 0.7)) + "px";
                 btn.appendChild(dot);
                 btn.onclick = () => {
                     currentSize = sz;
@@ -2017,9 +1194,20 @@
             t._timer = setTimeout(() => t.classList.remove("show"), 3200);
         }
         
+        // =========================================================================
+        // TAB NAVIGATION (bottom nav)
+        // =========================================================================
+        let currentView = "home";
+        
         function switchView(viewName) {
+            if (currentView === "draw" && viewName !== "draw") deselectText();
+            if (currentView !== viewName) haptic(8);
+            closeModal();
+            currentView = viewName;
+            
             document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
             document.getElementById("view-" + viewName).classList.add("active");
+            document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === viewName));
             
             if (viewName === "draw") {
                 syncUnit();
@@ -2061,16 +1249,13 @@
             const frameRect = canvasFrame.getBoundingClientRect();
             const cx = anchorX !== undefined ? anchorX : frameRect.width / 2;
             const cy = anchorY !== undefined ? anchorY : frameRect.height / 2;
-            
             studioPanX = cx - ((cx - studioPanX) / studioScale) * clampedScale;
             studioPanY = cy - ((cy - studioPanY) / studioScale) * clampedScale;
             studioScale = clampedScale;
             applyStudioTransform();
         }
         
-        function zoomStudio(factor) {
-            zoomStudioAt(studioScale * factor);
-        }
+        function zoomStudio(factor) { zoomStudioAt(studioScale * factor); }
         
         function resetStudioZoom() {
             studioScale = 1;
@@ -2082,9 +1267,7 @@
         canvasFrame.addEventListener("wheel", (e) => {
             e.preventDefault();
             const rect = canvasFrame.getBoundingClientRect();
-            const ax = e.clientX - rect.left;
-            const ay = e.clientY - rect.top;
-            zoomStudioAt(studioScale * (e.deltaY < 0 ? 1.15 : 0.85), ax, ay);
+            zoomStudioAt(studioScale * (e.deltaY < 0 ? 1.15 : 0.85), e.clientX - rect.left, e.clientY - rect.top);
         }, { passive: false });
         
         window.addEventListener("keydown", (e) => {
@@ -2115,16 +1298,7 @@
                 return;
             }
             
-            const keyMap = {
-                b: "brush",
-                e: "eraser",
-                h: "hand",
-                l: "line",
-                r: "rect",
-                o: "circle",
-                g: "fill",
-                i: "eyedropper"
-            };
+            const keyMap = { b: "brush", e: "eraser", h: "hand", l: "line", r: "rect", o: "circle", g: "fill", i: "eyedropper" };
             const mapped = keyMap[e.key.toLowerCase()];
             if (mapped) setTool(mapped);
         });
@@ -2138,12 +1312,6 @@
             }
         });
         
-        function toggleOptions(e) {
-            e.stopPropagation();
-            const pop = document.getElementById("options-popover");
-            pop.hidden = !pop.hidden;
-        }
-        
         function applyOptions() {
             const showGrid = document.getElementById("opt-grid").checked;
             smoothStrokes = document.getElementById("opt-smooth").checked;
@@ -2151,22 +1319,28 @@
             
             canvasFrame.classList.toggle("show-grid", showGrid);
             document.getElementById("wall-stage").classList.toggle("wall-stage-bordered", showBorders);
+            
+            lsSet(LS_OPTIONS, {
+                grid: showGrid,
+                smooth: smoothStrokes,
+                borders: showBorders
+            });
+            
             redrawStudio();
         }
         
-        document.addEventListener("click", (e) => {
-            const pop = document.getElementById("options-popover");
-            if (!pop.hidden && !pop.contains(e.target) && e.target.id !== "options-btn") {
-                pop.hidden = true;
-            }
-        });
+        function loadOptions() {
+            const saved = lsGet(LS_OPTIONS, { grid: false, smooth: true, borders: false });
+            document.getElementById("opt-grid").checked = Boolean(saved.grid);
+            document.getElementById("opt-smooth").checked = saved.smooth !== false;
+            document.getElementById("opt-borders").checked = Boolean(saved.borders);
+            applyOptions();
+        }
         
         let texts = [];
         let selectedText = null;
         
-        function frameUnit() {
-            return (canvasFrame.clientWidth || 460) / 500;
-        }
+        function frameUnit() { return (canvasFrame.clientWidth || 460) / 500; }
         function syncUnit() {
             canvasFrame.style.setProperty("--u", frameUnit() + "px");
             applyStudioTransform();
@@ -2205,21 +1379,9 @@
         }
         
         function removeSelectedOrAllText() {
-            if (selectedText) {
-                deleteTextItem(selectedText);
-                showToast("Removed selected text");
-                return;
-            }
-            if (texts.length === 1) {
-                deleteTextItem(texts[0]);
-                showToast("Removed text");
-                return;
-            }
-            if (texts.length > 1) {
-                clearTexts();
-                showToast("Removed all text boxes");
-                return;
-            }
+            if (selectedText) { deleteTextItem(selectedText); showToast("Removed selected text"); return; }
+            if (texts.length === 1) { deleteTextItem(texts[0]); showToast("Removed text"); return; }
+            if (texts.length > 1) { clearTexts(); showToast("Removed all text boxes"); return; }
             showToast("No text to remove");
         }
         
@@ -2303,10 +1465,7 @@
                 }
             });
             
-            del.addEventListener("click", (e) => {
-                e.stopPropagation();
-                deleteTextItem(item);
-            });
+            del.addEventListener("click", (e) => { e.stopPropagation(); deleteTextItem(item); });
             
             handle.addEventListener("pointerdown", (e) => {
                 e.preventDefault();
@@ -2381,7 +1540,7 @@
         
         document.addEventListener("pointerdown", (e) => {
             if (!selectedText) return;
-            if (e.target.closest && e.target.closest(".text-box, .toolbar, .text-tools, #del-text-btn")) return;
+            if (e.target.closest && e.target.closest(".text-box, .sheet, .tool-dock")) return;
             deselectText();
         });
         
@@ -2407,13 +1566,7 @@
                     x1 = x0 + Math.sign(x1 - x0 || 1) * side;
                     y1 = y0 + Math.sign(y1 - y0 || 1) * side;
                 }
-                return [
-                [x0, y0],
-                [x1, y0],
-                [x1, y1],
-                [x0, y1],
-                [x0, y0]
-                ];
+                return [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]];
             }
             
             if (shapeType === "circle") {
@@ -2442,12 +1595,7 @@
             let clean = (hex || "#0f172a").replace("#", "");
             if (clean.length === 3) clean = clean.split("").map(ch => ch + ch).join("");
             const num = parseInt(clean, 16);
-            return [
-            (num >> 16) & 255,
-            (num >> 8) & 255,
-            num & 255,
-            Math.round(alpha * 255)
-            ];
+            return [(num >> 16) & 255, (num >> 8) & 255, num & 255, Math.round(alpha * 255)];
         }
         
         function rgbToHex(r, g, b) {
@@ -2474,14 +1622,7 @@
             const sr = data[startIdx], sg = data[startIdx + 1], sb = data[startIdx + 2], sa = data[startIdx + 3];
             
             const tol = 32;
-            if (
-            Math.abs(sr - fr) <= 4 &&
-            Math.abs(sg - fg) <= 4 &&
-            Math.abs(sb - fb) <= 4 &&
-            Math.abs(sa - fa) <= 10
-            ) {
-                return;
-            }
+            if (Math.abs(sr - fr) <= 4 && Math.abs(sg - fg) <= 4 && Math.abs(sb - fb) <= 4 && Math.abs(sa - fa) <= 10) return;
             
             const visited = new Uint8Array(dim * dim);
             const stack = [sx, sy];
@@ -2502,29 +1643,18 @@
                 if (visited[pos]) continue;
                 
                 let lx = x;
-                while (lx > 0 && !visited[y * dim + (lx - 1)] && matches((y * dim + (lx - 1)) * 4)) {
-                    lx--;
-                }
+                while (lx > 0 && !visited[y * dim + (lx - 1)] && matches((y * dim + (lx - 1)) * 4)) lx--;
                 let rx = x;
-                while (rx < dim - 1 && !visited[y * dim + (rx + 1)] && matches((y * dim + (rx + 1)) * 4)) {
-                    rx++;
-                }
+                while (rx < dim - 1 && !visited[y * dim + (rx + 1)] && matches((y * dim + (rx + 1)) * 4)) rx++;
                 
                 for (let cx = lx; cx <= rx; cx++) {
                     const cPos = y * dim + cx;
                     visited[cPos] = 1;
                     const idx = cPos * 4;
-                    data[idx] = fr;
-                    data[idx + 1] = fg;
-                    data[idx + 2] = fb;
-                    data[idx + 3] = fa;
+                    data[idx] = fr; data[idx + 1] = fg; data[idx + 2] = fb; data[idx + 3] = fa;
                     
-                    if (y > 0 && !visited[(y - 1) * dim + cx] && matches(((y - 1) * dim + cx) * 4)) {
-                        stack.push(cx, y - 1);
-                    }
-                    if (y < dim - 1 && !visited[(y + 1) * dim + cx] && matches(((y + 1) * dim + cx) * 4)) {
-                        stack.push(cx, y + 1);
-                    }
+                    if (y > 0 && !visited[(y - 1) * dim + cx] && matches(((y - 1) * dim + cx) * 4)) stack.push(cx, y - 1);
+                    if (y < dim - 1 && !visited[(y + 1) * dim + cx] && matches(((y + 1) * dim + cx) * 4)) stack.push(cx, y + 1);
                 }
             }
             
@@ -2584,20 +1714,11 @@
             deselectText();
             const pt = getCanvasPoint(e);
             
-            if (currentTool === "eyedropper") {
-                pickColorAt(pt);
-                return;
-            }
+            if (currentTool === "eyedropper") { pickColorAt(pt); return; }
             
             if (currentTool === "fill") {
                 redoStack = [];
-                strokes.push({
-                    k: "fill",
-                    c: currentColor,
-                    a: currentOpacity,
-                    x: pt[0],
-                    y: pt[1]
-                });
+                strokes.push({ k: "fill", c: currentColor, a: currentOpacity, x: pt[0], y: pt[1] });
                 redrawStudio();
                 updateHistoryUI();
                 return;
@@ -2664,13 +1785,7 @@
             
             if (shapeStart && (currentTool === "line" || currentTool === "rect" || currentTool === "circle")) {
                 const pts = buildShapePoints(currentTool, shapeStart, pt, shiftPressed);
-                renderStrokesInstant(previewCtx, [{
-                    c: currentColor,
-                    s: currentSize,
-                    a: currentOpacity,
-                    sm: false,
-                    p: pts
-                }], 500, true);
+                renderStrokesInstant(previewCtx, [{ c: currentColor, s: currentSize, a: currentOpacity, sm: false, p: pts }], 500, true);
                 return;
             }
             
@@ -2684,9 +1799,7 @@
         }
         
         function endDraw(e) {
-            if (e && e.touches && e.touches.length < 2) {
-                studioPinchDist = null;
-            }
+            if (e && e.touches && e.touches.length < 2) studioPinchDist = null;
             if (isStudioPanning) {
                 isStudioPanning = false;
                 canvasFrame.classList.remove("panning");
@@ -2701,13 +1814,7 @@
                 
                 const pts = buildShapePoints(currentTool, shapeStart, pt || shapeStart, shiftPressed);
                 redoStack = [];
-                strokes.push({
-                    c: currentColor,
-                    s: currentSize,
-                    a: currentOpacity,
-                    sm: false,
-                    p: pts
-                });
+                strokes.push({ c: currentColor, s: currentSize, a: currentOpacity, sm: false, p: pts });
                 shapeStart = null;
                 isDrawing = false;
                 redrawStudio();
@@ -2725,9 +1832,7 @@
         function updateHistoryUI() {
             const strokeTxt = strokes.length + (strokes.length === 1 ? " stroke" : " strokes");
             const statsEl = document.getElementById("studio-stats");
-            if (statsEl) {
-                statsEl.textContent = `${strokeTxt} · ${wallEntries.length} on wall`;
-            }
+            if (statsEl) statsEl.textContent = `${strokeTxt} · ${wallEntries.length} on wall`;
             document.getElementById("undo-btn").disabled = strokes.length === 0;
             document.getElementById("redo-btn").disabled = redoStack.length === 0;
         }
@@ -2802,18 +1907,14 @@
                 } else {
                     ctx.beginPath();
                     ctx.moveTo(st.p[0][0] * ratio, st.p[0][1] * ratio);
-                    for (let i = 1; i < st.p.length; i++) {
-                        ctx.lineTo(st.p[i][0] * ratio, st.p[i][1] * ratio);
-                    }
+                    for (let i = 1; i < st.p.length; i++) ctx.lineTo(st.p[i][0] * ratio, st.p[i][1] * ratio);
                     ctx.stroke();
                 }
                 ctx.restore();
             }
         }
         
-        function redrawStudio() {
-            renderStrokesInstant(drawCtx, strokes, 500);
-        }
+        function redrawStudio() { renderStrokesInstant(drawCtx, strokes, 500); }
         
         function undoStroke() {
             if (isPreviewing || strokes.length === 0) return;
@@ -2887,15 +1988,10 @@
             for (const st of strokeList) {
                 if (st.k === "text") {
                     const text = String(st.t || "");
-                    for (let i = 0; i < text.length; i++) {
-                        segments.push({ type: "text", item: st, length: i + 1 });
-                    }
+                    for (let i = 0; i < text.length; i++) segments.push({ type: "text", item: st, length: i + 1 });
                     continue;
                 }
-                if (st.k === "fill") {
-                    segments.push({ type: "fill", item: st });
-                    continue;
-                }
+                if (st.k === "fill") { segments.push({ type: "fill", item: st }); continue; }
                 if (!st.p || st.p.length === 0) continue;
                 if (st.p.length === 1) {
                     segments.push({ type: "dot", c: st.c, s: st.s, a: st.a ?? 1, er: !!st.er, x: st.p[0][0], y: st.p[0][1] });
@@ -2961,11 +2057,8 @@
                     ctx.restore();
                 }
                 
-                if (idx < segments.length) {
-                    rafId = requestAnimationFrame(step);
-                } else if (onComplete) {
-                    onComplete();
-                }
+                if (idx < segments.length) rafId = requestAnimationFrame(step);
+                else if (onComplete) onComplete();
             }
             
             rafId = requestAnimationFrame(step);
@@ -3048,10 +2141,7 @@
             }
             
             const pad = 0.6;
-            minX -= pad;
-            maxX += pad;
-            minY -= pad;
-            maxY += pad;
+            minX -= pad; maxX += pad; minY -= pad; maxY += pad;
             
             let spanW = maxX - minX;
             let spanH = maxY - minY;
@@ -3111,7 +2201,7 @@
                 
                 ctx.fillStyle = "#0f172a";
                 ctx.font = `900 ${T * 0.16}px Inter, sans-serif`;
-                ctx.fillText("THE FREEDOM WALL", cx, cy + T * 0.24);
+                ctx.fillText("THE ARTcher", cx, cy + T * 0.24);
                 
                 ctx.fillStyle = "#64748b";
                 ctx.font = `600 ${T * 0.065}px "JetBrains Mono", monospace`;
@@ -3119,7 +2209,7 @@
             } else {
                 ctx.fillStyle = "#0f172a";
                 ctx.font = `900 ${T * 0.18}px Inter, sans-serif`;
-                ctx.fillText("THE FREEDOM WALL", cx, cy - T * 0.08);
+                ctx.fillText("THE ARTcher", cx, cy - T * 0.08);
                 
                 ctx.fillStyle = "#64748b";
                 ctx.font = `600 ${T * 0.07}px "JetBrains Mono", monospace`;
@@ -3147,14 +2237,10 @@
                 for (let gx = -radius; gx < radius; gx++) {
                     for (let gy = -radius; gy < radius; gy++) {
                         if (isCenterReserved(gx, gy)) continue;
-                        if (!occupied.has(`${gx},${gy}`)) {
-                            candidates.push({ gx, gy });
-                        }
+                        if (!occupied.has(`${gx},${gy}`)) candidates.push({ gx, gy });
                     }
                 }
-                if (candidates.length >= 6) {
-                    return candidates[Math.floor(Math.random() * candidates.length)];
-                }
+                if (candidates.length >= 6) return candidates[Math.floor(Math.random() * candidates.length)];
                 radius++;
             }
             return { gx: 2, gy: 0 };
@@ -3165,10 +2251,7 @@
             const ctrl = new AbortController();
             const to = setTimeout(() => ctrl.abort(), 5000);
             try {
-                const res = await fetch(`${GAS_WEB_APP_URL}?module=freedomwall&ping=1&_t=${Date.now()}`, {
-                    signal: ctrl.signal,
-                    cache: "no-store"
-                });
+                const res = await fetch(`${GAS_WEB_APP_URL}?module=freedomwall&ping=1&_t=${Date.now()}`, { signal: ctrl.signal, cache: "no-store" });
                 return res.ok;
             } catch (e) {
                 return false;
@@ -3207,9 +2290,11 @@
             setUploadUI();
             clearCanvas(true);
             document.getElementById("author-input").value = "";
+            setDrawTab("style");
             switchView("wall");
             launchConfetti();
             playPopTone(660);
+            haptic(20);
             
             if (AUTO_UPLOAD && await hasGoodInternet()) {
                 showToast("Uploading to the wall...");
@@ -3289,7 +2374,6 @@
                         removePending(entry.id);
                         occupied.push(entry);
                         done++;
-                        // Broadcast instantly via Supabase Realtime to everyone online
                         broadcastWallEntry(entry);
                     } else {
                         throw new Error((json && json.error) || "Upload failed");
@@ -3314,13 +2398,20 @@
         function setUploadUI() {
             const n = pending.length;
             const label = uploading ? "Uploading..." : `Upload (${n})`;
-            ["nav-upload-btn", "dock-upload-btn"].forEach(id => {
+            ["nav-upload-btn", "dock-upload-btn", "more-upload-btn"].forEach(id => {
                 const b = document.getElementById(id);
                 if (!b) return;
                 b.hidden = n === 0;
                 b.textContent = label;
                 b.disabled = uploading;
             });
+            const badge = document.getElementById("nav-badge");
+            if (badge) {
+                badge.hidden = n === 0;
+                badge.textContent = n;
+            }
+            const st = document.getElementById("more-upload-status");
+            if (st) st.textContent = n === 0 ? "Nothing waiting" : `${n} drawing${n === 1 ? "" : "s"} saved on this device`;
         }
         
         function updateWallCount(extra = "") {
@@ -3329,6 +2420,8 @@
             if (pending.length) txt += ` · ${pending.length} pending`;
             const el = document.getElementById("wall-count");
             if (el) el.textContent = txt + extra;
+            const home = document.getElementById("home-stats");
+            if (home) home.textContent = `${n} ${n === 1 ? "drawing" : "drawings"} on the wall`;
         }
         
         const sigOf = list => list.map(e => e.id).join("|");
@@ -3381,11 +2474,8 @@
         }
         
         function refreshWall() {
-            if (AUTO_UPLOAD && pending.length > 0 && navigator.onLine) {
-                uploadPending(false);
-            } else {
-                loadWallEntries({ autoPlay: true, manual: true });
-            }
+            if (AUTO_UPLOAD && pending.length > 0 && navigator.onLine) uploadPending(false);
+            else loadWallEntries({ autoPlay: true, manual: true });
         }
         
         function layoutMonument() {
@@ -3399,9 +2489,7 @@
         function createWallTile(entry, animate = false, isNewArrival = false) {
             const stage = document.getElementById("wall-stage");
             const tile = document.createElement("div");
-            tile.className = "wall-tile"
-            + (entry._pending ? " pending" : "")
-            + (isNewArrival ? " just-arrived" : "");
+            tile.className = "wall-tile" + (entry._pending ? " pending" : "") + (isNewArrival ? " just-arrived" : "");
             tile.dataset.id = entry.id;
             tile.style.left = entry.gx * CELL_SIZE + "px";
             tile.style.top = entry.gy * CELL_SIZE + "px";
@@ -3434,9 +2522,7 @@
                 renderStrokesInstant(ctx, entry.strokes || [], 360);
             }
             
-            if (isNewArrival) {
-                setTimeout(() => tile.classList.remove("just-arrived"), 5000);
-            }
+            if (isNewArrival) setTimeout(() => tile.classList.remove("just-arrived"), 5000);
             return cvs;
         }
         
@@ -3470,9 +2556,7 @@
             else applyStageTransform();
         }
         
-        function replayAllDrawings() {
-            renderWall(true);
-        }
+        function replayAllDrawings() { renderWall(true); }
         
         function applyStageTransform() {
             const stage = document.getElementById("wall-stage");
@@ -3482,7 +2566,7 @@
         function fitWallToScreen() {
             const viewport = document.getElementById("wall-viewport");
             const vw = viewport.clientWidth || window.innerWidth;
-            const vh = viewport.clientHeight || (window.innerHeight - 60);
+            const vh = viewport.clientHeight || (window.innerHeight - 120);
             
             let minX = -CELL_SIZE, maxX = CELL_SIZE, minY = -CELL_SIZE, maxY = CELL_SIZE;
             
@@ -3525,6 +2609,10 @@
             applyStageTransform();
         }
         
+        window.addEventListener("resize", () => {
+            if (document.getElementById("view-wall").classList.contains("active") && !userMoved) fitWallToScreen();
+        });
+        
         const wallViewport = document.getElementById("wall-viewport");
         wallViewport.addEventListener("mousedown", (e) => {
             isPanning = true;
@@ -3546,9 +2634,7 @@
             applyStageTransform();
         });
         
-        window.addEventListener("mouseup", () => {
-            isPanning = false;
-        });
+        window.addEventListener("mouseup", () => { isPanning = false; });
         
         wallViewport.addEventListener("wheel", (e) => {
             e.preventDefault();
@@ -3559,6 +2645,9 @@
         wallViewport.addEventListener("touchstart", (e) => {
             if (e.touches.length === 1) {
                 isPanning = true;
+                dragMoved = false;
+                downX = e.touches[0].clientX;
+                downY = e.touches[0].clientY;
                 startPanX = e.touches[0].clientX - panX;
                 startPanY = e.touches[0].clientY - panY;
             } else if (e.touches.length === 2) {
@@ -3572,6 +2661,7 @@
         
         wallViewport.addEventListener("touchmove", (e) => {
             if (e.touches.length === 1 && isPanning) {
+                if (Math.hypot(e.touches[0].clientX - downX, e.touches[0].clientY - downY) > 6) dragMoved = true;
                 userMoved = true;
                 panX = e.touches[0].clientX - startPanX;
                 panY = e.touches[0].clientY - startPanY;
@@ -3597,8 +2687,7 @@
         function openModal(entry) {
             modalEntry = entry;
             document.getElementById("modal-author").textContent = entry.author || "Anonymous";
-            const modal = document.getElementById("tile-modal");
-            modal.classList.add("open");
+            document.getElementById("tile-modal").classList.add("open");
             
             const mCtx = document.getElementById("modal-canvas").getContext("2d", { willReadFrequently: true });
             
@@ -3620,6 +2709,10 @@
             document.getElementById("tile-modal").classList.remove("open");
         }
         
+        // Android back / browser back: close modal first
+        window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+        
+        loadOptions();
         initStudioControls();
         layoutMonument();
         applyStageTransform();
