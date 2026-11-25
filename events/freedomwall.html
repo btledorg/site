@@ -1,0 +1,2612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>ARCHERSTUDIO</title>
+  <meta name="description" content="The Freedom Wall by ARCHERSTUDIO and BTLED ORG. Draw on your own tile and watch it replay on the shared wall." />
+  <meta name="theme-color" content="#ffffff" />
+
+  <!-- Tab icon / logo -->
+  <link rel="icon" type="image/png" href="../resources/image/logo/logo4.png" />
+  <link rel="apple-touch-icon" href="../resources/image/logo/logo4.png" />
+
+  <meta property="og:title" content="ARCHERSTUDIO — The Freedom Wall" />
+  <meta property="og:description" content="Draw on your own tile and watch it replay on the shared wall." />
+  <meta property="og:image" content="../resources/image/banner/freedom.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --accent: #1d4ed8;
+      --accent-hover: #1e40af;
+      --d-blue: #1d4ed8;
+      --d-red: #dc2626;
+      --d-green: #16a34a;
+      --d-amber: #d97706;
+      --d-violet: #7c3aed;
+      --d-pink: #db2777;
+      --d-cyan: #0891b2;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    [hidden] { display: none !important; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow-x: hidden;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Navigation Bar */
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+
+    @media (min-width: 700px) {
+      .topbar { padding-left: 28px; padding-right: 28px; }
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--ink);
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 4px 0;
+    }
+
+    .brand img {
+      height: 30px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .brand-text {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--ink);
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .btn:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-icon {
+      padding: 9px 11px;
+      min-width: 38px;
+    }
+
+    .btn-icon svg {
+      width: 17px;
+      height: 17px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: block;
+    }
+
+    .btn-primary {
+      background: var(--ink);
+      color: #ffffff;
+      border-color: var(--ink);
+    }
+
+    .btn-primary:hover {
+      background: #1e293b;
+      border-color: #1e293b;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .btn-accent:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-amber {
+      background: #fffbeb;
+      color: #92400e;
+      border-color: #fcd34d;
+    }
+
+    .btn-amber:hover {
+      background: #fef3c7;
+      border-color: #f59e0b;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    /* Music equalizer pulse when active */
+    #mute-btn.playing {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #eff6ff;
+    }
+
+    /* Views */
+    .view {
+      display: none;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding-top: 60px;
+    }
+
+    .view.active {
+      display: flex;
+    }
+
+    /* 1. Landing Overview with Full-Screen Dotted Grey Background */
+    #view-landing {
+      position: relative;
+      overflow: hidden;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 84px 24px 96px;
+      text-align: center;
+      background-color: #ffffff;
+      background-image: radial-gradient(#cbd5e13d 1.35px, transparent 1.35px);
+      background-size: 22px 22px;
+    }
+
+    /* Background doodle layer */
+    .doodles {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .doodle {
+      position: absolute;
+      overflow: visible;
+      fill: none;
+      stroke-width: 3.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.9;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .doodle:hover {
+      transform: scale(1.18) rotate(8deg) !important;
+    }
+
+    .doodle path,
+    .doodle circle,
+    .doodle ellipse {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      animation: draw 1.4s cubic-bezier(.4, .1, .2, 1) forwards;
+      animation-delay: var(--d, 0s);
+    }
+
+    .doodle .dot {
+      fill: currentColor;
+      stroke: none;
+      stroke-dasharray: none;
+      stroke-dashoffset: 0;
+      opacity: 0;
+      animation: pop 0.35s ease forwards;
+      animation-delay: var(--d, 0s);
+    }
+
+    @keyframes draw {
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes pop {
+      to { opacity: 1; }
+    }
+
+    .doodle { stroke: currentColor; }
+
+    .d1  { top: 14%;  left: 5%;   width: clamp(70px, 11vw, 150px); color: var(--d-blue);   transform: rotate(-8deg); }
+    .d2  { top: 12%;  right: 7%;  width: clamp(48px, 7vw, 96px);   color: var(--d-amber);  transform: rotate(12deg); }
+    .d3  { top: 46%;  left: 3%;   width: clamp(52px, 8vw, 110px);  color: var(--d-pink);   transform: rotate(-10deg); }
+    .d4  { top: 40%;  right: 4%;  width: clamp(70px, 10vw, 140px); color: var(--d-green);  transform: rotate(6deg); }
+    .d5  { bottom: 12%; left: 9%; width: clamp(60px, 9vw, 120px);  color: var(--d-violet); transform: rotate(8deg); }
+    .d6  { bottom: 14%; right: 10%; width: clamp(60px, 9vw, 120px); color: var(--d-red);   transform: rotate(-12deg); }
+    .d7  { top: 26%;  left: 22%;  width: clamp(30px, 4vw, 52px);   color: var(--d-cyan);   transform: rotate(20deg); }
+    .d8  { top: 24%;  right: 22%; width: clamp(60px, 8vw, 110px);  color: var(--d-violet); transform: rotate(-6deg); }
+    .d9  { bottom: 28%; left: 24%; width: clamp(34px, 4vw, 56px);  color: var(--d-amber);  }
+    .d10 { bottom: 26%; right: 24%; width: clamp(30px, 4vw, 52px); color: var(--d-blue);   transform: rotate(15deg); }
+
+    @media (max-width: 760px) {
+      .d7, .d8, .d9, .d10 { display: none; }
+      .d1 { top: 11%; left: 4%; }
+      .d2 { top: 10%; right: 5%; }
+      .d3 { top: auto; bottom: 22%; left: 4%; }
+      .d4 { top: auto; bottom: 20%; right: 4%; }
+      .d5 { bottom: 7%; left: 18%; }
+      .d6 { bottom: 6%; right: 18%; }
+      .doodle { opacity: 0.6; }
+    }
+
+    .landing-card {
+      position: relative;
+      z-index: 1;
+      max-width: 620px;
+      width: 100%;
+    }
+
+    .landing-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .landing-title {
+      font-size: clamp(40px, 8vw, 76px);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 18px;
+      color: var(--ink);
+    }
+
+    .landing-desc {
+      font-size: clamp(15px, 2.2vw, 18px);
+      line-height: 1.6;
+      color: var(--muted);
+      max-width: 46ch;
+      margin: 0 auto 30px;
+    }
+
+    .landing-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .landing-buttons .btn {
+      padding: 14px 26px;
+      font-size: 15px;
+      border-radius: 10px;
+    }
+
+    .landing-credit {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 22px;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .landing-credit img {
+      height: 18px;
+      width: auto;
+    }
+
+    @media (max-width: 480px) {
+      #view-landing { padding: 84px 20px 88px; }
+      .landing-buttons { flex-direction: column; }
+      .landing-buttons .btn { width: 100%; }
+      .brand-text { font-size: 14px; }
+      .nav-actions .btn { padding: 8px 10px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .doodle path,
+      .doodle circle,
+      .doodle ellipse { animation: none; stroke-dashoffset: 0; }
+      .doodle .dot { animation: none; opacity: 1; }
+    }
+
+    /* 2. Personal Drawing Studio */
+    #view-draw {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 74px 16px 32px;
+    }
+
+    .studio-wrap {
+      width: 100%;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .studio-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .studio-header h2 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .canvas-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background-color: #ffffff;
+      border: 2px solid var(--ink);
+      border-radius: 12px;
+      touch-action: none;
+    }
+
+    .canvas-frame.show-grid {
+      background-image:
+        linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+        linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+      background-size: 10% 10%;
+    }
+
+    #draw-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+      border-radius: 10px;
+    }
+
+    /* Draggable / editable text layer */
+    .text-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .text-box {
+      position: absolute;
+      pointer-events: auto;
+      font-size: calc(var(--fs, 30) * var(--u, 1px));
+      font-family: var(--ff, 'Inter', sans-serif);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .text-content {
+      display: block;
+      min-width: calc(24 * var(--u, 1px));
+      min-height: 1.2em;
+      white-space: pre;
+      outline: none;
+      padding: 0;
+      cursor: text;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    .text-content:empty::before {
+      content: "Type here";
+      opacity: 0.3;
+    }
+
+    .text-box.selected .text-content {
+      outline: 1.5px dashed var(--accent);
+      outline-offset: 4px;
+    }
+
+    .text-handle,
+    .text-del {
+      display: none;
+      position: absolute;
+      top: -34px;
+      width: 28px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      line-height: 1;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
+      cursor: pointer;
+    }
+
+    .text-handle { left: -4px; cursor: move; touch-action: none; }
+    .text-del { left: 30px; color: var(--d-red); }
+
+    .text-box.selected .text-handle,
+    .text-box.selected .text-del { display: flex; }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #ffffff;
+    }
+
+    .swatches {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 23px;
+      height: 23px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .swatch.active {
+      transform: scale(1.18);
+      box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--ink);
+    }
+
+    /* Color Pad (Millions of Colors Picker) */
+    .color-pad-wrap {
+      position: relative;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: conic-gradient(#ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #a855f7, #ec4899, #ef4444);
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 0 1px #cbd5e1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s;
+    }
+
+    .color-pad-wrap.active {
+      transform: scale(1.18);
+      box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--ink);
+    }
+
+    .color-pad-wrap::after {
+      content: "+";
+      font-size: 13px;
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    #color-pad-input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+    }
+
+    .sizes {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .size-btn {
+      width: 27px;
+      height: 27px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .size-btn.active {
+      border-color: var(--ink);
+      background: #f1f5f9;
+    }
+
+    .size-dot {
+      border-radius: 50%;
+      background: var(--ink);
+    }
+
+    .text-tools {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .text-tools .btn { padding: 8px 11px; }
+    .text-tools .grow { flex: 1; }
+
+    .font-select {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      max-width: 132px;
+    }
+
+    /* Studio Controls Row: Undo, Redo + Icon-only Clear, Replay, Save + Options */
+    .studio-controls {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      position: relative;
+    }
+
+    .studio-controls .btn-hist {
+      flex: 1;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+
+    /* Options Popover */
+    .options-popover {
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 8px);
+      width: 230px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .opt-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .opt-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .opt-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .submit-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .name-input {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .name-input:focus {
+      border-color: var(--ink);
+    }
+
+    .studio-note {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .studio-note b { color: #92400e; }
+
+    /* 3. Main Pure-White Freedom Wall */
+    #view-wall {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      background: #ffffff;
+      padding-top: 60px;
+    }
+
+    #wall-viewport {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 60px);
+      overflow: hidden;
+      background: #ffffff;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #wall-viewport:active {
+      cursor: grabbing;
+    }
+
+    #wall-stage {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    .center-monument {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: #ffffff;
+      user-select: none;
+      pointer-events: none;
+      z-index: 5;
+      padding: 16px;
+    }
+
+    .center-monument img {
+      max-width: 120px;
+      max-height: 90px;
+      object-fit: contain;
+      margin-bottom: 12px;
+    }
+
+    .center-event-title {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #0f172a;
+      line-height: 1.05;
+    }
+
+    .center-event-sub {
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .wall-tile {
+      position: absolute;
+      background: #ffffff;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+
+    .wall-tile:hover {
+      z-index: 20;
+      transform: scale(1.04);
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+      border-radius: 8px;
+    }
+
+    .wall-tile canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .wall-tile.pending::after {
+      content: "";
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+    }
+
+    .wall-tile-tag {
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.85);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .wall-tile:hover .wall-tile-tag {
+      opacity: 1;
+    }
+
+    /* Floating Bottom Dock on Wall */
+    .wall-dock {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      z-index: 90;
+      max-width: calc(100vw - 16px);
+    }
+
+    .dock-stat {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 0 10px;
+      white-space: nowrap;
+    }
+
+    .dock-btn {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .dock-btn:hover {
+      background: #f1f5f9;
+    }
+
+    .dock-btn:disabled { opacity: 0.5; pointer-events: none; }
+
+    .dock-btn.primary {
+      background: var(--ink);
+      color: #ffffff;
+    }
+
+    .dock-btn.primary:hover {
+      background: #1e293b;
+    }
+
+    .dock-btn.amber {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    /* Lightbox Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 200;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 20px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-head h3 {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .modal-canvas-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #modal-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .modal-actions .btn { flex: 1; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 74px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-12px);
+      background: var(--ink);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      z-index: 300;
+      max-width: calc(100vw - 24px);
+      text-align: center;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Fun Celebration Confetti */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 250;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="topbar">
+    <button class="brand" onclick="switchView('landing')" aria-label="ARCHERSTUDIO home">
+      <img src="../resources/image/logo/logo4.png" alt="" onerror="this.style.display='none'">
+      <span class="brand-text">ARCHERSTUDIO</span>
+    </button>
+    <div class="nav-actions">
+      <button class="btn btn-amber" id="nav-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
+      <button class="btn" id="nav-wall-btn" onclick="switchView('wall')">View wall</button>
+      <button class="btn btn-primary" id="nav-draw-btn" onclick="switchView('draw')">+ Draw</button>
+      <button class="btn btn-icon" id="mute-btn" onclick="toggleMusic()" aria-label="Toggle background music" title="Background Music (Muted)">
+        <!-- Muted speaker icon by default -->
+        <svg id="mute-icon" viewBox="0 0 24 24">
+          <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- View 1: Landing Page -->
+  <main id="view-landing" class="view active">
+
+    <div class="doodles" aria-hidden="true">
+      <svg class="doodle d1" onclick="popDoodle(this)" viewBox="0 0 100 40"><path pathLength="1" style="--d:.1s" d="M4 24 C14 2, 22 2, 30 20 S46 38, 54 20 S72 2, 80 20 S92 34, 97 18"/></svg>
+      <svg class="doodle d2" onclick="popDoodle(this)" viewBox="0 0 100 100"><path pathLength="1" style="--d:.4s" d="M50 8 L61 38 L93 40 L68 60 L77 92 L50 74 L23 92 L32 60 L7 40 L39 38 Z"/></svg>
+      <svg class="doodle d3" onclick="popDoodle(this)" viewBox="0 0 100 100"><path pathLength="1" style="--d:.7s" d="M50 86 C8 56 14 18 38 22 C46 23 50 30 50 35 C50 30 54 23 62 22 C86 18 92 56 50 86 Z"/></svg>
+      <svg class="doodle d4" onclick="popDoodle(this)" viewBox="0 0 100 100"><path pathLength="1" style="--d:1s" d="M8 82 C20 30, 62 18, 70 44 C76 66, 44 66, 50 44 C54 30, 78 30, 90 58 M90 58 L74 56 M90 58 L92 42"/></svg>
+      <svg class="doodle d5" onclick="popDoodle(this)" viewBox="0 0 100 100"><path pathLength="1" style="--d:1.3s" d="M56 6 L26 54 L50 54 L42 94 L78 40 L54 40 Z"/></svg>
+      <svg class="doodle d6" onclick="popDoodle(this)" viewBox="0 0 100 100"><path pathLength="1" style="--d:1.6s" d="M14 88 L20 64 L68 16 L84 32 L36 80 Z M58 26 L74 42 M14 88 L30 82"/></svg>
+      <svg class="doodle d7" onclick="popDoodle(this)" viewBox="0 0 100 100"><path pathLength="1" style="--d:.9s" d="M50 12 V88 M12 50 H88"/></svg>
+      <svg class="doodle d8" onclick="popDoodle(this)" viewBox="0 0 100 70"><path pathLength="1" style="--d:1.2s" d="M10 40 C10 8, 80 4, 78 34 C76 62, 18 66, 24 36 C28 16, 66 16, 62 36"/></svg>
+      <svg class="doodle d9" onclick="popDoodle(this)" viewBox="0 0 100 100"><circle class="dot" style="--d:1.5s" cx="20" cy="30" r="7"/><circle class="dot" style="--d:1.65s" cx="58" cy="18" r="7"/><circle class="dot" style="--d:1.8s" cx="76" cy="62" r="7"/><circle class="dot" style="--d:1.95s" cx="34" cy="76" r="7"/></svg>
+      <svg class="doodle d10" onclick="popDoodle(this)" viewBox="0 0 100 100"><path pathLength="1" style="--d:1.8s" d="M52 10 C84 8, 94 44, 76 74 C58 98, 14 88, 10 54 C8 28, 30 14, 50 20"/></svg>
+    </div>
+
+    <div class="landing-card">
+      <h1 class="landing-title">The Freedom Wall</h1>
+      <p class="landing-desc">
+        Draw, write, post it, and watch it replay stroke by stroke.
+      </p>
+      <div class="landing-buttons">
+        <button class="btn btn-primary" onclick="switchView('draw')">Start drawing</button>
+        <button class="btn" onclick="switchView('wall')">View the wall</button>
+      </div>
+    </div>
+
+    <div class="landing-credit">
+      <img src="../resources/image/logo/logo4.png" alt="" onerror="this.style.display='none'">
+      <span>ARCHERSTUDIO &times; BTLED ORG</span>
+    </div>
+  </main>
+
+  <!-- View 2: Personal Drawing Canvas -->
+  <section id="view-draw" class="view">
+    <div class="studio-wrap">
+      <div class="studio-header">
+        <h2>Your Canvas</h2>
+        <span style="font-size:12px;color:var(--muted);" id="stroke-counter">0 strokes</span>
+      </div>
+
+      <div class="canvas-frame" id="canvas-frame">
+        <canvas id="draw-canvas" width="500" height="500"></canvas>
+        <div class="text-layer" id="text-layer"></div>
+      </div>
+
+      <!-- Colors (Presets + Color Pad) & Brush Sizes -->
+      <div class="toolbar">
+        <div class="swatches" id="swatch-list">
+          <!-- Preset swatches injected here + Color Pad below -->
+          <label class="color-pad-wrap" id="color-pad-btn" title="Color Pad (Millions of Colors)" aria-label="Color Pad">
+            <input type="color" id="color-pad-input" value="#1d4ed8" />
+          </label>
+        </div>
+        <div class="sizes" id="size-list"></div>
+      </div>
+
+      <!-- Text & Font Chooser Row -->
+      <div class="text-tools">
+        <button class="btn grow" onclick="addText()">T&nbsp; Add text</button>
+        <select id="font-select" class="font-select" onchange="changeTextFont(this.value)" aria-label="Choose font" title="Choose Font">
+          <option value="Inter">Sans (Inter)</option>
+          <option value="Caveat">Handwriting</option>
+          <option value="Playfair Display">Serif</option>
+          <option value="Press Start 2P">Pixel</option>
+          <option value="JetBrains Mono">Mono</option>
+        </select>
+        <button class="btn" onclick="changeTextSize(-1)" aria-label="Smaller text" title="Smaller text">A&minus;</button>
+        <button class="btn" onclick="changeTextSize(1)" aria-label="Bigger text" title="Bigger text">A+</button>
+      </div>
+
+      <!-- Undo, Redo + Icon-Only Clear, Replay, Save + Options -->
+      <div class="studio-controls">
+        <button class="btn btn-hist" id="undo-btn" onclick="undoStroke()">Undo</button>
+        <button class="btn btn-hist" id="redo-btn" onclick="redoStroke()" disabled>Redo</button>
+
+        <!-- Icon-only: Clear -->
+        <button class="btn btn-icon" onclick="clearCanvas()" aria-label="Clear canvas" title="Clear">
+          <svg viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+          </svg>
+        </button>
+
+        <!-- Icon-only: Replay -->
+        <button class="btn btn-icon" onclick="previewDrawing()" aria-label="Replay drawing" title="Replay">
+          <svg viewBox="0 0 24 24">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </button>
+
+        <!-- Icon-only: Save PNG -->
+        <button class="btn btn-icon" onclick="saveStudioPNG()" aria-label="Save PNG" title="Save PNG">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </button>
+
+        <!-- Options Toggle -->
+        <button class="btn btn-icon" id="options-btn" onclick="toggleOptions(event)" aria-label="Canvas options" title="Options">
+          <svg viewBox="0 0 24 24">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+        </button>
+
+        <!-- Options Popover Menu -->
+        <div class="options-popover" id="options-popover" hidden>
+          <div class="opt-title">Studio Options</div>
+          <label class="opt-row">
+            <span>Canvas Grid Guide</span>
+            <input type="checkbox" id="opt-grid" onchange="applyOptions()">
+          </label>
+          <label class="opt-row">
+            <span>Smooth Brush Strokes</span>
+            <input type="checkbox" id="opt-smooth" checked onchange="applyOptions()">
+          </label>
+          <label class="opt-row">
+            <span>Wall Tile Borders</span>
+            <input type="checkbox" id="opt-borders" onchange="applyOptions()">
+          </label>
+        </div>
+      </div>
+
+      <div class="submit-row">
+        <input type="text" id="author-input" class="name-input" maxlength="24" placeholder="Your name or alias (optional)" />
+        <button class="btn btn-accent" id="submit-btn" onclick="submitToWall()">Post to Wall</button>
+      </div>
+
+      <p class="studio-note" id="studio-note">
+        Tap <b>Add text</b>, pick a font, then drag the ✥ handle to move it.<br>
+        Posts upload automatically when online, or save locally if offline.
+        <span id="pending-note" hidden></span>
+      </p>
+    </div>
+  </section>
+
+  <!-- View 3: Main Random-Grid Whiteboard -->
+  <section id="view-wall" class="view">
+    <div id="wall-viewport">
+      <div id="wall-stage">
+        <div class="center-monument" id="center-monument">
+          <img src="../resources/image/logo/freedom.png" alt="Event Logo" onerror="this.style.display='none'">
+          <div class="center-event-title">THE FREEDOM WALL</div>
+          <div class="center-event-sub">ARCHERSTUDIO &times; BTLED ORG</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wall-dock">
+      <span class="dock-stat" id="wall-count">Loading...</span>
+      <button class="dock-btn" onclick="replayAllDrawings()">Play All</button>
+      <button class="dock-btn" id="refresh-btn" onclick="refreshWall()">Refresh</button>
+      <button class="dock-btn" onclick="resetFit()">Fit</button>
+      <button class="dock-btn" onclick="zoomWall(1.25)">+</button>
+      <button class="dock-btn" onclick="zoomWall(0.8)">&minus;</button>
+      <button class="dock-btn" onclick="saveWallPNG()">Save PNG</button>
+      <button class="dock-btn amber" id="dock-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
+      <button class="dock-btn primary" onclick="switchView('draw')">+ Draw</button>
+    </div>
+  </section>
+
+  <!-- Single Tile Lightbox Modal -->
+  <div class="modal-backdrop" id="tile-modal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="modal-author">Anonymous</h3>
+        <button class="btn" style="padding:4px 10px;" onclick="closeModal()">Close</button>
+      </div>
+      <div class="modal-canvas-wrap">
+        <canvas id="modal-canvas" width="500" height="500"></canvas>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="modal-replay-btn">Replay Strokes</button>
+        <button class="btn" id="modal-save-btn">Save PNG</button>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="confetti-canvas"></canvas>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // =========================================================================
+    // CONFIG
+    // =========================================================================
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNGn9fFT4HRkKLgh7CJnNek604Be08n-oY3PaEDJZIapCGZlvxrvJE/exec";
+    const LOGO_PATH = "../resources/image/logo/freedom.png";
+    const AUTO_UPLOAD = true;
+
+    const LS_QUEUE = "fw_pending_v1";
+    const LS_CACHE = "fw_cache_v1";
+
+    const LOFI_MP3_PATH = "../resources/audio/song1.mp3";
+
+    // =========================================================================
+    // FUN AMBIENT LO-FI BACKGROUND MUSIC (MP3 + Web Audio fallback)
+    // =========================================================================
+    let audioCtx = null;
+    let lofiAudio = null;
+    let usingMp3 = true;
+    let musicPlaying = false;
+    let musicTimer = null;
+    let chordStep = 0;
+
+    const LOFI_CHORDS = [
+      [261.63, 329.63, 392.00, 493.88],
+      [220.00, 261.63, 329.63, 392.00],
+      [293.66, 349.23, 440.00, 523.25],
+      [196.00, 246.94, 293.66, 349.23]
+    ];
+
+    function playChord(freqs) {
+      if (!audioCtx || !musicPlaying) return;
+      const now = audioCtx.currentTime;
+      freqs.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        osc.type = idx === 0 ? "sine" : "triangle";
+        osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(680, now);
+
+        gain.gain.setValueAtTime(0.0001, now + idx * 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.018, now + idx * 0.04 + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now + idx * 0.04);
+        osc.stop(now + 2.6);
+      });
+    }
+
+    function updateMuteIcon() {
+      const btn = document.getElementById("mute-btn");
+      const icon = document.getElementById("mute-icon");
+      if (musicPlaying) {
+        btn.classList.add("playing");
+        btn.title = "Mute Background Music";
+        icon.innerHTML = `
+          <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        `;
+      } else {
+        btn.classList.remove("playing");
+        btn.title = "Play Background Music";
+        icon.innerHTML = `
+          <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        `;
+      }
+    }
+
+    async function toggleMusic() {
+      musicPlaying = !musicPlaying;
+      updateMuteIcon();
+
+      if (musicPlaying) {
+        if (usingMp3) {
+          if (!lofiAudio) {
+            lofiAudio = new Audio(LOFI_MP3_PATH);
+            lofiAudio.loop = true;
+            lofiAudio.volume = 0.35;
+          }
+          try {
+            await lofiAudio.play();
+            showToast("Chill background music on ♪");
+            return;
+          } catch (error) {
+            usingMp3 = false;
+          }
+        }
+
+        if (!audioCtx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+        playChord(LOFI_CHORDS[chordStep % LOFI_CHORDS.length]);
+        chordStep++;
+        musicTimer = setInterval(() => {
+          playChord(LOFI_CHORDS[chordStep % LOFI_CHORDS.length]);
+          chordStep++;
+        }, 2600);
+        showToast("Chill background music on ♪");
+      } else {
+        if (lofiAudio) {
+          lofiAudio.pause();
+          lofiAudio.currentTime = 0;
+        }
+        clearInterval(musicTimer);
+        musicTimer = null;
+        showToast("Music muted");
+      }
+    }
+
+    // Playful pop sound & confetti burst
+    function playPopTone(freq = 520) {
+      if (!musicPlaying || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.4, now + 0.09);
+      gain.gain.setValueAtTime(0.03, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.12);
+    }
+
+    function popDoodle(el) {
+      playPopTone(440 + Math.random() * 260);
+      el.animate([
+        { transform: "scale(1)" },
+        { transform: "scale(1.3) rotate(14deg)" },
+        { transform: "scale(1)" }
+      ], { duration: 320, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)" });
+    }
+
+    function launchConfetti() {
+      const cvs = document.getElementById("confetti-canvas");
+      const ctx = cvs.getContext("2d");
+      cvs.width = window.innerWidth;
+      cvs.height = window.innerHeight;
+
+      const palette = ["#1d4ed8", "#dc2626", "#16a34a", "#d97706", "#7c3aed", "#db2777", "#0891b2"];
+      const pieces = Array.from({ length: 70 }, () => ({
+        x: cvs.width * (0.25 + Math.random() * 0.5),
+        y: cvs.height * 0.45,
+        vx: (Math.random() - 0.5) * 14,
+        vy: -Math.random() * 14 - 4,
+        size: 5 + Math.random() * 6,
+        color: palette[Math.floor(Math.random() * palette.length)],
+        rot: Math.random() * Math.PI * 2,
+        vrot: (Math.random() - 0.5) * 0.25
+      }));
+
+      let frame = 0;
+      function tick() {
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        for (const p of pieces) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.45;
+          p.rot += p.vrot;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+          ctx.restore();
+        }
+        frame++;
+        if (frame < 75) requestAnimationFrame(tick);
+        else ctx.clearRect(0, 0, cvs.width, cvs.height);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // =========================================================================
+    // APP STATE
+    // =========================================================================
+    const COLORS = ["#0f172a", "#1d4ed8", "#dc2626", "#16a34a", "#d97706", "#7c3aed", "#db2777", "#0891b2"];
+    const SIZES = [3, 6, 12, 20];
+    const TEXT_FS = [16, 22, 30, 42, 58, 76];
+    const FONT_FAMILIES = {
+      "Inter": "'Inter', -apple-system, sans-serif",
+      "Caveat": "'Caveat', cursive",
+      "Playfair Display": "'Playfair Display', Georgia, serif",
+      "Press Start 2P": "'Press Start 2P', monospace",
+      "JetBrains Mono": "'JetBrains Mono', monospace"
+    };
+    const CELL_SIZE = 190;
+
+    let currentColor = COLORS[0];
+    let currentSize = SIZES[1];
+    let defaultTextFs = 30;
+    let defaultTextFont = "Inter";
+    let smoothStrokes = true;
+
+    let strokes = [];
+    let redoStack = [];
+    let currentStroke = null;
+    let isDrawing = false;
+    let isPreviewing = false;
+
+    let serverEntries = [];
+    let pending = [];
+    let wallEntries = [];
+    let wallTileAnimators = [];
+    let loadingWall = false;
+    let uploading = false;
+
+    // Pan & Zoom state
+    let panX = 0, panY = 0, scale = 1;
+    let isPanning = false, startPanX = 0, startPanY = 0;
+    let userMoved = false;
+    let dragMoved = false;
+    let downX = 0, downY = 0;
+
+    function lsGet(key, fallback) {
+      try {
+        const v = localStorage.getItem(key);
+        return v ? JSON.parse(v) : fallback;
+      } catch (e) { return fallback; }
+    }
+    function lsSet(key, val) {
+      try { localStorage.setItem(key, JSON.stringify(val)); return true; }
+      catch (e) { return false; }
+    }
+
+    pending = lsGet(LS_QUEUE, []);
+    serverEntries = lsGet(LS_CACHE, []);
+    rebuildEntries();
+
+    function rebuildEntries() {
+      const ids = new Set(serverEntries.map(e => e.id));
+      wallEntries = serverEntries.concat(
+        pending.filter(p => !ids.has(p.id)).map(p => Object.assign({}, p, { _pending: true }))
+      );
+    }
+
+    // =========================================================================
+    // INITIALIZATION
+    // =========================================================================
+    const drawCanvas = document.getElementById("draw-canvas");
+    const drawCtx = drawCanvas.getContext("2d");
+    const canvasFrame = document.getElementById("canvas-frame");
+    const textLayer = document.getElementById("text-layer");
+
+    function selectColor(col, isCustomPad = false) {
+      currentColor = col;
+      document.querySelectorAll(".swatch").forEach(el => el.classList.remove("active"));
+      const padBtn = document.getElementById("color-pad-btn");
+      if (isCustomPad) {
+        padBtn.classList.add("active");
+        padBtn.style.background = col;
+      } else {
+        padBtn.classList.remove("active");
+        padBtn.style.background = "";
+      }
+      if (selectedText) {
+        selectedText.c = col;
+        selectedText.el.style.color = col;
+      }
+    }
+
+    function initStudioControls() {
+      const swatchList = document.getElementById("swatch-list");
+      const padBtn = document.getElementById("color-pad-btn");
+
+      COLORS.forEach((col, i) => {
+        const btn = document.createElement("button");
+        btn.className = "swatch" + (i === 0 ? " active" : "");
+        btn.style.backgroundColor = col;
+        btn.setAttribute("aria-label", "Color " + col);
+        btn.onclick = () => {
+          selectColor(col, false);
+          btn.classList.add("active");
+        };
+        swatchList.insertBefore(btn, padBtn);
+      });
+
+      // Millions of colors picker
+      const padInput = document.getElementById("color-pad-input");
+      padInput.addEventListener("input", (e) => {
+        selectColor(e.target.value, true);
+      });
+
+      const sizeList = document.getElementById("size-list");
+      SIZES.forEach((sz, i) => {
+        const btn = document.createElement("button");
+        btn.className = "size-btn" + (i === 1 ? " active" : "");
+        btn.setAttribute("aria-label", "Brush size " + sz);
+        const dot = document.createElement("span");
+        dot.className = "size-dot";
+        dot.style.width = Math.max(4, sz * 0.85) + "px";
+        dot.style.height = Math.max(4, sz * 0.85) + "px";
+        btn.appendChild(dot);
+        btn.onclick = () => {
+          currentSize = sz;
+          document.querySelectorAll(".size-btn").forEach(el => el.classList.remove("active"));
+          btn.classList.add("active");
+        };
+        sizeList.appendChild(btn);
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove("show"), 3200);
+    }
+
+    function switchView(viewName) {
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById("view-" + viewName).classList.add("active");
+
+      if (viewName === "draw") {
+        syncUnit();
+      }
+
+      if (viewName === "wall") {
+        userMoved = false;
+        renderWall(true);
+        loadWallEntries({ autoPlay: true });
+      }
+    }
+
+    // =========================================================================
+    // OPTIONS POPOVER
+    // =========================================================================
+    function toggleOptions(e) {
+      e.stopPropagation();
+      const pop = document.getElementById("options-popover");
+      pop.hidden = !pop.hidden;
+    }
+
+    function applyOptions() {
+      const showGrid = document.getElementById("opt-grid").checked;
+      smoothStrokes = document.getElementById("opt-smooth").checked;
+      const showBorders = document.getElementById("opt-borders").checked;
+
+      canvasFrame.classList.toggle("show-grid", showGrid);
+      document.getElementById("wall-stage").classList.toggle("wall-stage-bordered", showBorders);
+      redrawStudio();
+    }
+
+    document.addEventListener("click", (e) => {
+      const pop = document.getElementById("options-popover");
+      if (!pop.hidden && !pop.contains(e.target) && e.target.id !== "options-btn") {
+        pop.hidden = true;
+      }
+    });
+
+    // =========================================================================
+    // TEXT & FONT CHOOSER (draggable + editable)
+    // =========================================================================
+    let texts = [];
+    let selectedText = null;
+
+    function frameUnit() {
+      return (canvasFrame.clientWidth || 460) / 500;
+    }
+    function syncUnit() {
+      canvasFrame.style.setProperty("--u", frameUnit() + "px");
+    }
+    if (window.ResizeObserver) new ResizeObserver(syncUnit).observe(canvasFrame);
+    window.addEventListener("resize", syncUnit);
+
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    function placeText(item) {
+      item.el.style.left = (item.x / 5) + "%";
+      item.el.style.top = (item.y / 5) + "%";
+    }
+
+    function selectText(item) {
+      texts.forEach(t => t.el.classList.remove("selected"));
+      selectedText = item;
+      if (item) {
+        item.el.classList.add("selected");
+        document.getElementById("font-select").value = item.fn || "Inter";
+      }
+    }
+
+    function deselectText() {
+      texts.forEach(t => t.el.classList.remove("selected"));
+      selectedText = null;
+      const ae = document.activeElement;
+      if (ae && textLayer.contains(ae)) ae.blur();
+    }
+
+    function addText(init) {
+      syncUnit();
+      const fontKey = (init && init.fn) || defaultTextFont;
+      const item = Object.assign({
+        id: "t" + Date.now() + Math.random().toString(36).slice(2, 5),
+        t: "", x: 130, y: 210, c: currentColor, f: defaultTextFs, fn: fontKey
+      }, init || {});
+
+      const box = document.createElement("div");
+      box.className = "text-box";
+      box.style.setProperty("--fs", item.f);
+      box.style.setProperty("--ff", FONT_FAMILIES[item.fn] || FONT_FAMILIES["Inter"]);
+      box.style.color = item.c;
+
+      const handle = document.createElement("button");
+      handle.className = "text-handle";
+      handle.type = "button";
+      handle.textContent = "✥";
+      handle.setAttribute("aria-label", "Drag text");
+
+      const del = document.createElement("button");
+      del.className = "text-del";
+      del.type = "button";
+      del.textContent = "×";
+      del.setAttribute("aria-label", "Delete text");
+
+      const content = document.createElement("div");
+      content.className = "text-content";
+      content.contentEditable = "plaintext-only";
+      if (content.contentEditable !== "plaintext-only") content.contentEditable = "true";
+      content.spellcheck = false;
+      content.textContent = item.t;
+
+      box.appendChild(handle);
+      box.appendChild(del);
+      box.appendChild(content);
+      textLayer.appendChild(box);
+
+      item.el = box;
+      item.content = content;
+      texts.push(item);
+      placeText(item);
+
+      content.addEventListener("input", () => {
+        item.t = (content.innerText || "").replace(/\n+$/, "");
+      });
+      content.addEventListener("focus", () => selectText(item));
+      box.addEventListener("pointerdown", () => selectText(item));
+
+      del.addEventListener("click", (e) => {
+        e.stopPropagation();
+        texts = texts.filter(t => t !== item);
+        box.remove();
+        if (selectedText === item) selectedText = null;
+      });
+
+      handle.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        selectText(item);
+        handle.setPointerCapture(e.pointerId);
+        const u = frameUnit();
+        const sx = e.clientX, sy = e.clientY, ox = item.x, oy = item.y;
+        const move = (ev) => {
+          item.x = clamp(ox + (ev.clientX - sx) / u, 0, 470);
+          item.y = clamp(oy + (ev.clientY - sy) / u, 0, 480);
+          placeText(item);
+        };
+        const up = () => {
+          handle.removeEventListener("pointermove", move);
+          handle.removeEventListener("pointerup", up);
+          handle.removeEventListener("pointercancel", up);
+        };
+        handle.addEventListener("pointermove", move);
+        handle.addEventListener("pointerup", up);
+        handle.addEventListener("pointercancel", up);
+      });
+
+      selectText(item);
+      if (!init) setTimeout(() => content.focus(), 0);
+      return item;
+    }
+
+    function changeTextFont(fontKey) {
+      defaultTextFont = fontKey;
+      if (selectedText) {
+        selectedText.fn = fontKey;
+        selectedText.el.style.setProperty("--ff", FONT_FAMILIES[fontKey] || FONT_FAMILIES["Inter"]);
+      } else {
+        showToast("Font set to " + fontKey);
+      }
+    }
+
+    function changeTextSize(dir) {
+      const cur = selectedText ? selectedText.f : defaultTextFs;
+      let idx = TEXT_FS.reduce((best, v, i) => Math.abs(v - cur) < Math.abs(TEXT_FS[best] - cur) ? i : best, 0);
+      idx = clamp(idx + dir, 0, TEXT_FS.length - 1);
+      const f = TEXT_FS[idx];
+      if (selectedText) {
+        selectedText.f = f;
+        selectedText.el.style.setProperty("--fs", f);
+      } else {
+        defaultTextFs = f;
+        showToast("Text size set. Tap Add text.");
+      }
+    }
+
+    function getTextItems() {
+      return texts
+        .filter(t => (t.t || "").trim().length > 0)
+        .map(t => ({
+          k: "text",
+          t: t.t.slice(0, 120),
+          x: Math.round(t.x),
+          y: Math.round(t.y),
+          c: t.c,
+          f: t.f,
+          fn: t.fn || "Inter"
+        }));
+    }
+
+    function clearTexts() {
+      texts.forEach(t => t.el.remove());
+      texts = [];
+      selectedText = null;
+    }
+
+    document.addEventListener("pointerdown", (e) => {
+      if (!selectedText) return;
+      if (e.target.closest && e.target.closest(".text-box, .toolbar, .text-tools")) return;
+      deselectText();
+    });
+
+    // =========================================================================
+    // DRAWING ENGINE + UNDO / REDO
+    // =========================================================================
+    function getCanvasPoint(e) {
+      const rect = drawCanvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const x = Math.round(((clientX - rect.left) / rect.width) * 500);
+      const y = Math.round(((clientY - rect.top) / rect.height) * 500);
+      return [Math.max(0, Math.min(500, x)), Math.max(0, Math.min(500, y))];
+    }
+
+    function startDraw(e) {
+      if (isPreviewing) return;
+      e.preventDefault();
+      deselectText();
+      isDrawing = true;
+      redoStack = [];
+      const pt = getCanvasPoint(e);
+      currentStroke = { c: currentColor, s: currentSize, sm: smoothStrokes, p: [pt] };
+      strokes.push(currentStroke);
+      redrawStudio();
+      updateHistoryUI();
+    }
+
+    function moveDraw(e) {
+      if (!isDrawing || !currentStroke || isPreviewing) return;
+      e.preventDefault();
+      const pt = getCanvasPoint(e);
+      const last = currentStroke.p[currentStroke.p.length - 1];
+      if (Math.hypot(pt[0] - last[0], pt[1] - last[1]) >= 2) {
+        currentStroke.p.push(pt);
+        redrawStudio();
+      }
+    }
+
+    function endDraw() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      currentStroke = null;
+      updateHistoryUI();
+    }
+
+    function updateHistoryUI() {
+      document.getElementById("stroke-counter").textContent =
+        strokes.length + (strokes.length === 1 ? " stroke" : " strokes");
+      document.getElementById("undo-btn").disabled = strokes.length === 0;
+      document.getElementById("redo-btn").disabled = redoStack.length === 0;
+    }
+
+    drawCanvas.addEventListener("mousedown", startDraw);
+    window.addEventListener("mousemove", moveDraw);
+    window.addEventListener("mouseup", endDraw);
+
+    drawCanvas.addEventListener("touchstart", startDraw, { passive: false });
+    window.addEventListener("touchmove", moveDraw, { passive: false });
+    window.addEventListener("touchend", endDraw);
+
+    function drawTextItem(ctx, it, ratio) {
+      const f = it.f || 30;
+      const family = FONT_FAMILIES[it.fn] || FONT_FAMILIES["Inter"];
+      ctx.font = `700 ${f * ratio}px ${family}`;
+      ctx.fillStyle = it.c || "#0f172a";
+      ctx.textBaseline = "top";
+      ctx.textAlign = "left";
+      String(it.t || "").split("\n").forEach((line, i) => {
+        ctx.fillText(line, it.x * ratio, (it.y + (i * 1.2 + 0.1) * f) * ratio);
+      });
+    }
+
+    function renderStrokesInstant(ctx, strokeList, canvasDim, clear = true) {
+      if (clear) ctx.clearRect(0, 0, canvasDim, canvasDim);
+      const ratio = canvasDim / 500;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      for (const st of strokeList) {
+        if (st.k === "text") { drawTextItem(ctx, st, ratio); continue; }
+        if (!st.p || st.p.length === 0) continue;
+        ctx.strokeStyle = st.c || "#0f172a";
+        ctx.fillStyle = st.c || "#0f172a";
+        ctx.lineWidth = (st.s || 4) * ratio;
+
+        if (st.p.length === 1) {
+          ctx.beginPath();
+          ctx.arc(st.p[0][0] * ratio, st.p[0][1] * ratio, ((st.s || 4) * ratio) / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (st.sm !== false && st.p.length > 2) {
+          ctx.beginPath();
+          ctx.moveTo(st.p[0][0] * ratio, st.p[0][1] * ratio);
+          for (let i = 1; i < st.p.length - 1; i++) {
+            const xc = ((st.p[i][0] + st.p[i + 1][0]) / 2) * ratio;
+            const yc = ((st.p[i][1] + st.p[i + 1][1]) / 2) * ratio;
+            ctx.quadraticCurveTo(st.p[i][0] * ratio, st.p[i][1] * ratio, xc, yc);
+          }
+          const last = st.p[st.p.length - 1];
+          ctx.lineTo(last[0] * ratio, last[1] * ratio);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(st.p[0][0] * ratio, st.p[0][1] * ratio);
+          for (let i = 1; i < st.p.length; i++) {
+            ctx.lineTo(st.p[i][0] * ratio, st.p[i][1] * ratio);
+          }
+          ctx.stroke();
+        }
+      }
+    }
+
+    function redrawStudio() {
+      renderStrokesInstant(drawCtx, strokes, 500);
+    }
+
+    function undoStroke() {
+      if (isPreviewing || strokes.length === 0) return;
+      redoStack.push(strokes.pop());
+      redrawStudio();
+      updateHistoryUI();
+    }
+
+    function redoStroke() {
+      if (isPreviewing || redoStack.length === 0) return;
+      strokes.push(redoStack.pop());
+      redrawStudio();
+      updateHistoryUI();
+    }
+
+    function clearCanvas() {
+      if (isPreviewing) return;
+      strokes = [];
+      redoStack = [];
+      clearTexts();
+      redrawStudio();
+      updateHistoryUI();
+    }
+
+    function animateStrokes(ctx, strokeList, canvasDim, speedMultiplier = 1, onComplete = null) {
+      const ratio = canvasDim / 500;
+      ctx.clearRect(0, 0, canvasDim, canvasDim);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      const segments = [];
+      for (const st of strokeList) {
+        if (st.k === "text") {
+          const text = String(st.t || "");
+          for (let i = 0; i < text.length; i++) {
+            segments.push({ type: "text", item: st, length: i + 1 });
+          }
+          continue;
+        }
+        if (!st.p || st.p.length === 0) continue;
+        if (st.p.length === 1) {
+          segments.push({ type: "dot", c: st.c, s: st.s, x: st.p[0][0], y: st.p[0][1] });
+        } else {
+          for (let i = 1; i < st.p.length; i++) {
+            segments.push({
+              type: "line", c: st.c, s: st.s,
+              x1: st.p[i - 1][0], y1: st.p[i - 1][1],
+              x2: st.p[i][0], y2: st.p[i][1]
+            });
+          }
+        }
+      }
+
+      if (segments.length === 0) {
+        if (onComplete) onComplete();
+        return { cancel: () => {} };
+      }
+
+      let idx = 0;
+      let rafId = null;
+      let cancelled = false;
+      const stepsPerFrame = Math.max(1, Math.ceil((segments.length / 95) * speedMultiplier));
+
+      function step() {
+        if (cancelled) return;
+        const limit = Math.min(segments.length, idx + stepsPerFrame);
+        for (; idx < limit; idx++) {
+          const seg = segments[idx];
+          if (seg.type === "text") {
+            drawTextItem(ctx, Object.assign({}, seg.item, { t: String(seg.item.t || "").slice(0, seg.length) }), ratio);
+            continue;
+          }
+
+          ctx.strokeStyle = seg.c || "#0f172a";
+          ctx.fillStyle = seg.c || "#0f172a";
+          ctx.lineWidth = (seg.s || 4) * ratio;
+
+          if (seg.type === "dot") {
+            ctx.beginPath();
+            ctx.arc(seg.x * ratio, seg.y * ratio, ((seg.s || 4) * ratio) / 2, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.beginPath();
+            ctx.moveTo(seg.x1 * ratio, seg.y1 * ratio);
+            ctx.lineTo(seg.x2 * ratio, seg.y2 * ratio);
+            ctx.stroke();
+          }
+        }
+
+        if (idx < segments.length) {
+          rafId = requestAnimationFrame(step);
+        } else if (onComplete) {
+          onComplete();
+        }
+      }
+
+      rafId = requestAnimationFrame(step);
+      return {
+        cancel: () => {
+          cancelled = true;
+          if (rafId) cancelAnimationFrame(rafId);
+        }
+      };
+    }
+
+    function previewDrawing() {
+      const all = strokes.concat(getTextItems());
+      if (all.length === 0 || isPreviewing) return;
+      deselectText();
+      isPreviewing = true;
+      textLayer.style.visibility = "hidden";
+      animateStrokes(drawCtx, all, 500, 1, () => {
+        isPreviewing = false;
+        textLayer.style.visibility = "visible";
+        redrawStudio();
+      });
+    }
+
+    // =========================================================================
+    // PNG EXPORT (16:9 Wall Export with Centered Logo)
+    // =========================================================================
+    function downloadCanvas(canvas, filename) {
+      canvas.toBlob((blob) => {
+        if (!blob) { showToast("Could not create the PNG."); return; }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 3000);
+      }, "image/png");
+    }
+
+    function exportStrokesPNG(strokeList, filename) {
+      const dim = 1000;
+      const c = document.createElement("canvas");
+      c.width = dim;
+      c.height = dim;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, dim, dim);
+      renderStrokesInstant(ctx, strokeList, dim, false);
+      downloadCanvas(c, filename);
+    }
+
+    function saveStudioPNG() {
+      const all = strokes.concat(getTextItems());
+      if (all.length === 0) { showToast("Draw something first."); return; }
+      exportStrokesPNG(all, "freedom-wall-drawing-" + Date.now() + ".png");
+    }
+
+    function loadLogoForExport() {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(img.naturalWidth > 0 ? img : null);
+        img.onerror = () => resolve(null);
+        img.src = LOGO_PATH;
+      });
+    }
+
+    async function saveWallPNG() {
+      let minX = -1, maxX = 1, minY = -1, maxY = 1;
+      for (const e of wallEntries) {
+        minX = Math.min(minX, e.gx);
+        maxX = Math.max(maxX, e.gx + 1);
+        minY = Math.min(minY, e.gy);
+        maxY = Math.max(maxY, e.gy + 1);
+      }
+
+      const pad = 0.6;
+      minX -= pad;
+      maxX += pad;
+      minY -= pad;
+      maxY += pad;
+
+      let spanW = maxX - minX;
+      let spanH = maxY - minY;
+      const targetRatio = 16 / 9;
+      const currentRatio = spanW / spanH;
+
+      if (currentRatio < targetRatio) {
+        const extraW = spanH * targetRatio - spanW;
+        minX -= extraW / 2;
+        maxX += extraW / 2;
+        spanW = maxX - minX;
+      } else if (currentRatio > targetRatio) {
+        const extraH = spanW / targetRatio - spanH;
+        minY -= extraH / 2;
+        maxY += extraH / 2;
+        spanH = maxY - minY;
+      }
+
+      const desiredW = Math.min(3840, Math.max(1920, Math.round(spanW * 240)));
+      const T = desiredW / spanW;
+      const outW = Math.round(spanW * T);
+      const outH = Math.round(spanH * T);
+
+      const c = document.createElement("canvas");
+      c.width = outW;
+      c.height = outH;
+      const ctx = c.getContext("2d");
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, outW, outH);
+
+      for (const e of wallEntries) {
+        ctx.save();
+        ctx.translate((e.gx - minX) * T, (e.gy - minY) * T);
+        renderStrokesInstant(ctx, e.strokes || [], T, false);
+        ctx.restore();
+      }
+
+      const cx = (0 - minX) * T;
+      const cy = (0 - minY) * T;
+      const logoImg = await loadLogoForExport();
+
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      if (logoImg) {
+        const maxLogoH = T * 0.62;
+        const maxLogoW = T * 1.25;
+        const scaleLogo = Math.min(maxLogoW / logoImg.naturalWidth, maxLogoH / logoImg.naturalHeight);
+        const lw = logoImg.naturalWidth * scaleLogo;
+        const lh = logoImg.naturalHeight * scaleLogo;
+        ctx.drawImage(logoImg, cx - lw / 2, cy - T * 0.66, lw, lh);
+
+        ctx.fillStyle = "#0f172a";
+        ctx.font = `900 ${T * 0.16}px Inter, sans-serif`;
+        ctx.fillText("THE FREEDOM WALL", cx, cy + T * 0.24);
+
+        ctx.fillStyle = "#64748b";
+        ctx.font = `600 ${T * 0.065}px "JetBrains Mono", monospace`;
+        ctx.fillText("ARCHERSTUDIO × BTLED ORG", cx, cy + T * 0.45);
+      } else {
+        ctx.fillStyle = "#0f172a";
+        ctx.font = `900 ${T * 0.18}px Inter, sans-serif`;
+        ctx.fillText("THE FREEDOM WALL", cx, cy - T * 0.08);
+
+        ctx.fillStyle = "#64748b";
+        ctx.font = `600 ${T * 0.07}px "JetBrains Mono", monospace`;
+        ctx.fillText("ARCHERSTUDIO × BTLED ORG", cx, cy + T * 0.16);
+      }
+      ctx.restore();
+
+      try {
+        downloadCanvas(c, "freedom-wall-16x9-" + Date.now() + ".png");
+      } catch (err) {
+        showToast("Could not create the PNG.");
+      }
+    }
+
+    // =========================================================================
+    // RANDOM GRID SLOT ALLOCATION
+    // =========================================================================
+    function isCenterReserved(gx, gy) {
+      return (gx === -1 || gx === 0) && (gy === -1 || gy === 0);
+    }
+
+    function pickRandomOpenSlot(existingEntries) {
+      const occupied = new Set(existingEntries.map(e => `${e.gx},${e.gy}`));
+      let radius = 2;
+
+      while (radius < 60) {
+        const candidates = [];
+        for (let gx = -radius; gx < radius; gx++) {
+          for (let gy = -radius; gy < radius; gy++) {
+            if (isCenterReserved(gx, gy)) continue;
+            if (!occupied.has(`${gx},${gy}`)) {
+              candidates.push({ gx, gy });
+            }
+          }
+        }
+        if (candidates.length >= 6) {
+          return candidates[Math.floor(Math.random() * candidates.length)];
+        }
+        radius++;
+      }
+      return { gx: 2, gy: 0 };
+    }
+
+    // =========================================================================
+    // CONNECTIVITY CHECK + AUTO UPLOAD
+    // =========================================================================
+    async function hasGoodInternet() {
+      if (!navigator.onLine) return false;
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 5000);
+      try {
+        const res = await fetch(`${GAS_WEB_APP_URL}?module=freedomwall&ping=1&_t=${Date.now()}`, {
+          signal: ctrl.signal,
+          cache: "no-store"
+        });
+        return res.ok;
+      } catch (e) {
+        return false;
+      } finally {
+        clearTimeout(to);
+      }
+    }
+
+    async function submitToWall() {
+      deselectText();
+      const items = strokes.concat(getTextItems());
+      if (items.length === 0) {
+        showToast("Draw something first before posting.");
+        return;
+      }
+
+      const slot = pickRandomOpenSlot(wallEntries);
+      const author = document.getElementById("author-input").value.trim() || "Anonymous";
+      const entry = {
+        id: "fw_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+        author: author,
+        gx: slot.gx,
+        gy: slot.gy,
+        strokes: items,
+        timestamp: Date.now()
+      };
+
+      pending.push(entry);
+      if (!lsSet(LS_QUEUE, pending)) {
+        pending.pop();
+        showToast("Device storage is full. Upload the saved drawings first.");
+        return;
+      }
+
+      rebuildEntries();
+      setUploadUI();
+      clearCanvas();
+      document.getElementById("author-input").value = "";
+      switchView("wall");
+      launchConfetti();
+      playPopTone(660);
+
+      if (AUTO_UPLOAD && await hasGoodInternet()) {
+        showToast("Uploading to the wall...");
+        uploadPending(true);
+      } else {
+        showToast("Saved offline ✓ Will upload when internet is good.");
+      }
+    }
+
+    function removePending(id) {
+      pending = pending.filter(p => p.id !== id);
+      lsSet(LS_QUEUE, pending);
+    }
+
+    async function fetchServerEntries() {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 20000);
+      try {
+        const res = await fetch(`${GAS_WEB_APP_URL}?module=freedomwall&_t=${Date.now()}`, { signal: ctrl.signal });
+        const json = await res.json();
+        if (json.ok && Array.isArray(json.data)) return json.data;
+        throw new Error("Bad response");
+      } finally {
+        clearTimeout(to);
+      }
+    }
+
+    async function uploadPending(silent = false) {
+      if (uploading || pending.length === 0) return;
+      if (!navigator.onLine) {
+        if (!silent) showToast("No internet right now. Try again when connected.");
+        return;
+      }
+
+      uploading = true;
+      setUploadUI();
+      const total = pending.length;
+      let done = 0;
+
+      try {
+        const latest = await fetchServerEntries();
+        const occupied = latest.slice();
+        const serverIds = new Set(latest.map(e => e.id));
+
+        for (const entry of pending.slice()) {
+          if (serverIds.has(entry.id)) { removePending(entry.id); done++; continue; }
+
+          if (occupied.some(o => o.gx === entry.gx && o.gy === entry.gy)) {
+            const others = pending.filter(p => p.id !== entry.id);
+            const slot = pickRandomOpenSlot(occupied.concat(others));
+            entry.gx = slot.gx;
+            entry.gy = slot.gy;
+            lsSet(LS_QUEUE, pending);
+          }
+
+          const payload = Object.assign({ action: "addFreedomWall" }, {
+            id: entry.id, author: entry.author, gx: entry.gx, gy: entry.gy,
+            strokes: entry.strokes, timestamp: entry.timestamp
+          });
+
+          const ctrl = new AbortController();
+          const to = setTimeout(() => ctrl.abort(), 30000);
+          let json;
+          try {
+            const res = await fetch(GAS_WEB_APP_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify(payload),
+              signal: ctrl.signal
+            });
+            json = await res.json();
+          } finally {
+            clearTimeout(to);
+          }
+
+          if (json && json.ok) {
+            removePending(entry.id);
+            occupied.push(entry);
+            done++;
+          } else {
+            throw new Error((json && json.error) || "Upload failed");
+          }
+        }
+      } catch (err) {
+        // Remaining items stay safely in localStorage
+      }
+
+      uploading = false;
+      rebuildEntries();
+      setUploadUI();
+
+      if (done === total) {
+        if (done > 0) showToast(`Uploaded ${done} drawing${done === 1 ? "" : "s"} ✓`);
+      } else {
+        showToast(`Uploaded ${done} of ${total}. The rest are still saved here.`);
+      }
+
+      loadWallEntries({ autoPlay: false });
+    }
+
+    function setUploadUI() {
+      const n = pending.length;
+      const label = uploading ? "Uploading..." : `Upload (${n})`;
+      ["nav-upload-btn", "dock-upload-btn"].forEach(id => {
+        const b = document.getElementById(id);
+        b.hidden = n === 0;
+        b.textContent = label;
+        b.disabled = uploading;
+      });
+      const note = document.getElementById("pending-note");
+      note.hidden = n === 0;
+      note.innerHTML = n ? `<br><b>${n} drawing${n === 1 ? "" : "s"} waiting to upload.</b>` : "";
+    }
+
+    // =========================================================================
+    // WALL SYNC
+    // =========================================================================
+    function updateWallCount(extra = "") {
+      const n = wallEntries.length;
+      let txt = `${n} ${n === 1 ? "drawing" : "drawings"}`;
+      if (pending.length) txt += ` · ${pending.length} not uploaded`;
+      document.getElementById("wall-count").textContent = txt + extra;
+    }
+
+    const sigOf = list => list.map(e => e.id).join("|");
+
+    async function loadWallEntries({ autoPlay = true, manual = false } = {}) {
+      if (loadingWall) return;
+      loadingWall = true;
+      document.getElementById("wall-count").textContent = "Syncing...";
+      const rbtn = document.getElementById("refresh-btn");
+      rbtn.disabled = true;
+
+      try {
+        const list = await fetchServerEntries();
+        const changed = sigOf(list) !== sigOf(serverEntries);
+        serverEntries = list;
+        lsSet(LS_CACHE, list);
+        rebuildEntries();
+        setUploadUI();
+
+        if (document.getElementById("view-wall").classList.contains("active")) {
+          if (changed) {
+            renderWall(autoPlay);
+            if (manual) showToast("Wall updated ✓");
+          } else {
+            updateWallCount();
+            if (manual) showToast("Already up to date");
+          }
+        }
+      } catch (err) {
+        updateWallCount(" · offline");
+        if (manual) showToast("Can't reach the server. Showing saved copy.");
+      } finally {
+        loadingWall = false;
+        rbtn.disabled = false;
+      }
+    }
+
+    function refreshWall() {
+      if (AUTO_UPLOAD && pending.length > 0 && navigator.onLine) {
+        uploadPending(false);
+      } else {
+        loadWallEntries({ autoPlay: true, manual: true });
+      }
+    }
+
+    // =========================================================================
+    // MAIN WHITEBOARD RENDERING
+    // =========================================================================
+    function layoutMonument() {
+      const monument = document.getElementById("center-monument");
+      monument.style.left = -CELL_SIZE + "px";
+      monument.style.top = -CELL_SIZE + "px";
+      monument.style.width = CELL_SIZE * 2 + "px";
+      monument.style.height = CELL_SIZE * 2 + "px";
+    }
+
+    function renderWall(autoPlay = true) {
+      wallTileAnimators.forEach(a => a.cancel());
+      wallTileAnimators = [];
+
+      const stage = document.getElementById("wall-stage");
+      stage.querySelectorAll(".wall-tile").forEach(el => el.remove());
+
+      layoutMonument();
+      updateWallCount();
+
+      wallEntries.forEach((entry, index) => {
+        const tile = document.createElement("div");
+        tile.className = "wall-tile" + (entry._pending ? " pending" : "");
+        tile.style.left = entry.gx * CELL_SIZE + "px";
+        tile.style.top = entry.gy * CELL_SIZE + "px";
+        tile.style.width = CELL_SIZE + "px";
+        tile.style.height = CELL_SIZE + "px";
+
+        const cvs = document.createElement("canvas");
+        cvs.width = 360;
+        cvs.height = 360;
+        tile.appendChild(cvs);
+
+        const tag = document.createElement("div");
+        tag.className = "wall-tile-tag";
+        tag.textContent = (entry.author || "Anonymous") + (entry._pending ? " · not uploaded" : "");
+        tile.appendChild(tag);
+
+        tile.onclick = (e) => {
+          e.stopPropagation();
+          if (dragMoved) return;
+          openModal(entry);
+        };
+
+        stage.appendChild(tile);
+
+        const ctx = cvs.getContext("2d");
+        if (autoPlay) {
+          const delay = Math.min(index * 45, 1800);
+          const timer = setTimeout(() => {
+            const anim = animateStrokes(ctx, entry.strokes || [], 360, 1.1);
+            wallTileAnimators.push(anim);
+          }, delay);
+          wallTileAnimators.push({ cancel: () => clearTimeout(timer) });
+        } else {
+          renderStrokesInstant(ctx, entry.strokes || [], 360);
+        }
+      });
+
+      if (!userMoved) fitWallToScreen();
+      else applyStageTransform();
+    }
+
+    function replayAllDrawings() {
+      renderWall(true);
+    }
+
+    // =========================================================================
+    // AUTO-FIT, PAN & ZOOM
+    // =========================================================================
+    function applyStageTransform() {
+      const stage = document.getElementById("wall-stage");
+      stage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    }
+
+    function fitWallToScreen() {
+      const viewport = document.getElementById("wall-viewport");
+      const vw = viewport.clientWidth || window.innerWidth;
+      const vh = viewport.clientHeight || (window.innerHeight - 60);
+
+      let minX = -CELL_SIZE, maxX = CELL_SIZE, minY = -CELL_SIZE, maxY = CELL_SIZE;
+
+      for (const e of wallEntries) {
+        minX = Math.min(minX, e.gx * CELL_SIZE);
+        maxX = Math.max(maxX, (e.gx + 1) * CELL_SIZE);
+        minY = Math.min(minY, e.gy * CELL_SIZE);
+        maxY = Math.max(maxY, (e.gy + 1) * CELL_SIZE);
+      }
+
+      const contentW = maxX - minX + 120;
+      const contentH = maxY - minY + 140;
+
+      scale = Math.min(vw / contentW, vh / contentH, 1.15);
+      scale = Math.max(0.18, scale);
+
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+
+      panX = vw / 2 - centerX * scale;
+      panY = vh / 2 - centerY * scale;
+      applyStageTransform();
+    }
+
+    function resetFit() {
+      userMoved = false;
+      fitWallToScreen();
+    }
+
+    function zoomWall(factor) {
+      userMoved = true;
+      const viewport = document.getElementById("wall-viewport");
+      const cx = viewport.clientWidth / 2;
+      const cy = viewport.clientHeight / 2;
+
+      const newScale = Math.min(2.5, Math.max(0.15, scale * factor));
+      panX = cx - ((cx - panX) / scale) * newScale;
+      panY = cy - ((cy - panY) / scale) * newScale;
+      scale = newScale;
+      applyStageTransform();
+    }
+
+    const wallViewport = document.getElementById("wall-viewport");
+    wallViewport.addEventListener("mousedown", (e) => {
+      isPanning = true;
+      dragMoved = false;
+      downX = e.clientX;
+      downY = e.clientY;
+      startPanX = e.clientX - panX;
+      startPanY = e.clientY - panY;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!isPanning) return;
+      if (Math.hypot(e.clientX - downX, e.clientY - downY) > 5) {
+        dragMoved = true;
+        userMoved = true;
+      }
+      panX = e.clientX - startPanX;
+      panY = e.clientY - startPanY;
+      applyStageTransform();
+    });
+
+    window.addEventListener("mouseup", () => {
+      isPanning = false;
+    });
+
+    wallViewport.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      zoomWall(e.deltaY < 0 ? 1.12 : 0.89);
+    }, { passive: false });
+
+    let lastTouchDist = null;
+    wallViewport.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        isPanning = true;
+        startPanX = e.touches[0].clientX - panX;
+        startPanY = e.touches[0].clientY - panY;
+      } else if (e.touches.length === 2) {
+        isPanning = false;
+        lastTouchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    }, { passive: true });
+
+    wallViewport.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 1 && isPanning) {
+        userMoved = true;
+        panX = e.touches[0].clientX - startPanX;
+        panY = e.touches[0].clientY - startPanY;
+        applyStageTransform();
+      } else if (e.touches.length === 2 && lastTouchDist) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        zoomWall(dist / lastTouchDist);
+        lastTouchDist = dist;
+      }
+    }, { passive: true });
+
+    wallViewport.addEventListener("touchend", () => {
+      isPanning = false;
+      lastTouchDist = null;
+    });
+
+    // =========================================================================
+    // SINGLE TILE MODAL
+    // =========================================================================
+    let modalAnim = null;
+    let modalEntry = null;
+
+    function openModal(entry) {
+      modalEntry = entry;
+      document.getElementById("modal-author").textContent = entry.author || "Anonymous";
+      const modal = document.getElementById("tile-modal");
+      modal.classList.add("open");
+
+      const mCtx = document.getElementById("modal-canvas").getContext("2d");
+
+      const play = () => {
+        if (modalAnim) modalAnim.cancel();
+        modalAnim = animateStrokes(mCtx, entry.strokes || [], 500, 1);
+      };
+
+      document.getElementById("modal-replay-btn").onclick = play;
+      document.getElementById("modal-save-btn").onclick = () => {
+        exportStrokesPNG(entry.strokes || [], "freedom-wall-" + (entry.id || Date.now()) + ".png");
+      };
+      play();
+    }
+
+    function closeModal() {
+      if (modalAnim) modalAnim.cancel();
+      modalEntry = null;
+      document.getElementById("tile-modal").classList.remove("open");
+    }
+
+    // =========================================================================
+    // BOOT
+    // =========================================================================
+    initStudioControls();
+    layoutMonument();
+    applyStageTransform();
+    setUploadUI();
+    updateHistoryUI();
+    syncUnit();
+
+    window.addEventListener("online", () => {
+      if (AUTO_UPLOAD && pending.length > 0) uploadPending(true);
+    });
+
+    if (AUTO_UPLOAD && pending.length > 0 && navigator.onLine) {
+      uploadPending(true);
+    }
+  </script>
+</body>
+</html>
