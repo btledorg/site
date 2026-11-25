@@ -1459,11 +1459,6 @@
         <input type="text" id="author-input" class="name-input" maxlength="24" placeholder="Your name or alias (optional)" />
         <button class="btn btn-accent" id="submit-btn" onclick="submitToWall()">Post to Wall</button>
       </div>
-
-      <p class="studio-note" id="studio-note">
-        Use <b>Hand (H)</b> to pan around &amp; select/remove text, or <b>Eraser (E)</b> to erase strokes.
-        <span id="pending-note" hidden></span>
-      </p>
     </div>
   </section>
 
@@ -1539,6 +1534,7 @@
 
     const LS_QUEUE = "fw_pending_v1";
     const LS_CACHE = "fw_cache_v1";
+    const LS_MUSIC_TIME = "fw_music_time_v1";
 
     const LOFI_MP3_PATH = "../resources/audio/song1.mp3";
 
@@ -1551,6 +1547,17 @@
     let musicPlaying = false;
     let musicTimer = null;
     let chordStep = 0;
+
+    function saveMusicTime() {
+      if (!lofiAudio || !Number.isFinite(lofiAudio.currentTime)) return;
+      try {
+        localStorage.setItem(LS_MUSIC_TIME, String(lofiAudio.currentTime));
+      } catch (error) {
+        // Music playback should continue if browser storage is unavailable.
+      }
+    }
+
+    window.addEventListener("beforeunload", saveMusicTime);
 
     const LOFI_CHORDS = [
       [261.63, 329.63, 392.00, 493.88],
@@ -1618,6 +1625,20 @@
             lofiAudio = new Audio(LOFI_MP3_PATH);
             lofiAudio.loop = true;
             lofiAudio.volume = 0.35;
+            lofiAudio.addEventListener("loadedmetadata", () => {
+              try {
+                const savedTime = Number(localStorage.getItem(LS_MUSIC_TIME));
+                if (Number.isFinite(savedTime) && savedTime > 0) {
+                  lofiAudio.currentTime = lofiAudio.duration
+                    ? Math.min(savedTime, Math.max(0, lofiAudio.duration - 0.1))
+                    : savedTime;
+                }
+              } catch (error) {
+                // Ignore unavailable storage or unsupported seeking.
+              }
+            }, { once: true });
+            lofiAudio.addEventListener("timeupdate", saveMusicTime);
+            lofiAudio.addEventListener("pause", saveMusicTime);
           }
           try {
             await lofiAudio.play();
@@ -1644,8 +1665,8 @@
         showToast("Chill background music on ♪");
       } else {
         if (lofiAudio) {
+          saveMusicTime();
           lofiAudio.pause();
-          lofiAudio.currentTime = 0;
         }
         clearInterval(musicTimer);
         musicTimer = null;
