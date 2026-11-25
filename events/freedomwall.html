@@ -77,10 +77,16 @@
         .brand {
             display: flex; align-items: center; gap: 9px;
             background: none; border: none; color: var(--ink);
-            cursor: pointer; min-width: 0; padding: 4px 0;
+            cursor: pointer; min-width: 0; padding: 4px 0; text-align: left;
         }
         .brand img { height: 26px; width: auto; object-fit: contain; flex-shrink: 0; }
-        .brand-text { font-size: 14px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
+        .brand-stack { display: flex; flex-direction: column; min-width: 0; }
+        .brand-text { font-size: 14px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; line-height: 1.15; }
+        .brand-greeting {
+            font-size: 11px; font-weight: 600; color: var(--accent);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            max-width: 170px; line-height: 1.2; margin-top: 1px;
+        }
         .live-pill {
             display: inline-flex; align-items: center; gap: 5px;
             padding: 3px 8px; border-radius: 999px; background: var(--soft);
@@ -92,15 +98,16 @@
         /* ============ BUTTONS ============ */
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-            padding: 10px 14px; min-height: 40px;
-            border-radius: 10px; font-size: 13px; font-weight: 600;
+            padding: 9px 12px; min-height: 38px;
+            border-radius: 10px; font-size: 12.5px; font-weight: 600;
             cursor: pointer; border: 1px solid var(--border);
             background: #fff; color: var(--ink);
-            transition: background .15s, transform .1s; white-space: nowrap;
+            transition: background .15s, transform .1s, border-color .15s; white-space: nowrap;
         }
         .btn:active { transform: scale(.97); background: #f1f5f9; }
-        .btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-        .btn-icon { padding: 0; width: 40px; }
+        .btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .btn-icon { padding: 0; width: 38px; }
+        .btn-sm { min-height: 32px; padding: 5px 10px; font-size: 11.5px; border-radius: 8px; }
         .btn-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
         .btn-primary:active { background: #1e293b; }
         .btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -196,52 +203,41 @@
         .landing-title { font-size: clamp(38px, 11vw, 72px); font-weight: 900; letter-spacing: -.04em; line-height: 1; margin-bottom: 16px; }
         .landing-desc { font-size: clamp(15px, 4vw, 18px); line-height: 1.6; color: var(--muted); max-width: 40ch; margin: 0 auto 28px; }
         .landing-buttons { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
-        .landing-stats {
-            display: inline-flex; gap: 6px; align-items: center; margin: 22px auto 0;
-            padding: 7px 14px; border-radius: 999px; background: rgba(255,255,255,.9);
-            border: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--muted);
-        }
-        .landing-credit {
-            position: absolute; left: 0; right: 0; bottom: calc(var(--bottom) + 10px); z-index: 1;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            font-size: 11.5px; font-weight: 500; color: var(--muted);
-        }
-        .landing-credit img { height: 16px; width: auto; }
-        @media (max-height: 640px) { .landing-credit { display: none; } }
         
         /* ---- DRAW ---- */
         #view-draw { flex-direction: column; align-items: center; padding-left: 12px; padding-right: 12px; }
         .studio-wrap { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 8px; margin: auto; padding: 8px 0; }
-        .studio-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-        .history { display: flex; gap: 6px; }
+        .studio-bar { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+        .history { display: flex; gap: 5px; }
         .chip-btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-            height: 36px; min-width: 36px; padding: 0 10px; border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+            height: 34px; min-width: 34px; padding: 0 9px; border-radius: 10px;
             border: 1px solid var(--border); background: #fff; color: var(--ink);
-            font-size: 12px; font-weight: 700; cursor: pointer;
+            font-size: 11px; font-weight: 700; cursor: pointer;
         }
-        .chip-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+        .chip-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
         .chip-btn:active { background: #f1f5f9; }
+        .chip-btn.active { background: var(--accent-soft); color: var(--accent); border-color: #93c5fd; }
         .chip-btn:disabled { opacity: .35; pointer-events: none; }
         .studio-zoom-group { display: inline-flex; align-items: center; background: var(--soft); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-        .studio-zoom-btn { border: none; background: transparent; color: var(--ink); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; height: 34px; min-width: 36px; padding: 0 8px; cursor: pointer; }
+        .studio-zoom-btn { border: none; background: transparent; color: var(--ink); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; height: 32px; min-width: 32px; padding: 0 6px; cursor: pointer; }
         .studio-zoom-btn:active { background: #e2e8f0; }
-        .studio-zoom-level { border-left: 1px solid var(--border); border-right: 1px solid var(--border); min-width: 50px; font-size: 11px; color: var(--muted); }
+        .studio-zoom-level { border-left: 1px solid var(--border); border-right: 1px solid var(--border); min-width: 46px; font-size: 10.5px; color: var(--muted); }
         
         .tool-dock { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; padding: 4px; background: var(--soft); border: 1px solid var(--border); border-radius: 12px; }
         .tool-btn {
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-            height: 46px; border: 1px solid transparent; border-radius: 9px;
+            height: 44px; border: 1px solid transparent; border-radius: 9px;
             background: transparent; color: var(--muted); font-size: 9px; font-weight: 700; cursor: pointer;
             transition: background .12s, color .12s;
         }
-        .tool-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+        .tool-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
         .tool-btn.active { background: var(--ink); color: #fff; box-shadow: 0 2px 6px rgba(15,23,42,.18); }
         
         .canvas-frame {
             position: relative; aspect-ratio: 1 / 1;
-            width: min(100%, calc(100dvh - var(--top) - var(--bottom) - 255px));
-            min-width: 250px; margin: 0 auto;
+            width: min(100%, calc(100dvh - var(--top) - var(--bottom) - 270px));
+            min-width: 245px; margin: 0 auto;
             background-color: var(--soft);
             background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
             background-size: 14px 14px;
@@ -253,15 +249,35 @@
             background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
             background-size: 10% 10%;
         }
-        #draw-canvas, #preview-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+        /* Symmetry guide lines */
+        .sym-guides { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+        .sym-line-v { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; border-left: 1.5px dashed rgba(29, 78, 216, 0.35); }
+        .sym-line-h { position: absolute; left: 0; right: 0; top: 50%; height: 1px; border-top: 1.5px dashed rgba(29, 78, 216, 0.35); }
+
+        /* Reference / Tracing Image Layer (NEVER posted or exported) */
+        .ref-layer {
+            position: absolute; inset: 0; overflow: hidden;
+            pointer-events: none; z-index: 1;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .ref-layer img {
+            max-width: 92%; max-height: 92%;
+            object-fit: contain;
+            user-select: none; -webkit-user-drag: none;
+            transform-origin: center center;
+            will-change: transform, opacity, filter;
+        }
+
+        #draw-canvas, #preview-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 2; }
         #draw-canvas { cursor: crosshair; }
-        #preview-canvas { pointer-events: none; }
+        #preview-canvas { pointer-events: none; z-index: 3; }
         .canvas-frame.mode-hand #draw-canvas, .canvas-frame.pan-ready #draw-canvas { cursor: grab; }
         .canvas-frame.panning #draw-canvas { cursor: grabbing; }
         .canvas-frame.mode-eraser #draw-canvas { cursor: cell; }
         .canvas-frame.mode-eyedropper #draw-canvas, .canvas-frame.mode-fill #draw-canvas { cursor: copy; }
         
-        .text-layer { position: absolute; inset: 0; pointer-events: none; }
+        .text-layer { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
         .canvas-frame.mode-hand .text-box { cursor: move; }
         .text-box { position: absolute; pointer-events: auto; font-size: calc(var(--fs, 30) * var(--u, 1px)); font-family: var(--ff, 'Inter', sans-serif); font-weight: 700; line-height: 1.2; }
         .text-content { display: block; min-width: calc(24 * var(--u, 1px)); min-height: 1.2em; white-space: pre; outline: none; padding: 0; cursor: text; -webkit-user-select: text; user-select: text; }
@@ -278,55 +294,122 @@
         .text-del { left: 34px; color: var(--d-red); }
         .text-box.selected .text-handle, .text-box.selected .text-del { display: flex; }
         
-        /* sheet with sub-tabs */
+        /* sheet with 4 sub-tabs */
         .sheet { border: 1px solid var(--border); border-radius: 14px; background: #fff; overflow: hidden; }
-        .sheet-tabs { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--soft); border-bottom: 1px solid var(--border); }
+        .sheet-tabs { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--soft); border-bottom: 1px solid var(--border); }
         .sheet-tab {
-            height: 38px; border: none; background: transparent; color: var(--muted);
-            font-size: 12.5px; font-weight: 700; cursor: pointer; position: relative;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
+            height: 36px; border: none; background: transparent; color: var(--muted);
+            font-size: 12px; font-weight: 700; cursor: pointer; position: relative;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
         }
-        .sheet-tab svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+        .sheet-tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
         .sheet-tab.active { color: var(--ink); background: #fff; }
-        .sheet-tab.active::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--ink); }
-        .sheet-pane { display: none; padding: 12px; flex-direction: column; gap: 12px; }
+        .sheet-tab.active::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--ink); }
+        .ref-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+        .sheet-pane { display: none; padding: 11px 12px; flex-direction: column; gap: 10px; }
         .sheet-pane.active { display: flex; }
         
         .row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-        .swatches { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
-        .swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform .1s; }
+        .swatches { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .swatch { width: 27px; height: 27px; border-radius: 50%; border: 1.5px solid rgba(15,23,42,.12); cursor: pointer; transition: transform .1s; flex-shrink: 0; }
         .swatch.active { transform: scale(1.12); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--ink); }
-        .color-pad-wrap {
-            position: relative; width: 29px; height: 29px; border-radius: 50%;
+        .color-pad-btn {
+            position: relative; width: 28px; height: 28px; border-radius: 50%;
             background: conic-gradient(#ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #a855f7, #ec4899, #ef4444);
             border: 2px solid #fff; box-shadow: 0 0 0 1px #cbd5e1; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
-        .color-pad-wrap.active { transform: scale(1.12); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--ink); }
-        .color-pad-wrap::after { content: "+"; font-size: 15px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.55); pointer-events: none; line-height: 1; }
-        #color-pad-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: none; padding: 0; }
-        .sizes { display: flex; align-items: center; gap: 6px; }
-        .size-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border); background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .color-pad-btn.active { transform: scale(1.12); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--ink); }
+        .color-pad-btn::after { content: "+"; font-size: 15px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); line-height: 1; }
+        
+        .saved-colors-bar { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; padding-top: 2px; border-top: 1px dashed var(--border); }
+        .saved-label { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-right: 2px; }
+        .saved-swatch { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid rgba(15,23,42,.15); cursor: pointer; transition: transform .1s; }
+        .saved-swatch.active { transform: scale(1.12); box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--ink); }
+
+        .sizes-and-fill { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+        .sizes { display: flex; align-items: center; gap: 5px; }
+        .size-btn { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .size-btn.active { border-color: var(--ink); background: #f1f5f9; }
         .size-dot { border-radius: 50%; background: var(--ink); }
-        .opacity-row { display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 600; color: var(--muted); }
-        .opacity-row input[type="range"] { flex: 1; height: 28px; accent-color: var(--ink); cursor: pointer; }
-        .opacity-val { font-family: 'JetBrains Mono', monospace; font-size: 11px; min-width: 38px; text-align: right; color: var(--ink); }
+        .fill-toggle-btn {
+            display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 10px;
+            border-radius: 9px; border: 1px solid var(--border); background: #fff;
+            font-size: 11.5px; font-weight: 700; color: var(--muted); cursor: pointer;
+        }
+        .fill-toggle-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+        .slider-row { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: var(--muted); }
+        .slider-row span:first-child { min-width: 54px; }
+        .slider-row input[type="range"] { flex: 1; height: 24px; accent-color: var(--ink); cursor: pointer; }
+        .slider-val { font-family: 'JetBrains Mono', monospace; font-size: 11px; min-width: 40px; text-align: right; color: var(--ink); }
+        
+        /* Reference pane controls */
+        .ref-badge-note {
+            font-size: 11px; color: var(--accent); background: var(--accent-soft);
+            padding: 6px 10px; border-radius: 8px; font-weight: 600; text-align: center;
+        }
+        .ref-actions-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .ref-nudge-pad { display: flex; align-items: center; justify-content: center; gap: 6px; }
         
         .text-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .text-tools .full { grid-column: 1 / -1; }
-        .text-tools .pair { display: grid; grid-template-columns: 1fr 1fr 44px; gap: 8px; grid-column: 1 / -1; }
+        .text-tools .pair { display: grid; grid-template-columns: 1fr 1fr 42px; gap: 8px; grid-column: 1 / -1; }
         .font-select {
-            padding: 0 10px; min-height: 40px; border: 1px solid var(--border); border-radius: 10px;
-            background: #fff; color: var(--ink); font-size: 14px; font-weight: 600; font-family: inherit; width: 100%;
+            padding: 0 10px; min-height: 38px; border: 1px solid var(--border); border-radius: 10px;
+            background: #fff; color: var(--ink); font-size: 13.5px; font-weight: 600; font-family: inherit; width: 100%;
         }
         
         .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .action-grid .btn { flex-direction: column; gap: 4px; min-height: 52px; font-size: 11.5px; }
-        .name-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; font-size: 16px; font-family: inherit; outline: none; }
+        .action-grid .btn { flex-direction: column; gap: 4px; min-height: 50px; font-size: 11.5px; }
+        .name-input { width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: 12px; font-size: 15px; font-family: inherit; outline: none; background: #fff; color: var(--ink); }
         .name-input:focus { border-color: var(--ink); }
+        .name-input:disabled { background: var(--soft); color: var(--muted); }
         .studio-stats { font-size: 12px; color: var(--muted); font-weight: 600; text-align: center; }
         
+        /* ============ CUSTOM COLOR PICKER MODAL ============ */
+        .cp-box { max-width: 370px; gap: 12px; }
+        .cp-sv-wrap {
+            position: relative; width: 100%; height: 175px; border-radius: 12px;
+            overflow: hidden; cursor: crosshair; touch-action: none;
+            border: 1px solid var(--border);
+        }
+        #cp-sv-canvas { width: 100%; height: 100%; display: block; }
+        .cp-sv-cursor {
+            position: absolute; width: 18px; height: 18px; border-radius: 50%;
+            border: 2.5px solid #fff; box-shadow: 0 0 0 1.5px #0f172a, 0 2px 6px rgba(0,0,0,.35);
+            transform: translate(-50%, -50%); pointer-events: none;
+        }
+        .cp-hue-wrap {
+            position: relative; width: 100%; height: 22px; border-radius: 999px;
+            background: linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%);
+            cursor: pointer; touch-action: none; border: 1px solid var(--border);
+        }
+        .cp-hue-thumb {
+            position: absolute; top: 50%; width: 24px; height: 24px; border-radius: 50%;
+            background: #fff; border: 2.5px solid var(--ink);
+            box-shadow: 0 2px 6px rgba(0,0,0,.25);
+            transform: translate(-50%, -50%); pointer-events: none;
+        }
+        .cp-info-row { display: flex; align-items: center; gap: 8px; }
+        .cp-preview-pair {
+            display: flex; height: 38px; width: 76px; border-radius: 10px;
+            overflow: hidden; border: 1px solid var(--border); flex-shrink: 0;
+        }
+        .cp-prev-old, .cp-prev-new { flex: 1; height: 100%; }
+        .cp-hex-input {
+            flex: 1; min-width: 0; height: 38px; padding: 0 10px;
+            border: 1px solid var(--border); border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace; font-size: 13.5px; font-weight: 700;
+            text-transform: uppercase; color: var(--ink); background: var(--soft);
+        }
+        .cp-saved-grid { display: flex; flex-wrap: wrap; gap: 7px; min-height: 28px; align-items: center; }
+        .cp-preset-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+        .cp-mini-swatch {
+            aspect-ratio: 1 / 1; width: 100%; border-radius: 7px;
+            border: 1.5px solid rgba(15,23,42,.15); cursor: pointer;
+        }
+
         /* ---- WALL ---- */
         #view-wall { flex-direction: column; overflow: hidden; }
         #wall-viewport { position: relative; flex: 1; width: 100%; overflow: hidden; background: #fff; cursor: grab; touch-action: none; }
@@ -395,6 +478,45 @@
         .switch input:checked::after { transform: translateX(18px); }
         .more-credit { text-align: center; font-size: 12px; color: var(--muted); font-weight: 500; padding-top: 4px; }
         
+        /* ---- FULLSCREEN NICKNAME OVERLAY ---- */
+        .nickname-overlay {
+            position: fixed; inset: 0; z-index: 400;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: calc(24px + var(--safe-t)) 22px calc(24px + var(--safe-b));
+            background-color: #ffffff;
+            background-image: radial-gradient(#cbd5e14d 1.35px, transparent 1.35px);
+            background-size: 22px 22px;
+            overflow-y: auto;
+        }
+        .nickname-card {
+            width: 100%; max-width: 390px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 28px 22px;
+            box-shadow: 0 20px 44px rgba(15, 23, 42, 0.08);
+            display: flex; flex-direction: column; gap: 16px;
+            text-align: center;
+            animation: viewIn .2s ease;
+        }
+        .nickname-logo {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            margin: 0 auto; font-size: 12px; font-weight: 800; letter-spacing: .06em; color: var(--muted);
+        }
+        .nickname-logo img { height: 22px; width: auto; }
+        .nickname-title { font-size: 23px; font-weight: 900; letter-spacing: -.03em; line-height: 1.2; color: var(--ink); }
+        .nickname-sub { font-size: 13.5px; color: var(--muted); line-height: 1.45; margin-top: -6px; }
+        .anon-check-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 11px 14px; border-radius: 12px;
+            border: 1px solid var(--border); background: var(--soft);
+            font-size: 13.5px; font-weight: 600; color: var(--ink);
+            cursor: pointer; user-select: none; text-align: left;
+        }
+        .anon-check-row input[type="checkbox"] {
+            width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0;
+        }
+        
         /* ---- MODALS ---- */
         .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.45); backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 200; }
         .modal-backdrop.open { display: flex; }
@@ -425,7 +547,7 @@
             transform: translateX(-50%) translateY(-12px);
             background: var(--ink); color: #fff; font-size: 13px; font-weight: 600;
             padding: 10px 18px; border-radius: 999px; opacity: 0; pointer-events: none;
-            transition: all .2s ease; z-index: 300; max-width: calc(100vw - 24px); text-align: center;
+            transition: all .2s ease; z-index: 500; max-width: calc(100vw - 24px); text-align: center;
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 250; }
@@ -438,17 +560,81 @@
         @media (prefers-reduced-motion: reduce) {
             .doodle path, .doodle circle { animation: none; stroke-dashoffset: 0; }
             .doodle .dot { animation: none; opacity: 1; }
-            .view.active, .modal-box, .confirm-box { animation: none; }
+            .view.active, .modal-box, .confirm-box, .nickname-card { animation: none; }
         }
     </style>
 </head>
 <body>
     
+    <!-- FULLSCREEN NICKNAME OVERLAY -->
+    <div class="nickname-overlay" id="nickname-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="nickname-overlay-title">
+        <form class="nickname-card" onsubmit="saveNicknameOverlay(event)">
+            <div class="nickname-logo">
+                <img src="../resources/image/logo/logo4.png" alt="" onerror="this.style.display='none'">
+                <span>ARCHERSTUDIO</span>
+            </div>
+            <h2 class="nickname-title" id="nickname-overlay-title">Please Enter your Nickname</h2>
+            <p class="nickname-sub">This will appear as your name or alias when you post on the wall.</p>
+            <input type="text" id="overlay-nickname-input" class="name-input" maxlength="24" placeholder="Enter your nickname" autocomplete="off" />
+            <label class="anon-check-row" for="overlay-anon-check">
+                <input type="checkbox" id="overlay-anon-check" onchange="toggleOverlayAnon(this.checked)" />
+                <span>Or stay anonymous</span>
+            </label>
+            <div style="display:flex;gap:8px;">
+                <button type="button" class="btn btn-lg" id="overlay-cancel-btn" onclick="closeNicknameOverlay()" hidden style="flex:1;">Cancel</button>
+                <button type="submit" class="btn btn-accent btn-lg btn-block" style="flex:2;">Continue</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- CUSTOM COLOR PICKER MODAL -->
+    <div class="modal-backdrop" id="color-modal" onclick="if(event.target===this) closeColorPicker()">
+        <div class="modal-box cp-box" role="dialog" aria-modal="true" aria-labelledby="cp-modal-title">
+            <div class="modal-head">
+                <h3 id="cp-modal-title">Pick a Color</h3>
+                <button type="button" class="btn btn-sm" onclick="closeColorPicker()">Cancel</button>
+            </div>
+
+            <div class="cp-sv-wrap" id="cp-sv-wrap">
+                <canvas id="cp-sv-canvas" width="320" height="175"></canvas>
+                <div class="cp-sv-cursor" id="cp-sv-cursor"></div>
+            </div>
+
+            <div class="cp-hue-wrap" id="cp-hue-wrap">
+                <div class="cp-hue-thumb" id="cp-hue-thumb"></div>
+            </div>
+
+            <div class="cp-info-row">
+                <div class="cp-preview-pair" title="Previous vs Selected">
+                    <div class="cp-prev-old" id="cp-prev-old"></div>
+                    <div class="cp-prev-new" id="cp-prev-new"></div>
+                </div>
+                <input type="text" id="cp-hex-input" class="cp-hex-input" maxlength="7" value="#1D4ED8" aria-label="Hex color code" oninput="onCpHexInput(this.value)" />
+                <button type="button" class="btn btn-sm" onclick="saveCurrentToPalette()" title="Save color to palette">+ Save</button>
+            </div>
+
+            <div>
+                <div class="saved-label" style="margin-bottom:6px;">Saved &amp; Used Colors</div>
+                <div class="cp-saved-grid" id="cp-saved-grid"></div>
+            </div>
+
+            <div>
+                <div class="saved-label" style="margin-bottom:6px;">Quick Swatches</div>
+                <div class="cp-preset-grid" id="cp-preset-grid"></div>
+            </div>
+
+            <button type="button" class="btn btn-accent btn-block" onclick="confirmColorPicker()">Use Color</button>
+        </div>
+    </div>
+
     <!-- TOP BAR -->
     <header class="topbar">
         <button class="brand" onclick="switchView('home')" aria-label="ARCHERSTUDIO home">
             <img src="../resources/image/logo/logo4.png" alt="" onerror="this.style.display='none'">
-            <span class="brand-text">ARCHERSTUDIO</span>
+            <span class="brand-stack">
+                <span class="brand-text">ARCHERSTUDIO</span>
+                <span class="brand-greeting" id="nav-greeting" hidden></span>
+            </span>
         </button>
         <div style="display:flex;align-items:center;gap:8px;">
             <button class="btn btn-amber" id="nav-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
@@ -482,11 +668,6 @@
                 <button class="btn btn-lg" onclick="switchView('wall')">View the wall</button>
             </div>
         </div>
-        
-        <div style="display:none;" class="landing-credit">
-            <img src="../resources/image/logo/logo4.png" alt="" onerror="this.style.display='none'">
-            <span>ARCHERSTUDIO</span>
-        </div>
     </main>
     
     <!-- DRAW TAB -->
@@ -499,6 +680,10 @@
                     </button>
                     <button class="chip-btn" id="redo-btn" onclick="redoStroke()" aria-label="Redo" disabled>
                         <svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg>
+                    </button>
+                    <button class="chip-btn" id="sym-btn" onclick="cycleSymmetry()" title="Mirror Symmetry Mode">
+                        <svg viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2 2"/><polyline points="8 8 4 12 8 16"/><polyline points="16 8 20 12 16 16"/></svg>
+                        <span id="sym-label">Off</span>
                     </button>
                 </div>
                 <div class="studio-zoom-group" role="group" aria-label="Canvas zoom controls">
@@ -515,7 +700,7 @@
                 <button type="button" class="tool-btn" data-tool="eraser" onclick="setTool('eraser')" title="Eraser (E)">
                     <svg viewBox="0 0 24 24"><path d="M20 20H7L3 16c-.8-.8-.8-2 0-2.8L13.4 2.8c.8-.8 2-.8 2.8 0L21 7.6c.8.8.8 2 0 2.8L11.4 20"></path><path d="M6 11l7 7"></path></svg><span>Eraser</span>
                 </button>
-                <button type="button" class="tool-btn" data-tool="hand" onclick="setTool('hand')" title="Hand / Pan & Select Text (H)">
+                <button type="button" class="tool-btn" data-tool="hand" onclick="setTool('hand')" title="Hand / Pan & Move Ref/Text (H)">
                     <svg viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg><span>Hand</span>
                 </button>
                 <button type="button" class="tool-btn" data-tool="line" onclick="setTool('line')" title="Line (L)">
@@ -537,8 +722,15 @@
             
             <div class="canvas-frame" id="canvas-frame">
                 <div class="canvas-stage" id="canvas-stage">
+                    <div class="ref-layer" id="ref-layer" hidden>
+                        <img id="ref-img" alt="Reference tracing overlay" />
+                    </div>
                     <canvas id="draw-canvas" width="500" height="500"></canvas>
                     <canvas id="preview-canvas" width="500" height="500"></canvas>
+                    <div class="sym-guides" id="sym-guides" hidden>
+                        <div class="sym-line-v" id="sym-line-v"></div>
+                        <div class="sym-line-h" id="sym-line-h" hidden></div>
+                    </div>
                     <div class="text-layer" id="text-layer"></div>
                 </div>
             </div>
@@ -548,6 +740,10 @@
                     <button class="sheet-tab active" data-pane="style" role="tab" onclick="setDrawTab('style')">
                         <svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-8.8-10-8.8z"/></svg>Style
                     </button>
+                    <button class="sheet-tab" data-pane="ref" role="tab" onclick="setDrawTab('ref')">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Trace
+                        <span class="ref-dot" id="ref-tab-dot" hidden></span>
+                    </button>
                     <button class="sheet-tab" data-pane="text" role="tab" onclick="setDrawTab('text')">
                         <svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>Text
                     </button>
@@ -556,22 +752,77 @@
                     </button>
                 </div>
                 
+                <!-- STYLE PANE -->
                 <div class="sheet-pane active" id="pane-style">
                     <div class="row-between">
                         <div class="swatches" id="swatch-list">
-                            <label class="color-pad-wrap" id="color-pad-btn" title="Color Pad (Millions of Colors)" aria-label="Color Pad">
-                                <input type="color" id="color-pad-input" value="#1d4ed8" />
-                            </label>
+                            <button type="button" class="color-pad-btn" id="color-pad-btn" onclick="openColorPicker()" title="Custom Color Picker" aria-label="Custom Color Picker"></button>
                         </div>
                     </div>
-                    <div class="sizes" id="size-list"></div>
-                    <div class="opacity-row">
+                    <div class="saved-colors-bar" id="saved-colors-bar" hidden>
+                        <span class="saved-label">Saved</span>
+                        <div class="swatches" id="saved-swatch-list"></div>
+                    </div>
+                    <div class="sizes-and-fill">
+                        <div class="sizes" id="size-list"></div>
+                        <button type="button" class="fill-toggle-btn" id="shape-fill-btn" onclick="toggleShapeFill()" title="Fill inside Box & Circle shapes">
+                            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:currentColor;"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                            <span>Fill Shape</span>
+                        </button>
+                    </div>
+                    <div class="slider-row">
                         <span>Opacity</span>
                         <input type="range" id="opacity-slider" min="10" max="100" step="5" value="100" oninput="setOpacity(this.value)" />
-                        <span class="opacity-val" id="opacity-val">100%</span>
+                        <span class="slider-val" id="opacity-val">100%</span>
+                    </div>
+                </div>
+
+                <!-- TRACE / REFERENCE IMAGE PANE -->
+                <div class="sheet-pane" id="pane-ref">
+                    <input type="file" id="ref-file-input" accept="image/*" hidden onchange="handleRefUpload(event)" />
+                    <div class="ref-badge-note">Local tracing guide only — never uploaded or posted to the wall.</div>
+                    
+                    <div id="ref-empty-state">
+                        <button type="button" class="btn btn-primary btn-block" onclick="document.getElementById('ref-file-input').click()">
+                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            Upload Reference Image
+                        </button>
+                    </div>
+
+                    <div id="ref-controls" hidden style="display:flex;flex-direction:column;gap:8px;">
+                        <div class="slider-row">
+                            <span>Opacity</span>
+                            <input type="range" id="ref-opacity-slider" min="5" max="100" step="5" value="35" oninput="updateRefTransform()" />
+                            <span class="slider-val" id="ref-opacity-val">35%</span>
+                        </div>
+                        <div class="slider-row">
+                            <span>Size</span>
+                            <input type="range" id="ref-scale-slider" min="20" max="250" step="5" value="100" oninput="updateRefTransform()" />
+                            <span class="slider-val" id="ref-scale-val">100%</span>
+                        </div>
+                        <div class="slider-row">
+                            <span>Rotate</span>
+                            <input type="range" id="ref-rot-slider" min="-180" max="180" step="5" value="0" oninput="updateRefTransform()" />
+                            <span class="slider-val" id="ref-rot-val">0°</span>
+                        </div>
+                        <div class="ref-actions-row">
+                            <button type="button" class="btn btn-sm" id="ref-gray-btn" onclick="toggleRefGrayscale()">B&amp;W</button>
+                            <button type="button" class="btn btn-sm" id="ref-vis-btn" onclick="toggleRefVisibility()">Hide</button>
+                            <button type="button" class="btn btn-sm" onclick="resetRefTransform()">Reset</button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="removeRefImage()">Remove</button>
+                        </div>
+                        <div class="ref-nudge-pad">
+                            <span style="font-size:11px;font-weight:600;color:var(--muted);margin-right:4px;">Move:</span>
+                            <button type="button" class="btn btn-sm" onclick="nudgeRef(-12, 0)" aria-label="Move left">&larr;</button>
+                            <button type="button" class="btn btn-sm" onclick="nudgeRef(0, -12)" aria-label="Move up">&uarr;</button>
+                            <button type="button" class="btn btn-sm" onclick="nudgeRef(0, 12)" aria-label="Move down">&darr;</button>
+                            <button type="button" class="btn btn-sm" onclick="nudgeRef(12, 0)" aria-label="Move right">&rarr;</button>
+                            <button type="button" class="btn btn-sm" onclick="document.getElementById('ref-file-input').click()">Change</button>
+                        </div>
                     </div>
                 </div>
                 
+                <!-- TEXT PANE -->
                 <div class="sheet-pane" id="pane-text">
                     <div class="text-tools">
                         <button class="btn btn-primary full" onclick="addText()">T&nbsp; Add text</button>
@@ -592,6 +843,7 @@
                     </div>
                 </div>
                 
+                <!-- POST PANE -->
                 <div class="sheet-pane" id="pane-post">
                     <div class="action-grid">
                         <button class="btn" onclick="previewDrawing()">
@@ -604,7 +856,7 @@
                             <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>Clear
                         </button>
                     </div>
-                    <input type="text" id="author-input" class="name-input" maxlength="24" placeholder="Your name or alias (optional)" />
+                    <input type="text" id="author-input" class="name-input" maxlength="24" placeholder="Your name or alias (optional)" oninput="handleStudioAuthorInput(this.value)" />
                     <button class="btn btn-accent btn-lg btn-block" id="submit-btn" onclick="submitToWall()">Post to wall</button>
                     <div class="studio-stats" id="studio-stats">0 strokes · 0 on wall</div>
                 </div>
@@ -649,6 +901,16 @@
     <section id="view-more" class="view">
         <div class="more-wrap">
             <h2 class="more-title">More</h2>
+
+            <div class="card">
+                <div class="card-head">Profile</div>
+                <button class="list-row" onclick="openNicknameOverlay(true)">
+                    <span class="lead">
+                        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span>Edit name<small id="more-profile-name">Anonymous</small></span>
+                    </span>
+                </button>
+            </div>
             
             <div class="card">
                 <div class="card-head">Sound</div>
@@ -697,7 +959,7 @@
                 </label>
             </div>
             
-            <div class="more-credit">ARCHERSTUDIO &times; BTLED ORG</div>
+            <div class="more-credit">ARCHERSTUDIO</div>
         </div>
     </section>
     
@@ -765,6 +1027,9 @@
         const LS_CACHE = "fw_cache_v1";
         const LS_MUSIC_TIME = "fw_music_time_v1";
         const LS_OPTIONS = "fw_options_v1";
+        const LS_PROFILE = "fw_profile_v1";
+        const LS_SAVED_COLORS = "fw_saved_colors_v1";
+        const LS_DRAFT = "fw_draft_v1";
         
         const LOFI_MP3_PATH = "../resources/audio/song1.mp3";
         
@@ -782,10 +1047,10 @@
         window.addEventListener("beforeunload", saveMusicTime);
         
         const LOFI_CHORDS = [
-        [261.63, 329.63, 392.00, 493.88],
-        [220.00, 261.63, 329.63, 392.00],
-        [293.66, 349.23, 440.00, 523.25],
-        [196.00, 246.94, 293.66, 349.23]
+            [261.63, 329.63, 392.00, 493.88],
+            [220.00, 261.63, 329.63, 392.00],
+            [293.66, 349.23, 440.00, 523.25],
+            [196.00, 246.94, 293.66, 349.23]
         ];
         
         function playChord(freqs) {
@@ -909,9 +1174,9 @@
         function popDoodle(el) {
             playPopTone(440 + Math.random() * 260);
             el.animate([
-            { transform: "scale(1)" },
-            { transform: "scale(1.3) rotate(14deg)" },
-            { transform: "scale(1)" }
+                { transform: "scale(1)" },
+                { transform: "scale(1.3) rotate(14deg)" },
+                { transform: "scale(1)" }
             ], { duration: 320, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)" });
         }
         
@@ -951,6 +1216,10 @@
         }
         
         const COLORS = ["#0f172a", "#1d4ed8", "#dc2626", "#16a34a", "#d97706", "#7c3aed", "#db2777", "#0891b2"];
+        const CP_PRESETS = [
+            "#000000", "#ffffff", "#64748b", "#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4",
+            "#3b82f6", "#6366f1", "#a855f7", "#ec4899", "#f43f5e", "#854d0e", "#fde047", "#bbf7d0"
+        ];
         const SIZES = [2, 5, 10, 18, 28];
         const TEXT_FS = [16, 22, 30, 42, 58, 76];
         const FONT_FAMILIES = {
@@ -966,6 +1235,8 @@
         let currentColor = COLORS[0];
         let currentSize = SIZES[1];
         let currentOpacity = 1;
+        let shapeFilled = false;
+        let symmetryMode = "none"; // "none" | "x" | "y" | "xy"
         let defaultTextFs = 30;
         let defaultTextFont = "Inter";
         let smoothStrokes = true;
@@ -974,6 +1245,7 @@
         let strokes = [];
         let redoStack = [];
         let currentStroke = null;
+        let mirrorStrokes = [];
         let shapeStart = null;
         let isDrawing = false;
         let isPreviewing = false;
@@ -1012,6 +1284,134 @@
             try { localStorage.setItem(key, JSON.stringify(val)); return true; }
             catch (e) { return false; }
         }
+
+        // =========================================================================
+        // DRAFT AUTO-SAVE
+        // =========================================================================
+        let draftSaveTimer = null;
+        function scheduleDraftSave() {
+            clearTimeout(draftSaveTimer);
+            draftSaveTimer = setTimeout(() => {
+                lsSet(LS_DRAFT, { strokes, texts: getTextItems() });
+            }, 350);
+        }
+
+        function loadDraft() {
+            const draft = lsGet(LS_DRAFT, null);
+            if (!draft) return;
+            if (Array.isArray(draft.strokes) && draft.strokes.length > 0) {
+                strokes = draft.strokes;
+                redrawStudio();
+            }
+            if (Array.isArray(draft.texts) && draft.texts.length > 0) {
+                draft.texts.forEach(t => addText(t));
+                deselectText();
+            }
+            updateHistoryUI();
+        }
+
+        // =========================================================================
+        // USER NICKNAME / PROFILE OVERLAY
+        // =========================================================================
+        let userProfile = lsGet(LS_PROFILE, null);
+
+        function applyProfileUI() {
+            const greetingEl = document.getElementById("nav-greeting");
+            const authorInput = document.getElementById("author-input");
+            const moreNameEl = document.getElementById("more-profile-name");
+
+            const isNamed = userProfile && !userProfile.anonymous && userProfile.name && userProfile.name.trim().length > 0;
+            const cleanName = isNamed ? userProfile.name.trim().slice(0, 24) : "";
+
+            if (greetingEl) {
+                if (isNamed) {
+                    greetingEl.textContent = `Hi, ${cleanName}!`;
+                    greetingEl.hidden = false;
+                } else {
+                    greetingEl.textContent = "";
+                    greetingEl.hidden = true;
+                }
+            }
+            if (authorInput) authorInput.value = isNamed ? cleanName : "";
+            if (moreNameEl) moreNameEl.textContent = isNamed ? cleanName : "Anonymous";
+        }
+
+        function toggleOverlayAnon(isAnon) {
+            const input = document.getElementById("overlay-nickname-input");
+            if (!input) return;
+            input.disabled = isAnon;
+            if (!isAnon) input.focus();
+        }
+
+        function openNicknameOverlay(allowCancel = false) {
+            const overlay = document.getElementById("nickname-overlay");
+            const input = document.getElementById("overlay-nickname-input");
+            const anonCheck = document.getElementById("overlay-anon-check");
+            const cancelBtn = document.getElementById("overlay-cancel-btn");
+
+            const isAnon = Boolean(userProfile && userProfile.anonymous);
+            anonCheck.checked = isAnon;
+            input.value = (!isAnon && userProfile && userProfile.name) ? userProfile.name : "";
+            input.disabled = isAnon;
+            cancelBtn.hidden = !allowCancel;
+
+            overlay.hidden = false;
+            if (!isAnon) setTimeout(() => input.focus(), 20);
+        }
+
+        function closeNicknameOverlay() {
+            document.getElementById("nickname-overlay").hidden = true;
+        }
+
+        function saveNicknameOverlay(event) {
+            if (event) event.preventDefault();
+            const input = document.getElementById("overlay-nickname-input");
+            const anonCheck = document.getElementById("overlay-anon-check");
+            const isAnon = anonCheck.checked;
+            const rawName = (input.value || "").trim().slice(0, 24);
+
+            if (!isAnon && !rawName) {
+                showToast("Please enter a nickname or check stay anonymous.");
+                input.focus();
+                return;
+            }
+
+            userProfile = {
+                name: isAnon ? "" : rawName,
+                anonymous: isAnon
+            };
+            lsSet(LS_PROFILE, userProfile);
+            applyProfileUI();
+            closeNicknameOverlay();
+            haptic(10);
+            showToast(isAnon ? "Staying anonymous" : `Welcome, ${rawName}!`);
+        }
+
+        function handleStudioAuthorInput(val) {
+            const trimmed = (val || "").trim().slice(0, 24);
+            userProfile = trimmed
+                ? { name: trimmed, anonymous: false }
+                : { name: "", anonymous: true };
+            lsSet(LS_PROFILE, userProfile);
+
+            const greetingEl = document.getElementById("nav-greeting");
+            const moreNameEl = document.getElementById("more-profile-name");
+            if (trimmed) {
+                greetingEl.textContent = `Hi, ${trimmed}!`;
+                greetingEl.hidden = false;
+                moreNameEl.textContent = trimmed;
+            } else {
+                greetingEl.textContent = "";
+                greetingEl.hidden = true;
+                moreNameEl.textContent = "Anonymous";
+            }
+        }
+
+        function initUserProfile() {
+            userProfile = lsGet(LS_PROFILE, null);
+            applyProfileUI();
+            if (!userProfile) openNicknameOverlay(false);
+        }
         
         pending = lsGet(LS_QUEUE, []);
         serverEntries = lsGet(LS_CACHE, []);
@@ -1020,7 +1420,7 @@
         function rebuildEntries() {
             const ids = new Set(serverEntries.map(e => e.id));
             wallEntries = serverEntries.concat(
-            pending.filter(p => !ids.has(p.id)).map(p => Object.assign({}, p, { _pending: true }))
+                pending.filter(p => !ids.has(p.id)).map(p => Object.assign({}, p, { _pending: true }))
             );
             updateWallCount();
             updateHistoryUI();
@@ -1093,7 +1493,340 @@
                 });
             } catch (e) {}
         }
+
+        // =========================================================================
+        // CUSTOM HSV COLOR PICKER + SAVED COLORS
+        // =========================================================================
+        let savedColors = lsGet(LS_SAVED_COLORS, []);
+        let cpHue = 221;
+        let cpSat = 0.86;
+        let cpVal = 0.85;
+
+        function hsvToHex(h, s, v) {
+            const c = v * s;
+            const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+            const m = v - c;
+            let r = 0, g = 0, b = 0;
+            if (h < 60) { r = c; g = x; }
+            else if (h < 120) { r = x; g = c; }
+            else if (h < 180) { g = c; b = x; }
+            else if (h < 240) { g = x; b = c; }
+            else if (h < 300) { r = x; b = c; }
+            else { r = c; b = x; }
+            const toHex = n => Math.round((n + m) * 255).toString(16).padStart(2, "0");
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+
+        function hexToHsv(hex) {
+            let clean = (hex || "#1d4ed8").replace("#", "");
+            if (clean.length === 3) clean = clean.split("").map(c => c + c).join("");
+            if (!/^[0-9a-fA-F]{6}$/.test(clean)) return { h: 221, s: 0.86, v: 0.85 };
+            const r = parseInt(clean.slice(0, 2), 16) / 255;
+            const g = parseInt(clean.slice(2, 4), 16) / 255;
+            const b = parseInt(clean.slice(4, 6), 16) / 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            const d = max - min;
+            let h = 0;
+            if (d !== 0) {
+                if (max === r) h = 60 * (((g - b) / d) % 6);
+                else if (max === g) h = 60 * ((b - r) / d + 2);
+                else h = 60 * ((r - g) / d + 4);
+            }
+            if (h < 0) h += 360;
+            const s = max === 0 ? 0 : d / max;
+            return { h, s, v: max };
+        }
+
+        function renderSavedColorsUI() {
+            const bar = document.getElementById("saved-colors-bar");
+            const list = document.getElementById("saved-swatch-list");
+            const modalGrid = document.getElementById("cp-saved-grid");
+            list.innerHTML = "";
+            modalGrid.innerHTML = "";
+
+            if (savedColors.length === 0) {
+                bar.hidden = true;
+                modalGrid.innerHTML = `<span style="font-size:11.5px;color:var(--muted);">Custom colors you use or save will appear here.</span>`;
+                return;
+            }
+
+            bar.hidden = false;
+            savedColors.forEach(col => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "saved-swatch" + (currentColor.toLowerCase() === col.toLowerCase() ? " active" : "");
+                btn.style.backgroundColor = col;
+                btn.title = col.toUpperCase();
+                btn.onclick = () => selectColor(col, true);
+                list.appendChild(btn);
+
+                const mBtn = document.createElement("button");
+                mBtn.type = "button";
+                mBtn.className = "saved-swatch";
+                mBtn.style.backgroundColor = col;
+                mBtn.title = col.toUpperCase();
+                mBtn.onclick = () => {
+                    const hsv = hexToHsv(col);
+                    cpHue = hsv.h; cpSat = hsv.s; cpVal = hsv.v;
+                    updateCpCanvasAndUI();
+                };
+                modalGrid.appendChild(mBtn);
+            });
+        }
+
+        function rememberUsedColor(hex) {
+            const norm = hex.toLowerCase();
+            if (COLORS.includes(norm)) return;
+            savedColors = [norm].concat(savedColors.filter(c => c.toLowerCase() !== norm)).slice(0, 12);
+            lsSet(LS_SAVED_COLORS, savedColors);
+            renderSavedColorsUI();
+        }
+
+        function saveCurrentToPalette() {
+            const hex = hsvToHex(cpHue, cpSat, cpVal).toLowerCase();
+            savedColors = [hex].concat(savedColors.filter(c => c.toLowerCase() !== hex)).slice(0, 12);
+            lsSet(LS_SAVED_COLORS, savedColors);
+            renderSavedColorsUI();
+            showToast(`Saved ${hex.toUpperCase()}`);
+        }
+
+        function drawCpSvSquare() {
+            const cvs = document.getElementById("cp-sv-canvas");
+            const ctx = cvs.getContext("2d");
+            const w = cvs.width, h = cvs.height;
+
+            ctx.fillStyle = `hsl(${cpHue}, 100%, 50%)`;
+            ctx.fillRect(0, 0, w, h);
+
+            const whiteGrad = ctx.createLinearGradient(0, 0, w, 0);
+            whiteGrad.addColorStop(0, "rgba(255,255,255,1)");
+            whiteGrad.addColorStop(1, "rgba(255,255,255,0)");
+            ctx.fillStyle = whiteGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            const blackGrad = ctx.createLinearGradient(0, 0, 0, h);
+            blackGrad.addColorStop(0, "rgba(0,0,0,0)");
+            blackGrad.addColorStop(1, "rgba(0,0,0,1)");
+            ctx.fillStyle = blackGrad;
+            ctx.fillRect(0, 0, w, h);
+        }
+
+        function updateCpCanvasAndUI(skipHexInput = false) {
+            drawCpSvSquare();
+            const hex = hsvToHex(cpHue, cpSat, cpVal);
+
+            const svCursor = document.getElementById("cp-sv-cursor");
+            svCursor.style.left = (cpSat * 100) + "%";
+            svCursor.style.top = ((1 - cpVal) * 100) + "%";
+            svCursor.style.backgroundColor = hex;
+
+            const hueThumb = document.getElementById("cp-hue-thumb");
+            hueThumb.style.left = ((cpHue / 360) * 100) + "%";
+            hueThumb.style.backgroundColor = `hsl(${cpHue}, 100%, 50%)`;
+
+            document.getElementById("cp-prev-new").style.backgroundColor = hex;
+            if (!skipHexInput) {
+                document.getElementById("cp-hex-input").value = hex.toUpperCase();
+            }
+        }
+
+        function onCpHexInput(val) {
+            let clean = val.trim();
+            if (!clean.startsWith("#")) clean = "#" + clean;
+            if (/^#[0-9a-fA-F]{6}$/.test(clean)) {
+                const hsv = hexToHsv(clean);
+                cpHue = hsv.h; cpSat = hsv.s; cpVal = hsv.v;
+                updateCpCanvasAndUI(true);
+            }
+        }
+
+        function openColorPicker() {
+            const hsv = hexToHsv(currentColor);
+            cpHue = hsv.h; cpSat = hsv.s; cpVal = hsv.v;
+            document.getElementById("cp-prev-old").style.backgroundColor = currentColor;
+            renderSavedColorsUI();
+            document.getElementById("color-modal").classList.add("open");
+            updateCpCanvasAndUI();
+        }
+
+        function closeColorPicker() {
+            document.getElementById("color-modal").classList.remove("open");
+        }
+
+        function confirmColorPicker() {
+            const hex = hsvToHex(cpHue, cpSat, cpVal);
+            rememberUsedColor(hex);
+            selectColor(hex, true);
+            closeColorPicker();
+            haptic(8);
+        }
+
+        function initCustomColorPickerEvents() {
+            const svWrap = document.getElementById("cp-sv-wrap");
+            const hueWrap = document.getElementById("cp-hue-wrap");
+            const presetGrid = document.getElementById("cp-preset-grid");
+
+            CP_PRESETS.forEach(col => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "cp-mini-swatch";
+                b.style.backgroundColor = col;
+                b.title = col.toUpperCase();
+                b.onclick = () => {
+                    const hsv = hexToHsv(col);
+                    cpHue = hsv.h; cpSat = hsv.s; cpVal = hsv.v;
+                    updateCpCanvasAndUI();
+                };
+                presetGrid.appendChild(b);
+            });
+
+            const handleSvPointer = (e) => {
+                const rect = svWrap.getBoundingClientRect();
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                cpSat = clamp((cx - rect.left) / rect.width, 0, 1);
+                cpVal = 1 - clamp((cy - rect.top) / rect.height, 0, 1);
+                updateCpCanvasAndUI();
+            };
+
+            let draggingSv = false;
+            svWrap.addEventListener("pointerdown", (e) => {
+                e.preventDefault();
+                draggingSv = true;
+                svWrap.setPointerCapture(e.pointerId);
+                handleSvPointer(e);
+            });
+            svWrap.addEventListener("pointermove", (e) => { if (draggingSv) handleSvPointer(e); });
+            svWrap.addEventListener("pointerup", () => { draggingSv = false; });
+            svWrap.addEventListener("pointercancel", () => { draggingSv = false; });
+
+            const handleHuePointer = (e) => {
+                const rect = hueWrap.getBoundingClientRect();
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                cpHue = clamp(((cx - rect.left) / rect.width) * 360, 0, 359.9);
+                updateCpCanvasAndUI();
+            };
+
+            let draggingHue = false;
+            hueWrap.addEventListener("pointerdown", (e) => {
+                e.preventDefault();
+                draggingHue = true;
+                hueWrap.setPointerCapture(e.pointerId);
+                handleHuePointer(e);
+            });
+            hueWrap.addEventListener("pointermove", (e) => { if (draggingHue) handleHuePointer(e); });
+            hueWrap.addEventListener("pointerup", () => { draggingHue = false; });
+            hueWrap.addEventListener("pointercancel", () => { draggingHue = false; });
+        }
+
+        // =========================================================================
+        // LOCAL REFERENCE / TRACING IMAGE (NEVER POSTED)
+        // =========================================================================
+        let refState = {
+            loaded: false,
+            visible: true,
+            grayscale: false,
+            x: 0,
+            y: 0,
+            scale: 1,
+            opacity: 0.35,
+            rot: 0
+        };
+
+        function handleRefUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById("ref-img");
+                img.src = e.target.result;
+                refState = {
+                    loaded: true,
+                    visible: true,
+                    grayscale: false,
+                    x: 0,
+                    y: 0,
+                    scale: 1,
+                    opacity: 0.35,
+                    rot: 0
+                };
+                document.getElementById("ref-opacity-slider").value = 35;
+                document.getElementById("ref-scale-slider").value = 100;
+                document.getElementById("ref-rot-slider").value = 0;
+                document.getElementById("ref-gray-btn").classList.remove("active");
+                document.getElementById("ref-vis-btn").textContent = "Hide";
+
+                document.getElementById("ref-layer").hidden = false;
+                document.getElementById("ref-empty-state").hidden = true;
+                document.getElementById("ref-controls").hidden = false;
+                document.getElementById("ref-tab-dot").hidden = false;
+                updateRefTransform();
+                showToast("Reference image loaded (local only)");
+            };
+            reader.readAsDataURL(file);
+            event.target.value = "";
+        }
+
+        function updateRefTransform() {
+            if (!refState.loaded) return;
+            refState.opacity = Number(document.getElementById("ref-opacity-slider").value) / 100;
+            refState.scale = Number(document.getElementById("ref-scale-slider").value) / 100;
+            refState.rot = Number(document.getElementById("ref-rot-slider").value);
+
+            document.getElementById("ref-opacity-val").textContent = Math.round(refState.opacity * 100) + "%";
+            document.getElementById("ref-scale-val").textContent = Math.round(refState.scale * 100) + "%";
+            document.getElementById("ref-rot-val").textContent = refState.rot + "°";
+
+            const img = document.getElementById("ref-img");
+            img.style.opacity = refState.visible ? refState.opacity : 0;
+            img.style.filter = refState.grayscale ? "grayscale(100%) contrast(115%)" : "none";
+            img.style.transform = `translate(${refState.x}px, ${refState.y}px) scale(${refState.scale}) rotate(${refState.rot}deg)`;
+        }
+
+        function nudgeRef(dx, dy) {
+            if (!refState.loaded) return;
+            refState.x += dx;
+            refState.y += dy;
+            updateRefTransform();
+        }
+
+        function toggleRefGrayscale() {
+            refState.grayscale = !refState.grayscale;
+            document.getElementById("ref-gray-btn").classList.toggle("active", refState.grayscale);
+            updateRefTransform();
+        }
+
+        function toggleRefVisibility() {
+            refState.visible = !refState.visible;
+            document.getElementById("ref-vis-btn").textContent = refState.visible ? "Hide" : "Show";
+            updateRefTransform();
+        }
+
+        function resetRefTransform() {
+            refState.x = 0;
+            refState.y = 0;
+            refState.scale = 1;
+            refState.rot = 0;
+            refState.opacity = 0.35;
+            document.getElementById("ref-opacity-slider").value = 35;
+            document.getElementById("ref-scale-slider").value = 100;
+            document.getElementById("ref-rot-slider").value = 0;
+            updateRefTransform();
+        }
+
+        function removeRefImage() {
+            refState.loaded = false;
+            document.getElementById("ref-img").src = "";
+            document.getElementById("ref-layer").hidden = true;
+            document.getElementById("ref-controls").hidden = true;
+            document.getElementById("ref-empty-state").hidden = false;
+            document.getElementById("ref-tab-dot").hidden = true;
+            showToast("Reference image removed");
+        }
         
+        // =========================================================================
+        // STUDIO TOOLS, SYMMETRY & SHAPE FILL
+        // =========================================================================
         const drawCanvas = document.getElementById("draw-canvas");
         const drawCtx = drawCanvas.getContext("2d", { willReadFrequently: true });
         const previewCanvas = document.getElementById("preview-canvas");
@@ -1114,6 +1847,42 @@
             if (tool === "eyedropper") canvasFrame.classList.add("mode-eyedropper");
             if (tool !== "hand") deselectText();
             haptic(6);
+        }
+
+        function cycleSymmetry() {
+            const order = ["none", "x", "y", "xy"];
+            const labels = { none: "Off", x: "Mirror X", y: "Mirror Y", xy: "4-Way" };
+            symmetryMode = order[(order.indexOf(symmetryMode) + 1) % order.length];
+
+            const btn = document.getElementById("sym-btn");
+            const label = document.getElementById("sym-label");
+            const guides = document.getElementById("sym-guides");
+            const lineV = document.getElementById("sym-line-v");
+            const lineH = document.getElementById("sym-line-h");
+
+            label.textContent = labels[symmetryMode];
+            btn.classList.toggle("active", symmetryMode !== "none");
+            guides.hidden = symmetryMode === "none";
+            lineV.hidden = !(symmetryMode === "x" || symmetryMode === "xy");
+            lineH.hidden = !(symmetryMode === "y" || symmetryMode === "xy");
+            haptic(8);
+            showToast("Symmetry: " + labels[symmetryMode]);
+        }
+
+        function getSymmetricPoints(pt) {
+            const [x, y] = pt;
+            const res = [[x, y]];
+            if (symmetryMode === "x" || symmetryMode === "xy") res.push([500 - x, y]);
+            if (symmetryMode === "y" || symmetryMode === "xy") res.push([x, 500 - y]);
+            if (symmetryMode === "xy") res.push([500 - x, 500 - y]);
+            return res;
+        }
+
+        function toggleShapeFill() {
+            shapeFilled = !shapeFilled;
+            document.getElementById("shape-fill-btn").classList.toggle("active", shapeFilled);
+            haptic(6);
+            showToast(shapeFilled ? "Shapes will be filled" : "Shapes outline only");
         }
         
         function setDrawTab(name) {
@@ -1138,12 +1907,14 @@
                 padBtn.classList.remove("active");
                 padBtn.style.background = "";
                 document.querySelectorAll(".swatch").forEach(el => {
-                    if (el.dataset.color === col) el.classList.add("active");
+                    if (el.dataset.color && el.dataset.color.toLowerCase() === col.toLowerCase()) el.classList.add("active");
                 });
             }
+            renderSavedColorsUI();
             if (selectedText) {
                 selectedText.c = col;
                 selectedText.el.style.color = col;
+                scheduleDraftSave();
             }
             if (currentTool === "eraser" || currentTool === "hand" || currentTool === "eyedropper") {
                 setTool("brush");
@@ -1156,6 +1927,7 @@
             
             COLORS.forEach((col, i) => {
                 const btn = document.createElement("button");
+                btn.type = "button";
                 btn.className = "swatch" + (i === 0 ? " active" : "");
                 btn.dataset.color = col;
                 btn.style.backgroundColor = col;
@@ -1163,13 +1935,14 @@
                 btn.onclick = () => selectColor(col, false);
                 swatchList.insertBefore(btn, padBtn);
             });
-            
-            const padInput = document.getElementById("color-pad-input");
-            padInput.addEventListener("input", (e) => { selectColor(e.target.value, true); });
+
+            renderSavedColorsUI();
+            initCustomColorPickerEvents();
             
             const sizeList = document.getElementById("size-list");
             SIZES.forEach((sz, i) => {
                 const btn = document.createElement("button");
+                btn.type = "button";
                 btn.className = "size-btn" + (i === 1 ? " active" : "");
                 btn.setAttribute("aria-label", "Brush size " + sz);
                 const dot = document.createElement("span");
@@ -1274,6 +2047,8 @@
             if (e.key === "Shift") shiftPressed = true;
             
             if (document.activeElement.tagName === "INPUT" || document.activeElement.isContentEditable) return;
+            if (!document.getElementById("nickname-overlay").hidden) return;
+            if (document.getElementById("color-modal").classList.contains("open")) return;
             if (!document.getElementById("view-draw").classList.contains("active")) return;
             
             if (e.code === "Space") {
@@ -1376,6 +2151,7 @@
             texts = texts.filter(t => t !== item);
             item.el.remove();
             if (selectedText === item) selectedText = null;
+            scheduleDraftSave();
         }
         
         function removeSelectedOrAllText() {
@@ -1432,6 +2208,7 @@
             
             content.addEventListener("input", () => {
                 item.t = (content.innerText || "").replace(/\n+$/, "");
+                scheduleDraftSave();
             });
             content.addEventListener("focus", () => selectText(item));
             
@@ -1459,6 +2236,7 @@
                         window.removeEventListener("pointermove", move);
                         window.removeEventListener("pointerup", up);
                         if (!moved) content.focus();
+                        else scheduleDraftSave();
                     };
                     window.addEventListener("pointermove", move);
                     window.addEventListener("pointerup", up);
@@ -1483,6 +2261,7 @@
                     handle.removeEventListener("pointermove", move);
                     handle.removeEventListener("pointerup", up);
                     handle.removeEventListener("pointercancel", up);
+                    scheduleDraftSave();
                 };
                 handle.addEventListener("pointermove", move);
                 handle.addEventListener("pointerup", up);
@@ -1499,6 +2278,7 @@
             if (selectedText) {
                 selectedText.fn = fontKey;
                 selectedText.el.style.setProperty("--ff", FONT_FAMILIES[fontKey] || FONT_FAMILIES["Inter"]);
+                scheduleDraftSave();
             } else {
                 showToast("Font set to " + fontKey);
             }
@@ -1512,6 +2292,7 @@
             if (selectedText) {
                 selectedText.f = f;
                 selectedText.el.style.setProperty("--fs", f);
+                scheduleDraftSave();
             } else {
                 defaultTextFs = f;
                 showToast("Text size set. Tap Add text.");
@@ -1606,8 +2387,8 @@
             const [x, y] = pt;
             const px = drawCtx.getImageData(clamp(x, 0, 499), clamp(y, 0, 499), 1, 1).data;
             const hex = px[3] < 20 ? "#ffffff" : rgbToHex(px[0], px[1], px[2]);
+            rememberUsedColor(hex);
             selectColor(hex, true);
-            document.getElementById("color-pad-input").value = hex;
             showToast("Picked color " + hex.toUpperCase());
         }
         
@@ -1629,10 +2410,10 @@
             
             function matches(idx) {
                 return (
-                Math.abs(data[idx] - sr) <= tol &&
-                Math.abs(data[idx + 1] - sg) <= tol &&
-                Math.abs(data[idx + 2] - sb) <= tol &&
-                Math.abs(data[idx + 3] - sa) <= tol
+                    Math.abs(data[idx] - sr) <= tol &&
+                    Math.abs(data[idx + 1] - sg) <= tol &&
+                    Math.abs(data[idx + 2] - sb) <= tol &&
+                    Math.abs(data[idx + 3] - sa) <= tol
                 );
             }
             
@@ -1677,18 +2458,20 @@
                 e.preventDefault();
                 if (isDrawing && currentStroke && currentStroke.p && currentStroke.p.length <= 2) {
                     strokes.pop();
+                    mirrorStrokes.forEach(() => strokes.pop());
                     redrawStudio();
                     updateHistoryUI();
                 }
                 isDrawing = false;
                 currentStroke = null;
+                mirrorStrokes = [];
                 shapeStart = null;
                 previewCtx.clearRect(0, 0, 500, 500);
                 
                 const rect = canvasFrame.getBoundingClientRect();
                 studioPinchDist = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
                 );
                 studioPinchMidX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
                 studioPinchMidY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
@@ -1718,9 +2501,11 @@
             
             if (currentTool === "fill") {
                 redoStack = [];
+                rememberUsedColor(currentColor);
                 strokes.push({ k: "fill", c: currentColor, a: currentOpacity, x: pt[0], y: pt[1] });
                 redrawStudio();
                 updateHistoryUI();
+                scheduleDraftSave();
                 return;
             }
             
@@ -1733,15 +2518,33 @@
             isDrawing = true;
             redoStack = [];
             const isEraser = currentTool === "eraser";
+            if (!isEraser) rememberUsedColor(currentColor);
+
+            const symPts = getSymmetricPoints(pt);
             currentStroke = {
                 c: isEraser ? "#ffffff" : currentColor,
                 s: currentSize,
                 a: isEraser ? 1 : currentOpacity,
                 er: isEraser,
                 sm: !isEraser && smoothStrokes,
-                p: [pt]
+                p: [symPts[0]]
             };
             strokes.push(currentStroke);
+
+            mirrorStrokes = [];
+            for (let i = 1; i < symPts.length; i++) {
+                const ms = {
+                    c: currentStroke.c,
+                    s: currentStroke.s,
+                    a: currentStroke.a,
+                    er: currentStroke.er,
+                    sm: currentStroke.sm,
+                    p: [symPts[i]]
+                };
+                mirrorStrokes.push(ms);
+                strokes.push(ms);
+            }
+
             redrawStudio();
             updateHistoryUI();
         }
@@ -1751,8 +2554,8 @@
                 e.preventDefault();
                 const rect = canvasFrame.getBoundingClientRect();
                 const newDist = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
                 );
                 const newMidX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
                 const newMidY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
@@ -1785,7 +2588,8 @@
             
             if (shapeStart && (currentTool === "line" || currentTool === "rect" || currentTool === "circle")) {
                 const pts = buildShapePoints(currentTool, shapeStart, pt, shiftPressed);
-                renderStrokesInstant(previewCtx, [{ c: currentColor, s: currentSize, a: currentOpacity, sm: false, p: pts }], 500, true);
+                const isFilled = shapeFilled && (currentTool === "rect" || currentTool === "circle");
+                renderStrokesInstant(previewCtx, [{ c: currentColor, s: currentSize, a: currentOpacity, sm: false, fl: isFilled, p: pts }], 500, true);
                 return;
             }
             
@@ -1793,7 +2597,11 @@
             const last = currentStroke.p[currentStroke.p.length - 1];
             const minStep = studioScale > 1.5 ? 1 : 2;
             if (Math.hypot(pt[0] - last[0], pt[1] - last[1]) >= minStep) {
-                currentStroke.p.push(pt);
+                const symPts = getSymmetricPoints(pt);
+                currentStroke.p.push(symPts[0]);
+                for (let i = 0; i < mirrorStrokes.length; i++) {
+                    if (symPts[i + 1]) mirrorStrokes[i].p.push(symPts[i + 1]);
+                }
                 redrawStudio();
             }
         }
@@ -1808,25 +2616,30 @@
             if (isDrawing && shapeStart && (currentTool === "line" || currentTool === "rect" || currentTool === "circle")) {
                 previewCtx.clearRect(0, 0, 500, 500);
                 const pt = e && (e.changedTouches ? [
-                Math.max(0, Math.min(500, Math.round(((e.changedTouches[0].clientX - drawCanvas.getBoundingClientRect().left) / drawCanvas.getBoundingClientRect().width) * 500))),
-                Math.max(0, Math.min(500, Math.round(((e.changedTouches[0].clientY - drawCanvas.getBoundingClientRect().top) / drawCanvas.getBoundingClientRect().height) * 500)))
+                    Math.max(0, Math.min(500, Math.round(((e.changedTouches[0].clientX - drawCanvas.getBoundingClientRect().left) / drawCanvas.getBoundingClientRect().width) * 500))),
+                    Math.max(0, Math.min(500, Math.round(((e.changedTouches[0].clientY - drawCanvas.getBoundingClientRect().top) / drawCanvas.getBoundingClientRect().height) * 500)))
                 ] : getCanvasPoint(e));
                 
                 const pts = buildShapePoints(currentTool, shapeStart, pt || shapeStart, shiftPressed);
+                const isFilled = shapeFilled && (currentTool === "rect" || currentTool === "circle");
                 redoStack = [];
-                strokes.push({ c: currentColor, s: currentSize, a: currentOpacity, sm: false, p: pts });
+                rememberUsedColor(currentColor);
+                strokes.push({ c: currentColor, s: currentSize, a: currentOpacity, sm: false, fl: isFilled, p: pts });
                 shapeStart = null;
                 isDrawing = false;
                 redrawStudio();
                 updateHistoryUI();
+                scheduleDraftSave();
                 return;
             }
             
             if (!isDrawing) return;
             isDrawing = false;
             currentStroke = null;
+            mirrorStrokes = [];
             shapeStart = null;
             updateHistoryUI();
+            scheduleDraftSave();
         }
         
         function updateHistoryUI() {
@@ -1908,6 +2721,10 @@
                     ctx.beginPath();
                     ctx.moveTo(st.p[0][0] * ratio, st.p[0][1] * ratio);
                     for (let i = 1; i < st.p.length; i++) ctx.lineTo(st.p[i][0] * ratio, st.p[i][1] * ratio);
+                    if (st.fl) {
+                        ctx.closePath();
+                        ctx.fill();
+                    }
                     ctx.stroke();
                 }
                 ctx.restore();
@@ -1921,6 +2738,7 @@
             redoStack.push(strokes.pop());
             redrawStudio();
             updateHistoryUI();
+            scheduleDraftSave();
         }
         
         function redoStroke() {
@@ -1928,6 +2746,7 @@
             strokes.push(redoStack.pop());
             redrawStudio();
             updateHistoryUI();
+            scheduleDraftSave();
         }
         
         let pendingCriticalAction = null;
@@ -1964,9 +2783,9 @@
                     return;
                 }
                 confirmCriticalAction(
-                "Clear your canvas?",
-                "This will permanently remove the drawing and text currently on your canvas.",
-                () => clearCanvas(true)
+                    "Clear your canvas?",
+                    "This will permanently remove the drawing and text currently on your canvas.",
+                    () => clearCanvas(true)
                 );
                 return;
             }
@@ -1976,6 +2795,7 @@
             resetStudioZoom();
             redrawStudio();
             updateHistoryUI();
+            lsSet(LS_DRAFT, null);
         }
         
         function animateStrokes(ctx, strokeList, canvasDim, speedMultiplier = 1, onComplete = null) {
@@ -1993,6 +2813,10 @@
                 }
                 if (st.k === "fill") { segments.push({ type: "fill", item: st }); continue; }
                 if (!st.p || st.p.length === 0) continue;
+                if (st.fl) {
+                    segments.push({ type: "filledShape", item: st });
+                    continue;
+                }
                 if (st.p.length === 1) {
                     segments.push({ type: "dot", c: st.c, s: st.s, a: st.a ?? 1, er: !!st.er, x: st.p[0][0], y: st.p[0][1] });
                 } else {
@@ -2027,6 +2851,10 @@
                     }
                     if (seg.type === "fill") {
                         applyFloodFill(ctx, seg.item.x, seg.item.y, seg.item.c || "#0f172a", seg.item.a ?? 1, canvasDim);
+                        continue;
+                    }
+                    if (seg.type === "filledShape") {
+                        renderStrokesInstant(ctx, [seg.item], canvasDim, false);
                         continue;
                     }
                     
@@ -2077,9 +2905,14 @@
             resetStudioZoom();
             isPreviewing = true;
             textLayer.style.visibility = "hidden";
+            const refLayer = document.getElementById("ref-layer");
+            const wasRefVisible = !refLayer.hidden;
+            if (wasRefVisible) refLayer.hidden = true;
+
             animateStrokes(drawCtx, all, 500, 1, () => {
                 isPreviewing = false;
                 textLayer.style.visibility = "visible";
+                if (wasRefVisible) refLayer.hidden = false;
                 redrawStudio();
             });
         }
@@ -2269,7 +3102,8 @@
             }
             
             const slot = pickRandomOpenSlot(wallEntries);
-            const author = document.getElementById("author-input").value.trim() || "Anonymous";
+            const rawAuthor = document.getElementById("author-input").value.trim();
+            const author = rawAuthor || (userProfile && !userProfile.anonymous && userProfile.name ? userProfile.name : "Anonymous");
             const entry = {
                 id: "fw_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
                 author: author,
@@ -2289,7 +3123,7 @@
             rebuildEntries();
             setUploadUI();
             clearCanvas(true);
-            document.getElementById("author-input").value = "";
+            applyProfileUI();
             setDrawTab("style");
             switchView("wall");
             launchConfetti();
@@ -2379,8 +3213,7 @@
                         throw new Error((json && json.error) || "Upload failed");
                     }
                 }
-            } catch (err) {
-            }
+            } catch (err) {}
             
             uploading = false;
             rebuildEntries();
@@ -2420,8 +3253,6 @@
             if (pending.length) txt += ` · ${pending.length} pending`;
             const el = document.getElementById("wall-count");
             if (el) el.textContent = txt + extra;
-            const home = document.getElementById("home-stats");
-            if (home) home.textContent = `${n} ${n === 1 ? "drawing" : "drawings"} on the wall`;
         }
         
         const sigOf = list => list.map(e => e.id).join("|");
@@ -2653,8 +3484,8 @@
             } else if (e.touches.length === 2) {
                 isPanning = false;
                 lastTouchDist = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
                 );
             }
         }, { passive: true });
@@ -2668,8 +3499,8 @@
                 applyStageTransform();
             } else if (e.touches.length === 2 && lastTouchDist) {
                 const dist = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
                 );
                 zoomWall(dist / lastTouchDist);
                 lastTouchDist = dist;
@@ -2709,11 +3540,17 @@
             document.getElementById("tile-modal").classList.remove("open");
         }
         
-        // Android back / browser back: close modal first
-        window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                closeModal();
+                closeColorPicker();
+            }
+        });
         
+        initUserProfile();
         loadOptions();
         initStudioControls();
+        loadDraft();
         layoutMonument();
         applyStageTransform();
         setUploadUI();
