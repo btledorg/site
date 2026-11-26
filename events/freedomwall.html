@@ -5818,11 +5818,7 @@
                                 if (cvs) cvs.getContext("2d").clearRect(0, 0, cvs.width, cvs.height);
                             } else {
                                 updateWeatherPillUI();
-                                const weatherChk = document.getElementById("opt-weather-fx");
-                        if (weatherChk) weatherChk.checked = weatherEnabled;
-                        const weatherPill = document.getElementById("weather-pill");
-                        if (weatherPill) weatherPill.hidden = !weatherEnabled;
-                        if (weatherEnabled) startWeatherEngine();
+                                applyWeatherEffectsToggle();
                             }
                             if (typeof startSeasonalParticles === "function") startSeasonalParticles();
                         }
@@ -5892,6 +5888,7 @@
                             const ctx = cvs.getContext("2d");
                             rebuildWeatherParticles();
 
+                            window.removeEventListener("resize", rebuildWeatherParticles);
                             window.addEventListener("resize", rebuildWeatherParticles);
 
                             function tick() {
@@ -5901,7 +5898,6 @@
                                 }
                                 ctx.clearRect(0, 0, cvs.width, cvs.height);
 
-                                // Visible on Home & Wall; subtle on Draw so sketching stays unobstructed
                                 const viewAlphaScale = currentView === "draw" ? 0.22 : 1.0;
                                 const mode = getActiveWeatherMode();
 
@@ -5918,7 +5914,6 @@
                                         ctx.fill();
                                     }
                                 } else if (mode === "rain" || mode === "storm") {
-                                    // Cool overcast tint
                                     ctx.fillStyle = `rgba(30, 58, 138, ${(mode === "storm" ? 0.08 : 0.04) * viewAlphaScale})`;
                                     ctx.fillRect(0, 0, cvs.width, cvs.height);
 
@@ -5942,7 +5937,6 @@
                                         if (d.x < -40) d.x = cvs.width + 40;
                                     }
 
-                                    // Raindrop splash rings above bottom nav
                                     for (let i = weatherSplashes.length - 1; i >= 0; i--) {
                                         const s = weatherSplashes[i];
                                         s.r += 0.6;
@@ -5955,7 +5949,6 @@
                                         ctx.stroke();
                                     }
 
-                                    // Storm lightning flash
                                     if (mode === "storm" && Math.random() < 0.005) {
                                         weatherLightning = 0.32;
                                     }
@@ -5988,6 +5981,7 @@
                                 liveWeatherState = { mode, temp, label };
                                 rebuildWeatherParticles();
                                 updateWeatherPillUI();
+                                if (typeof startSeasonalParticles === "function") startSeasonalParticles();
                             } catch (e) {
                                 updateWeatherPillUI();
                             }

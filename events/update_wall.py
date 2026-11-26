@@ -1,60 +1,10 @@
-import sys
-from pathlib import Path
+import re
 
-def patch_html(file_path: str):
-    path = Path(file_path)
-    if not path.exists():
-        print(f"Error: File '{file_path}' not found.")
-        sys.exit(1)
+with open("freedomwall.html", "r", encoding="utf-8") as f:
+    html = f.read()
 
-    content = path.read_text(encoding="utf-8")
-
-    # 1. Fix duplicate stencils in initUpgradeControls() by clearing stencilList first
-    old_stencil_block = """                            const stencilList = document.getElementById("stencil-list");
-                            Object.entries(STENCILS).forEach(([k, [label]]) => {"""
-
-    new_stencil_block = """                            const stencilList = document.getElementById("stencil-list");
-                            stencilList.innerHTML = "";
-                            Object.entries(STENCILS).forEach(([k, [label]]) => {"""
-
-    assert old_stencil_block in content, "Could not find stencilList block in initUpgradeControls()"
-    content = content.replace(old_stencil_block, new_stencil_block, 1)
-
-    # 2. Add Weather effects toggle switch in More -> Options
-    old_options_card = """                                <label class="list-row">
-                                    <span>Wall tile borders</span>
-                                    <span class="switch"><input type="checkbox" id="opt-borders" onchange="applyOptions()"></span>
-                                </label>"""
-
-    new_options_card = """                                <label class="list-row">
-                                    <span>Wall tile borders</span>
-                                    <span class="switch"><input type="checkbox" id="opt-borders" onchange="applyOptions()"></span>
-                                </label>
-                                <label class="list-row">
-                                    <span>Weather effects</span>
-                                    <span class="switch"><input type="checkbox" id="opt-weather-fx" checked onchange="applyWeatherEffectsToggle()"></span>
-                                </label>"""
-
-    assert old_options_card in content, "Could not find Options card block"
-    content = content.replace(old_options_card, new_options_card, 1)
-
-    # 3. Add weather toggle state, persistence, and guard inside weather engine
-    old_weather_decl = """                        const WEATHER_MODES = ["auto", "clear", "cloudy", "rain", "storm"];
-                        let weatherOverride = "auto";"""
-
-    new_weather_decl = """                        const LS_WEATHER_FX = "fw_weather_fx_v1";
-                        const WEATHER_MODES = ["auto", "clear", "cloudy", "rain", "storm"];
-                        let weatherOverride = "auto";
-                        let weatherEnabled = lsGet(LS_WEATHER_FX, true) !== false;"""
-
-    assert old_weather_decl in content, "Could not find WEATHER_MODES declaration"
-    content = content.replace(old_weather_decl, new_weather_decl, 1)
-
-    old_weather_fn = """                        function getActiveWeatherMode() {
-                            return weatherOverride === "auto" ? liveWeatherState.mode : weatherOverride;
-                        }"""
-
-    new_weather_fn = """                        function getActiveWeatherMode() {
+pattern = r'function getActiveWeatherMode\(\)[\s\S]*?function syncLiveWeather\('
+replacement = '''function getActiveWeatherMode() {
                             if (!weatherEnabled) return "clear";
                             return weatherOverride === "auto" ? liveWeatherState.mode : weatherOverride;
                         }
@@ -77,28 +27,166 @@ def patch_html(file_path: str):
                                 startWeatherEngine();
                             }
                             if (typeof startSeasonalParticles === "function") startSeasonalParticles();
-                        }"""
+                        }
 
-    assert old_weather_fn in content, "Could not find getActiveWeatherMode()"
-    content = content.replace(old_weather_fn, new_weather_fn, 1)
+                        function updateWeatherPillUI() {
+                            const el = document.getElementById("weather-pill-text");
+                            if (!el) return;
+                            const mode = getActiveWeatherMode();
+                            const icons = { clear: "☀️", cloudy: "☁️", rain: "🌧️", storm: "⛈️" };
+                            const names = { clear: "Clear", cloudy: "Cloudy", rain: "Rain", storm: "Storm" };
+                            const tag = weatherOverride === "auto" ? `${liveWeatherState.temp}°C ${names[mode]}` : `Preview: ${names[mode]}`;
+                            el.textContent = `${icons[mode] || "🌤️"} ${tag}`;
+                        }
 
-    # 4. Initialize weather toggle checkbox & pill visibility on startup
-    old_weather_boot = """                        startWeatherEngine();"""
+                        function cycleWeatherPreview() {
+                            const nextIdx = (WEATHER_MODES.indexOf(weatherOverride) + 1) % WEATHER_MODES.length;
+                            weatherOverride = WEATHER_MODES[nextIdx];
+                            rebuildWeatherParticles();
+                            updateWeatherPillUI();
+                            if (typeof startSeasonalParticles === "function") startSeasonalParticles();
+                            haptic(8);
+                            const mode = getActiveWeatherMode();
+                            showToast(weatherOverride === "auto"
+                                ? `Sky synced to live weather (${liveWeatherState.temp}°C ${liveWeatherState.label})`
+                                : `Weather effect preview: ${mode.toUpperCase()}`
+                            );
+                        }
 
-    new_weather_boot = """                        const weatherChk = document.getElementById("opt-weather-fx");
-                        if (weatherChk) weatherChk.checked = weatherEnabled;
-                        const weatherPill = document.getElementById("weather-pill");
-                        if (weatherPill) weatherPill.hidden = !weatherEnabled;
-                        if (weatherEnabled) startWeatherEngine();"""
+                        function rebuildWeatherParticles() {
+                            const cvs = document.getElementById("weather-canvas");
+                            if (!cvs) return;
+                            cvs.width = window.innerWidth;
+                            cvs.height = window.innerHeight;
+                            const mode = getActiveWeatherMode();
+                            weatherParticles = [];
+                            weatherSplashes = [];
 
-    assert old_weather_boot in content, "Could not find startWeatherEngine() boot call"
-    content = content.replace(old_weather_boot, new_weather_boot, 1)
+                            if (mode === "rain" || mode === "storm") {
+                                const count = mode === "storm" ? 130 : 75;
+                                for (let i = 0; i < count; i++) {
+                                    weatherParticles.push({
+                                        x: Math.random() * (cvs.width + 120),
+                                        y: Math.random() * cvs.height,
+                                        len: (mode === "storm" ? 20 : 14) + Math.random() * 14,
+                                        vy: (mode === "storm" ? 13 : 9) + Math.random() * 6,
+                                        vx: mode === "storm" ? -3.2 : -1.6,
+                                        alpha: 0.35 + Math.random() * 0.35
+                                    });
+                                }
+                            } else if (mode === "cloudy") {
+                                for (let i = 0; i < 10; i++) {
+                                    weatherParticles.push({
+                                        x: Math.random() * cvs.width,
+                                        y: 50 + Math.random() * (cvs.height * 0.65),
+                                        r: 95 + Math.random() * 115,
+                                        vx: 0.25 + Math.random() * 0.35,
+                                        alpha: 0.14 + Math.random() * 0.10
+                                    });
+                                }
+                            }
+                        }
 
-    path.write_text(content, encoding="utf-8")
-    print(f"Successfully updated {file_path}")
+                        function startWeatherEngine() {
+                            if (weatherRaf) cancelAnimationFrame(weatherRaf);
+                            const cvs = document.getElementById("weather-canvas");
+                            if (!cvs) return;
+                            const ctx = cvs.getContext("2d");
+                            rebuildWeatherParticles();
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python update_artcher.py <path_to_html>")
-        sys.exit(1)
-    patch_html(sys.argv[1])
+                            window.removeEventListener("resize", rebuildWeatherParticles);
+                            window.addEventListener("resize", rebuildWeatherParticles);
+
+                            function tick() {
+                                if (cvs.width !== window.innerWidth || cvs.height !== window.innerHeight) {
+                                    cvs.width = window.innerWidth;
+                                    cvs.height = window.innerHeight;
+                                }
+                                ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+                                const viewAlphaScale = currentView === "draw" ? 0.22 : 1.0;
+                                const mode = getActiveWeatherMode();
+
+                                if (mode === "cloudy") {
+                                    for (const c of weatherParticles) {
+                                        c.x += c.vx;
+                                        if (c.x - c.r > cvs.width) c.x = -c.r;
+                                        const g = ctx.createRadialGradient(c.x, c.y, c.r * 0.15, c.x, c.y, c.r);
+                                        g.addColorStop(0, `rgba(148, 163, 184, ${c.alpha * viewAlphaScale})`);
+                                        g.addColorStop(1, "rgba(148, 163, 184, 0)");
+                                        ctx.fillStyle = g;
+                                        ctx.beginPath();
+                                        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+                                        ctx.fill();
+                                    }
+                                } else if (mode === "rain" || mode === "storm") {
+                                    ctx.fillStyle = `rgba(30, 58, 138, ${(mode === "storm" ? 0.08 : 0.04) * viewAlphaScale})`;
+                                    ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+                                    ctx.lineWidth = 1.5;
+                                    for (const d of weatherParticles) {
+                                        ctx.strokeStyle = `rgba(59, 130, 246, ${d.alpha * viewAlphaScale})`;
+                                        ctx.beginPath();
+                                        ctx.moveTo(d.x, d.y);
+                                        ctx.lineTo(d.x + d.vx * 1.4, d.y + d.len);
+                                        ctx.stroke();
+
+                                        d.x += d.vx;
+                                        d.y += d.vy;
+                                        if (d.y > cvs.height - 62) {
+                                            if (Math.random() < 0.25 && weatherSplashes.length < 30) {
+                                                weatherSplashes.push({ x: d.x, y: cvs.height - 62, r: 1, maxR: 8 + Math.random() * 6, alpha: 0.45 });
+                                            }
+                                            d.y = -20;
+                                            d.x = Math.random() * (cvs.width + 120);
+                                        }
+                                        if (d.x < -40) d.x = cvs.width + 40;
+                                    }
+
+                                    for (let i = weatherSplashes.length - 1; i >= 0; i--) {
+                                        const s = weatherSplashes[i];
+                                        s.r += 0.6;
+                                        s.alpha -= 0.03;
+                                        if (s.alpha <= 0) { weatherSplashes.splice(i, 1); continue; }
+                                        ctx.strokeStyle = `rgba(59, 130, 246, ${s.alpha * viewAlphaScale})`;
+                                        ctx.lineWidth = 1;
+                                        ctx.beginPath();
+                                        ctx.ellipse(s.x, s.y, s.r, s.r * 0.35, 0, 0, Math.PI * 2);
+                                        ctx.stroke();
+                                    }
+
+                                    if (mode === "storm" && Math.random() < 0.005) {
+                                        weatherLightning = 0.32;
+                                    }
+                                    if (weatherLightning > 0) {
+                                        ctx.fillStyle = `rgba(224, 242, 254, ${weatherLightning * viewAlphaScale})`;
+                                        ctx.fillRect(0, 0, cvs.width, cvs.height);
+                                        weatherLightning -= 0.025;
+                                    }
+                                }
+
+                                weatherRaf = requestAnimationFrame(tick);
+                            }
+                            weatherRaf = requestAnimationFrame(tick);
+                        }
+
+                        async function syncLiveWeather('''
+
+new_html, count = re.subn(pattern, replacement, html, count=1)
+assert count == 1, "Weather function block not found"
+
+new_html = new_html.replace(
+    "startWeatherEngine();",
+    "applyWeatherEffectsToggle();",
+    1
+)
+
+new_html = new_html.replace(
+    "rebuildWeatherParticles();\n                                updateWeatherPillUI();",
+    "rebuildWeatherParticles();\n                                updateWeatherPillUI();\n                                if (typeof startSeasonalParticles === \"function\") startSeasonalParticles();"
+)
+
+with open("freedomwall.html", "w", encoding="utf-8") as f:
+    f.write(new_html)
+
+print("Successfully patched freedomwall.html!")
