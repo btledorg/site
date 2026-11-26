@@ -1,625 +1,224 @@
+import re
 import sys
-import shutil
-from pathlib import Path
 
+filename = sys.argv[1] if len(sys.argv) > 1 else "freedomwall.html"
 
-def replace_exact(content: str, old: str, new: str, label: str) -> str:
-    count = content.count(old)
-    if count == 0:
-        raise RuntimeError(f"Patch failed: could not find block for [{label}]")
-    if count > 1:
-        raise RuntimeError(f"Patch failed: matched [{label}] {count} times (expected 1)")
-    return content.replace(old, new, 1)
+with open(filename, "r", encoding="utf-8") as f:
+    html = f.read()
 
-
-def main():
-    target = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("freedomwall.html")
-    if not target.exists():
-        print(f"Error: {target} not found.")
-        sys.exit(1)
-
-    backup = target.with_suffix(target.suffix + ".layers.bak")
-    shutil.copy2(target, backup)
-    text = target.read_text(encoding="utf-8")
-
-    # 1. CSS for Ibis Paint-style Layers Drawer & Layer Rows
-    old_css = """        .sheet-tabs { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--soft); border-bottom: 1px solid var(--border); }"""
-    new_css = """        .sheet-tabs { display: grid; grid-template-columns: repeat(5, 1fr); background: var(--soft); border-bottom: 1px solid var(--border); }
-        .layer-list { display: flex; flex-direction: column; gap: 6px; max-height: 185px; overflow-y: auto; padding-right: 2px; }
-        .layer-row {
-            display: flex; align-items: center; gap: 7px; padding: 6px 8px;
-            border: 1.5px solid var(--border); border-radius: 10px; background: #fff;
-            cursor: pointer; transition: border-color .12s, background .12s;
-        }
-        .layer-row.active { border-color: var(--accent); background: var(--accent-soft); }
-        .layer-row.is-hidden { opacity: 0.52; }
-        .layer-thumb {
-            width: 34px; height: 34px; border-radius: 7px; border: 1px solid var(--border);
-            background-color: #fff;
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 6px 6px;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 13px; color: var(--ink); flex-shrink: 0; overflow: hidden;
-        }
-        .layer-thumb canvas { width: 100%; height: 100%; display: block; }
-        .layer-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-        .layer-name { font-size: 12px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .layer-sub { font-size: 10px; color: var(--muted); font-weight: 600; }
-        .layer-actions { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
-        .layer-ico-btn {
-            width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--border);
-            background: #fff; color: var(--ink); display: inline-flex; align-items: center;
-            justify-content: center; cursor: pointer; font-size: 12px; font-weight: 700; padding: 0;
-        }
-        .layer-ico-btn:active { background: #f1f5f9; }
-        .layer-ico-btn.off { color: var(--muted); background: var(--soft); }
-        .layer-ico-btn.del { color: var(--d-red); }"""
-    text = replace_exact(text, old_css, new_css, "CSS Layers Panel & 5-Tab Grid")
-
-    # 2. HTML: Add Layers tab & pane inside .sheet
-    old_tabs = """                                        <button class="sheet-tab" data-pane="text" role="tab" onclick="setDrawTab('text')">
-                                            <svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>Text
-                                        </button>
-                                        <button class="sheet-tab" data-pane="post" role="tab" onclick="setDrawTab('post')">
-                                            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Post
-                                        </button>"""
-    new_tabs = """                                        <button class="sheet-tab" data-pane="text" role="tab" onclick="setDrawTab('text')">
-                                            <svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>Text
-                                        </button>
-                                        <button class="sheet-tab" data-pane="layers" role="tab" onclick="setDrawTab('layers'); renderLayersPanel();">
-                                            <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Layers
-                                        </button>
-                                        <button class="sheet-tab" data-pane="post" role="tab" onclick="setDrawTab('post')">
-                                            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Post
-                                        </button>"""
-    text = replace_exact(text, old_tabs, new_tabs, "HTML Layers Tab")
-
-    old_post_pane = """                                <!-- POST PANE -->"""
-    new_layers_pane = """                                <!-- LAYERS PANE (IBIS PAINT STYLE) -->
-                                <div class="sheet-pane" id="pane-layers">
-                                    <div class="row-between">
-                                        <div style="display:flex;gap:6px;">
-                                            <button type="button" class="btn btn-sm btn-primary" onclick="addDrawLayer()">+ Draw Layer</button>
-                                            <button type="button" class="btn btn-sm" onclick="addText()">+ Text Layer</button>
-                                        </div>
-                                        <button type="button" class="btn btn-sm" onclick="mergeLayerDown()" title="Merge active layer down">Merge ↓</button>
-                                    </div>
-                                    <div class="layer-list" id="layer-list"></div>
-                                </div>
-                                
-                                <!-- POST PANE -->"""
-    text = replace_exact(text, old_post_pane, new_layers_pane, "HTML Layers Pane")
-
-    # 3. JS: Multi-layer state, active layer proxy, and draft persistence
-    old_strokes_decl = """                        let strokes = [];
-                        let redoStack = [];"""
-    new_layers_state = """                        let layers = [
-                            { id: "layer_base", name: "Layer 1", type: "draw", visible: true, strokes: [], redoStack: [] }
-                        ];
-                        let activeLayerId = "layer_base";
-                        let layerCounter = 1;
-
-                        function getActiveDrawLayer() {
-                            let lyr = layers.find(l => l.id === activeLayerId && l.type === "draw");
-                            if (!lyr) {
-                                lyr = layers.find(l => l.type === "draw");
-                                if (!lyr) {
-                                    layerCounter++;
-                                    lyr = { id: "layer_" + Date.now(), name: "Layer " + layerCounter, type: "draw", visible: true, strokes: [], redoStack: [] };
-                                    layers.unshift(lyr);
+new_seasons_block = """const SEASONS = {
+                            christmas: {
+                                id: "christmas",
+                                icon: "🎄",
+                                name: "Merry Christmas!",
+                                pill: "🎄 Holiday Edition",
+                                sub: "ARCHERSTUDIO",
+                                accent: "#dc2626",
+                                accentHover: "#b91c1c",
+                                accentSoft: "#fef2f2",
+                                particle: "snow",
+                                colors: ["#dc2626", "#16a34a", "#eab308", "#991b1b"],
+                                stencils: {
+                                    xmas_tree: ["🎄 Tree", () => `<polygon points="250,55 150,200 205,200 120,320 190,320 95,435 405,435 310,320 380,320 295,200 350,200"/><rect x="225" y="435" width="50" height="45"/>`],
+                                    xmas_gift: ["🎁 Gift", () => `<rect x="120" y="180" width="260" height="240" rx="12"/><rect x="105" y="140" width="290" height="45" rx="8"/><line x1="250" y1="140" x2="250" y2="420"/><path d="M250 140 C210 90, 160 110, 195 140 M250 140 C290 90, 340 110, 305 140"/>`]
                                 }
-                                activeLayerId = lyr.id;
-                            }
-                            return lyr;
-                        }
-
-                        function getAllFlattenedStrokes(includeHidden = false) {
-                            const out = [];
-                            for (const lyr of layers) {
-                                if (!includeHidden && !lyr.visible) continue;
-                                if (lyr.type === "draw") {
-                                    out.push(...lyr.strokes);
-                                } else if (lyr.type === "text" && lyr.textItem && (lyr.textItem.t || "").trim()) {
-                                    out.push({
-                                        k: "text",
-                                        t: lyr.textItem.t.slice(0, 120),
-                                        x: Math.round(lyr.textItem.x),
-                                        y: Math.round(lyr.textItem.y),
-                                        c: lyr.textItem.c,
-                                        f: lyr.textItem.f,
-                                        fn: lyr.textItem.fn || "Inter"
-                                    });
+                            },
+                            newyear: {
+                                id: "newyear",
+                                icon: "🎆",
+                                name: "Happy New Year!",
+                                pill: "🎆 New Year Edition",
+                                sub: "ARCHERSTUDIO",
+                                accent: "#d97706",
+                                accentHover: "#b45309",
+                                accentSoft: "#fffbeb",
+                                particle: "sparkle",
+                                colors: ["#d97706", "#eab308", "#1d4ed8", "#0f172a"],
+                                stencils: {
+                                    ny_star: ["✨ Starburst", () => `<polygon points="250,40 285,185 435,185 312,275 358,425 250,335 142,425 188,275 65,185 215,185"/>`]
                                 }
-                            }
-                            return out;
-                        }
-
-                        Object.defineProperty(window, "strokes", {
-                            get() { return getActiveDrawLayer().strokes; },
-                            set(v) { getActiveDrawLayer().strokes = Array.isArray(v) ? v : []; }
-                        });
-                        Object.defineProperty(window, "redoStack", {
-                            get() { return getActiveDrawLayer().redoStack; },
-                            set(v) { getActiveDrawLayer().redoStack = Array.isArray(v) ? v : []; }
-                        });"""
-    text = replace_exact(text, old_strokes_decl, new_layers_state, "JS Multi-layer State & Proxies")
-
-    # 4. JS: Draft Save & Load with Multi-layer support
-    old_draft = """                        let draftSaveTimer = null;
-                        function scheduleDraftSave() {
-                            clearTimeout(draftSaveTimer);
-                            draftSaveTimer = setTimeout(() => {
-                                lsSet(LS_DRAFT, { strokes, texts: getTextItems(), bg: paperBg });
-                            }, 350);
-                        }
-                        
-                        function loadDraft() {
-                            const draft = lsGet(LS_DRAFT, null);
-                            if (draft && draft.bg) setPaper(draft.bg, true);
-                            if (!draft) return;
-                            if (Array.isArray(draft.strokes) && draft.strokes.length > 0) {
-                                strokes = draft.strokes;
-                                redrawStudio();
-                            }
-                            if (Array.isArray(draft.texts) && draft.texts.length > 0) {
-                                draft.texts.forEach(t => addText(t));
-                                deselectText();
-                            }
-                            updateHistoryUI();
-                        }"""
-    new_draft = """                        let draftSaveTimer = null;
-                        function scheduleDraftSave() {
-                            clearTimeout(draftSaveTimer);
-                            draftSaveTimer = setTimeout(() => {
-                                const serializedLayers = layers.map(l => {
-                                    if (l.type === "draw") {
-                                        return { id: l.id, name: l.name, type: "draw", visible: l.visible, strokes: l.strokes };
-                                    }
-                                    const t = l.textItem;
-                                    return {
-                                        id: l.id, name: l.name, type: "text", visible: l.visible,
-                                        text: t ? { id: t.id, t: t.t, x: t.x, y: t.y, c: t.c, f: t.f, fn: t.fn } : null
-                                    };
-                                });
-                                lsSet(LS_DRAFT, { layers: serializedLayers, activeLayerId, bg: paperBg });
-                            }, 350);
-                        }
-                        
-                        function loadDraft() {
-                            const draft = lsGet(LS_DRAFT, null);
-                            if (draft && draft.bg) setPaper(draft.bg, true);
-                            if (!draft) { renderLayersPanel(); return; }
-                            if (Array.isArray(draft.layers) && draft.layers.length > 0) {
-                                layers = [];
-                                draft.layers.forEach((dl, idx) => {
-                                    if (dl.type === "draw") {
-                                        layers.push({
-                                            id: dl.id || ("layer_" + idx),
-                                            name: dl.name || ("Layer " + (idx + 1)),
-                                            type: "draw",
-                                            visible: dl.visible !== false,
-                                            strokes: Array.isArray(dl.strokes) ? dl.strokes : [],
-                                            redoStack: []
-                                        });
-                                        layerCounter = Math.max(layerCounter, idx + 1);
-                                    } else if (dl.type === "text" && dl.text) {
-                                        const item = addText(dl.text, true);
-                                        const lyr = layers.find(x => x.textItem === item);
-                                        if (lyr) {
-                                            lyr.id = dl.id || lyr.id;
-                                            lyr.name = dl.name || lyr.name;
-                                            lyr.visible = dl.visible !== false;
-                                            item.el.style.display = lyr.visible ? "" : "none";
-                                        }
-                                    }
-                                });
-                                if (!layers.some(l => l.type === "draw")) {
-                                    layers.unshift({ id: "layer_base", name: "Layer 1", type: "draw", visible: true, strokes: [], redoStack: [] });
+                            },
+                            valentines: {
+                                id: "valentines",
+                                icon: "💖",
+                                name: "Happy Valentine's Day!",
+                                pill: "💖 Valentine's Wall",
+                                sub: "ARCHERSTUDIO",
+                                accent: "#db2777",
+                                accentHover: "#be185d",
+                                accentSoft: "#fdf2f8",
+                                particle: "hearts",
+                                colors: ["#db2777", "#e11d48", "#f43f5e", "#f472b6"],
+                                stencils: {
+                                    val_heart: ["💖 Heart", () => `<path d="M250 430 C70 300 85 120 195 135 C230 140 250 175 250 195 C250 175 270 140 305 135 C415 120 430 300 250 430 Z"/>`]
                                 }
-                                activeLayerId = draft.activeLayerId || layers[0].id;
-                                syncTextLayerZOrder();
-                                deselectText();
-                                redrawStudio();
-                            } else {
-                                if (Array.isArray(draft.strokes) && draft.strokes.length > 0) {
-                                    strokes = draft.strokes;
-                                    redrawStudio();
+                            },
+                            halloween: {
+                                id: "halloween",
+                                icon: "🎃",
+                                name: "Spooky Season!",
+                                pill: "🎃 Spooky Wall",
+                                sub: "ARCHERSTUDIO",
+                                accent: "#7c3aed",
+                                accentHover: "#6d28d9",
+                                accentSoft: "#f5f3ff",
+                                particle: "spooky",
+                                colors: ["#7c3aed", "#ea580c", "#0f172a", "#16a34a"],
+                                stencils: {
+                                    spooky_ghost: ["👻 Ghost", () => `<path d="M140 420 V220 C140 120 360 120 360 220 V420 L315 385 L275 420 L250 390 L225 420 L185 385 Z"/><circle cx="215" cy="220" r="14"/><circle cx="285" cy="220" r="14"/>`]
                                 }
-                                if (Array.isArray(draft.texts) && draft.texts.length > 0) {
-                                    draft.texts.forEach(t => addText(t, true));
-                                    deselectText();
+                            },
+                            philippines: {
+                                id: "philippines",
+                                icon: "🇵🇭",
+                                name: "Mabuhay! Filipino Pride",
+                                pill: "🇵🇭 Pinoy Pride",
+                                sub: "ARCHERSTUDIO",
+                                accent: "#1d4ed8",
+                                accentHover: "#1e40af",
+                                accentSoft: "#eff6ff",
+                                particle: "sparkle",
+                                colors: ["#1d4ed8", "#dc2626", "#eab308", "#ffffff"],
+                                stencils: {
+                                    ph_sun: ["☀️ PH Sun", () => `<circle cx="250" cy="250" r="75"/><path d="M250 60V145M250 355V440M60 250H145M355 250H440M115 115L175 175M325 325L385 385M385 115L325 175M175 325L115 385"/>`]
+                                }
+                            },
+                            lunar_new_year: {
+                                id: "lunar_new_year",
+                                icon: "🧧",
+                                name: "Happy Lunar New Year!",
+                                pill: "🧧 Lunar New Year",
+                                sub: "ARCHERSTUDIO",
+                                accent: "#e11d48",
+                                accentHover: "#be123c",
+                                accentSoft: "#fff1f2",
+                                particle: "sparkle",
+                                colors: ["#e11d48", "#eab308", "#f59e0b", "#0f172a"],
+                                stencils: {
+                                    lny_lantern: ["🏮 Lantern", () => `<rect x="170" y="140" width="160" height="220" rx="70"/><line x1="250" y1="80" x2="250" y2="140"/><line x1="250" y1="360" x2="250" y2="435"/><line x1="220" y1="145" x2="220" y2="355"/><line x1="280" y1="145" x2="280" y2="355"/>`]
+                                }
+                            },
+                            holy_week: {
+                                id: "holy_week",
+                                icon: "✝️",
+                                name: "Blessed Holy Week",
+                                pill: "✝️ Holy Week",
+                                sub: "ARCHERSTUDIO",
+                                accent: "#6d28d9",
+                                accentHover: "#5b21b6",
+                                accentSoft: "#f5f3ff",
+                                particle: "sparkle",
+                                colors: ["#6d28d9", "#eab308", "#334155", "#f8fafc"],
+                                stencils: {
+                                    hw_cross: ["✝️ Cross", () => `<path d="M250 85V415M155 195H345"/>`]
+                                }
+                            },
+                            teachers_day: {
+                                id: "teachers_day",
+                                icon: "🍎",
+                                name: "Happy Teachers' Day!",
+                                pill: "🍎 Teachers' Day",
+                                sub: "ARCHERSTUDIO",
+                                accent: "#15803d",
+                                accentHover: "#166534",
+                                accentSoft: "#f0fdf4",
+                                particle: "sparkle",
+                                colors: ["#15803d", "#dc2626", "#1d4ed8", "#eab308"],
+                                stencils: {
+                                    td_apple: ["🍎 Apple", () => `<path d="M250 175 C175 155 125 220 145 315 C160 385 215 425 250 405 C285 425 340 385 355 315 C375 220 325 155 250 175 Z"/><path d="M250 175 C255 125 295 105 320 115"/>`]
+                                }
+                            },
+                            undas_all_saints: {
+                                id: "undas_all_saints",
+                                icon: "🕯️",
+                                name: "Undas & All Saints",
+                                pill: "🕯️ Undas",
+                                sub: "ARCHERSTUDIO",
+                                accent: "#b45309",
+                                accentHover: "#92400e",
+                                accentSoft: "#fffbeb",
+                                particle: "sparkle",
+                                colors: ["#b45309", "#f59e0b", "#334155", "#fef3c7"],
+                                stencils: {
+                                    undas_candle: ["🕯️ Candle", () => `<rect x="215" y="220" width="70" height="200" rx="8"/><path d="M250 120 C225 155 225 185 250 205 C275 185 275 155 250 120 Z"/>`]
                                 }
                             }
-                            updateHistoryUI();
-                            renderLayersPanel();
+                        };"""
+
+new_detect_block = """function getEasterSunday(year) {
+                            const a = year % 19;
+                            const b = Math.floor(year / 100);
+                            const c = year % 100;
+                            const d = Math.floor(b / 4);
+                            const e = b % 4;
+                            const f = Math.floor((b + 8) / 25);
+                            const g = Math.floor((b - f + 1) / 3);
+                            const h = (19 * a + b - d - g + 15) % 30;
+                            const i = Math.floor(c / 4);
+                            const k = c % 4;
+                            const l = (32 + 2 * e + 2 * i - h - k) % 7;
+                            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+                            const month = Math.floor((h + l - 7 * m + 114) / 31);
+                            const day = ((h + l - 7 * m + 114) % 31) + 1;
+                            return new Date(year, month - 1, day);
+                        }
+
+                        function detectCalendarSeason(now = new Date()) {
+                            const y = now.getFullYear();
+                            const m = now.getMonth() + 1;
+                            const d = now.getDate();
+
+                            const easter = getEasterSunday(y);
+                            const startDay = new Date(y, now.getMonth(), d).getTime();
+                            const hwStart = new Date(easter.getFullYear(), easter.getMonth(), easter.getDate() - 3).getTime();
+                            const hwEnd = new Date(easter.getFullYear(), easter.getMonth(), easter.getDate() + 1).getTime();
+                            if (startDay >= hwStart && startDay <= hwEnd) return "holy_week";
+
+                            if ((m === 12 && d >= 27) || (m === 1 && d <= 5)) return "newyear";
+                            if ((m === 11 && d >= 4) || (m === 12 && d <= 26)) return "christmas";
+                            if (m === 10 && d === 5) return "teachers_day";
+                            if ((m === 10 && d >= 30) || (m === 11 && d <= 2)) return "undas_all_saints";
+                            if ((m === 10 && d >= 20) || (m === 11 && d <= 3)) return "halloween";
+                            if (m === 2 && d <= 16) return "valentines";
+                            if ((m === 1 && d >= 20) || (m === 2 && d <= 10)) return "lunar_new_year";
+                            if ((m === 6 && d <= 15) || m === 8) return "philippines";
+                            return "none";
                         }"""
-    text = replace_exact(text, old_draft, new_draft, "JS Draft Save & Load for Layers")
 
-    # 5. JS: Force Hand tool in addText(), link text boxes to layers, and add Layer UI controls
-    old_delete_text = """                        function deleteTextItem(item) {
-                            if (!item) return;
-                            texts = texts.filter(t => t !== item);
-                            item.el.remove();
-                            if (selectedText === item) selectedText = null;
-                            scheduleDraftSave();
-                        }"""
-    new_delete_text = """                        function deleteTextItem(item) {
-                            if (!item) return;
-                            texts = texts.filter(t => t !== item);
-                            layers = layers.filter(l => l.textItem !== item);
-                            item.el.remove();
-                            if (selectedText === item) selectedText = null;
-                            renderLayersPanel();
-                            scheduleDraftSave();
-                        }"""
-    text = replace_exact(text, old_delete_text, new_delete_text, "JS deleteTextItem sync with layers")
+# Replace entire const SEASONS = { ... }; block up to its matching `};`
+seasons_re = re.compile(
+    r"const SEASONS\s*=\s*\{[\s\S]*?\n\s*\n\s*\};",
+    re.MULTILINE
+)
+if seasons_re.search(html):
+    html = seasons_re.sub(new_seasons_block, html, count=1)
+    print("Replaced SEASONS block.")
+else:
+    # Fallback match up to first `};` after `const SEASONS`
+    seasons_fallback = re.compile(r"const SEASONS\s*=\s*\{[\s\S]*?\};", re.MULTILINE)
+    html, count = seasons_fallback.subn(new_seasons_block, html, count=1)
+    print("Replaced SEASONS block (fallback):" if count else "FAILED to find SEASONS block.")
 
-    old_add_text_sig = """                        function addText(init) {
-                            syncUnit();
-                            if (currentTool === "eraser") setTool("hand");"""
-    new_add_text_sig = """                        function addText(init, skipToolSwitch = false) {
-                            syncUnit();
-                            if (!skipToolSwitch) setTool("hand");"""
-    text = replace_exact(text, old_add_text_sig, new_add_text_sig, "JS addText auto-switch to Hand tool")
+# Replace detectCalendarSeason (and any prior getEasterSunday)
+detect_re = re.compile(
+    r"(?:function getEasterSunday\(year\)\s*\{[\s\S]*?\n\s*\}\s*)?function detectCalendarSeason\(now = new Date\(\)\)\s*\{[\s\S]*?\n\s*\}",
+    re.MULTILINE
+)
+html, d_count = detect_re.subn(new_detect_block, html, count=1)
+print("Replaced detectCalendarSeason:" if d_count else "FAILED to find detectCalendarSeason.")
 
-    old_add_text_end = """                            selectText(item);
-                            if (!init) setTimeout(() => content.focus(), 0);
-                            return item;
-                        }"""
-    new_add_text_end = """                            const textLayerObj = {
-                                id: "tlayer_" + item.id,
-                                name: (item.t || "").trim() ? `Text: ${item.t.trim().slice(0, 14)}` : `Text ${texts.length}`,
-                                type: "text",
-                                visible: true,
-                                textItem: item
-                            };
-                            layers.push(textLayerObj);
-                            if (!skipToolSwitch) activeLayerId = textLayerObj.id;
-                            syncTextLayerZOrder();
-                            renderLayersPanel();
+# Ensure dropdown options exist
+if 'value="lunar_new_year"' not in html:
+    opt_re = re.compile(r'(<option value="philippines">.*?</option>)')
+    extra_opts = (
+        r'\1\n'
+        r'                                        <option value="lunar_new_year">🧧 Lunar New Year</option>\n'
+        r'                                        <option value="holy_week">✝️ Holy Week</option>\n'
+        r'                                        <option value="teachers_day">🍎 Teachers\' Day</option>\n'
+        r'                                        <option value="undas_all_saints">🕯️ Undas / All Saints\'</option>'
+    )
+    html, o_count = opt_re.subn(extra_opts, html, count=1)
+    print("Added select options:" if o_count else "Could not find philippines <option>.")
 
-                            selectText(item);
-                            if (!init) setTimeout(() => content.focus(), 0);
-                            return item;
-                        }"""
-    text = replace_exact(text, old_add_text_end, new_add_text_end, "JS register text box in layers")
-
-    old_content_input = """                            content.addEventListener("input", () => {
-                                item.t = (content.innerText || "").replace(/\\n+$/, "");
-                                scheduleDraftSave();
-                            });"""
-    new_content_input = """                            content.addEventListener("input", () => {
-                                item.t = (content.innerText || "").replace(/\\n+$/, "");
-                                const lyr = layers.find(l => l.textItem === item);
-                                if (lyr) lyr.name = item.t.trim() ? `Text: ${item.t.trim().slice(0, 14)}` : "Text Layer";
-                                renderLayersPanel();
-                                scheduleDraftSave();
-                            });"""
-    text = replace_exact(text, old_content_input, new_content_input, "JS update text layer name on input")
-
-    # 6. JS: Render visible layers in proper stack order & Layer management functions
-    old_committed = """                        function rebuildCommittedLayer() {
-                            const activeCount = isDrawing && currentStroke ? (1 + mirrorStrokes.length) : 0;
-                            const baseCount = Math.max(0, strokes.length - activeCount);
-                            renderStrokesInstant(committedCtx, strokes.slice(0, baseCount), 500, true);
-                            committedCount = baseCount;
-                        }
-                        
-                        function redrawStudio() {
-                            const activeCount = isDrawing && currentStroke ? (1 + mirrorStrokes.length) : 0;
-                            const baseCount = Math.max(0, strokes.length - activeCount);
-                            if (committedCount !== baseCount) rebuildCommittedLayer();
-                            
-                            drawCtx.clearRect(0, 0, 500, 500);
-                            drawCtx.drawImage(committedCanvas, 0, 0);
-                            if (activeCount > 0) {
-                                renderStrokesInstant(drawCtx, strokes.slice(baseCount), 500, false);
-                            }
-                        }"""
-    new_committed = """                        const layerScratchCanvas = document.createElement("canvas");
-                        layerScratchCanvas.width = 500;
-                        layerScratchCanvas.height = 500;
-                        const layerScratchCtx = layerScratchCanvas.getContext("2d", { willReadFrequently: true });
-
-                        function syncTextLayerZOrder() {
-                            layers.forEach((lyr, idx) => {
-                                if (lyr.type === "text" && lyr.textItem && lyr.textItem.el) {
-                                    lyr.textItem.el.style.zIndex = String(10 + idx);
-                                    lyr.textItem.el.style.display = lyr.visible ? "" : "none";
-                                }
-                            });
-                        }
-
-                        function rebuildCommittedLayer() {
-                            committedCtx.clearRect(0, 0, 500, 500);
-                            const activeDraw = getActiveDrawLayer();
-                            const activeCount = isDrawing && currentStroke ? (1 + mirrorStrokes.length) : 0;
-                            for (const lyr of layers) {
-                                if (!lyr.visible || lyr.type !== "draw") continue;
-                                const list = (lyr === activeDraw && activeCount > 0)
-                                    ? lyr.strokes.slice(0, Math.max(0, lyr.strokes.length - activeCount))
-                                    : lyr.strokes;
-                                if (!list.length) continue;
-                                renderStrokesInstant(layerScratchCtx, list, 500, true);
-                                committedCtx.drawImage(layerScratchCanvas, 0, 0);
-                            }
-                            committedCount = activeDraw.strokes.length - activeCount;
-                        }
-                        
-                        function redrawStudio() {
-                            rebuildCommittedLayer();
-                            drawCtx.clearRect(0, 0, 500, 500);
-                            drawCtx.drawImage(committedCanvas, 0, 0);
-                            const activeDraw = getActiveDrawLayer();
-                            const activeCount = isDrawing && currentStroke ? (1 + mirrorStrokes.length) : 0;
-                            if (activeDraw.visible && activeCount > 0) {
-                                renderStrokesInstant(layerScratchCtx, activeDraw.strokes.slice(-activeCount), 500, true);
-                                drawCtx.drawImage(layerScratchCanvas, 0, 0);
-                            }
-                            if (document.getElementById("pane-layers")?.classList.contains("active")) {
-                                renderLayersPanel();
-                            }
-                        }
-
-                        function addDrawLayer() {
-                            layerCounter++;
-                            const id = "layer_" + Date.now() + "_" + Math.random().toString(36).slice(2, 5);
-                            const newLyr = { id, name: "Layer " + layerCounter, type: "draw", visible: true, strokes: [], redoStack: [] };
-                            const idx = layers.findIndex(l => l.id === activeLayerId);
-                            if (idx >= 0) layers.splice(idx + 1, 0, newLyr);
-                            else layers.push(newLyr);
-                            activeLayerId = id;
-                            deselectText();
-                            if (currentTool === "hand") setTool("brush");
-                            syncTextLayerZOrder();
-                            renderLayersPanel();
-                            updateHistoryUI();
-                            scheduleDraftSave();
-                            haptic(8);
-                            showToast("Added " + newLyr.name);
-                        }
-
-                        function selectLayer(id) {
-                            const lyr = layers.find(l => l.id === id);
-                            if (!lyr) return;
-                            activeLayerId = id;
-                            if (lyr.type === "text" && lyr.textItem) {
-                                setTool("hand");
-                                selectText(lyr.textItem);
-                            } else {
-                                deselectText();
-                            }
-                            renderLayersPanel();
-                            updateHistoryUI();
-                            haptic(6);
-                        }
-
-                        function toggleLayerVisibility(id, e) {
-                            if (e) e.stopPropagation();
-                            const lyr = layers.find(l => l.id === id);
-                            if (!lyr) return;
-                            lyr.visible = !lyr.visible;
-                            if (lyr.type === "text" && lyr.textItem) {
-                                lyr.textItem.el.style.display = lyr.visible ? "" : "none";
-                                if (!lyr.visible && selectedText === lyr.textItem) deselectText();
-                            }
-                            redrawStudio();
-                            renderLayersPanel();
-                            scheduleDraftSave();
-                            haptic(6);
-                        }
-
-                        function moveLayerOrder(id, dir, e) {
-                            if (e) e.stopPropagation();
-                            const idx = layers.findIndex(l => l.id === id);
-                            const targetIdx = idx + dir;
-                            if (idx < 0 || targetIdx < 0 || targetIdx >= layers.length) return;
-                            const [moved] = layers.splice(idx, 1);
-                            layers.splice(targetIdx, 0, moved);
-                            syncTextLayerZOrder();
-                            redrawStudio();
-                            renderLayersPanel();
-                            scheduleDraftSave();
-                            haptic(6);
-                        }
-
-                        function deleteLayerById(id, e) {
-                            if (e) e.stopPropagation();
-                            const idx = layers.findIndex(l => l.id === id);
-                            if (idx < 0) return;
-                            const lyr = layers[idx];
-                            if (lyr.type === "text" && lyr.textItem) {
-                                deleteTextItem(lyr.textItem);
-                                return;
-                            }
-                            const drawLayers = layers.filter(l => l.type === "draw");
-                            if (drawLayers.length <= 1) {
-                                lyr.strokes = [];
-                                lyr.redoStack = [];
-                                redrawStudio();
-                                updateHistoryUI();
-                                renderLayersPanel();
-                                scheduleDraftSave();
-                                showToast("Cleared base layer");
-                                return;
-                            }
-                            layers.splice(idx, 1);
-                            if (activeLayerId === id) {
-                                const fallback = layers[Math.max(0, idx - 1)] || layers[0];
-                                activeLayerId = fallback.id;
-                            }
-                            redrawStudio();
-                            updateHistoryUI();
-                            renderLayersPanel();
-                            scheduleDraftSave();
-                            haptic(8);
-                            showToast("Deleted " + lyr.name);
-                        }
-
-                        function mergeLayerDown() {
-                            const idx = layers.findIndex(l => l.id === activeLayerId);
-                            if (idx <= 0) { showToast("No layer below to merge into"); return; }
-                            const top = layers[idx];
-                            const below = layers[idx - 1];
-                            if (below.type !== "draw") { showToast("Can only merge onto a drawing layer"); return; }
-                            if (top.type === "draw") {
-                                below.strokes.push(...top.strokes);
-                            } else if (top.type === "text" && top.textItem) {
-                                if ((top.textItem.t || "").trim()) {
-                                    below.strokes.push({
-                                        k: "text",
-                                        t: top.textItem.t.slice(0, 120),
-                                        x: Math.round(top.textItem.x),
-                                        y: Math.round(top.textItem.y),
-                                        c: top.textItem.c,
-                                        f: top.textItem.f,
-                                        fn: top.textItem.fn || "Inter"
-                                    });
-                                }
-                                texts = texts.filter(t => t !== top.textItem);
-                                top.textItem.el.remove();
-                            }
-                            layers.splice(idx, 1);
-                            activeLayerId = below.id;
-                            redrawStudio();
-                            updateHistoryUI();
-                            renderLayersPanel();
-                            scheduleDraftSave();
-                            haptic(10);
-                            showToast("Merged into " + below.name);
-                        }
-
-                        function renderLayersPanel() {
-                            const list = document.getElementById("layer-list");
-                            if (!list) return;
-                            list.replaceChildren();
-                            // Display top-most layer at the top (Ibis Paint convention)
-                            for (let i = layers.length - 1; i >= 0; i--) {
-                                const lyr = layers[i];
-                                const row = document.createElement("div");
-                                row.className = "layer-row" + (lyr.id === activeLayerId ? " active" : "") + (!lyr.visible ? " is-hidden" : "");
-                                row.onclick = () => selectLayer(lyr.id);
-
-                                const thumb = document.createElement("div");
-                                thumb.className = "layer-thumb";
-                                if (lyr.type === "text") {
-                                    thumb.textContent = "T";
-                                    if (lyr.textItem) thumb.style.color = lyr.textItem.c;
-                                } else {
-                                    const cv = document.createElement("canvas");
-                                    cv.width = cv.height = 68;
-                                    renderStrokesInstant(cv.getContext("2d"), lyr.strokes, 68, true);
-                                    thumb.appendChild(cv);
-                                }
-
-                                const meta = document.createElement("div");
-                                meta.className = "layer-meta";
-                                const nm = document.createElement("div");
-                                nm.className = "layer-name";
-                                nm.textContent = lyr.name;
-                                const sub = document.createElement("div");
-                                sub.className = "layer-sub";
-                                sub.textContent = lyr.type === "text"
-                                    ? "Text Layer"
-                                    : `${lyr.strokes.length} stroke${lyr.strokes.length === 1 ? "" : "s"}`;
-                                meta.append(nm, sub);
-
-                                const acts = document.createElement("div");
-                                acts.className = "layer-actions";
-
-                                const visBtn = document.createElement("button");
-                                visBtn.type = "button";
-                                visBtn.className = "layer-ico-btn" + (!lyr.visible ? " off" : "");
-                                visBtn.textContent = lyr.visible ? "👁" : "🙈";
-                                visBtn.title = lyr.visible ? "Hide layer" : "Show layer";
-                                visBtn.onclick = (e) => toggleLayerVisibility(lyr.id, e);
-
-                                const upBtn = document.createElement("button");
-                                upBtn.type = "button";
-                                upBtn.className = "layer-ico-btn";
-                                upBtn.textContent = "↑";
-                                upBtn.title = "Move layer up";
-                                upBtn.disabled = (i === layers.length - 1);
-                                upBtn.onclick = (e) => moveLayerOrder(lyr.id, 1, e);
-
-                                const dnBtn = document.createElement("button");
-                                dnBtn.type = "button";
-                                dnBtn.className = "layer-ico-btn";
-                                dnBtn.textContent = "↓";
-                                dnBtn.title = "Move layer down";
-                                dnBtn.disabled = (i === 0);
-                                dnBtn.onclick = (e) => moveLayerOrder(lyr.id, -1, e);
-
-                                const delBtn = document.createElement("button");
-                                delBtn.type = "button";
-                                delBtn.className = "layer-ico-btn del";
-                                delBtn.textContent = "×";
-                                delBtn.title = "Delete layer";
-                                delBtn.onclick = (e) => deleteLayerById(lyr.id, e);
-
-                                acts.append(visBtn, upBtn, dnBtn, delBtn);
-                                row.append(thumb, meta, acts);
-                                list.appendChild(row);
-                            }
-                        }"""
-    text = replace_exact(text, old_committed, new_committed, "JS Ibis Paint Layer Rendering & Management")
-
-    # 7. JS: Clear, Preview, Save PNG, Share, and Post flatten visible layers in order
-    old_clear = """                            strokes = [];
-                            redoStack = [];
-                            clearTexts();
-                            resetStudioZoom();
-                            redrawStudio();
-                            updateHistoryUI();
-                            lsSet(LS_DRAFT, null);"""
-    new_clear = """                            clearTexts();
-                            layers = [{ id: "layer_base", name: "Layer 1", type: "draw", visible: true, strokes: [], redoStack: [] }];
-                            activeLayerId = "layer_base";
-                            layerCounter = 1;
-                            resetStudioZoom();
-                            redrawStudio();
-                            updateHistoryUI();
-                            renderLayersPanel();
-                            lsSet(LS_DRAFT, null);"""
-    text = replace_exact(text, old_clear, new_clear, "JS clearCanvas reset layers")
-
-    old_preview = """                        function previewDrawing() {
-                            const all = strokes.concat(getTextItems());"""
-    new_preview = """                        function previewDrawing() {
-                            const all = getAllFlattenedStrokes(false);"""
-    text = replace_exact(text, old_preview, new_preview, "JS previewDrawing flatten visible layers")
-
-    old_save_png = """                        function saveStudioPNG() {
-                            const all = strokes.concat(getTextItems());"""
-    new_save_png = """                        function saveStudioPNG() {
-                            const all = getAllFlattenedStrokes(false);"""
-    text = replace_exact(text, old_save_png, new_save_png, "JS saveStudioPNG flatten visible layers")
-
-    old_submit_probe = """                        function submitToWall() {
-                            deselectText();
-                            const probe = strokes.concat(getTextItems());"""
-    new_submit_probe = """                        function submitToWall() {
-                            deselectText();
-                            const probe = getAllFlattenedStrokes(false);"""
-    text = replace_exact(text, old_submit_probe, new_submit_probe, "JS submitToWall probe visible layers")
-
-    old_submit_core = """                        async function submitToWallCore() {
-                            deselectText();
-                            const items = strokes.concat(getTextItems());"""
-    new_submit_core = """                        async function submitToWallCore() {
-                            deselectText();
-                            const items = getAllFlattenedStrokes(false);"""
-    text = replace_exact(text, old_submit_core, new_submit_core, "JS submitToWallCore flatten visible layers")
-
-    old_get_all = """                        function getAllItems() {
-                            const all = strokes.concat(getTextItems());"""
-    new_get_all = """                        function getAllItems() {
-                            const all = getAllFlattenedStrokes(false);"""
-    text = replace_exact(text, old_get_all, new_get_all, "JS getAllItems flatten visible layers")
-
-    target.write_text(text, encoding="utf-8")
-    print(f"Successfully added Ibis Paint-style layers to {target} (backup saved to {backup}).")
-
-
-if __name__ == "__main__":
-    main()
+with open(filename, "w", encoding="utf-8") as f:
+    f.write(html)
