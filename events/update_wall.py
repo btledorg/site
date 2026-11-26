@@ -1,29 +1,31 @@
 #!/usr/bin/env python3
 """
-update_wall.py  -  patches freedomwall.html (The ARTcher)
+fix_wall.py  -  second patch for freedomwall.html (The ARTcher)
 
 Usage:
-    python update_wall.py freedomwall.html
+    python fix_wall.py freedomwall.html
 
-Adds:
-  1. More > Options toggles (saved in LS_OPTIONS):
-       - Weather sky effects  (#weather-canvas + topbar weather pill)
-       - Haptic feedback      (navigator.vibrate)
-       - Show wall minimap    (#minimap)
-       - Auto-upload drawings (overrides AUTO_UPLOAD at runtime)
-       - Reset all settings
-  2. Live drawing file-size badge (KB / MB) in the Post pane, with
-     amber (> 500 KB) and red (> 1.5 MB) warning states, and the size
-     shown in the upload / offline-save toasts.
+Fixes / adds:
+  1. Stencils shown twice (Trace tab). initUpgradeControls() appended the buttons
+     on top of the ones applySeasonalTheme() had already drawn. The list is now
+     cleared before it is rebuilt, so it is correct at load and after a theme change.
+  2. Reactions (like -> unlike -> like again):
+       - clicks are queued per tile/reaction, so rapid taps always end on the state
+         the user last chose (the server only supports "toggle")
+       - a slow background refresh or a live broadcast can no longer overwrite a
+         reaction that is still being saved
+       - failed saves roll back to the last confirmed state and re-sync
+  3. 15 more text fonts (Text tab), preloaded so wall replays show them correctly.
 
-Safe to re-run: it refuses to patch a file that already has the markers,
-and it writes a .bak copy before touching anything.
+Independent of update_wall.py: run it before or after. Writes a backup first and
+changes nothing if any anchor is missing.
 """
 import re
 import shutil
 import sys
+import time
 
-MARKER = "ARTCHER-V3-OPTIONS"
+MARKER = "FIX-V2-LIKES"
 
 
 def die(msg):
@@ -34,382 +36,280 @@ def die(msg):
 def sub_once(src, old, new, label):
     n = src.count(old)
     if n != 1:
-        die("anchor '%s' expected once, found %d" % (label, n))
+        die("anchor '%s' expected once, found %d (no file was changed)" % (label, n))
+    print("  ok  " + label)
     return src.replace(old, new)
 
 
-def sub_all(src, old, new, label):
-    n = src.count(old)
-    if n < 1:
-        die("anchor '%s' not found" % label)
-    print("  - %s (%d place%s)" % (label, n, "" if n == 1 else "s"))
-    return src.replace(old, new)
-
-
-def re_once(src, pattern, repl_fn, label):
-    out, n = re.subn(pattern, repl_fn, src, count=1, flags=re.S)
+def re_once(src, pattern, repl, label):
+    out, n = re.subn(pattern, lambda m: repl(m), src, count=1, flags=re.S)
     if n != 1:
-        die("pattern '%s' not found" % label)
+        die("pattern '%s' not found exactly once (no file was changed)" % label)
+    print("  ok  " + label)
     return out
 
 
-# ---------------------------------------------------------------------------
-# CSS
-# ---------------------------------------------------------------------------
-CSS = r"""
-<style id="artcher-v3">
-    /* ===== V3 / drawing size badge ===== */
-    .size-row {
-        display: flex; align-items: center; justify-content: space-between; gap: 10px;
-        padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px;
-        background: var(--soft); font-size: 12px; font-weight: 700; color: var(--ink);
-    }
-    .size-label small { display: block; margin-top: 1px; font-size: 10.5px; font-weight: 500; color: var(--muted); }
-    .size-badge {
-        flex-shrink: 0; padding: 4px 11px; border-radius: 999px;
-        font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
-        background: #fff; border: 1px solid var(--border); color: var(--ink);
-        transition: background .2s, border-color .2s, color .2s;
-    }
-    .size-badge.warn   { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
-    .size-badge.danger { background: #fef2f2; border-color: #fecaca; color: var(--d-red); }
-</style>
-"""
+def function_span(src, signature):
+    """Return (start, end) of a function whose text begins with `signature`
+    (the signature must end with the opening '{'). Brace matched, skips strings."""
+    if src.count(signature) != 1:
+        die("function '%s' expected once, found %d" % (signature, src.count(signature)))
+    start = src.index(signature)
+    i = start + len(signature)
+    depth = 1
+    n = len(src)
+    while i < n and depth > 0:
+        ch = src[i]
+        if ch in "\"'`":
+            q = ch
+            i += 1
+            while i < n and src[i] != q:
+                if src[i] == "\\":
+                    i += 1
+                i += 1
+        elif ch == "/" and src[i + 1:i + 2] == "/":
+            while i < n and src[i] != "\n":
+                i += 1
+        elif ch == "/" and src[i + 1:i + 2] == "*":
+            i = src.index("*/", i + 2) + 1
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+        i += 1
+    if depth != 0:
+        die("could not find the end of '%s'" % signature)
+    return start, i
 
-# ---------------------------------------------------------------------------
-# HTML
-# ---------------------------------------------------------------------------
-OPTION_ROWS = r"""
-                                <label class="list-row">
-                                    <span>Weather sky effects<small>Rain, clouds, lightning &amp; the sky pill</small></span>
-                                    <span class="switch"><input type="checkbox" id="opt-weather" checked onchange="applyOptions()"></span>
-                                </label>
-                                <label class="list-row">
-                                    <span>Haptic feedback<small>Vibrate on taps and actions</small></span>
-                                    <span class="switch"><input type="checkbox" id="opt-haptic" checked onchange="applyOptions()"></span>
-                                </label>
-                                <label class="list-row">
-                                    <span>Show wall minimap<small>Small overview map on the Wall</small></span>
-                                    <span class="switch"><input type="checkbox" id="opt-minimap" checked onchange="applyOptions()"></span>
-                                </label>
-                                <label class="list-row">
-                                    <span>Auto-upload drawings<small>Off = save on this device, upload manually</small></span>
-                                    <span class="switch"><input type="checkbox" id="opt-autoupload" checked onchange="applyOptions()"></span>
-                                </label>
-                                <button type="button" class="list-row" onclick="resetAllSettings()">
-                                    <span class="lead">
-                                        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-                                        <span style="color:var(--d-red);">Reset all settings<small>Restore Options &amp; seasonal theme defaults</small></span>
-                                    </span>
-                                </button>"""
 
-SIZE_ROW = r"""<div class="size-row" id="drawing-size-row">
-                                        <span class="size-label">Upload size<small id="drawing-size-hint">Estimated upload size</small></span>
-                                        <span class="size-badge" id="drawing-size-badge" aria-live="polite">0.0 KB</span>
-                                    </div>
-                                    """
+def replace_function(src, signature, new_code, label):
+    s, e = function_span(src, signature)
+    print("  ok  " + label)
+    return src[:s] + new_code + src[e:]
 
-# ---------------------------------------------------------------------------
-# JS (inserted right after the storage-key constants, so every later
-# function can see these globals)
-# ---------------------------------------------------------------------------
-JS_CORE = r"""
 
-                        /* ===== ARTCHER-V3-OPTIONS: settings toggles + drawing size (added by update_wall.py) ===== */
-                        let optWeatherOn = true;
-                        let optHapticOn = true;
-                        let optMinimapOn = true;
-                        let optAutoUpload = AUTO_UPLOAD;
-                        let optionsInitDone = false;
+# --------------------------------------------------------------------------
+# fonts
+# --------------------------------------------------------------------------
+# (select value, CSS stack, label, Google Fonts family query)
+FONTS = [
+    ("Lobster", "'Lobster', cursive", "Lobster (script)", "Lobster"),
+    ("Pacifico", "'Pacifico', cursive", "Pacifico (retro script)", "Pacifico"),
+    ("Dancing Script", "'Dancing Script', cursive", "Dancing Script", "Dancing+Script:wght@700"),
+    ("Satisfy", "'Satisfy', cursive", "Satisfy (brush script)", "Satisfy"),
+    ("Permanent Marker", "'Permanent Marker', cursive", "Permanent Marker", "Permanent+Marker"),
+    ("Gloria Hallelujah", "'Gloria Hallelujah', cursive", "Gloria Hallelujah (hand)", "Gloria+Hallelujah"),
+    ("Shadows Into Light", "'Shadows Into Light', cursive", "Shadows Into Light", "Shadows+Into+Light"),
+    ("Bebas Neue", "'Bebas Neue', Impact, sans-serif", "Bebas Neue (tall caps)", "Bebas+Neue"),
+    ("Bangers", "'Bangers', Impact, cursive", "Bangers (comic)", "Bangers"),
+    ("Righteous", "'Righteous', sans-serif", "Righteous", "Righteous"),
+    ("Fredoka", "'Fredoka', sans-serif", "Fredoka (rounded)", "Fredoka:wght@600"),
+    ("Abril Fatface", "'Abril Fatface', Georgia, serif", "Abril Fatface (display serif)", "Abril+Fatface"),
+    ("Special Elite", "'Special Elite', 'Courier New', monospace", "Special Elite (typewriter)", "Special+Elite"),
+    ("Orbitron", "'Orbitron', sans-serif", "Orbitron (sci-fi)", "Orbitron:wght@700"),
+    ("Creepster", "'Creepster', cursive", "Creepster (spooky)", "Creepster"),
+]
 
-                        const SIZE_WARN_BYTES = 500 * 1024;
-                        const SIZE_DANGER_BYTES = 1.5 * 1024 * 1024;
-                        let drawingSizeTimer = 0;
-                        let lastDrawingBytes = 0;
+FONT_LINK_EXTRA = "".join("&family=" + f[3] for f in FONTS)
 
-                        function readOpt(id, fallback) {
-                            const el = document.getElementById(id);
-                            return el ? el.checked : fallback;
-                        }
+FONT_MAP_EXTRA = "".join(
+    ',\n                            "%s": "%s"' % (f[0], f[1]) for f in FONTS
+)
 
-                        function formatBytes(bytes) {
-                            const b = Math.max(0, Number(bytes) || 0);
-                            if (b >= 1024 * 1024) return (b / (1024 * 1024)).toFixed(2) + " MB";
-                            return (b / 1024).toFixed(1) + " KB";
-                        }
+FONT_OPTIONS = "".join(
+    '\n                                            <option value="%s" style="font-family:%s">%s</option>'
+    % (f[0], f[1], f[2])
+    for f in FONTS
+)
 
-                        function utf8Bytes(str) {
-                            return new TextEncoder().encode(str).length;
-                        }
-
-                        // Same JSON body that uploadPending() POSTs to Apps Script
-                        function entryPayloadBytes(entry) {
-                            return utf8Bytes(JSON.stringify({
-                                action: "addFreedomWall",
-                                id: entry.id,
-                                author: entry.author,
-                                gx: entry.gx,
-                                gy: entry.gy,
-                                strokes: entry.strokes,
-                                timestamp: entry.timestamp
-                            }));
-                        }
-
-                        // What "Post to wall" would upload right now (strokes + text + paper tint).
-                        // The local trace/reference image is never uploaded, so it is not counted.
-                        function measureDrawingBytes() {
-                            const items = getAllItems();
-                            if (!items.length) return 0;
-                            return entryPayloadBytes({
-                                id: "fw_0000000000000_0000",
-                                author: currentAuthorName() || "Anonymous",
-                                gx: 0, gy: 0,
-                                strokes: items,
-                                timestamp: Date.now()
+PRELOAD_FN = r"""
+                        // FIX-V2-FONTS: load every text font up front so canvas text (export, replay,
+                        // wall tiles) never renders in a fallback font.
+                        function preloadAllFonts() {
+                            if (!document.fonts || !document.fonts.load) return;
+                            const jobs = Object.keys(FONT_FAMILIES).map(k =>
+                                document.fonts.load('700 24px "' + k + '"').catch(() => null));
+                            Promise.all(jobs).then(() => {
+                                try { tileBitmapCache.clear(); scheduleWallPaint(); } catch (e) {}
                             });
                         }
+"""
 
-                        function updateDrawingSize() {
-                            clearTimeout(drawingSizeTimer);
-                            drawingSizeTimer = setTimeout(() => {
-                                let bytes = 0;
-                                try { bytes = measureDrawingBytes(); } catch (e) {}
-                                lastDrawingBytes = bytes;
-                                const badge = document.getElementById("drawing-size-badge");
-                                const hint = document.getElementById("drawing-size-hint");
-                                if (!badge) return;
-                                badge.textContent = formatBytes(bytes);
-                                badge.classList.toggle("warn", bytes > SIZE_WARN_BYTES && bytes <= SIZE_DANGER_BYTES);
-                                badge.classList.toggle("danger", bytes > SIZE_DANGER_BYTES);
-                                if (hint) {
-                                    hint.textContent = bytes > SIZE_DANGER_BYTES
-                                        ? "Very large - may be slow or fail on weak internet"
-                                        : bytes > SIZE_WARN_BYTES
-                                            ? "Getting large - consider simplifying"
-                                            : "Estimated upload size";
-                                }
-                            }, 120);
-                        }
+# --------------------------------------------------------------------------
+# reactions
+# --------------------------------------------------------------------------
+REACTIONS_JS = r"""// ===== FIX-V2-LIKES: safe like / unlike / like again =====
+                        // reactPending: "tileId:type" -> { want, serverOn }   (one save loop per key)
+                        // reactTouched: tileId -> time of the last local change
+                        const reactPending = new Map();
+                        const reactTouched = {};
 
-                        function applyOptionVisibility() {
-                            const wc = document.getElementById("weather-canvas");
-                            if (wc) wc.style.display = optWeatherOn ? "" : "none";
-                            const wp = document.getElementById("weather-pill");
-                            if (wp) wp.hidden = !optWeatherOn;
-                            const mmEl = document.getElementById("minimap");
-                            if (mmEl) mmEl.hidden = !optMinimapOn;
-                            try {
-                                rebuildWeatherParticles();
-                                updateWeatherPillUI();
-                                startSeasonalParticles();
-                            } catch (e) {}
-                            if (optMinimapOn) { try { updateMinimap(); } catch (e) {} }
-                        }
-
-                        function resetAllSettings(confirmed = false) {
-                            if (!confirmed) {
-                                confirmCriticalAction(
-                                    "Reset all settings?",
-                                    "Every toggle in Options and the seasonal theme go back to their defaults. Your drawings, name and saved colors are kept.",
-                                    () => resetAllSettings(true)
-                                );
-                                return;
+                        function reactIdBusy(id, exceptKey) {
+                            for (const k of reactPending.keys()) {
+                                if (k !== exceptKey && k.startsWith(id + ":")) return true;
                             }
-                            lsSet(LS_OPTIONS, {
-                                grid: false, smooth: true, borders: false,
-                                weather: true, haptic: true, minimap: true, autoUpload: true
-                            });
-                            lsSet(LS_SEASON_OVERRIDE, "auto");
-                            lsSet(LS_SEASON_FX, true);
-                            loadOptions();
-                            applySeasonalTheme();
-                            haptic(10);
-                            showToast("Settings reset to defaults");
+                            return false;
                         }
-"""
+
+                        async function loadReactions() {
+                            const startedAt = Date.now();
+                            try {
+                                const res = await fetch(`${GAS_WEB_APP_URL}?module=freedomwallreactions&voter=${encodeURIComponent(voterId)}&_t=${Date.now()}`);
+                                const j = await res.json();
+                                if (!j.ok) return;
+                                const nextR = Object.assign({}, j.data || {});
+                                const nextM = Object.assign({}, j.mine || {});
+                                // keep local state for anything saved/being saved since this request began
+                                Object.keys(reactions).forEach(id => {
+                                    if (reactIdBusy(id) || (reactTouched[id] || 0) >= startedAt) {
+                                        nextR[id] = reactions[id];
+                                        if (myReactions[id]) nextM[id] = myReactions[id];
+                                    }
+                                });
+                                reactions = nextR;
+                                myReactions = nextM;
+                                document.querySelectorAll(".wall-tile").forEach(t => updateTilePill(t.dataset.id));
+                                if (modalEntry) updateReactBar();
+                            } catch (e) {}
+                        }
+
+                        async function postReactionToggle(id, type) {
+                            const res = await fetch(GAS_WEB_APP_URL, {
+                                method: "POST",
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                body: JSON.stringify({ action: "reactFreedomWall", id, type, voter: voterId })
+                            });
+                            const j = await res.json();
+                            if (!j.ok) throw new Error(j.error || "failed");
+                            return j;
+                        }
+
+                        async function toggleReaction(type) {
+                            if (!modalEntry || modalEntry._pending) return;
+                            if (!navigator.onLine) { showToast("Reactions need internet."); return; }
+                            const id = modalEntry.id;
+                            const key = id + ":" + type;
+                            haptic(10);
+
+                            // 1) update the screen right away
+                            const counts = Object.assign(zeroCounts(), reactions[id]);
+                            const mineList = (myReactions[id] || []).slice();
+                            const wasOn = mineList.includes(type);
+                            reactions[id] = Object.assign({}, counts, { [type]: Math.max(0, counts[type] + (wasOn ? -1 : 1)) });
+                            myReactions[id] = wasOn ? mineList.filter(t => t !== type) : mineList.concat(type);
+                            reactTouched[id] = Date.now();
+                            updateReactBar(); updateTilePill(id);
+
+                            // 2) a save loop is already running for this reaction: just tell it the new goal
+                            let st = reactPending.get(key);
+                            if (st) { st.want = !wasOn; return; }
+
+                            // 3) otherwise start one. The server only toggles, so keep toggling until
+                            //    the server state matches what the user last asked for.
+                            st = { want: !wasOn, serverOn: wasOn };
+                            reactPending.set(key, st);
+                            let failed = false;
+                            try {
+                                for (let guard = 0; st.serverOn !== st.want && guard < 8; guard++) {
+                                    const j = await postReactionToggle(id, type);
+                                    const nowOn = typeof j.active === "boolean" ? j.active : !st.serverOn;
+                                    if (nowOn === st.serverOn) break;          // server did not flip: stop, re-sync below
+                                    st.serverOn = nowOn;
+                                    if (st.serverOn === st.want && j.counts) {
+                                        // settled: take the server's numbers (only this type if others are mid-save)
+                                        reactions[id] = reactIdBusy(id, key)
+                                            ? Object.assign({}, reactions[id], { [type]: j.counts[type] })
+                                            : Object.assign(zeroCounts(), j.counts);
+                                        const m = new Set(myReactions[id] || []);
+                                        if (st.serverOn) m.add(type); else m.delete(type);
+                                        myReactions[id] = [...m];
+                                        reactTouched[id] = Date.now();
+                                        updateReactBar(); updateTilePill(id);
+                                        if (wallChannel && wallChannel.state === "joined" && !reactIdBusy(id, key)) {
+                                            wallChannel.send({ type: "broadcast", event: "reaction", payload: { id, counts: reactions[id] } });
+                                        }
+                                    }
+                                }
+                                if (st.serverOn !== st.want) failed = true;
+                            } catch (e) {
+                                failed = true;
+                            } finally {
+                                reactPending.delete(key);
+                            }
+
+                            if (failed) {
+                                showToast("Couldn't save reaction. Re-syncing…");
+                                const m = new Set(myReactions[id] || []);
+                                if (st.serverOn) m.add(type); else m.delete(type);
+                                myReactions[id] = [...m];
+                                reactTouched[id] = 0;
+                                updateReactBar(); updateTilePill(id);
+                                loadReactions();                                // pull the real counts back
+                            }
+                        }"""
+
+BROADCAST_GUARD = "if (!payload || !payload.id || !payload.counts) return;"
 
 
 def main():
     if len(sys.argv) != 2:
-        die("usage: python update_wall.py freedomwall.html")
+        die("usage: python fix_wall.py freedomwall.html")
     path = sys.argv[1]
-
     with open(path, "r", encoding="utf-8", newline="") as f:
         html = f.read()
 
-    if MARKER in html or "artcher-v3" in html:
-        die("this file already looks patched (marker found). Nothing changed.")
+    if MARKER in html:
+        die("this file already has the reaction fix. Nothing changed.")
 
-    print("Patching %s ..." % path)
-    shutil.copyfile(path, path + ".bak")
-    print("  backup -> %s.bak" % path)
+    print("Checking anchors in %s ..." % path)
 
-    # ---- CSS -------------------------------------------------------------
-    html = sub_once(html, "</head>", CSS + "</head>", "</head>")
+    # ---- fonts -----------------------------------------------------------
+    html = sub_once(
+        html,
+        "&family=Press+Start+2P&display=swap",
+        "&family=Press+Start+2P" + FONT_LINK_EXTRA + "&display=swap",
+        "Google Fonts link",
+    )
+    html = sub_once(
+        html,
+        '"JetBrains Mono": "\'JetBrains Mono\', monospace"',
+        '"JetBrains Mono": "\'JetBrains Mono\', monospace"' + FONT_MAP_EXTRA,
+        "FONT_FAMILIES",
+    )
+    html = sub_once(
+        html,
+        '<option value="JetBrains Mono">Mono</option>',
+        '<option value="JetBrains Mono">Mono</option>' + FONT_OPTIONS,
+        "font dropdown",
+    )
+    html = sub_once(html, "const CELL_SIZE = 190;", "const CELL_SIZE = 190;\n" + PRELOAD_FN, "preloadAllFonts()")
+    html = sub_once(html, "loadDraft();", "loadDraft();\n                        preloadAllFonts();", "call preloadAllFonts()")
 
-    # ---- Options card: new toggles + reset button ------------------------
+    # ---- stencils shown twice ---------------------------------------------
     html = re_once(
         html,
-        r'(id="opt-borders"[^>]*>\s*</span>\s*</label>)',
-        lambda m: m.group(1) + OPTION_ROWS,
-        "Options card (opt-borders row)",
+        r'(const stencilList = document\.getElementById\("stencil-list"\);)(\s*)(Object\.entries\(STENCILS\))',
+        lambda m: m.group(1) + '\n                            stencilList.innerHTML = ""; // FIX: never append on top of an existing list\n                            ' + m.group(3),
+        "stencil list cleared before it is built",
     )
 
-    # ---- Size badge above the Post button --------------------------------
-    post_btn = '<button class="btn btn-accent btn-lg btn-block" id="submit-btn" onclick="submitToWall()">Post to wall</button>'
-    html = sub_once(html, post_btn, SIZE_ROW + post_btn, "Post to wall button")
-
-    # ---- Haptics (haptic() is defined twice in the file) -----------------
-    html = sub_all(
-        html,
-        "try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}",
-        "try { if (optHapticOn && navigator.vibrate) navigator.vibrate(ms); } catch (e) {}",
-        "haptic() respects the toggle",
-    )
-
-    # ---- Auto-upload: AUTO_UPLOAD && ...  ->  optAutoUpload && ... -------
-    html = sub_all(html, "AUTO_UPLOAD &&", "optAutoUpload &&", "auto-upload checks use the toggle")
-
+    # ---- reactions --------------------------------------------------------
+    html = replace_function(html, "async function loadReactions() {", "@@REACT@@", "replace loadReactions()")
+    html = replace_function(html, "async function toggleReaction(type) {", "", "remove old toggleReaction()")
+    html = html.replace("@@REACT@@", REACTIONS_JS)
     html = sub_once(
         html,
-        'showToast("Saved offline ✓ Will upload when internet is good.");',
-        'showToast(optAutoUpload ? `Saved offline ✓ (${sizeLabel}) Will upload when internet is good.` : `Saved on this device ✓ (${sizeLabel}) Tap Upload when you are ready.`);',
-        "offline-saved toast",
-    )
-    html = sub_once(
-        html,
-        'showToast("Uploading to the wall...");',
-        'showToast(sizeBytes > SIZE_DANGER_BYTES ? `Uploading large drawing (${sizeLabel}) - this may take a moment...` : `Uploading drawing (${sizeLabel})...`);',
-        "uploading toast",
-    )
-    html = sub_once(
-        html,
-        "pending.push(entry);",
-        "pending.push(entry);\n                            const sizeBytes = entryPayloadBytes(entry);\n                            const sizeLabel = formatBytes(sizeBytes);",
-        "pending.push(entry)",
+        BROADCAST_GUARD,
+        BROADCAST_GUARD + "\n                                if (reactIdBusy(payload.id)) return;   // don't overwrite a reaction we are still saving",
+        "live broadcast guard",
     )
 
-    # ---- applyOptions(): read + apply + persist new toggles --------------
-    html = sub_once(
-        html,
-        'const showBorders = document.getElementById("opt-borders").checked;',
-        'const showBorders = document.getElementById("opt-borders").checked;\n'
-        '                            const wasAutoUpload = optAutoUpload;\n'
-        '                            optWeatherOn = readOpt("opt-weather", true);\n'
-        '                            optHapticOn = readOpt("opt-haptic", true);\n'
-        '                            optMinimapOn = readOpt("opt-minimap", true);\n'
-        '                            optAutoUpload = readOpt("opt-autoupload", AUTO_UPLOAD);\n'
-        '                            applyOptionVisibility();\n'
-        '                            if (optionsInitDone && !wasAutoUpload && optAutoUpload && pending.length > 0 && navigator.onLine) uploadPending(true);',
-        "applyOptions() read",
-    )
-    html = sub_once(
-        html,
-        "borders: showBorders\n",
-        "borders: showBorders,\n"
-        "                                weather: optWeatherOn,\n"
-        "                                haptic: optHapticOn,\n"
-        "                                minimap: optMinimapOn,\n"
-        "                                autoUpload: optAutoUpload\n",
-        "applyOptions() save",
-    ) if html.count("borders: showBorders\n") == 1 else sub_once(
-        html,
-        "borders: showBorders\r\n",
-        "borders: showBorders,\r\n"
-        "                                weather: optWeatherOn,\r\n"
-        "                                haptic: optHapticOn,\r\n"
-        "                                minimap: optMinimapOn,\r\n"
-        "                                autoUpload: optAutoUpload\r\n",
-        "applyOptions() save (CRLF)",
-    )
-
-    # ---- loadOptions(): defaults + restore -------------------------------
-    html = sub_once(
-        html,
-        "const saved = lsGet(LS_OPTIONS, { grid: false, smooth: true, borders: false });",
-        "const saved = lsGet(LS_OPTIONS, { grid: false, smooth: true, borders: false, weather: true, haptic: true, minimap: true, autoUpload: true });",
-        "loadOptions() defaults",
-    )
-    html = sub_once(
-        html,
-        'document.getElementById("opt-borders").checked = Boolean(saved.borders);',
-        'document.getElementById("opt-borders").checked = Boolean(saved.borders);\n'
-        '                            document.getElementById("opt-weather").checked = saved.weather !== false;\n'
-        '                            document.getElementById("opt-haptic").checked = saved.haptic !== false;\n'
-        '                            document.getElementById("opt-minimap").checked = saved.minimap !== false;\n'
-        '                            document.getElementById("opt-autoupload").checked = saved.autoUpload !== false;',
-        "loadOptions() restore",
-    )
-
-    # ---- weather + minimap gates -----------------------------------------
-    html = sub_once(
-        html,
-        "function getActiveWeatherMode() {",
-        'function getActiveWeatherMode() {\n                            if (!optWeatherOn) return "clear";',
-        "getActiveWeatherMode()",
-    )
-    html = sub_once(
-        html,
-        "function updateMinimap() {",
-        "function updateMinimap() {\n                            if (!optMinimapOn) return;",
-        "updateMinimap()",
-    )
-
-    # ---- init: mark options as ready; size after draft load --------------
-    html = sub_once(
-        html,
-        "loadOptions();",
-        "loadOptions();\n                        optionsInitDone = true;",
-        "init loadOptions()",
-    )
-    html = sub_once(
-        html,
-        "loadDraft();",
-        "loadDraft();\n                        updateDrawingSize();",
-        "init loadDraft()",
-    )
-
-    # ---- live size hooks --------------------------------------------------
-    # scheduleDraftSave() already runs after every stroke end, undo, redo,
-    # fill, shape, text edit/move/delete and paper change, so hooking it
-    # covers all of them.
-    html = sub_once(
-        html,
-        "function scheduleDraftSave() {",
-        "function scheduleDraftSave() {\n                            updateDrawingSize();",
-        "scheduleDraftSave()",
-    )
-    html = sub_once(
-        html,
-        "lsSet(LS_DRAFT, null);",
-        "lsSet(LS_DRAFT, null);\n                            updateDrawingSize();",
-        "clearCanvas()",
-    )
-    html = sub_once(
-        html,
-        'showToast("Reference image loaded (local only)");',
-        'showToast("Reference image loaded (local only)");\n                                updateDrawingSize();',
-        "trace image loaded",
-    )
-    html = sub_once(
-        html,
-        'showToast("Reference image removed");',
-        'showToast("Reference image removed");\n                            updateDrawingSize();',
-        "trace image removed",
-    )
-
-    # ---- core JS block (last, so it can't create duplicate anchors) ------
-    html = sub_once(
-        html,
-        'const LS_DRAFT = "fw_draft_v1";',
-        'const LS_DRAFT = "fw_draft_v1";' + JS_CORE,
-        "LS_DRAFT constant",
-    )
-
+    backup = "%s.bak-fix-%d" % (path, int(time.time()))
+    shutil.copyfile(path, backup)
     with open(path, "w", encoding="utf-8", newline="") as f:
         f.write(html)
-
-    print("Done. Open the page and check: More > Options (5 new rows) and Draw > Post (size badge).")
+    print("Done. Backup: " + backup)
+    print("Hard-refresh the page (Ctrl+Shift+R) so the new fonts and script load.")
 
 
 if __name__ == "__main__":

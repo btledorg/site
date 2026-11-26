@@ -18,7 +18,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=Lobster&family=Pacifico&family=Dancing+Script:wght@700&family=Satisfy&family=Permanent+Marker&family=Gloria+Hallelujah&family=Shadows+Into+Light&family=Bebas+Neue&family=Bangers&family=Righteous&family=Fredoka:wght@600&family=Abril+Fatface&family=Special+Elite&family=Orbitron:wght@700&family=Creepster&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -1071,24 +1071,6 @@
                             .tp-legend { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; font-size: 11px; font-weight: 600; color: var(--muted); }
                             .tp-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
                         </style>
-                        
-                        <style id="artcher-v3">
-                            /* ===== V3 / drawing size badge ===== */
-                            .size-row {
-                                display: flex; align-items: center; justify-content: space-between; gap: 10px;
-                                padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px;
-                                background: var(--soft); font-size: 12px; font-weight: 700; color: var(--ink);
-                            }
-                            .size-label small { display: block; margin-top: 1px; font-size: 10.5px; font-weight: 500; color: var(--muted); }
-                            .size-badge {
-                                flex-shrink: 0; padding: 4px 11px; border-radius: 999px;
-                                font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
-                                background: #fff; border: 1px solid var(--border); color: var(--ink);
-                                transition: background .2s, border-color .2s, color .2s;
-                            }
-                            .size-badge.warn   { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
-                            .size-badge.danger { background: #fef2f2; border-color: #fecaca; color: var(--d-red); }
-                        </style>
                     </head>
                     <body>
                         
@@ -1400,6 +1382,21 @@
                                             <option value="Playfair Display">Serif</option>
                                             <option value="Press Start 2P">Pixel</option>
                                             <option value="JetBrains Mono">Mono</option>
+                                            <option value="Lobster" style="font-family:'Lobster', cursive">Lobster (script)</option>
+                                            <option value="Pacifico" style="font-family:'Pacifico', cursive">Pacifico (retro script)</option>
+                                            <option value="Dancing Script" style="font-family:'Dancing Script', cursive">Dancing Script</option>
+                                            <option value="Satisfy" style="font-family:'Satisfy', cursive">Satisfy (brush script)</option>
+                                            <option value="Permanent Marker" style="font-family:'Permanent Marker', cursive">Permanent Marker</option>
+                                            <option value="Gloria Hallelujah" style="font-family:'Gloria Hallelujah', cursive">Gloria Hallelujah (hand)</option>
+                                            <option value="Shadows Into Light" style="font-family:'Shadows Into Light', cursive">Shadows Into Light</option>
+                                            <option value="Bebas Neue" style="font-family:'Bebas Neue', Impact, sans-serif">Bebas Neue (tall caps)</option>
+                                            <option value="Bangers" style="font-family:'Bangers', Impact, cursive">Bangers (comic)</option>
+                                            <option value="Righteous" style="font-family:'Righteous', sans-serif">Righteous</option>
+                                            <option value="Fredoka" style="font-family:'Fredoka', sans-serif">Fredoka (rounded)</option>
+                                            <option value="Abril Fatface" style="font-family:'Abril Fatface', Georgia, serif">Abril Fatface (display serif)</option>
+                                            <option value="Special Elite" style="font-family:'Special Elite', 'Courier New', monospace">Special Elite (typewriter)</option>
+                                            <option value="Orbitron" style="font-family:'Orbitron', sans-serif">Orbitron (sci-fi)</option>
+                                            <option value="Creepster" style="font-family:'Creepster', cursive">Creepster (spooky)</option>
                                         </select>
                                         <div class="pair">
                                             <button class="btn" onclick="changeTextSize(-1)" aria-label="Smaller text">A&minus; Smaller</button>
@@ -1429,10 +1426,6 @@
                                         <button class="btn" onclick="videoStudio()">Replay video</button>
                                     </div>
                                     <input type="text" id="author-input" class="name-input" maxlength="24" placeholder="Your name or alias (optional)" oninput="handleStudioAuthorInput(this.value)" />
-                                    <div class="size-row" id="drawing-size-row">
-                                        <span class="size-label">Upload size<small id="drawing-size-hint">Estimated upload size</small></span>
-                                        <span class="size-badge" id="drawing-size-badge" aria-live="polite">0.0 KB</span>
-                                    </div>
                                     <button class="btn btn-accent btn-lg btn-block" id="submit-btn" onclick="submitToWall()">Post to wall</button>
                                     <div class="studio-stats" id="studio-stats">0 strokes · 0 on wall</div>
                                 </div>
@@ -1617,28 +1610,6 @@
                                     <span>Wall tile borders</span>
                                     <span class="switch"><input type="checkbox" id="opt-borders" onchange="applyOptions()"></span>
                                 </label>
-                                <label class="list-row">
-                                    <span>Weather sky effects<small>Rain, clouds, lightning &amp; the sky pill</small></span>
-                                    <span class="switch"><input type="checkbox" id="opt-weather" checked onchange="applyOptions()"></span>
-                                </label>
-                                <label class="list-row">
-                                    <span>Haptic feedback<small>Vibrate on taps and actions</small></span>
-                                    <span class="switch"><input type="checkbox" id="opt-haptic" checked onchange="applyOptions()"></span>
-                                </label>
-                                <label class="list-row">
-                                    <span>Show wall minimap<small>Small overview map on the Wall</small></span>
-                                    <span class="switch"><input type="checkbox" id="opt-minimap" checked onchange="applyOptions()"></span>
-                                </label>
-                                <label class="list-row">
-                                    <span>Auto-upload drawings<small>Off = save on this device, upload manually</small></span>
-                                    <span class="switch"><input type="checkbox" id="opt-autoupload" checked onchange="applyOptions()"></span>
-                                </label>
-                                <button type="button" class="list-row" onclick="resetAllSettings()">
-                                    <span class="lead">
-                                        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-                                        <span style="color:var(--d-red);">Reset all settings<small>Restore Options &amp; seasonal theme defaults</small></span>
-                                    </span>
-                                </button>
                             </div>
                             
                             <div class="more-credit">ARCHERSTUDIO @ 2026</div>
@@ -1783,119 +1754,6 @@
                         const LS_PROFILE = "fw_profile_v1";
                         const LS_SAVED_COLORS = "fw_saved_colors_v1";
                         const LS_DRAFT = "fw_draft_v1";
-                        
-                        /* ===== ARTCHER-V3-OPTIONS: settings toggles + drawing size (added by update_wall.py) ===== */
-                        let optWeatherOn = true;
-                        let optHapticOn = true;
-                        let optMinimapOn = true;
-                        let optAutoUpload = AUTO_UPLOAD;
-                        let optionsInitDone = false;
-                        
-                        const SIZE_WARN_BYTES = 500 * 1024;
-                        const SIZE_DANGER_BYTES = 1.5 * 1024 * 1024;
-                        let drawingSizeTimer = 0;
-                        let lastDrawingBytes = 0;
-                        
-                        function readOpt(id, fallback) {
-                            const el = document.getElementById(id);
-                            return el ? el.checked : fallback;
-                        }
-                        
-                        function formatBytes(bytes) {
-                            const b = Math.max(0, Number(bytes) || 0);
-                            if (b >= 1024 * 1024) return (b / (1024 * 1024)).toFixed(2) + " MB";
-                            return (b / 1024).toFixed(1) + " KB";
-                        }
-                        
-                        function utf8Bytes(str) {
-                            return new TextEncoder().encode(str).length;
-                        }
-                        
-                        // Same JSON body that uploadPending() POSTs to Apps Script
-                        function entryPayloadBytes(entry) {
-                            return utf8Bytes(JSON.stringify({
-                                action: "addFreedomWall",
-                                id: entry.id,
-                                author: entry.author,
-                                gx: entry.gx,
-                                gy: entry.gy,
-                                strokes: entry.strokes,
-                                timestamp: entry.timestamp
-                            }));
-                        }
-                        
-                        // What "Post to wall" would upload right now (strokes + text + paper tint).
-                        // The local trace/reference image is never uploaded, so it is not counted.
-                        function measureDrawingBytes() {
-                            const items = getAllItems();
-                            if (!items.length) return 0;
-                            return entryPayloadBytes({
-                                id: "fw_0000000000000_0000",
-                                author: currentAuthorName() || "Anonymous",
-                                gx: 0, gy: 0,
-                                strokes: items,
-                                timestamp: Date.now()
-                            });
-                        }
-                        
-                        function updateDrawingSize() {
-                            clearTimeout(drawingSizeTimer);
-                            drawingSizeTimer = setTimeout(() => {
-                                let bytes = 0;
-                                try { bytes = measureDrawingBytes(); } catch (e) {}
-                                lastDrawingBytes = bytes;
-                                const badge = document.getElementById("drawing-size-badge");
-                                const hint = document.getElementById("drawing-size-hint");
-                                if (!badge) return;
-                                badge.textContent = formatBytes(bytes);
-                                badge.classList.toggle("warn", bytes > SIZE_WARN_BYTES && bytes <= SIZE_DANGER_BYTES);
-                                badge.classList.toggle("danger", bytes > SIZE_DANGER_BYTES);
-                                if (hint) {
-                                    hint.textContent = bytes > SIZE_DANGER_BYTES
-                                    ? "Very large - may be slow or fail on weak internet"
-                                    : bytes > SIZE_WARN_BYTES
-                                    ? "Getting large - consider simplifying"
-                                    : "Estimated upload size";
-                                }
-                            }, 120);
-                        }
-                        
-                        function applyOptionVisibility() {
-                            const wc = document.getElementById("weather-canvas");
-                            if (wc) wc.style.display = optWeatherOn ? "" : "none";
-                            const wp = document.getElementById("weather-pill");
-                            if (wp) wp.hidden = !optWeatherOn;
-                            const mmEl = document.getElementById("minimap");
-                            if (mmEl) mmEl.hidden = !optMinimapOn;
-                            try {
-                                rebuildWeatherParticles();
-                                updateWeatherPillUI();
-                                startSeasonalParticles();
-                            } catch (e) {}
-                            if (optMinimapOn) { try { updateMinimap(); } catch (e) {} }
-                        }
-                        
-                        function resetAllSettings(confirmed = false) {
-                            if (!confirmed) {
-                                confirmCriticalAction(
-                                "Reset all settings?",
-                                "Every toggle in Options and the seasonal theme go back to their defaults. Your drawings, name and saved colors are kept.",
-                                () => resetAllSettings(true)
-                                );
-                                return;
-                            }
-                            lsSet(LS_OPTIONS, {
-                                grid: false, smooth: true, borders: false,
-                                weather: true, haptic: true, minimap: true, autoUpload: true
-                            });
-                            lsSet(LS_SEASON_OVERRIDE, "auto");
-                            lsSet(LS_SEASON_FX, true);
-                            loadOptions();
-                            applySeasonalTheme();
-                            haptic(10);
-                            showToast("Settings reset to defaults");
-                        }
-                        
                         
                         // =========================================================================
                         // LIVE STREAMING RADIO API (Radio Browser API + Synth Fallback)
@@ -2431,7 +2289,7 @@
                         }
                         
                         function haptic(ms = 8) {
-                            try { if (optHapticOn && navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
+                            try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
                         }
                         
                         function popDoodle(el) {
@@ -2460,7 +2318,7 @@
                         }
                         
                         function haptic(ms = 8) {
-                            try { if (optHapticOn && navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
+                            try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
                         }
                         
                         function popDoodle(el) {
@@ -2519,9 +2377,36 @@
                             "Caveat": "'Caveat', cursive",
                             "Playfair Display": "'Playfair Display', Georgia, serif",
                             "Press Start 2P": "'Press Start 2P', monospace",
-                            "JetBrains Mono": "'JetBrains Mono', monospace"
+                            "JetBrains Mono": "'JetBrains Mono', monospace",
+                            "Lobster": "'Lobster', cursive",
+                            "Pacifico": "'Pacifico', cursive",
+                            "Dancing Script": "'Dancing Script', cursive",
+                            "Satisfy": "'Satisfy', cursive",
+                            "Permanent Marker": "'Permanent Marker', cursive",
+                            "Gloria Hallelujah": "'Gloria Hallelujah', cursive",
+                            "Shadows Into Light": "'Shadows Into Light', cursive",
+                            "Bebas Neue": "'Bebas Neue', Impact, sans-serif",
+                            "Bangers": "'Bangers', Impact, cursive",
+                            "Righteous": "'Righteous', sans-serif",
+                            "Fredoka": "'Fredoka', sans-serif",
+                            "Abril Fatface": "'Abril Fatface', Georgia, serif",
+                            "Special Elite": "'Special Elite', 'Courier New', monospace",
+                            "Orbitron": "'Orbitron', sans-serif",
+                            "Creepster": "'Creepster', cursive"
                         };
                         const CELL_SIZE = 190;
+
+                        // FIX-V2-FONTS: load every text font up front so canvas text (export, replay,
+                        // wall tiles) never renders in a fallback font.
+                        function preloadAllFonts() {
+                            if (!document.fonts || !document.fonts.load) return;
+                            const jobs = Object.keys(FONT_FAMILIES).map(k =>
+                                document.fonts.load('700 24px "' + k + '"').catch(() => null));
+                            Promise.all(jobs).then(() => {
+                                try { tileBitmapCache.clear(); scheduleWallPaint(); } catch (e) {}
+                            });
+                        }
+
                         
                         let currentTool = "brush";
                         let currentColor = COLORS[0];
@@ -2582,7 +2467,6 @@
                         // =========================================================================
                         let draftSaveTimer = null;
                         function scheduleDraftSave() {
-                            updateDrawingSize();
                             clearTimeout(draftSaveTimer);
                             draftSaveTimer = setTimeout(() => {
                                 lsSet(LS_DRAFT, { strokes, texts: getTextItems(), bg: paperBg });
@@ -2753,6 +2637,7 @@
                             .on("presence", { event: "sync" }, () => { updateOnlineUI(); })
                             .on("broadcast", { event: "reaction" }, ({ payload }) => {
                                 if (!payload || !payload.id || !payload.counts) return;
+                                if (reactIdBusy(payload.id)) return;   // don't overwrite a reaction we are still saving
                                 reactions[payload.id] = payload.counts;
                                 updateTilePill(payload.id);
                                 if (modalEntry && modalEntry.id === payload.id) updateReactBar();
@@ -3068,7 +2953,6 @@
                                 document.getElementById("ref-tab-dot").hidden = false;
                                 updateRefTransform();
                                 showToast("Reference image loaded (local only)");
-                                updateDrawingSize();
                             };
                             reader.readAsDataURL(file);
                             event.target.value = "";
@@ -3129,7 +3013,6 @@
                             document.getElementById("ref-empty-state").hidden = false;
                             document.getElementById("ref-tab-dot").hidden = true;
                             showToast("Reference image removed");
-                            updateDrawingSize();
                         }
                         
                         // =========================================================================
@@ -3400,13 +3283,6 @@
                             const showGrid = document.getElementById("opt-grid").checked;
                             smoothStrokes = document.getElementById("opt-smooth").checked;
                             const showBorders = document.getElementById("opt-borders").checked;
-                            const wasAutoUpload = optAutoUpload;
-                            optWeatherOn = readOpt("opt-weather", true);
-                            optHapticOn = readOpt("opt-haptic", true);
-                            optMinimapOn = readOpt("opt-minimap", true);
-                            optAutoUpload = readOpt("opt-autoupload", AUTO_UPLOAD);
-                            applyOptionVisibility();
-                            if (optionsInitDone && !wasAutoUpload && optAutoUpload && pending.length > 0 && navigator.onLine) uploadPending(true);
                             
                             canvasFrame.classList.toggle("show-grid", showGrid);
                             document.getElementById("wall-stage").classList.toggle("wall-stage-bordered", showBorders);
@@ -3415,25 +3291,17 @@
                             lsSet(LS_OPTIONS, {
                                 grid: showGrid,
                                 smooth: smoothStrokes,
-                                borders: showBorders,
-                                weather: optWeatherOn,
-                                haptic: optHapticOn,
-                                minimap: optMinimapOn,
-                                autoUpload: optAutoUpload
+                                borders: showBorders
                             });
                             
                             redrawStudio();
                         }
                         
                         function loadOptions() {
-                            const saved = lsGet(LS_OPTIONS, { grid: false, smooth: true, borders: false, weather: true, haptic: true, minimap: true, autoUpload: true });
+                            const saved = lsGet(LS_OPTIONS, { grid: false, smooth: true, borders: false });
                             document.getElementById("opt-grid").checked = Boolean(saved.grid);
                             document.getElementById("opt-smooth").checked = saved.smooth !== false;
                             document.getElementById("opt-borders").checked = Boolean(saved.borders);
-                            document.getElementById("opt-weather").checked = saved.weather !== false;
-                            document.getElementById("opt-haptic").checked = saved.haptic !== false;
-                            document.getElementById("opt-minimap").checked = saved.minimap !== false;
-                            document.getElementById("opt-autoupload").checked = saved.autoUpload !== false;
                             applyOptions();
                         }
                         
@@ -4172,7 +4040,6 @@
                             redrawStudio();
                             updateHistoryUI();
                             lsSet(LS_DRAFT, null);
-                            updateDrawingSize();
                         }
                         
                         function animateStrokes(ctx, strokeList, canvasDim, speedMultiplier = 1, onComplete = null) {
@@ -4899,8 +4766,6 @@
                             };
                             
                             pending.push(entry);
-                            const sizeBytes = entryPayloadBytes(entry);
-                            const sizeLabel = formatBytes(sizeBytes);
                             myTileIds.push(entry.id); lsSet(LS_MINE, myTileIds.slice(-50));
                             if (!lsSet(LS_QUEUE, pending)) {
                                 pending.pop();
@@ -4918,11 +4783,11 @@
                             playPopTone(660);
                             haptic(20);
                             
-                            if (optAutoUpload && await hasGoodInternet()) {
-                                showToast(sizeBytes > SIZE_DANGER_BYTES ? `Uploading large drawing (${sizeLabel}) - this may take a moment...` : `Uploading drawing (${sizeLabel})...`);
+                            if (AUTO_UPLOAD && await hasGoodInternet()) {
+                                showToast("Uploading to the wall...");
                                 uploadPending(true);
                             } else {
-                                showToast(optAutoUpload ? `Saved offline ✓ (${sizeLabel}) Will upload when internet is good.` : `Saved on this device ✓ (${sizeLabel}) Tap Upload when you are ready.`);
+                                showToast("Saved offline ✓ Will upload when internet is good.");
                             }
                         }
                         
@@ -5094,7 +4959,7 @@
                         }
                         
                         function refreshWall() {
-                            if (optAutoUpload && pending.length > 0 && navigator.onLine) uploadPending(false);
+                            if (AUTO_UPLOAD && pending.length > 0 && navigator.onLine) uploadPending(false);
                             else loadWallEntries({ autoPlay: true, manual: true });
                         }
                         
@@ -5599,16 +5464,114 @@
                         let myReactions = {};
                         const zeroCounts = () => ({ heart: 0, star: 0, fire: 0 });
                         
+                        // ===== FIX-V2-LIKES: safe like / unlike / like again =====
+                        // reactPending: "tileId:type" -> { want, serverOn }   (one save loop per key)
+                        // reactTouched: tileId -> time of the last local change
+                        const reactPending = new Map();
+                        const reactTouched = {};
+
+                        function reactIdBusy(id, exceptKey) {
+                            for (const k of reactPending.keys()) {
+                                if (k !== exceptKey && k.startsWith(id + ":")) return true;
+                            }
+                            return false;
+                        }
+
                         async function loadReactions() {
+                            const startedAt = Date.now();
                             try {
                                 const res = await fetch(`${GAS_WEB_APP_URL}?module=freedomwallreactions&voter=${encodeURIComponent(voterId)}&_t=${Date.now()}`);
                                 const j = await res.json();
                                 if (!j.ok) return;
-                                reactions = j.data || {};
-                                myReactions = j.mine || {};
+                                const nextR = Object.assign({}, j.data || {});
+                                const nextM = Object.assign({}, j.mine || {});
+                                // keep local state for anything saved/being saved since this request began
+                                Object.keys(reactions).forEach(id => {
+                                    if (reactIdBusy(id) || (reactTouched[id] || 0) >= startedAt) {
+                                        nextR[id] = reactions[id];
+                                        if (myReactions[id]) nextM[id] = myReactions[id];
+                                    }
+                                });
+                                reactions = nextR;
+                                myReactions = nextM;
                                 document.querySelectorAll(".wall-tile").forEach(t => updateTilePill(t.dataset.id));
                                 if (modalEntry) updateReactBar();
                             } catch (e) {}
+                        }
+
+                        async function postReactionToggle(id, type) {
+                            const res = await fetch(GAS_WEB_APP_URL, {
+                                method: "POST",
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                body: JSON.stringify({ action: "reactFreedomWall", id, type, voter: voterId })
+                            });
+                            const j = await res.json();
+                            if (!j.ok) throw new Error(j.error || "failed");
+                            return j;
+                        }
+
+                        async function toggleReaction(type) {
+                            if (!modalEntry || modalEntry._pending) return;
+                            if (!navigator.onLine) { showToast("Reactions need internet."); return; }
+                            const id = modalEntry.id;
+                            const key = id + ":" + type;
+                            haptic(10);
+
+                            // 1) update the screen right away
+                            const counts = Object.assign(zeroCounts(), reactions[id]);
+                            const mineList = (myReactions[id] || []).slice();
+                            const wasOn = mineList.includes(type);
+                            reactions[id] = Object.assign({}, counts, { [type]: Math.max(0, counts[type] + (wasOn ? -1 : 1)) });
+                            myReactions[id] = wasOn ? mineList.filter(t => t !== type) : mineList.concat(type);
+                            reactTouched[id] = Date.now();
+                            updateReactBar(); updateTilePill(id);
+
+                            // 2) a save loop is already running for this reaction: just tell it the new goal
+                            let st = reactPending.get(key);
+                            if (st) { st.want = !wasOn; return; }
+
+                            // 3) otherwise start one. The server only toggles, so keep toggling until
+                            //    the server state matches what the user last asked for.
+                            st = { want: !wasOn, serverOn: wasOn };
+                            reactPending.set(key, st);
+                            let failed = false;
+                            try {
+                                for (let guard = 0; st.serverOn !== st.want && guard < 8; guard++) {
+                                    const j = await postReactionToggle(id, type);
+                                    const nowOn = typeof j.active === "boolean" ? j.active : !st.serverOn;
+                                    if (nowOn === st.serverOn) break;          // server did not flip: stop, re-sync below
+                                    st.serverOn = nowOn;
+                                    if (st.serverOn === st.want && j.counts) {
+                                        // settled: take the server's numbers (only this type if others are mid-save)
+                                        reactions[id] = reactIdBusy(id, key)
+                                            ? Object.assign({}, reactions[id], { [type]: j.counts[type] })
+                                            : Object.assign(zeroCounts(), j.counts);
+                                        const m = new Set(myReactions[id] || []);
+                                        if (st.serverOn) m.add(type); else m.delete(type);
+                                        myReactions[id] = [...m];
+                                        reactTouched[id] = Date.now();
+                                        updateReactBar(); updateTilePill(id);
+                                        if (wallChannel && wallChannel.state === "joined" && !reactIdBusy(id, key)) {
+                                            wallChannel.send({ type: "broadcast", event: "reaction", payload: { id, counts: reactions[id] } });
+                                        }
+                                    }
+                                }
+                                if (st.serverOn !== st.want) failed = true;
+                            } catch (e) {
+                                failed = true;
+                            } finally {
+                                reactPending.delete(key);
+                            }
+
+                            if (failed) {
+                                showToast("Couldn't save reaction. Re-syncing…");
+                                const m = new Set(myReactions[id] || []);
+                                if (st.serverOn) m.add(type); else m.delete(type);
+                                myReactions[id] = [...m];
+                                reactTouched[id] = 0;
+                                updateReactBar(); updateTilePill(id);
+                                loadReactions();                                // pull the real counts back
+                            }
                         }
                         
                         function updateTilePill(id) {
@@ -5632,41 +5595,7 @@
                             });
                         }
                         
-                        async function toggleReaction(type) {
-                            if (!modalEntry || modalEntry._pending) return;
-                            if (!navigator.onLine) { showToast("Reactions need internet."); return; }
-                            const id = modalEntry.id;
-                            haptic(10);
-                            
-                            const prevC = Object.assign(zeroCounts(), reactions[id]);
-                            const prevM = (myReactions[id] || []).slice();
-                            const on = prevM.includes(type);
-                            
-                            reactions[id] = Object.assign({}, prevC, { [type]: Math.max(0, prevC[type] + (on ? -1 : 1)) });
-                            myReactions[id] = on ? prevM.filter(t => t !== type) : prevM.concat(type);
-                            updateReactBar(); updateTilePill(id);
-                            
-                            try {
-                                const res = await fetch(GAS_WEB_APP_URL, {
-                                    method: "POST",
-                                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                                    body: JSON.stringify({ action: "reactFreedomWall", id, type, voter: voterId })
-                                });
-                                const j = await res.json();
-                                if (!j.ok) throw new Error(j.error || "failed");
-                                reactions[id] = j.counts;
-                                const m = new Set(myReactions[id] || []);
-                                if (j.active) m.add(type); else m.delete(type);
-                                myReactions[id] = [...m];
-                                if (wallChannel && wallChannel.state === "joined") {
-                                    wallChannel.send({ type: "broadcast", event: "reaction", payload: { id, counts: j.counts } });
-                                }
-                            } catch (e) {
-                                reactions[id] = prevC; myReactions[id] = prevM;
-                                showToast("Couldn't save reaction.");
-                            }
-                            updateReactBar(); updateTilePill(id);
-                        }
+                        
                         
                         // ---------- wall search + My tile ----------
                         const LS_MINE = "fw_mine_v1";
@@ -5731,7 +5660,6 @@
                         let mmMap = null, mmDragging = false, mmRaf = 0;
                         
                         function updateMinimap() {
-                            if (!optMinimapOn) return;
                             if (mmRaf) return;
                             mmRaf = requestAnimationFrame(() => { mmRaf = 0; drawMinimap(); });
                         }
@@ -5853,6 +5781,7 @@
                             });
                             
                             const stencilList = document.getElementById("stencil-list");
+                            stencilList.innerHTML = ""; // FIX: never append on top of an existing list
                             Object.entries(STENCILS).forEach(([k, [label]]) => {
                                 const b = document.createElement("button");
                                 b.type = "button"; b.className = "chip-btn"; b.dataset.k = k; b.textContent = label;
@@ -6259,10 +6188,9 @@
                         initUserProfile();
                         applySeasonalTheme();
                         loadOptions();
-                        optionsInitDone = true;
                         initStudioControls();
                         loadDraft();
-                        updateDrawingSize();
+                        preloadAllFonts();
                         layoutMonument();
                         applyStageTransform();
                         setUploadUI();
@@ -6271,10 +6199,10 @@
                         loadWallEntries({ autoPlay: false, manual: false, isLiveSync: true });
                         
                         window.addEventListener("online", () => {
-                            if (optAutoUpload && pending.length > 0) uploadPending(true);
+                            if (AUTO_UPLOAD && pending.length > 0) uploadPending(true);
                         });
                         
-                        if (optAutoUpload && pending.length > 0 && navigator.onLine) {
+                        if (AUTO_UPLOAD && pending.length > 0 && navigator.onLine) {
                             uploadPending(true);
                         }
                         
@@ -6284,7 +6212,6 @@
                         
                         
                         function getActiveWeatherMode() {
-                            if (!optWeatherOn) return "clear";
                             return weatherOverride === "auto" ? liveWeatherState.mode : weatherOverride;
                         }
                         
