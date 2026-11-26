@@ -1,292 +1,433 @@
-import re
-import sys
+
 from pathlib import Path
+import re
+import shutil
+import sys
 
-NEW_DRAW_HANDLERS = r'''let pendingTouchStroke = null;
+HTML_FILE = Path("freedomwall.html")
+BACKUP_FILE = Path("freedomwall.backup.html")
 
-function commitPendingTouchStroke() {
-    if (!pendingTouchStroke) return;
-    const { stroke, mirrors } = pendingTouchStroke;
-    pendingTouchStroke = null;
-    redoStack = [];
-    if (!stroke.er) rememberUsedColor(stroke.c);
-    strokes.push(stroke);
-    mirrors.forEach(ms => strokes.push(ms));
-    currentStroke = stroke;
-    mirrorStrokes = mirrors;
-    committedCount = -1;
+CSS = r"""
+/* Freedom Wall Text Layer Manager */
+#fw-layer-panel {
+    position: fixed;
+    right: 18px;
+    top: 100px;
+    width: 260px;
+    max-height: 65vh;
+    overflow-y: auto;
+    z-index: 99999;
+    background: #17191f;
+    color: #f5f5f5;
+    border: 1px solid #343945;
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 8px 30px #0007;
+    font: 13px Arial, sans-serif;
 }
 
-function startDraw(e) {
-    if (isPreviewing) return;
+#fw-layer-panel * {
+    box-sizing: border-box;
+}
 
-    // 2+ fingers: cancel any buffered/accidental 1-finger touch dot and switch to pinch-pan/zoom
-    if (e.touches && e.touches.length >= 2) {
-        e.preventDefault();
-        pendingTouchStroke = null;
-        if (isDrawing && currentStroke) {
-            strokes.pop();
-            mirrorStrokes.forEach(() => strokes.pop());
-            committedCount = -1;
-            redrawStudio();
-            updateHistoryUI();
-        }
-        isDrawing = false;
-        currentStroke = null;
-        mirrorStrokes = [];
-        shapeStart = null;
-        previewCtx.clearRect(0, 0, 500, 500);
+#fw-layer-panel .fw-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-weight: bold;
+    font-size: 15px;
+}
 
-        const rect = canvasFrame.getBoundingClientRect();
-        studioPinchDist = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
+#fw-layer-panel .fw-layer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px;
+    margin: 5px 0;
+    background: #242832;
+    border: 1px solid #353b49;
+    border-radius: 7px;
+    cursor: grab;
+}
+
+#fw-layer-panel .fw-layer.active {
+    border-color: #3b82f6;
+    background: #253653;
+}
+
+#fw-layer-panel .fw-layer.dragging {
+    opacity: .4;
+}
+
+#fw-layer-panel .fw-layer-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+#fw-layer-panel button {
+    border: 0;
+    border-radius: 5px;
+    padding: 5px 8px;
+    color: white;
+    background: #343b49;
+    cursor: pointer;
+}
+
+#fw-layer-panel button:hover {
+    background: #475569;
+}
+
+#fw-layer-panel .fw-delete {
+    background: #9f3030;
+}
+
+#fw-layer-panel .fw-delete:hover {
+    background: #c43d3d;
+}
+
+#fw-layer-panel .fw-empty {
+    color: #9299a8;
+    padding: 12px 4px;
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+    #fw-layer-panel {
+        top: auto;
+        bottom: 85px;
+        right: 10px;
+        width: min(230px, calc(100vw - 20px));
+        max-height: 35vh;
+    }
+}
+"""
+
+JS = r"""
+(() => {
+    if (window.__freedomWallLayersInstalled) return;
+    window.__freedomWallLayersInstalled = true;
+
+    const panel = document.createElement("aside");
+    panel.id = "fw-layer-panel";
+    panel.innerHTML = `
+        <div class="fw-heading">
+            <span>Text Layers</span>
+            <span id="fw-layer-count">0</span>
+        </div>
+        <div id="fw-layer-list">
+            <div class="fw-empty">No text layers yet</div>
+        </div>
+    `;
+    document.body.appendChild(panel);
+
+    const list = panel.querySelector("#fw-layer-list");
+    const count = panel.querySelector("#fw-layer-count");
+
+    let selected = null;
+    let dragged = null;
+    let refreshQueued = false;
+
+    function textElements() {
+        return [...document.querySelectorAll(".text-box")];
+    }
+
+    function getText(element) {
+        const editable = element.querySelector(
+            '[contenteditable="true"], textarea, input'
         );
-        studioPinchMidX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
-        studioPinchMidY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
-        return;
+        return (editable || element).innerText?.trim() ||
+               editable?.value?.trim() || "Untitled text";
     }
 
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    function selectLayer(element) {
+        selected = element;
 
-    // Hand tool OR Spacebar/Middle-click pan: never draw
-    if (currentTool === "hand" || (!e.touches && (spacePressed || e.button === 1))) {
-        e.preventDefault();
-        deselectText();
-        isDrawing = false;
-        currentStroke = null;
-        pendingTouchStroke = null;
-        isStudioPanning = true;
-        studioPanStartX = clientX - studioPanX;
-        studioPanStartY = clientY - studioPanY;
-        canvasFrame.classList.add("panning");
-        return;
+        textElements().forEach(el => {
+            el.classList.toggle("fw-layer-selected", el === element);
+        });
+
+        if (typeof window.selectText === "function") {
+            try { window.selectText(element); } catch (_) {}
+        }
+
+        refresh();
     }
 
-    if (e.button !== undefined && e.button !== 0) return;
+    function deleteLayer(element) {
+        if (!element || !element.isConnected) return;
 
-    e.preventDefault();
-    deselectText();
-    const pt = getCanvasPoint(e);
+        const deleteButton = element.querySelector(
+            'button[title*="Delete"], button[aria-label*="Delete"], .delete-text'
+        );
 
-    if (currentTool === "eyedropper") { pickColorAt(pt); return; }
+        if (deleteButton) {
+            deleteButton.click();
+        } else {
+            element.remove();
+        }
 
-    if (currentTool === "fill") {
-        redoStack = [];
-        rememberUsedColor(currentColor);
-        strokes.push({ k: "fill", c: currentColor, a: currentOpacity, x: pt[0], y: pt[1] });
-        committedCount = -1;
-        redrawStudio();
-        updateHistoryUI();
-        scheduleDraftSave();
-        return;
+        if (selected === element) selected = null;
+        refresh();
     }
 
-    if (currentTool === "line" || currentTool === "rect" || currentTool === "circle") {
-        isDrawing = true;
-        shapeStart = pt;
-        return;
+    function renameLayer(element) {
+        const current = getText(element);
+        const name = prompt("Rename this layer:", current);
+
+        if (name === null) return;
+
+        element.dataset.fwLayerName = name.trim() || "Untitled layer";
+        refresh();
     }
 
-    isDrawing = true;
-    const isEraser = currentTool === "eraser";
-    const symPts = getSymmetricPoints(pt);
+    function reorderLayers() {
+        const elements = [...list.querySelectorAll(".fw-layer")];
 
-    const baseStroke = {
-        c: isEraser ? "#ffffff" : currentColor,
-        s: currentSize,
-        a: isEraser ? 1 : currentOpacity,
-        er: isEraser,
-        sm: !isEraser && smoothStrokes,
-        p: [symPts[0]]
-    };
+        elements.forEach((row, index) => {
+            const element = row._fwElement;
+            if (!element || !element.isConnected) return;
 
-    const mirrors = [];
-    for (let i = 1; i < symPts.length; i++) {
-        mirrors.push({
-            c: baseStroke.c,
-            s: baseStroke.s,
-            a: baseStroke.a,
-            er: baseStroke.er,
-            sm: baseStroke.sm,
-            p: [symPts[i]]
+            element.style.zIndex = String(100 + index);
+            element.dataset.fwLayerOrder = String(index);
         });
     }
 
-    // Buffer touch strokes briefly so placing 2 fingers to pan never leaves/erases a dot
-    if (e.touches) {
-        pendingTouchStroke = { stroke: baseStroke, mirrors };
-        currentStroke = null;
-        mirrorStrokes = [];
-    } else {
-        redoStack = [];
-        if (!isEraser) rememberUsedColor(currentColor);
-        strokes.push(baseStroke);
-        mirrors.forEach(ms => strokes.push(ms));
-        currentStroke = baseStroke;
-        mirrorStrokes = mirrors;
-        committedCount = -1;
-        redrawStudio();
-        updateHistoryUI();
+    function refresh() {
+        if (refreshQueued) return;
+        refreshQueued = true;
+
+        requestAnimationFrame(() => {
+            refreshQueued = false;
+
+            const elements = textElements();
+            count.textContent = elements.length;
+            list.innerHTML = "";
+
+            if (!elements.length) {
+                list.innerHTML =
+                    '<div class="fw-empty">No text layers yet</div>';
+                selected = null;
+                return;
+            }
+
+            elements.forEach((element, index) => {
+                const row = document.createElement("div");
+                row.className = "fw-layer";
+                row.draggable = true;
+                row._fwElement = element;
+
+                if (element === selected) row.classList.add("active");
+
+                const name = document.createElement("span");
+                name.className = "fw-layer-name";
+                name.textContent =
+                    element.dataset.fwLayerName || getText(element) ||
+                    `Text ${index + 1}`;
+                name.title = "Click to select; double-click to rename";
+
+                name.addEventListener("click", () => selectLayer(element));
+                name.addEventListener("dblclick", () => renameLayer(element));
+
+                const edit = document.createElement("button");
+                edit.textContent = "Edit";
+                edit.title = "Edit layer text";
+                edit.addEventListener("click", () => {
+                    selectLayer(element);
+                    const editable = element.querySelector(
+                        '[contenteditable="true"], textarea, input'
+                    );
+
+                    if (editable) {
+                        editable.focus();
+                        if (editable.isContentEditable) {
+                            const range = document.createRange();
+                            range.selectNodeContents(editable);
+                            const selection = window.getSelection();
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                        }
+                    }
+                });
+
+                const remove = document.createElement("button");
+                remove.textContent = "×";
+                remove.className = "fw-delete";
+                remove.title = "Delete this layer";
+                remove.addEventListener("click", () => deleteLayer(element));
+
+                row.append(name, edit, remove);
+
+                row.addEventListener("dragstart", () => {
+                    dragged = row;
+                    row.classList.add("dragging");
+                });
+
+                row.addEventListener("dragend", () => {
+                    row.classList.remove("dragging");
+                    dragged = null;
+                    reorderLayers();
+                });
+
+                row.addEventListener("dragover", event => {
+                    event.preventDefault();
+                    if (!dragged || dragged === row) return;
+
+                    const rect = row.getBoundingClientRect();
+                    const after = event.clientY > rect.top + rect.height / 2;
+
+                    list.insertBefore(
+                        dragged,
+                        after ? row.nextSibling : row
+                    );
+                });
+
+                row.addEventListener("drop", event => {
+                    event.preventDefault();
+                    reorderLayers();
+                });
+
+                list.appendChild(row);
+            });
+        });
     }
-}
 
-function moveDraw(e) {
-    if (e.touches && e.touches.length >= 2 && studioPinchDist) {
-        e.preventDefault();
-        const rect = canvasFrame.getBoundingClientRect();
-        const newDist = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
-        );
-        const newMidX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
-        const newMidY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
-
-        studioPanX += (newMidX - studioPinchMidX);
-        studioPanY += (newMidY - studioPinchMidY);
-
-        const factor = newDist / studioPinchDist;
-        zoomStudioAt(studioScale * factor, newMidX, newMidY);
-
-        studioPinchDist = newDist;
-        studioPinchMidX = newMidX;
-        studioPinchMidY = newMidY;
-        return;
-    }
-
-    if (isStudioPanning) {
-        e.preventDefault();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const dx = clientX - studioPanStartX;
-        const dy = clientY - studioPanStartY;
-
-        if (studioScale <= 1.001 && typeof refState !== "undefined" && refState.loaded && refState.visible) {
-            refState.x += dx - studioPanX;
-            refState.y += dy - studioPanY;
-            studioPanX = dx;
-            studioPanY = dy;
-            if (typeof updateRefTransform === "function") updateRefTransform();
-        } else {
-            studioPanX = dx;
-            studioPanY = dy;
-            applyStudioTransform();
+    // Switch to Hand Tool after adding a text element.
+    function switchToHand() {
+        if (typeof window.setTool === "function") {
+            window.setTool("hand");
+            return;
         }
-        return;
+
+        const handButton = [...document.querySelectorAll(
+            "button, [role='button']"
+        )].find(button => {
+            const label = (
+                (button.textContent || "") + " " +
+                (button.title || "") + " " +
+                (button.getAttribute("aria-label") || "")
+            ).toLowerCase();
+
+            return label.includes("hand tool") ||
+                   label.trim() === "hand";
+        });
+
+        if (handButton) handButton.click();
+        document.body.classList.add("mode-hand");
     }
 
-    if (!isDrawing || isPreviewing) return;
-    e.preventDefault();
-    const pt = getCanvasPoint(e);
+    // Detect newly created text elements.
+    const observer = new MutationObserver(() => {
+        const elements = textElements();
 
-    if (shapeStart && (currentTool === "line" || currentTool === "rect" || currentTool === "circle")) {
-        const pts = buildShapePoints(currentTool, shapeStart, pt, shiftPressed);
-        const isFilled = shapeFilled && (currentTool === "rect" || currentTool === "circle");
-        renderStrokesInstant(previewCtx, [{ c: currentColor, s: currentSize, a: currentOpacity, sm: false, fl: isFilled, p: pts }], 500, true);
-        return;
-    }
+        elements.forEach(element => {
+            if (element.dataset.fwLayerTracked) return;
 
-    if (pendingTouchStroke) {
-        const startPt = pendingTouchStroke.stroke.p[0];
-        if (Math.hypot(pt[0] - startPt[0], pt[1] - startPt[1]) < 2) return;
-        commitPendingTouchStroke();
-        updateHistoryUI();
-    }
+            element.dataset.fwLayerTracked = "true";
 
-    if (!currentStroke) return;
-    const last = currentStroke.p[currentStroke.p.length - 1];
-    const minStep = studioScale > 1.5 ? 1 : 2;
-    if (Math.hypot(pt[0] - last[0], pt[1] - last[1]) >= minStep) {
-        const symPts = getSymmetricPoints(pt);
-        currentStroke.p.push(symPts[0]);
-        for (let i = 0; i < mirrorStrokes.length; i++) {
-            if (symPts[i + 1]) mirrorStrokes[i].p.push(symPts[i + 1]);
+            element.addEventListener("pointerdown", () => {
+                selectLayer(element);
+            });
+
+            element.addEventListener("focusin", () => {
+                selectLayer(element);
+            });
+
+            switchToHand();
+        });
+
+        refresh();
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    // Keep the layer list synchronized with text edits.
+    document.addEventListener("input", event => {
+        if (event.target.closest(".text-box")) refresh();
+    });
+
+    document.addEventListener("click", event => {
+        if (event.target.closest(".text-box")) {
+            const element = event.target.closest(".text-box");
+            if (element) selectLayer(element);
         }
-        scheduleStudioRedraw();
-    }
-}
+    });
 
-function endDraw(e) {
-    if (e && e.touches && e.touches.length < 2) studioPinchDist = null;
-    if (isStudioPanning) {
-        isStudioPanning = false;
-        if (studioScale <= 1.001) {
-            studioPanX = 0;
-            studioPanY = 0;
-        }
-        canvasFrame.classList.remove("panning");
-        return;
-    }
+    // Initial scan.
+    textElements().forEach(element => {
+        element.dataset.fwLayerTracked = "true";
+    });
 
-    if (isDrawing && shapeStart && (currentTool === "line" || currentTool === "rect" || currentTool === "circle")) {
-        previewCtx.clearRect(0, 0, 500, 500);
-        const rect = drawCanvas.getBoundingClientRect();
-        const pt = e && e.changedTouches
-            ? [
-                Math.max(0, Math.min(500, Math.round(((e.changedTouches[0].clientX - rect.left) / rect.width) * 500))),
-                Math.max(0, Math.min(500, Math.round(((e.changedTouches[0].clientY - rect.top) / rect.height) * 500)))
-              ]
-            : getCanvasPoint(e);
+    refresh();
 
-        const pts = buildShapePoints(currentTool, shapeStart, pt || shapeStart, shiftPressed);
-        const isFilled = shapeFilled && (currentTool === "rect" || currentTool === "circle");
-        redoStack = [];
-        rememberUsedColor(currentColor);
-        strokes.push({ c: currentColor, s: currentSize, a: currentOpacity, sm: false, fl: isFilled, p: pts });
-        shapeStart = null;
-        isDrawing = false;
-        committedCount = -1;
-        redrawStudio();
-        updateHistoryUI();
-        scheduleDraftSave();
-        return;
-    }
+    console.info("Freedom Wall Text Layers installed.");
+})();
+"""
 
-    if (pendingTouchStroke) {
-        commitPendingTouchStroke();
-    }
-
-    if (!isDrawing) return;
-    isDrawing = false;
-    currentStroke = null;
-    mirrorStrokes = [];
-    shapeStart = null;
-    committedCount = -1;
-    redrawStudio();
-    updateHistoryUI();
-    scheduleDraftSave();
-}'''
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python fix_hand_pan.py freedomwall.html")
+    if not HTML_FILE.exists():
+        print("ERROR: freedomwall.html was not found.")
+        print("Place update_wall.py beside freedomwall.html.")
         sys.exit(1)
 
-    target = Path(sys.argv[1])
-    if not target.exists():
-        print(f"Error: File not found: {target}")
+    original = HTML_FILE.read_text(encoding="utf-8")
+
+    if "__freedomWallLayersInstalled" in original:
+        print("Text Layer Manager is already installed.")
+        sys.exit(0)
+
+    if "</body>" not in original.lower():
+        print("ERROR: Could not find the closing </body> tag.")
+        print("No changes were made.")
         sys.exit(1)
 
-    html = target.read_text(encoding="utf-8")
+    shutil.copy2(HTML_FILE, BACKUP_FILE)
+    print(f"Backup created: {BACKUP_FILE}")
 
-    # Match from `function startDraw(e)` through the end of `function endDraw(e)`
-    pattern = re.compile(
-        r"(?:let\s+pendingTouchStroke\s*=[\s\S]*?)?function\s+startDraw\s*\(e\)\s*\{[\s\S]*?function\s+endDraw\s*\(e\)\s*\{[\s\S]*?scheduleDraftSave\(\);\s*\}",
-        re.MULTILINE
+    injection = f"""
+<style>
+{CSS}
+</style>
+<script>
+{JS}
+</script>
+"""
+
+    updated, replacements = re.subn(
+        r"</body\s*>",
+        lambda match: injection + match.group(0),
+        original,
+        count=1,
+        flags=re.IGNORECASE
     )
 
-    if not pattern.search(html):
-        print("Error: Could not locate startDraw..endDraw block in the HTML file.")
+    if replacements != 1:
+        print("ERROR: Could not safely inject the update.")
+        print("Your original file remains backed up.")
         sys.exit(1)
 
-    backup = target.with_suffix(target.suffix + ".bak")
-    backup.write_text(html, encoding="utf-8")
+    HTML_FILE.write_text(updated, encoding="utf-8")
 
-    updated = pattern.sub(lambda _: NEW_DRAW_HANDLERS, html, count=1)
-    target.write_text(updated, encoding="utf-8")
+    print("SUCCESS: Freedom Wall updated.")
+    print("Added:")
+    print("- Text Layer Manager")
+    print("- Individual layer selection and deletion")
+    print("- Layer renaming")
+    print("- Drag-to-reorder layer list")
+    print("- Text editing from the layer panel")
+    print("- Automatic Hand Tool switching attempt")
+    print()
+    print("IMPORTANT: Test the editor before publishing.")
+    print("Restore freedomwall.backup.html if anything behaves incorrectly.")
 
-    print(f"Patched {target} successfully (backup saved to {backup}).")
 
 if __name__ == "__main__":
     main()
