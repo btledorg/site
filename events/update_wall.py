@@ -1,65 +1,104 @@
 import sys
 from pathlib import Path
 
-TARGET_FILE = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("freedomwall.html")
-if not TARGET_FILE.exists():
-    print(f"Error: '{TARGET_FILE}' not found.")
-    sys.exit(1)
+def patch_html(file_path: str):
+    path = Path(file_path)
+    if not path.exists():
+        print(f"Error: File '{file_path}' not found.")
+        sys.exit(1)
 
-html = TARGET_FILE.read_text(encoding="utf-8")
-original = html
+    content = path.read_text(encoding="utf-8")
 
-# 1. Remove particle creation for "clear" in rebuildWeatherParticles()
-old_clear_spawn = """                            } else {
-                                // Clear / Sunny: warm floating ambient motes + subtle sunbeams
-                                for (let i = 0; i < 28; i++) {
-                                    weatherParticles.push({
-                                        x: Math.random() * cvs.width,
-                                        y: Math.random() * cvs.height,
-                                        r: 2 + Math.random() * 3.5,
-                                        vy: -0.18 - Math.random() * 0.32,
-                                        phase: Math.random() * Math.PI * 2,
-                                        alpha: 0.28 + Math.random() * 0.35
-                                    });
+    # 1. Fix duplicate stencils in initUpgradeControls() by clearing stencilList first
+    old_stencil_block = """                            const stencilList = document.getElementById("stencil-list");
+                            Object.entries(STENCILS).forEach(([k, [label]]) => {"""
+
+    new_stencil_block = """                            const stencilList = document.getElementById("stencil-list");
+                            stencilList.innerHTML = "";
+                            Object.entries(STENCILS).forEach(([k, [label]]) => {"""
+
+    assert old_stencil_block in content, "Could not find stencilList block in initUpgradeControls()"
+    content = content.replace(old_stencil_block, new_stencil_block, 1)
+
+    # 2. Add Weather effects toggle switch in More -> Options
+    old_options_card = """                                <label class="list-row">
+                                    <span>Wall tile borders</span>
+                                    <span class="switch"><input type="checkbox" id="opt-borders" onchange="applyOptions()"></span>
+                                </label>"""
+
+    new_options_card = """                                <label class="list-row">
+                                    <span>Wall tile borders</span>
+                                    <span class="switch"><input type="checkbox" id="opt-borders" onchange="applyOptions()"></span>
+                                </label>
+                                <label class="list-row">
+                                    <span>Weather effects</span>
+                                    <span class="switch"><input type="checkbox" id="opt-weather-fx" checked onchange="applyWeatherEffectsToggle()"></span>
+                                </label>"""
+
+    assert old_options_card in content, "Could not find Options card block"
+    content = content.replace(old_options_card, new_options_card, 1)
+
+    # 3. Add weather toggle state, persistence, and guard inside weather engine
+    old_weather_decl = """                        const WEATHER_MODES = ["auto", "clear", "cloudy", "rain", "storm"];
+                        let weatherOverride = "auto";"""
+
+    new_weather_decl = """                        const LS_WEATHER_FX = "fw_weather_fx_v1";
+                        const WEATHER_MODES = ["auto", "clear", "cloudy", "rain", "storm"];
+                        let weatherOverride = "auto";
+                        let weatherEnabled = lsGet(LS_WEATHER_FX, true) !== false;"""
+
+    assert old_weather_decl in content, "Could not find WEATHER_MODES declaration"
+    content = content.replace(old_weather_decl, new_weather_decl, 1)
+
+    old_weather_fn = """                        function getActiveWeatherMode() {
+                            return weatherOverride === "auto" ? liveWeatherState.mode : weatherOverride;
+                        }"""
+
+    new_weather_fn = """                        function getActiveWeatherMode() {
+                            if (!weatherEnabled) return "clear";
+                            return weatherOverride === "auto" ? liveWeatherState.mode : weatherOverride;
+                        }
+
+                        function applyWeatherEffectsToggle() {
+                            const chk = document.getElementById("opt-weather-fx");
+                            weatherEnabled = chk ? chk.checked : true;
+                            lsSet(LS_WEATHER_FX, weatherEnabled);
+                            const pill = document.getElementById("weather-pill");
+                            if (pill) pill.hidden = !weatherEnabled;
+                            if (!weatherEnabled) {
+                                if (weatherRaf) {
+                                    cancelAnimationFrame(weatherRaf);
+                                    weatherRaf = null;
                                 }
-                            }"""
+                                const cvs = document.getElementById("weather-canvas");
+                                if (cvs) cvs.getContext("2d").clearRect(0, 0, cvs.width, cvs.height);
+                            } else {
+                                updateWeatherPillUI();
+                                startWeatherEngine();
+                            }
+                            if (typeof startSeasonalParticles === "function") startSeasonalParticles();
+                        }"""
 
-if old_clear_spawn in html:
-    html = html.replace(old_clear_spawn, "                            }", 1)
-    print("[OK] Removed clear-weather particle spawning.")
+    assert old_weather_fn in content, "Could not find getActiveWeatherMode()"
+    content = content.replace(old_weather_fn, new_weather_fn, 1)
 
-# 2. Remove sunbeam & mote rendering in startWeatherEngine()
-old_clear_render = """                                if (mode === "clear") {
-                                    // Top-right warm sunbeam glow
-                                    const sunGrad = ctx.createRadialGradient(
-                                        cvs.width * 0.88, 45, 10,
-                                        cvs.width * 0.88, 45, Math.max(cvs.width, cvs.height) * 0.55
-                                    );
-                                    sunGrad.addColorStop(0, `rgba(253, 224, 71, ${0.22 * viewAlphaScale})`);
-                                    sunGrad.addColorStop(0.5, `rgba(254, 240, 138, ${0.08 * viewAlphaScale})`);
-                                    sunGrad.addColorStop(1, "rgba(254, 240, 138, 0)");
-                                    ctx.fillStyle = sunGrad;
-                                    ctx.fillRect(0, 0, cvs.width, cvs.height);
+    # 4. Initialize weather toggle checkbox & pill visibility on startup
+    old_weather_boot = """                        startWeatherEngine();"""
 
-                                    // Floating golden ambient motes
-                                    for (const p of weatherParticles) {
-                                        p.y += p.vy;
-                                        p.phase += 0.025;
-                                        p.x += Math.sin(p.phase) * 0.45;
-                                        if (p.y < -10) { p.y = cvs.height + 10; p.x = Math.random() * cvs.width; }
-                                        ctx.fillStyle = `rgba(245, 158, 11, ${p.alpha * viewAlphaScale})`;
-                                        ctx.beginPath();
-                                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                                        ctx.fill();
-                                    }
-                                } else if (mode === "cloudy") {"""
+    new_weather_boot = """                        const weatherChk = document.getElementById("opt-weather-fx");
+                        if (weatherChk) weatherChk.checked = weatherEnabled;
+                        const weatherPill = document.getElementById("weather-pill");
+                        if (weatherPill) weatherPill.hidden = !weatherEnabled;
+                        if (weatherEnabled) startWeatherEngine();"""
 
-if old_clear_render in html:
-    html = html.replace(old_clear_render, '                                if (mode === "cloudy") {', 1)
-    print("[OK] Removed clear-weather canvas rendering.")
+    assert old_weather_boot in content, "Could not find startWeatherEngine() boot call"
+    content = content.replace(old_weather_boot, new_weather_boot, 1)
 
-if html != original:
-    TARGET_FILE.write_text(html, encoding="utf-8")
-    print(f"[DONE] Successfully updated '{TARGET_FILE}'.")
-else:
-    print("[INFO] Clear-weather particles were already removed.")
+    path.write_text(content, encoding="utf-8")
+    print(f"Successfully updated {file_path}")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python update_artcher.py <path_to_html>")
+        sys.exit(1)
+    patch_html(sys.argv[1])

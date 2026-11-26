@@ -1363,6 +1363,10 @@
                                     <span>Wall tile borders</span>
                                     <span class="switch"><input type="checkbox" id="opt-borders" onchange="applyOptions()"></span>
                                 </label>
+                                <label class="list-row">
+                                    <span>Weather effects</span>
+                                    <span class="switch"><input type="checkbox" id="opt-weather-fx" checked onchange="applyWeatherEffectsToggle()"></span>
+                                </label>
                             </div>
                             
                             <div class="more-credit">ARCHERSTUDIO @ 2026</div>
@@ -5364,6 +5368,7 @@
                             });
                             
                             const stencilList = document.getElementById("stencil-list");
+                            stencilList.innerHTML = "";
                             Object.entries(STENCILS).forEach(([k, [label]]) => {
                                 const b = document.createElement("button");
                                 b.type = "button"; b.className = "chip-btn"; b.dataset.k = k; b.textContent = label;
@@ -5452,8 +5457,10 @@
                         // =========================================================================
                         // WEATHER STATE DECLARATIONS (Hoisted before Seasonal Engine)
                         // =========================================================================
+                        const LS_WEATHER_FX = "fw_weather_fx_v1";
                         const WEATHER_MODES = ["auto", "clear", "cloudy", "rain", "storm"];
                         let weatherOverride = "auto";
+                        let weatherEnabled = lsGet(LS_WEATHER_FX, true) !== false;
                         let liveWeatherState = { mode: "clear", temp: 29, label: "Clear" };
                         let weatherParticles = [];
                         let weatherSplashes = [];
@@ -5717,7 +5724,7 @@
                         // =========================================================================
                         // OPTIONAL APK DOWNLOAD PROMPT (WEB BROWSER ONLY)
                         // =========================================================================
-                        const APK_DOWNLOAD_URL = "download/ARTcher-v1.2.apk";
+                        const APK_DOWNLOAD_URL = "download/ARTcher-v1.3.apk";
                         const LS_APK_DISMISSED = "fw_apk_prompt_dismissed_v1";
 
                         function isRunningInsideAppOrPWA() {
@@ -5792,7 +5799,32 @@
 
 
                         function getActiveWeatherMode() {
+                            if (!weatherEnabled) return "clear";
                             return weatherOverride === "auto" ? liveWeatherState.mode : weatherOverride;
+                        }
+
+                        function applyWeatherEffectsToggle() {
+                            const chk = document.getElementById("opt-weather-fx");
+                            weatherEnabled = chk ? chk.checked : true;
+                            lsSet(LS_WEATHER_FX, weatherEnabled);
+                            const pill = document.getElementById("weather-pill");
+                            if (pill) pill.hidden = !weatherEnabled;
+                            if (!weatherEnabled) {
+                                if (weatherRaf) {
+                                    cancelAnimationFrame(weatherRaf);
+                                    weatherRaf = null;
+                                }
+                                const cvs = document.getElementById("weather-canvas");
+                                if (cvs) cvs.getContext("2d").clearRect(0, 0, cvs.width, cvs.height);
+                            } else {
+                                updateWeatherPillUI();
+                                const weatherChk = document.getElementById("opt-weather-fx");
+                        if (weatherChk) weatherChk.checked = weatherEnabled;
+                        const weatherPill = document.getElementById("weather-pill");
+                        if (weatherPill) weatherPill.hidden = !weatherEnabled;
+                        if (weatherEnabled) startWeatherEngine();
+                            }
+                            if (typeof startSeasonalParticles === "function") startSeasonalParticles();
                         }
 
                         function updateWeatherPillUI() {
