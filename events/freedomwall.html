@@ -852,7 +852,114 @@
         }
 
                         </style>
-                    </head>
+<style id="artcher-layout">
+:root { --side: 0px; }
+.view { left: var(--side); }
+
+/* ===== TOP BAR: brand | weather | online ===== */
+.topbar > div { flex-shrink: 0; }
+.brand { flex: 1 1 auto; min-width: 0; }
+.brand-stack { min-width: 0; overflow: hidden; }
+.brand-text { overflow: hidden; text-overflow: ellipsis; }
+.brand-greeting { max-width: 220px; }
+/* holiday message now lives in the header greeting, not as a pill on Home */
+.season-banner { display: none !important; }
+@media (max-width: 560px) { #nav-upload-btn { display: none; } }
+
+/* ===== RADIO: one small chip in the header, details open in a popover ===== */
+.radio-chip {
+    height: 26px; width: 34px; padding: 0; border: 0; border-radius: 999px;
+    background: var(--ink); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.radio-chip:active { transform: scale(.94); }
+.mp-eq { display: flex; align-items: flex-end; gap: 2px; width: 14px; height: 13px; }
+.mp-eq i { flex: 1; height: 30%; background: #fff; border-radius: 1px; animation: mpEq 1s ease-in-out infinite; }
+.mp-eq i:nth-child(2) { animation-delay: .2s; }
+.mp-eq i:nth-child(3) { animation-delay: .4s; }
+@keyframes mpEq { 0%, 100% { height: 25%; } 50% { height: 100%; } }
+.radio-pop {
+    position: absolute; top: 100%; right: 8px; margin-top: 8px; z-index: 130;
+    width: min(300px, calc(100vw - 16px));
+    padding: 10px 8px 10px 16px;
+    display: flex; align-items: center; gap: 4px;
+    background: var(--ink); color: #fff;
+    border-radius: 16px; box-shadow: 0 12px 32px rgba(15, 23, 42, .28);
+}
+.mp-text { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.mp-text strong { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mp-text small { font-size: 11px; color: #94a3b8; }
+.mp-btn {
+    width: 38px; height: 38px; border: 0; border-radius: 50%;
+    background: transparent; color: #fff; cursor: pointer; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.mp-btn:hover { background: rgba(255, 255, 255, .14); }
+.mp-btn:active { background: rgba(255, 255, 255, .26); }
+.mp-btn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-reduced-motion: reduce) { .mp-eq i { animation: none; height: 60%; } }
+
+/* ===== LANDSCAPE: laptop, tablet, phone sideways ===== */
+@media (orientation: landscape) and (min-width: 640px) {
+    :root { --nav: 0px; --side: 72px; }
+
+    /* bottom nav becomes a left rail */
+    .bottom-nav {
+        top: var(--top); bottom: 0; left: 0; right: auto;
+        width: var(--side); height: auto;
+        display: flex; flex-direction: column; align-items: stretch;
+        padding: 8px 4px calc(8px + var(--safe-b));
+        border-top: 0; border-right: 1px solid var(--border);
+        overflow-y: auto;
+    }
+    .nav-item { flex: none; height: 62px; margin-bottom: 2px; gap: 3px; }
+    .nav-badge { top: 6px; left: calc(50% + 6px); }
+
+    /* three columns: tools | big canvas | controls */
+    #view-draw {
+        --panel: clamp(240px, 28vw, 340px);
+        --cv: max(160px, min(
+            calc(100dvh - var(--top) - var(--safe-b) - 92px),
+            calc(100vw - var(--side) - 56px - var(--panel) - 76px)
+        ));
+        padding-left: 16px; padding-right: 16px;
+    }
+
+    .studio-wrap {
+        display: grid;
+        grid-template-columns: 56px var(--cv) var(--panel);
+        grid-template-rows: auto auto;
+        column-gap: 14px; row-gap: 10px;
+        justify-content: center; align-content: center;
+        width: 100%; max-width: none; margin: auto; padding: 12px 0;
+    }
+    .tool-dock {
+        grid-column: 1; grid-row: 1 / span 2; align-self: start;
+        display: flex; flex-direction: column; gap: 4px;
+        width: 56px; padding: 6px;
+        max-height: calc(100dvh - var(--top) - var(--safe-b) - 32px);
+        overflow-y: auto; scrollbar-width: none;
+    }
+    .tool-dock::-webkit-scrollbar { display: none; }
+    .tool-btn { width: 42px; height: 42px; flex: none; }
+    .tool-btn span { display: none; }
+    .tool-btn svg { width: 20px; height: 20px; }
+
+    .studio-bar { grid-column: 2; grid-row: 1; }
+    .canvas-frame { grid-column: 2; grid-row: 2; width: var(--cv); min-width: 0; margin: 0; }
+    .sheet {
+        grid-column: 3; grid-row: 1 / span 2; align-self: start;
+        max-height: calc(100dvh - var(--top) - var(--safe-b) - 32px);
+        overflow-y: auto;
+    }
+    .wall-fab { flex-direction: row; right: 50%; transform: translateX(50%); }
+    .fab-sep { width: 1px; height: auto; margin: 6px 0; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+    :root { --hdr: 46px; }
+}
+</style>
+</head>
                     <body>
                         
                         <!-- FULLSCREEN NICKNAME OVERLAY -->
@@ -926,16 +1033,29 @@
                                 </span>
                             </button>
                             <div style="display:flex;align-items:center;gap:6px;min-width:0;">
-                                <div class="radio-top-pill" id="radio-mini-pill" hidden>
-                                    <span>📻 <strong id="radio-mini-title">Radio</strong></span>
-                                    <button type="button" class="radio-mini-btn" onclick="nextRadioStation()" title="Next station" aria-label="Next station">&#9197;</button>
-                                    <button type="button" class="radio-mini-btn" onclick="toggleMusic()" title="Stop radio" aria-label="Stop radio">&times;</button>
-                                </div>
-                                <button class="btn btn-amber" id="nav-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
-                                <button type="button" class="weather-pill" id="weather-pill" onclick="cycleWeatherPreview()" title="Live sky weather · Tap to preview weather effects"><span id="weather-pill-text">🌤️ Sky</span></button>
+                                                                <button class="btn btn-amber" id="nav-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
+                                <!-- RADIO CHIP -->
+                <div class="radio-chip-wrap" id="radio-mini-pill" hidden>
+                    <button type="button" class="radio-chip" id="radio-chip-btn" onclick="toggleRadioPopover(event)" aria-haspopup="true" aria-expanded="false" aria-label="Now playing" title="Now playing">
+                        <span class="mp-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+                    </button>
+                    <div class="radio-pop" id="radio-pop" hidden role="dialog" aria-label="Radio player">
+                        <span class="mp-text"><strong id="radio-mini-title">Radio</strong><small>Live radio</small></span>
+                        <button type="button" class="mp-btn" onclick="prevRadioStation()" aria-label="Previous station" title="Previous station">
+                            <svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20" style="fill:currentColor"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                        </button>
+                        <button type="button" class="mp-btn" onclick="nextRadioStation()" aria-label="Next station" title="Next station">
+                            <svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4" style="fill:currentColor"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                        </button>
+                        <button type="button" class="mp-btn" onclick="closeRadioPopover(); toggleMusic()" aria-label="Stop radio" title="Stop radio">
+                            <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="weather-pill" id="weather-pill" onclick="cycleWeatherPreview()" title="Live sky weather · Tap to preview weather effects"><span id="weather-pill-text">🌤️ Sky</span></button>
                                 <span class="live-pill" id="online-pill" title="Users currently viewing or drawing">
                                     <span class="live-dot"></span>
-                                    <span id="online-count">1 online</span>
+                                    <span id="online-count">1</span>
                                 </span>
                             </div>
                         </header>
@@ -1362,10 +1482,6 @@
                                 <label class="list-row">
                                     <span>Wall tile borders</span>
                                     <span class="switch"><input type="checkbox" id="opt-borders" onchange="applyOptions()"></span>
-                                </label>
-                                <label class="list-row">
-                                    <span>Weather effects</span>
-                                    <span class="switch"><input type="checkbox" id="opt-weather-fx" checked onchange="applyWeatherEffectsToggle()"></span>
                                 </label>
                             </div>
                             
@@ -1922,7 +2038,7 @@
                                 if (status) status.textContent = label;
                                 if (volRow) volRow.hidden = false;
                                 if (miniPill) miniPill.hidden = false;
-                                if (miniTitle) miniTitle.textContent = label.replace(/^Live:\s*/i, "");
+                                if (miniTitle) miniTitle.textContent = label.replace(/^Live:\s*/i, "").replace(/\[[^\]]*\]\s*/, "");
                                 icon.innerHTML = `
                     <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
@@ -2163,6 +2279,12 @@
                         // =========================================================================
                         let userProfile = lsGet(LS_PROFILE, null);
                         
+                        const SEASON_GREETINGS = { christmas: "Merry Christmas", newyear: "Happy New Year", valentines: "Happy Valentine's Day", halloween: "Happy Halloween", philippines: "Mabuhay" };
+                        function greetingFor(name) {
+                            const g = activeSeason ? SEASON_GREETINGS[activeSeason.id] : "";
+                            if (!g) return name ? `Hi, ${name}!` : "";
+                            return name ? `${g}, ${name}!` : `${g}!`;
+                        }
                         function applyProfileUI() {
                             const greetingEl = document.getElementById("nav-greeting");
                             const authorInput = document.getElementById("author-input");
@@ -2173,11 +2295,11 @@
                             
                             if (greetingEl) {
                                 if (isNamed) {
-                                    greetingEl.textContent = `Hi, ${cleanName}!`;
+                                    greetingEl.textContent = greetingFor(cleanName);
                                     greetingEl.hidden = false;
                                 } else {
-                                    greetingEl.textContent = "";
-                                    greetingEl.hidden = true;
+                                    greetingEl.textContent = greetingFor("");
+                            greetingEl.hidden = !greetingEl.textContent;
                                 }
                             }
                             if (authorInput) authorInput.value = isNamed ? cleanName : "";
@@ -2245,12 +2367,12 @@
                             const greetingEl = document.getElementById("nav-greeting");
                             const moreNameEl = document.getElementById("more-profile-name");
                             if (trimmed) {
-                                greetingEl.textContent = `Hi, ${trimmed}!`;
+                                greetingEl.textContent = greetingFor(trimmed);
                                 greetingEl.hidden = false;
                                 moreNameEl.textContent = trimmed;
                             } else {
-                                greetingEl.textContent = "";
-                                greetingEl.hidden = true;
+                                greetingEl.textContent = greetingFor("");
+                            greetingEl.hidden = !greetingEl.textContent;
                                 moreNameEl.textContent = "Anonymous";
                             }
                         }
@@ -2285,7 +2407,7 @@
                             const state = wallChannel.presenceState();
                             const count = Math.max(1, Object.keys(state).length);
                             const el = document.getElementById("online-count");
-                            if (el) el.textContent = `${count} online`;
+                            if (el) el.textContent = String(count);
                         }
                         
                         if (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes("YOUR_")) {
@@ -5368,7 +5490,6 @@
                             });
                             
                             const stencilList = document.getElementById("stencil-list");
-                            stencilList.innerHTML = "";
                             Object.entries(STENCILS).forEach(([k, [label]]) => {
                                 const b = document.createElement("button");
                                 b.type = "button"; b.className = "chip-btn"; b.dataset.k = k; b.textContent = label;
@@ -5457,10 +5578,8 @@
                         // =========================================================================
                         // WEATHER STATE DECLARATIONS (Hoisted before Seasonal Engine)
                         // =========================================================================
-                        const LS_WEATHER_FX = "fw_weather_fx_v1";
                         const WEATHER_MODES = ["auto", "clear", "cloudy", "rain", "storm"];
                         let weatherOverride = "auto";
-                        let weatherEnabled = lsGet(LS_WEATHER_FX, true) !== false;
                         let liveWeatherState = { mode: "clear", temp: 29, label: "Clear" };
                         let weatherParticles = [];
                         let weatherSplashes = [];
@@ -5636,6 +5755,7 @@
                                 });
                             }
 
+                            applyProfileUI();
                             // Refresh stencil buttons
                             const stencilList = document.getElementById("stencil-list");
                             if (stencilList) {
@@ -5799,28 +5919,7 @@
 
 
                         function getActiveWeatherMode() {
-                            if (!weatherEnabled) return "clear";
                             return weatherOverride === "auto" ? liveWeatherState.mode : weatherOverride;
-                        }
-
-                        function applyWeatherEffectsToggle() {
-                            const chk = document.getElementById("opt-weather-fx");
-                            weatherEnabled = chk ? chk.checked : true;
-                            lsSet(LS_WEATHER_FX, weatherEnabled);
-                            const pill = document.getElementById("weather-pill");
-                            if (pill) pill.hidden = !weatherEnabled;
-                            if (!weatherEnabled) {
-                                if (weatherRaf) {
-                                    cancelAnimationFrame(weatherRaf);
-                                    weatherRaf = null;
-                                }
-                                const cvs = document.getElementById("weather-canvas");
-                                if (cvs) cvs.getContext("2d").clearRect(0, 0, cvs.width, cvs.height);
-                            } else {
-                                updateWeatherPillUI();
-                                applyWeatherEffectsToggle();
-                            }
-                            if (typeof startSeasonalParticles === "function") startSeasonalParticles();
                         }
 
                         function updateWeatherPillUI() {
@@ -5829,7 +5928,8 @@
                             const mode = getActiveWeatherMode();
                             const icons = { clear: "☀️", cloudy: "☁️", rain: "🌧️", storm: "⛈️" };
                             const names = { clear: "Clear", cloudy: "Cloudy", rain: "Rain", storm: "Storm" };
-                            const tag = weatherOverride === "auto" ? `${liveWeatherState.temp}°C ${names[mode]}` : `Preview: ${names[mode]}`;
+                            const tag = weatherOverride === "auto" ? `${liveWeatherState.temp}°` : names[mode];
+                            if (el.parentElement) el.parentElement.title = `${liveWeatherState.temp}°C ${names[mode]} · Tap to preview weather effects`;
                             el.textContent = `${icons[mode] || "🌤️"} ${tag}`;
                         }
 
@@ -5875,7 +5975,7 @@
                                         y: 50 + Math.random() * (cvs.height * 0.65),
                                         r: 95 + Math.random() * 115,
                                         vx: 0.25 + Math.random() * 0.35,
-                                        alpha: 0.14 + Math.random() * 0.10
+                                        alpha: 0.05 + Math.random() * 0.04
                                     });
                                 }
                             }
@@ -5888,7 +5988,6 @@
                             const ctx = cvs.getContext("2d");
                             rebuildWeatherParticles();
 
-                            window.removeEventListener("resize", rebuildWeatherParticles);
                             window.addEventListener("resize", rebuildWeatherParticles);
 
                             function tick() {
@@ -5898,6 +5997,7 @@
                                 }
                                 ctx.clearRect(0, 0, cvs.width, cvs.height);
 
+                                // Visible on Home & Wall; subtle on Draw so sketching stays unobstructed
                                 const viewAlphaScale = currentView === "draw" ? 0.22 : 1.0;
                                 const mode = getActiveWeatherMode();
 
@@ -5914,6 +6014,7 @@
                                         ctx.fill();
                                     }
                                 } else if (mode === "rain" || mode === "storm") {
+                                    // Cool overcast tint
                                     ctx.fillStyle = `rgba(30, 58, 138, ${(mode === "storm" ? 0.08 : 0.04) * viewAlphaScale})`;
                                     ctx.fillRect(0, 0, cvs.width, cvs.height);
 
@@ -5937,6 +6038,7 @@
                                         if (d.x < -40) d.x = cvs.width + 40;
                                     }
 
+                                    // Raindrop splash rings above bottom nav
                                     for (let i = weatherSplashes.length - 1; i >= 0; i--) {
                                         const s = weatherSplashes[i];
                                         s.r += 0.6;
@@ -5949,6 +6051,7 @@
                                         ctx.stroke();
                                     }
 
+                                    // Storm lightning flash
                                     if (mode === "storm" && Math.random() < 0.005) {
                                         weatherLightning = 0.32;
                                     }
@@ -5981,7 +6084,6 @@
                                 liveWeatherState = { mode, temp, label };
                                 rebuildWeatherParticles();
                                 updateWeatherPillUI();
-                                if (typeof startSeasonalParticles === "function") startSeasonalParticles();
                             } catch (e) {
                                 updateWeatherPillUI();
                             }
@@ -5998,5 +6100,23 @@
                         }
 
                     </script>
-                </body>
+                <script id="artcher-layout-js">
+    function closeRadioPopover() {
+        const p = document.getElementById("radio-pop"), b = document.getElementById("radio-chip-btn");
+        if (p) p.hidden = true;
+        if (b) b.setAttribute("aria-expanded", "false");
+    }
+    function toggleRadioPopover(e) {
+        if (e) e.stopPropagation();
+        const p = document.getElementById("radio-pop"), b = document.getElementById("radio-chip-btn");
+        if (!p) return;
+        p.hidden = !p.hidden;
+        if (b) b.setAttribute("aria-expanded", String(!p.hidden));
+    }
+    document.addEventListener("pointerdown", (e) => {
+        if (!e.target.closest("#radio-pop, #radio-chip-btn")) closeRadioPopover();
+    });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeRadioPopover(); });
+    </script>
+    </body>
                 </html>
