@@ -477,6 +477,19 @@
         .radio-station-option:disabled { cursor: default; color: var(--muted); }
         .radio-station-option span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .radio-station-option small { margin-left: auto; flex-shrink: 0; color: var(--muted); }
+        .radio-fav-btn {
+            border: 0;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 16px;
+            line-height: 1;
+            padding: 2px 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform .12s, color .12s;
+        }
+        .radio-fav-btn:hover { transform: scale(1.15); }
+        .radio-fav-btn.is-fav { color: #f59e0b; }
         .switch { position: relative; width: 46px; height: 28px; flex-shrink: 0; }
         .switch input { appearance: none; -webkit-appearance: none; width: 46px; height: 28px; border-radius: 999px; background: #cbd5e1; position: relative; cursor: pointer; transition: background .2s; }
         .switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
@@ -617,6 +630,156 @@
                             .btn-amber{background:#f59e0b;border:1px solid #d97706;color:#fff;font-weight:600}
                             .btn-amber:hover{background:#d97706}
                         
+        /* ===== TOPBAR RADIO PILL & WALL CANVAS ===== */
+        .radio-mode-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            padding: 10px 16px;
+            border-top: 1px solid #f1f5f9;
+            background: var(--soft);
+            flex-wrap: wrap;
+        }
+        .radio-mode-controls {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .radio-top-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            height: 30px;
+            padding: 0 6px 0 9px;
+            border-radius: 999px;
+            background: var(--ink);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            max-width: 175px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.14);
+        }
+        .radio-top-pill span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+        .radio-mini-btn {
+            border: 0;
+            background: rgba(255, 255, 255, 0.16);
+            color: #fff;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 700;
+            flex-shrink: 0;
+            padding: 0;
+        }
+        .radio-mini-btn:active { background: rgba(255, 255, 255, 0.3); }
+        #wall-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .wall-tile {
+            background: transparent !important;
+        }
+        @media (max-width: 420px) {
+            .radio-top-pill { max-width: 124px; }
+            .brand-greeting { max-width: 110px; }
+        }
+
+        /* ===== OPTIONAL APK DOWNLOAD PROMPT ===== */
+        .apk-prompt-card {
+            margin: 18px auto 0;
+            max-width: 320px;
+            padding: 11px 13px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.07);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            text-align: left;
+            backdrop-filter: blur(8px);
+        }
+        .apk-prompt-info {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-width: 0;
+        }
+        .apk-prompt-ico {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .apk-prompt-ico svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .apk-prompt-text {
+            min-width: 0;
+        }
+        .apk-prompt-title {
+            font-size: 12.5px;
+            font-weight: 800;
+            color: var(--ink);
+            line-height: 1.2;
+        }
+        .apk-prompt-sub {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted);
+            margin-top: 2px;
+            line-height: 1.25;
+        }
+        .apk-prompt-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .apk-dismiss-btn {
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .apk-dismiss-btn:hover { background: var(--soft); color: var(--ink); }
+
         /* ===== SEASONAL & HOLIDAY ENGINE ===== */
         #seasonal-canvas {
             position: fixed;
@@ -725,7 +888,12 @@
                                     <span class="brand-greeting" id="nav-greeting" hidden></span>
                                 </span>
                             </button>
-                            <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                                <div class="radio-top-pill" id="radio-mini-pill" hidden>
+                                    <span>📻 <strong id="radio-mini-title">Radio</strong></span>
+                                    <button type="button" class="radio-mini-btn" onclick="nextRadioStation()" title="Next station" aria-label="Next station">&#9197;</button>
+                                    <button type="button" class="radio-mini-btn" onclick="toggleMusic()" title="Stop radio" aria-label="Stop radio">&times;</button>
+                                </div>
                                 <button class="btn btn-amber" id="nav-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
                                 <span class="live-pill" id="online-pill" title="Users currently viewing or drawing">
                                     <span class="live-dot"></span>
@@ -756,6 +924,21 @@
                                 <div class="landing-buttons">
                                     <button class="btn btn-primary btn-lg" onclick="switchView('draw')">Start drawing</button>
                                     <button class="btn btn-lg" onclick="switchView('wall')">View the wall</button>
+                                </div>
+                                <div class="apk-prompt-card" id="apk-prompt-card" hidden>
+                                    <div class="apk-prompt-info">
+                                        <span class="apk-prompt-ico" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                                        </span>
+                                        <div class="apk-prompt-text">
+                                            <div class="apk-prompt-title">Get the Android App</div>
+                                            <div class="apk-prompt-sub">Fullscreen offline mode &amp; faster canvas</div>
+                                        </div>
+                                    </div>
+                                    <div class="apk-prompt-actions">
+                                        <a class="btn btn-accent btn-sm" id="apk-prompt-link" href="../resources/app/ARTcher.apk" download onclick="trackApkDownload()">APK</a>
+                                        <button type="button" class="apk-dismiss-btn" onclick="dismissApkPrompt()" title="Not now" aria-label="Dismiss app download prompt">&times;</button>
+                                    </div>
                                 </div>
                             </div>
                         </main>
@@ -968,6 +1151,7 @@
                     <!-- WALL TAB -->
                     <section id="view-wall" class="view">
                         <div id="wall-viewport">
+                            <canvas id="wall-canvas"></canvas>
                             <div id="wall-stage">
                                 <div class="center-monument" id="center-monument">
                                     <img src="../resources/image/logo/freedom.png" alt="Event Logo" onerror="this.style.display='none'">
@@ -1029,6 +1213,16 @@
                         <div class="more-wrap">
                             <h2 class="more-title">More</h2>
                             
+                            <div class="card" id="more-apk-card" hidden>
+                                <div class="card-head">Android App</div>
+                                <a class="list-row" id="more-apk-link" href="../resources/app/ARTcher.apk" download onclick="trackApkDownload()" style="text-decoration:none;">
+                                    <span class="lead">
+                                        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                        <span>Download Android App (.apk)<small>Optional native wrapper for offline drawing</small></span>
+                                    </span>
+                                </a>
+                            </div>
+
                             <div class="card">
                                 <div class="card-head">Profile</div>
                                 <button class="list-row" onclick="openNicknameOverlay(true)">
@@ -1053,6 +1247,20 @@
                                 </div>
                                 <div class="radio-station-list" id="radio-station-list" aria-label="Available radio stations">
                                     <button class="radio-station-option" type="button" disabled><span>Turn on radio to load stations</span></button>
+                                </div>
+                                <div class="radio-mode-bar" id="radio-mode-bar">
+                                    <div class="radio-mode-controls">
+                                        <button type="button" class="btn btn-sm" onclick="prevRadioStation()" title="Previous station" aria-label="Previous station">&laquo; Prev</button>
+                                        <button type="button" class="btn btn-sm" onclick="nextRadioStation()" title="Next station" aria-label="Next station">Next &raquo;</button>
+                                        <button type="button" class="btn btn-sm" id="radio-fav-filter-btn" onclick="toggleFavRadioFilter()" title="Show favorite stations only">★ Favs</button>
+                                        <button type="button" class="btn btn-sm" id="radio-autodj-btn" onclick="toggleRadioAutoDJ()" title="Auto-DJ rotates stations every 12 mins">Auto-DJ: Off</button>
+                                    </div>
+                                    <select id="radio-sleep-select" class="font-select" style="width:auto;min-height:32px;font-size:11.5px;" onchange="setRadioSleepTimer(this.value)" aria-label="Radio sleep timer">
+                                        <option value="0">Sleep: Off</option>
+                                        <option value="15">Sleep: 15m</option>
+                                        <option value="30">Sleep: 30m</option>
+                                        <option value="60">Sleep: 60m</option>
+                                    </select>
                                 </div>
                                 <div class="list-row" id="volume-row" hidden style="cursor:default; padding-top:8px; padding-bottom:12px;">
                                     <div class="slider-row" style="width:100%;">
@@ -1210,12 +1418,67 @@
                         "https://at1.api.radio-browser.info/json/stations/search"
                         ];
                         
+                        /* FAVORITE RADIOS & DEAD STREAM PRUNING */
                         const LS_MUSIC_VOL = "fw_music_vol_v1";
+                        const LS_FAV_RADIOS = "fw_fav_radios_v1";
                         
                         let audioCtx = null;
                         let radioAudio = null;
-                        let radioStations = [];
+                        let favoriteRadios = lsGet(LS_FAV_RADIOS, []);
+                        let deadRadioUrls = new Set();
+                        let showFavRadiosOnly = false;
+                        let radioStations = Array.isArray(favoriteRadios) ? favoriteRadios.slice() : [];
                         let currentStationIdx = 0;
+
+                        function isStationFavorite(url) {
+                            return favoriteRadios.some(f => f.url === url);
+                        }
+
+                        function toggleFavoriteRadio(station, e) {
+                            if (e) e.stopPropagation();
+                            if (!station || !station.url) return;
+                            const exists = isStationFavorite(station.url);
+                            if (exists) {
+                                favoriteRadios = favoriteRadios.filter(f => f.url !== station.url);
+                                showToast(`Removed from favorites: ${station.name}`);
+                            } else {
+                                favoriteRadios = [{ name: station.name, url: station.url, country: station.country || "" }].concat(favoriteRadios);
+                                showToast(`★ Saved favorite: ${station.name}`);
+                            }
+                            lsSet(LS_FAV_RADIOS, favoriteRadios);
+                            sortStationsWithFavorites();
+                            renderRadioStationList();
+                        }
+
+                        function sortStationsWithFavorites() {
+                            const activeUrl = radioStations[currentStationIdx]?.url;
+                            const favUrls = new Set(favoriteRadios.map(f => f.url));
+                            radioStations.sort((a, b) => Number(favUrls.has(b.url)) - Number(favUrls.has(a.url)));
+                            if (activeUrl) {
+                                const newIdx = radioStations.findIndex(s => s.url === activeUrl);
+                                if (newIdx !== -1) currentStationIdx = newIdx;
+                            }
+                        }
+
+                        function toggleFavRadioFilter() {
+                            showFavRadiosOnly = !showFavRadiosOnly;
+                            const btn = document.getElementById("radio-fav-filter-btn");
+                            if (btn) btn.classList.toggle("btn-accent", showFavRadiosOnly);
+                            renderRadioStationList();
+                        }
+
+                        function pruneBrokenStation(station) {
+                            if (!station || !station.url) return;
+                            deadRadioUrls.add(station.url);
+                            radioStations = radioStations.filter(s => s.url !== station.url);
+                            if (isStationFavorite(station.url)) {
+                                favoriteRadios = favoriteRadios.filter(f => f.url !== station.url);
+                                lsSet(LS_FAV_RADIOS, favoriteRadios);
+                            }
+                            if (currentStationIdx >= radioStations.length) currentStationIdx = 0;
+                            renderRadioStationList();
+                            showToast(`Removed unplayable radio: ${station.name}`);
+                        }
                         let musicPlaying = false;
                         let musicVolume = clamp(Number(lsGet(LS_MUSIC_VOL, 0.4)), 0, 1);
                         let usingSynthFallback = false;
@@ -1289,7 +1552,7 @@
                         };
                         
                         async function fetchLiveLofiStations() {
-                            if (radioStations.length > 0) return radioStations;
+                            if (radioStations.some(s => !isStationFavorite(s.url))) return radioStations;
                             
                             const PER_CATEGORY = 15;
                             const FETCH_LIMIT = "60";
@@ -1383,7 +1646,15 @@
                                 }
                             }
                             
-                            radioStations = mixed;
+                            const seenAll = new Set();
+                            const combined = [];
+                            for (const st of favoriteRadios.concat(mixed)) {
+                                if (!st || !st.url || deadRadioUrls.has(st.url) || seenAll.has(st.url)) continue;
+                                seenAll.add(st.url);
+                                combined.push(st);
+                            }
+                            radioStations = combined;
+                            sortStationsWithFavorites();
                             renderRadioStationList();
                             return radioStations;
                         }
@@ -1392,30 +1663,58 @@
                             const list = document.getElementById("radio-station-list");
                             if (!list) return;
                             list.replaceChildren();
-                            if (radioStations.length === 0) {
+                            const visibleStations = showFavRadiosOnly
+                                ? radioStations.filter(s => isStationFavorite(s.url))
+                                : radioStations;
+
+                            if (visibleStations.length === 0) {
                                 const empty = document.createElement("button");
                                 empty.type = "button";
                                 empty.className = "radio-station-option";
                                 empty.disabled = true;
-                                empty.innerHTML = "<span>No stations loaded yet</span>";
+                                empty.innerHTML = showFavRadiosOnly
+                                    ? "<span>No favorite stations yet · Tap ☆ to save one</span>"
+                                    : "<span>No stations loaded yet</span>";
                                 list.appendChild(empty);
                                 return;
                             }
-                            radioStations.forEach((station, index) => {
-                                const option = document.createElement("button");
-                                option.type = "button";
+
+                            const activeUrl = radioStations[currentStationIdx]?.url;
+                            visibleStations.forEach((station) => {
+                                const realIndex = radioStations.findIndex(s => s.url === station.url);
+                                const isFav = isStationFavorite(station.url);
+                                const option = document.createElement("div");
                                 option.className = "radio-station-option";
-                                option.classList.toggle("active", index === currentStationIdx % radioStations.length);
-                                option.setAttribute("aria-pressed", String(index === currentStationIdx % radioStations.length));
+                                option.setAttribute("role", "button");
+                                option.tabIndex = 0;
+                                option.classList.toggle("active", station.url === activeUrl);
+
+                                const star = document.createElement("button");
+                                star.type = "button";
+                                star.className = "radio-fav-btn" + (isFav ? " is-fav" : "");
+                                star.textContent = isFav ? "★" : "☆";
+                                star.title = isFav ? "Remove from favorites" : "Add to favorites";
+                                star.setAttribute("aria-label", star.title);
+                                star.addEventListener("click", (e) => toggleFavoriteRadio(station, e));
+                                option.appendChild(star);
+
                                 const name = document.createElement("span");
                                 name.textContent = station.name;
                                 option.appendChild(name);
+
                                 if (station.country) {
                                     const country = document.createElement("small");
                                     country.textContent = station.country;
                                     option.appendChild(country);
                                 }
-                                option.addEventListener("click", () => selectRadioStation(index));
+
+                                option.addEventListener("click", () => selectRadioStation(realIndex));
+                                option.addEventListener("keydown", (e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        selectRadioStation(realIndex);
+                                    }
+                                });
                                 list.appendChild(option);
                             });
                         }
@@ -1457,24 +1756,40 @@
                             
                             radioAudio.volume = musicVolume;
                             radioAudio.src = station.url;
+
+                            let settled = false;
+                            const failTimeout = setTimeout(() => {
+                                if (settled || !musicPlaying) return;
+                                settled = true;
+                                pruneBrokenStation(station);
+                                playCurrentStation(attempt + 1);
+                            }, 7000);
                             
                             radioAudio.onplaying = () => {
+                                clearTimeout(failTimeout);
+                                settled = true;
                                 if (!musicPlaying) return;
                                 const tag = station.country ? ` (${station.country})` : "";
                                 updateMuteIcon(`Live: ${station.name}${tag}`);
                             };
                             
                             radioAudio.onerror = () => {
-                                if (!musicPlaying) return;
-                                currentStationIdx = (currentStationIdx + 1) % stations.length;
+                                clearTimeout(failTimeout);
+                                if (settled || !musicPlaying) return;
+                                settled = true;
+                                pruneBrokenStation(station);
                                 playCurrentStation(attempt + 1);
                             };
                             
                             try {
                                 await radioAudio.play();
                             } catch (err) {
-                                currentStationIdx = (currentStationIdx + 1) % stations.length;
-                                playCurrentStation(attempt + 1);
+                                clearTimeout(failTimeout);
+                                if (!settled && musicPlaying) {
+                                    settled = true;
+                                    pruneBrokenStation(station);
+                                    playCurrentStation(attempt + 1);
+                                }
                             }
                         }
                         
@@ -1486,16 +1801,85 @@
                             if (radioAudio) radioAudio.volume = musicVolume;
                         }
                         
+                        let radioAutoDJ = false;
+                        let radioAutoDJTimer = null;
+                        let radioSleepTimer = null;
+
+                        function nextRadioStation() {
+                            if (!radioStations.length) {
+                                if (!musicPlaying) toggleMusic();
+                                return;
+                            }
+                            currentStationIdx = (currentStationIdx + 1) % radioStations.length;
+                            selectRadioStation(currentStationIdx);
+                            showToast(`📻 ${radioStations[currentStationIdx].name}`);
+                        }
+
+                        function prevRadioStation() {
+                            if (!radioStations.length) {
+                                if (!musicPlaying) toggleMusic();
+                                return;
+                            }
+                            currentStationIdx = (currentStationIdx - 1 + radioStations.length) % radioStations.length;
+                            selectRadioStation(currentStationIdx);
+                            showToast(`📻 ${radioStations[currentStationIdx].name}`);
+                        }
+
+                        function toggleRadioAutoDJ() {
+                            radioAutoDJ = !radioAutoDJ;
+                            const btn = document.getElementById("radio-autodj-btn");
+                            if (btn) {
+                                btn.textContent = radioAutoDJ ? "Auto-DJ: On" : "Auto-DJ: Off";
+                                btn.classList.toggle("btn-accent", radioAutoDJ);
+                            }
+                            clearInterval(radioAutoDJTimer);
+                            if (radioAutoDJ) {
+                                if (!musicPlaying) toggleMusic();
+                                radioAutoDJTimer = setInterval(() => {
+                                    if (musicPlaying && radioStations.length > 1) {
+                                        const rand = Math.floor(Math.random() * radioStations.length);
+                                        currentStationIdx = rand === currentStationIdx ? (rand + 1) % radioStations.length : rand;
+                                        selectRadioStation(currentStationIdx);
+                                    }
+                                }, 12 * 60 * 1000);
+                                showToast("Auto-DJ enabled (rotates every 12m)");
+                            } else {
+                                showToast("Auto-DJ turned off");
+                            }
+                        }
+
+                        function setRadioSleepTimer(minsStr) {
+                            const mins = Number(minsStr) || 0;
+                            clearTimeout(radioSleepTimer);
+                            if (mins <= 0) {
+                                showToast("Sleep timer off");
+                                return;
+                            }
+                            if (!musicPlaying) toggleMusic();
+                            radioSleepTimer = setTimeout(() => {
+                                if (musicPlaying) toggleMusic();
+                                const sel = document.getElementById("radio-sleep-select");
+                                if (sel) sel.value = "0";
+                                showToast("Sleep timer finished · Radio stopped");
+                            }, mins * 60 * 1000);
+                            showToast(`Radio will stop in ${mins} min`);
+                        }
+
                         function updateMuteIcon(customStatus = null) {
                             const btn = document.getElementById("mute-btn");
                             const icon = document.getElementById("mute-icon");
                             const status = document.getElementById("music-status");
                             const volRow = document.getElementById("volume-row");
+                            const miniPill = document.getElementById("radio-mini-pill");
+                            const miniTitle = document.getElementById("radio-mini-title");
                             
                             if (musicPlaying) {
                                 btn.classList.add("playing");
-                                if (status) status.textContent = customStatus || "Live Radio Playing";
+                                const label = customStatus || "Live Radio Playing";
+                                if (status) status.textContent = label;
                                 if (volRow) volRow.hidden = false;
+                                if (miniPill) miniPill.hidden = false;
+                                if (miniTitle) miniTitle.textContent = label.replace(/^Live:\s*/i, "");
                                 icon.innerHTML = `
                     <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
@@ -1504,6 +1888,7 @@
                                 btn.classList.remove("playing");
                                 if (status) status.textContent = "Off · Tap to tune in";
                                 if (volRow) volRow.hidden = true;
+                                if (miniPill) miniPill.hidden = true;
                                 icon.innerHTML = `
                     <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
                     <line x1="23" y1="9" x2="17" y2="15"></line>
@@ -2521,6 +2906,7 @@
                             
                             canvasFrame.classList.toggle("show-grid", showGrid);
                             document.getElementById("wall-stage").classList.toggle("wall-stage-bordered", showBorders);
+                            if (typeof scheduleWallPaint === "function") scheduleWallPaint();
                             
                             lsSet(LS_OPTIONS, {
                                 grid: showGrid,
@@ -2823,49 +3209,66 @@
                             const sx = clamp(Math.round((startX / 500) * dim), 0, dim - 1);
                             const sy = clamp(Math.round((startY / 500) * dim), 0, dim - 1);
                             const img = ctx.getImageData(0, 0, dim, dim);
-                            const data = img.data;
+                            const buf32 = new Uint32Array(img.data.buffer);
                             const [fr, fg, fb, fa] = hexToRgba(fillColor, alpha);
-                            
-                            const startIdx = (sy * dim + sx) * 4;
-                            const sr = data[startIdx], sg = data[startIdx + 1], sb = data[startIdx + 2], sa = data[startIdx + 3];
-                            
+                            const fillPacked = ((fa << 24) | (fb << 16) | (fg << 8) | fr) >>> 0;
+
+                            const startVal = buf32[sy * dim + sx];
+                            const sr = startVal & 255, sg = (startVal >>> 8) & 255, sb = (startVal >>> 16) & 255, sa = (startVal >>> 24) & 255;
                             const tol = 32;
                             if (Math.abs(sr - fr) <= 4 && Math.abs(sg - fg) <= 4 && Math.abs(sb - fb) <= 4 && Math.abs(sa - fa) <= 10) return;
-                            
-                            const visited = new Uint8Array(dim * dim);
-                            const stack = [sx, sy];
-                            
-                            function matches(idx) {
-                                return (
-                                Math.abs(data[idx] - sr) <= tol &&
-                                Math.abs(data[idx + 1] - sg) <= tol &&
-                                Math.abs(data[idx + 2] - sb) <= tol &&
-                                Math.abs(data[idx + 3] - sa) <= tol
-                                );
-                            }
-                            
-                            while (stack.length > 0) {
-                                const y = stack.pop();
-                                const x = stack.pop();
-                                const pos = y * dim + x;
-                                if (visited[pos]) continue;
-                                
+
+                            const total = dim * dim;
+                            const visited = new Uint8Array(total);
+                            const stack = new Int32Array(total * 2);
+                            let sp = 0;
+                            stack[sp++] = sx;
+                            stack[sp++] = sy;
+
+                            while (sp > 0) {
+                                const y = stack[--sp];
+                                const x = stack[--sp];
+                                const rowOff = y * dim;
+                                if (visited[rowOff + x]) continue;
+
                                 let lx = x;
-                                while (lx > 0 && !visited[y * dim + (lx - 1)] && matches((y * dim + (lx - 1)) * 4)) lx--;
+                                while (lx > 0 && !visited[rowOff + lx - 1]) {
+                                    const v = buf32[rowOff + lx - 1];
+                                    if (Math.abs((v & 255) - sr) > tol || Math.abs(((v >>> 8) & 255) - sg) > tol || Math.abs(((v >>> 16) & 255) - sb) > tol || Math.abs(((v >>> 24) & 255) - sa) > tol) break;
+                                    lx--;
+                                }
                                 let rx = x;
-                                while (rx < dim - 1 && !visited[y * dim + (rx + 1)] && matches((y * dim + (rx + 1)) * 4)) rx++;
-                                
+                                while (rx < dim - 1 && !visited[rowOff + rx + 1]) {
+                                    const v = buf32[rowOff + rx + 1];
+                                    if (Math.abs((v & 255) - sr) > tol || Math.abs(((v >>> 8) & 255) - sg) > tol || Math.abs(((v >>> 16) & 255) - sb) > tol || Math.abs(((v >>> 24) & 255) - sa) > tol) break;
+                                    rx++;
+                                }
+
                                 for (let cx = lx; cx <= rx; cx++) {
-                                    const cPos = y * dim + cx;
+                                    const cPos = rowOff + cx;
                                     visited[cPos] = 1;
-                                    const idx = cPos * 4;
-                                    data[idx] = fr; data[idx + 1] = fg; data[idx + 2] = fb; data[idx + 3] = fa;
-                                    
-                                    if (y > 0 && !visited[(y - 1) * dim + cx] && matches(((y - 1) * dim + cx) * 4)) stack.push(cx, y - 1);
-                                    if (y < dim - 1 && !visited[(y + 1) * dim + cx] && matches(((y + 1) * dim + cx) * 4)) stack.push(cx, y + 1);
+                                    buf32[cPos] = fillPacked;
+
+                                    if (y > 0) {
+                                        const uPos = cPos - dim;
+                                        if (!visited[uPos]) {
+                                            const uv = buf32[uPos];
+                                            if (Math.abs((uv & 255) - sr) <= tol && Math.abs(((uv >>> 8) & 255) - sg) <= tol && Math.abs(((uv >>> 16) & 255) - sb) <= tol && Math.abs(((uv >>> 24) & 255) - sa) <= tol) {
+                                                stack[sp++] = cx; stack[sp++] = y - 1;
+                                            }
+                                        }
+                                    }
+                                    if (y < dim - 1) {
+                                        const dPos = cPos + dim;
+                                        if (!visited[dPos]) {
+                                            const dv = buf32[dPos];
+                                            if (Math.abs((dv & 255) - sr) <= tol && Math.abs(((dv >>> 8) & 255) - sg) <= tol && Math.abs(((dv >>> 16) & 255) - sb) <= tol && Math.abs(((dv >>> 24) & 255) - sa) <= tol) {
+                                                stack[sp++] = cx; stack[sp++] = y + 1;
+                                            }
+                                        }
+                                    }
                                 }
                             }
-                            
                             ctx.putImageData(img, 0, 0);
                         }
                         
@@ -3029,7 +3432,7 @@
                                 for (let i = 0; i < mirrorStrokes.length; i++) {
                                     if (symPts[i + 1]) mirrorStrokes[i].p.push(symPts[i + 1]);
                                 }
-                                redrawStudio();
+                                scheduleStudioRedraw();
                             }
                         }
                         
@@ -3065,6 +3468,8 @@
                             currentStroke = null;
                             mirrorStrokes = [];
                             shapeStart = null;
+                            committedCount = -1;
+                            redrawStudio();
                             updateHistoryUI();
                             scheduleDraftSave();
                         }
@@ -3158,7 +3563,39 @@
                             }
                         }
                         
-                        function redrawStudio() { renderStrokesInstant(drawCtx, strokes, 500); }
+                        const committedCanvas = document.createElement("canvas");
+                        committedCanvas.width = 500;
+                        committedCanvas.height = 500;
+                        const committedCtx = committedCanvas.getContext("2d", { willReadFrequently: true });
+                        let committedCount = -1;
+                        let studioDrawRaf = 0;
+
+                        function rebuildCommittedLayer() {
+                            const activeCount = isDrawing && currentStroke ? (1 + mirrorStrokes.length) : 0;
+                            const baseCount = Math.max(0, strokes.length - activeCount);
+                            renderStrokesInstant(committedCtx, strokes.slice(0, baseCount), 500, true);
+                            committedCount = baseCount;
+                        }
+
+                        function redrawStudio() {
+                            const activeCount = isDrawing && currentStroke ? (1 + mirrorStrokes.length) : 0;
+                            const baseCount = Math.max(0, strokes.length - activeCount);
+                            if (committedCount !== baseCount) rebuildCommittedLayer();
+
+                            drawCtx.clearRect(0, 0, 500, 500);
+                            drawCtx.drawImage(committedCanvas, 0, 0);
+                            if (activeCount > 0) {
+                                renderStrokesInstant(drawCtx, strokes.slice(baseCount), 500, false);
+                            }
+                        }
+
+                        function scheduleStudioRedraw() {
+                            if (studioDrawRaf) return;
+                            studioDrawRaf = requestAnimationFrame(() => {
+                                studioDrawRaf = 0;
+                                redrawStudio();
+                            });
+                        }
                         
                         function undoStroke() {
                             if (isPreviewing || strokes.length === 0) return;
@@ -4142,22 +4579,242 @@
                             monument.style.height = CELL_SIZE * 2 + "px";
                         }
                         
+                        const tileBitmapCache = new Map();
+                        const activeReplayAnims = new Map();
+                        let wallPaintRaf = 0;
+                        let batchReplayRaf = 0;
+
+                        function getCachedTileCanvas(entry) {
+                            let cached = tileBitmapCache.get(entry.id);
+                            if (cached) return cached;
+                            const cvs = document.createElement("canvas");
+                            cvs.width = 256;
+                            cvs.height = 256;
+                            const ctx = cvs.getContext("2d");
+                            ctx.fillStyle = bgOf(entry.strokes);
+                            ctx.fillRect(0, 0, 256, 256);
+                            renderStrokesInstant(ctx, entry.strokes || [], 256, false);
+                            tileBitmapCache.set(entry.id, cvs);
+                            return cvs;
+                        }
+
+                        function paintWallViewport() {
+                            wallPaintRaf = 0;
+                            const wallCvs = document.getElementById("wall-canvas");
+                            if (!wallCvs || !document.getElementById("view-wall").classList.contains("active")) return;
+
+                            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                            const vw = wallViewport.clientWidth || window.innerWidth;
+                            const vh = wallViewport.clientHeight || window.innerHeight;
+                            const targetW = Math.round(vw * dpr);
+                            const targetH = Math.round(vh * dpr);
+                            if (wallCvs.width !== targetW || wallCvs.height !== targetH) {
+                                wallCvs.width = targetW;
+                                wallCvs.height = targetH;
+                            }
+
+                            const ctx = wallCvs.getContext("2d");
+                            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                            ctx.clearRect(0, 0, vw, vh);
+
+                            const showBorders = document.getElementById("opt-borders") && document.getElementById("opt-borders").checked;
+                            const tileScreenSize = CELL_SIZE * scale;
+
+                            for (const entry of wallEntries) {
+                                const sx = entry.gx * tileScreenSize + panX;
+                                const sy = entry.gy * tileScreenSize + panY;
+                                if (sx + tileScreenSize < -40 || sx > vw + 40 || sy + tileScreenSize < -40 || sy > vh + 40) continue;
+
+                                const replayCvs = activeReplayAnims.get(entry.id);
+                                if (replayCvs) {
+                                    ctx.fillStyle = bgOf(entry.strokes);
+                                    ctx.fillRect(sx, sy, tileScreenSize, tileScreenSize);
+                                    ctx.drawImage(replayCvs, sx, sy, tileScreenSize, tileScreenSize);
+                                } else {
+                                    const bmp = getCachedTileCanvas(entry);
+                                    ctx.drawImage(bmp, sx, sy, tileScreenSize, tileScreenSize);
+                                }
+
+                                if (showBorders) {
+                                    ctx.strokeStyle = "#e2e8f0";
+                                    ctx.lineWidth = 1;
+                                    ctx.strokeRect(sx, sy, tileScreenSize, tileScreenSize);
+                                }
+                            }
+                        }
+
+                        function scheduleWallPaint() {
+                            if (wallPaintRaf) return;
+                            wallPaintRaf = requestAnimationFrame(paintWallViewport);
+                        }
+
+                        function buildReplaySegments(strokeList) {
+                            const segments = [];
+                            for (const st of strokeList || []) {
+                                if (st.k === "bg") continue;
+                                if (st.k === "text") {
+                                    const text = String(st.t || "");
+                                    for (let i = 0; i < text.length; i++) segments.push({ type: "text", item: st, length: i + 1 });
+                                    continue;
+                                }
+                                if (st.k === "fill") { segments.push({ type: "fill", item: st }); continue; }
+                                if (!st.p || st.p.length === 0) continue;
+                                if (st.fl) { segments.push({ type: "filledShape", item: st }); continue; }
+                                if (st.p.length === 1) {
+                                    segments.push({ type: "dot", c: st.c, s: st.s, a: st.a ?? 1, er: !!st.er, x: st.p[0][0], y: st.p[0][1] });
+                                } else {
+                                    for (let i = 1; i < st.p.length; i++) {
+                                        segments.push({
+                                            type: "line", c: st.c, s: st.s, a: st.a ?? 1, er: !!st.er,
+                                            x1: st.p[i - 1][0], y1: st.p[i - 1][1],
+                                            x2: st.p[i][0], y2: st.p[i][1]
+                                        });
+                                    }
+                                }
+                            }
+                            return segments;
+                        }
+
+                        function drawSegmentBatch(ctx, segments, startIdx, endIdx, dim) {
+                            const ratio = dim / 500;
+                            ctx.lineCap = "round";
+                            ctx.lineJoin = "round";
+                            for (let idx = startIdx; idx < endIdx; idx++) {
+                                const seg = segments[idx];
+                                if (seg.type === "text") {
+                                    drawTextItem(ctx, Object.assign({}, seg.item, { t: String(seg.item.t || "").slice(0, seg.length) }), ratio);
+                                    continue;
+                                }
+                                if (seg.type === "fill") {
+                                    applyFloodFill(ctx, seg.item.x, seg.item.y, seg.item.c || "#0f172a", seg.item.a ?? 1, dim);
+                                    continue;
+                                }
+                                if (seg.type === "filledShape") {
+                                    renderStrokesInstant(ctx, [seg.item], dim, false);
+                                    continue;
+                                }
+                                ctx.save();
+                                if (seg.er) {
+                                    ctx.globalCompositeOperation = "destination-out";
+                                    ctx.globalAlpha = 1;
+                                    ctx.strokeStyle = "rgba(0,0,0,1)";
+                                    ctx.fillStyle = "rgba(0,0,0,1)";
+                                } else {
+                                    ctx.globalCompositeOperation = "source-over";
+                                    ctx.globalAlpha = seg.a;
+                                    ctx.strokeStyle = seg.c || "#0f172a";
+                                    ctx.fillStyle = seg.c || "#0f172a";
+                                }
+                                ctx.lineWidth = (seg.s || 4) * ratio;
+                                if (seg.type === "dot") {
+                                    ctx.beginPath();
+                                    ctx.arc(seg.x * ratio, seg.y * ratio, ((seg.s || 4) * ratio) / 2, 0, Math.PI * 2);
+                                    ctx.fill();
+                                } else {
+                                    ctx.beginPath();
+                                    ctx.moveTo(seg.x1 * ratio, seg.y1 * ratio);
+                                    ctx.lineTo(seg.x2 * ratio, seg.y2 * ratio);
+                                    ctx.stroke();
+                                }
+                                ctx.restore();
+                            }
+                        }
+
+                        function startUnifiedWallReplay(entriesToPlay) {
+                            if (batchReplayRaf) {
+                                cancelAnimationFrame(batchReplayRaf);
+                                batchReplayRaf = 0;
+                            }
+                            activeReplayAnims.clear();
+
+                            const dim = scale < 0.45 ? 160 : 220;
+                            const jobs = [];
+                            const startTime = performance.now();
+
+                            entriesToPlay.forEach((entry, index) => {
+                                const segments = buildReplaySegments(entry.strokes);
+                                const buf = document.createElement("canvas");
+                                buf.width = dim;
+                                buf.height = dim;
+                                const ctx = buf.getContext("2d", { willReadFrequently: true });
+                                activeReplayAnims.set(entry.id, buf);
+                                jobs.push({
+                                    entry,
+                                    buf,
+                                    ctx,
+                                    segments,
+                                    idx: 0,
+                                    delay: Math.min(index * 28, 1200),
+                                    stepRate: Math.max(1, Math.ceil((segments.length / 80) * 1.25)),
+                                    done: segments.length === 0
+                                });
+                            });
+
+                            function tick(now) {
+                                let remaining = 0;
+                                const vw = wallViewport.clientWidth || window.innerWidth;
+                                const vh = wallViewport.clientHeight || window.innerHeight;
+                                const tileScreenSize = CELL_SIZE * scale;
+
+                                for (const job of jobs) {
+                                    if (job.done) continue;
+                                    if (now - startTime < job.delay) {
+                                        remaining++;
+                                        continue;
+                                    }
+
+                                    const sx = job.entry.gx * tileScreenSize + panX;
+                                    const sy = job.entry.gy * tileScreenSize + panY;
+                                    const inView = !(sx + tileScreenSize < -60 || sx > vw + 60 || sy + tileScreenSize < -60 || sy > vh + 60);
+
+                                    const nextIdx = Math.min(job.segments.length, job.idx + job.stepRate);
+                                    if (inView) {
+                                        drawSegmentBatch(job.ctx, job.segments, job.idx, nextIdx, dim);
+                                        job.idx = nextIdx;
+                                    } else {
+                                        // Off-screen tiles skip intermediate strokes until visible or complete
+                                        job.idx = nextIdx;
+                                        if (job.idx >= job.segments.length) {
+                                            renderStrokesInstant(job.ctx, job.entry.strokes || [], dim, true);
+                                        }
+                                    }
+
+                                    if (job.idx >= job.segments.length) {
+                                        job.done = true;
+                                        activeReplayAnims.delete(job.entry.id);
+                                        tileBitmapCache.delete(job.entry.id);
+                                        getCachedTileCanvas(job.entry);
+                                    } else {
+                                        remaining++;
+                                    }
+                                }
+
+                                paintWallViewport();
+                                if (remaining > 0) {
+                                    batchReplayRaf = requestAnimationFrame(tick);
+                                } else {
+                                    batchReplayRaf = 0;
+                                }
+                            }
+
+                            paintWallViewport();
+                            batchReplayRaf = requestAnimationFrame(tick);
+                        }
+
+                        function startTileReplayOnWall(entry) {
+                            startUnifiedWallReplay([entry]);
+                        }
+
                         function createWallTile(entry, animate = false, isNewArrival = false) {
                             const stage = document.getElementById("wall-stage");
                             const tile = document.createElement("div");
                             tile.className = "wall-tile" + (entry._pending ? " pending" : "") + (isNewArrival ? " just-arrived" : "");
                             tile.dataset.id = entry.id;
-                            tile.style.background = bgOf(entry.strokes);
                             tile.style.left = entry.gx * CELL_SIZE + "px";
                             tile.style.top = entry.gy * CELL_SIZE + "px";
                             tile.style.width = CELL_SIZE + "px";
                             tile.style.height = CELL_SIZE + "px";
-                            
-                            const cvs = document.createElement("canvas");
-                            cvs.width = 360;
-                            cvs.height = 360;
-                            tile.appendChild(cvs);
-                            
+
                             const tag = document.createElement("div");
                             tag.className = "wall-tile-tag";
                             tag.textContent = (entry.author || "Anonymous") + (entry._pending ? " · not uploaded" : "");
@@ -4165,64 +4822,60 @@
                             const pill = document.createElement("div");
                             pill.className = "wall-tile-react";
                             tile.appendChild(pill);
-                            
+
                             tile.onclick = (e) => {
                                 e.stopPropagation();
                                 if (dragMoved) return;
                                 openModal(entry);
                             };
-                            
+
                             stage.appendChild(tile);
                             updateTilePill(entry.id);
                             updateMinimap();
-                            
-                            const ctx = cvs.getContext("2d", { willReadFrequently: true });
-                            if (animate) {
-                                const anim = animateStrokes(ctx, entry.strokes || [], 360, 1.1);
-                                wallTileAnimators.push(anim);
-                            } else {
-                                renderStrokesInstant(ctx, entry.strokes || [], 360);
+
+                            if (animate) startTileReplayOnWall(entry);
+                            else {
+                                getCachedTileCanvas(entry);
+                                scheduleWallPaint();
                             }
-                            
+
                             if (isNewArrival) setTimeout(() => tile.classList.remove("just-arrived"), 5000);
-                            return cvs;
+                            return null;
                         }
-                        
+
                         function renderWall(autoPlay = true) {
                             wallTileAnimators.forEach(a => a.cancel());
                             wallTileAnimators = [];
-                            
+                            if (batchReplayRaf) {
+                                cancelAnimationFrame(batchReplayRaf);
+                                batchReplayRaf = 0;
+                            }
+                            activeReplayAnims.clear();
+
                             const stage = document.getElementById("wall-stage");
                             stage.querySelectorAll(".wall-tile").forEach(el => el.remove());
-                            
+
                             layoutMonument();
                             updateWallCount();
-                            
-                            wallEntries.forEach((entry, index) => {
-                                if (autoPlay) {
-                                    const cvs = createWallTile(entry, false, false);
-                                    const ctx = cvs.getContext("2d", { willReadFrequently: true });
-                                    ctx.clearRect(0, 0, 360, 360);
-                                    const delay = Math.min(index * 45, 1800);
-                                    const timer = setTimeout(() => {
-                                        const anim = animateStrokes(ctx, entry.strokes || [], 360, 1.1);
-                                        wallTileAnimators.push(anim);
-                                    }, delay);
-                                    wallTileAnimators.push({ cancel: () => clearTimeout(timer) });
-                                } else {
-                                    createWallTile(entry, false, false);
-                                }
-                            });
-                            
+
                             if (!userMoved) fitWallToScreen();
                             else applyStageTransform();
+
+                            wallEntries.forEach((entry) => createWallTile(entry, false, false));
+
+                            if (autoPlay && wallEntries.length > 0) {
+                                startUnifiedWallReplay(wallEntries);
+                            } else {
+                                scheduleWallPaint();
+                            }
                         }
-                        
+
                         function replayAllDrawings() { renderWall(true); }
-                        
+
                         function applyStageTransform() {
                             const stage = document.getElementById("wall-stage");
                             stage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+                            scheduleWallPaint();
                             updateMinimap();
                         }
                         
@@ -4524,12 +5177,25 @@
                             input.blur();
                         }
                         
+                        let myTileCycleIdx = -1;
+                        let lastMyTileFocusId = null;
+
                         function jumpToMyTile() {
                             const mine = wallEntries
                             .filter(t => myTileIds.includes(t.id))
                             .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                             if (!mine.length) { showToast("You haven't posted a tile on this device yet."); return; }
-                            focusTile(mine[0]);
+
+                            myTileCycleIdx = (myTileCycleIdx + 1) % mine.length;
+                            if (mine.length > 1 && mine[myTileCycleIdx].id === lastMyTileFocusId) {
+                                myTileCycleIdx = (myTileCycleIdx + 1) % mine.length;
+                            }
+                            const target = mine[myTileCycleIdx];
+                            lastMyTileFocusId = target.id;
+                            focusTile(target);
+                            if (mine.length > 1) {
+                                showToast(`My tile ${myTileCycleIdx + 1} of ${mine.length} · ${target.author || "Anonymous"}`);
+                            }
                         }
                         
                         // ---------- minimap ----------
@@ -4995,6 +5661,59 @@
                             seasonFxRaf = requestAnimationFrame(tick);
                         }
 
+                        renderRadioStationList();
+                        // =========================================================================
+                        // OPTIONAL APK DOWNLOAD PROMPT (WEB BROWSER ONLY)
+                        // =========================================================================
+                        const APK_DOWNLOAD_URL = "download/ARTcher.apk";
+                        const LS_APK_DISMISSED = "fw_apk_prompt_dismissed_v1";
+
+                        function isRunningInsideAppOrPWA() {
+                            const ua = navigator.userAgent || "";
+                            const ref = document.referrer || "";
+                            const params = new URLSearchParams(window.location.search);
+
+                            const isAndroidWebView = /; wv\)/i.test(ua) || (/Android/i.test(ua) && /Version\/\d+\.\d+/i.test(ua));
+                            const isCustomWrapper = /ArcherFreedom|ARTcherApp|ArcherStudio/i.test(ua) || Boolean(window.AndroidInterface || window.ReactNativeWebView);
+                            const isAndroidReferrer = ref.startsWith("android-app://") || ref.startsWith("file://");
+                            const isEmbeddedIframe = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+                            const hasAppParam = params.get("app") === "1" || params.get("source") === "apk";
+                            const isStandalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+
+                            return isAndroidWebView || isCustomWrapper || isAndroidReferrer || isEmbeddedIframe || hasAppParam || isStandalone;
+                        }
+
+                        function initApkDownloadPrompt() {
+                            if (isRunningInsideAppOrPWA()) return;
+
+                            const promptCard = document.getElementById("apk-prompt-card");
+                            const moreApkCard = document.getElementById("more-apk-card");
+                            const promptLink = document.getElementById("apk-prompt-link");
+                            const moreLink = document.getElementById("more-apk-link");
+
+                            if (promptLink) promptLink.href = APK_DOWNLOAD_URL;
+                            if (moreLink) moreLink.href = APK_DOWNLOAD_URL;
+                            if (moreApkCard) moreApkCard.hidden = false;
+
+                            const dismissed = lsGet(LS_APK_DISMISSED, false);
+                            if (promptCard && !dismissed) {
+                                promptCard.hidden = false;
+                            }
+                        }
+
+                        function dismissApkPrompt() {
+                            lsSet(LS_APK_DISMISSED, true);
+                            const promptCard = document.getElementById("apk-prompt-card");
+                            if (promptCard) promptCard.hidden = true;
+                            showToast("You can still download the APK anytime in More.");
+                        }
+
+                        function trackApkDownload() {
+                            haptic(10);
+                            showToast("Downloading Android APK…");
+                        }
+
+                        initApkDownloadPrompt();
                         initUserProfile();
                         applySeasonalTheme();
                         loadOptions();
