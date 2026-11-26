@@ -629,228 +629,447 @@
                             .btn-secondary:active{transform:translateY(1px)}
                             .btn-amber{background:#f59e0b;border:1px solid #d97706;color:#fff;font-weight:600}
                             .btn-amber:hover{background:#d97706}
+                            
+                            /* ===== TOPBAR RADIO PILL & WALL CANVAS ===== */
+                            .radio-mode-bar {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                gap: 6px;
+                                padding: 10px 16px;
+                                border-top: 1px solid #f1f5f9;
+                                background: var(--soft);
+                                flex-wrap: wrap;
+                            }
+                            .radio-mode-controls {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 6px;
+                            }
+                            .radio-top-pill {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 4px;
+                                height: 30px;
+                                padding: 0 6px 0 9px;
+                                border-radius: 999px;
+                                background: var(--ink);
+                                color: #fff;
+                                font-size: 11px;
+                                font-weight: 600;
+                                max-width: 175px;
+                                box-shadow: 0 2px 8px rgba(15, 23, 42, 0.14);
+                            }
+                            .radio-top-pill span {
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                white-space: nowrap;
+                                min-width: 0;
+                            }
+                            .radio-mini-btn {
+                                border: 0;
+                                background: rgba(255, 255, 255, 0.16);
+                                color: #fff;
+                                width: 20px;
+                                height: 20px;
+                                border-radius: 50%;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                cursor: pointer;
+                                font-size: 10px;
+                                font-weight: 700;
+                                flex-shrink: 0;
+                                padding: 0;
+                            }
+                            .radio-mini-btn:active { background: rgba(255, 255, 255, 0.3); }
+                            #wall-canvas {
+                                position: absolute;
+                                inset: 0;
+                                width: 100%;
+                                height: 100%;
+                                display: block;
+                                pointer-events: none;
+                                z-index: 1;
+                            }
+                            .wall-tile {
+                                background: transparent !important;
+                            }
+                            @media (max-width: 420px) {
+                                .radio-top-pill { max-width: 124px; }
+                                .brand-greeting { max-width: 110px; }
+                            }
+                            
+                            /* ===== OPTIONAL APK DOWNLOAD PROMPT ===== */
+                            .apk-prompt-card {
+                                margin: 18px auto 0;
+                                max-width: 320px;
+                                padding: 11px 13px;
+                                border-radius: 14px;
+                                background: rgba(255, 255, 255, 0.94);
+                                border: 1px solid var(--border);
+                                box-shadow: 0 8px 22px rgba(15, 23, 42, 0.07);
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                gap: 10px;
+                                text-align: left;
+                                backdrop-filter: blur(8px);
+                            }
+                            .apk-prompt-info {
+                                display: flex;
+                                align-items: center;
+                                gap: 9px;
+                                min-width: 0;
+                            }
+                            .apk-prompt-ico {
+                                width: 34px;
+                                height: 34px;
+                                border-radius: 10px;
+                                background: var(--accent-soft);
+                                color: var(--accent);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                flex-shrink: 0;
+                            }
+                            .apk-prompt-ico svg {
+                                width: 18px;
+                                height: 18px;
+                                stroke: currentColor;
+                                fill: none;
+                                stroke-width: 2;
+                                stroke-linecap: round;
+                                stroke-linejoin: round;
+                            }
+                            .apk-prompt-text {
+                                min-width: 0;
+                            }
+                            .apk-prompt-title {
+                                font-size: 12.5px;
+                                font-weight: 800;
+                                color: var(--ink);
+                                line-height: 1.2;
+                            }
+                            .apk-prompt-sub {
+                                font-size: 11px;
+                                font-weight: 500;
+                                color: var(--muted);
+                                margin-top: 2px;
+                                line-height: 1.25;
+                            }
+                            .apk-prompt-actions {
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                                flex-shrink: 0;
+                            }
+                            .apk-dismiss-btn {
+                                border: 0;
+                                background: transparent;
+                                color: var(--muted);
+                                width: 26px;
+                                height: 26px;
+                                border-radius: 50%;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                cursor: pointer;
+                                font-size: 15px;
+                                font-weight: 700;
+                            }
+                            .apk-dismiss-btn:hover { background: var(--soft); color: var(--ink); }
+                            
+                            /* ===== SEASONAL & HOLIDAY ENGINE ===== */
+                            #seasonal-canvas {
+                                position: fixed;
+                                inset: 0;
+                                pointer-events: none;
+                                z-index: 90;
+                            }
+                            .season-pill {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 5px;
+                                padding: 3px 9px;
+                                border-radius: 999px;
+                                background: var(--accent-soft);
+                                border: 1px solid var(--border);
+                                color: var(--accent);
+                                font-size: 11px;
+                                font-weight: 700;
+                                white-space: nowrap;
+                            }
+                            .season-banner {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 6px;
+                                padding: 6px 14px;
+                                border-radius: 999px;
+                                background: var(--accent-soft);
+                                border: 1px solid var(--border);
+                                color: var(--accent);
+                                font-size: 12px;
+                                font-weight: 700;
+                                margin-bottom: 14px;
+                            }
+                            
+                            
+                            /* ===== AMBIENT & WEATHER-REACTIVE EFFECTS ===== */
+                            #weather-canvas {
+                                position: fixed;
+                                inset: 0;
+                                width: 100vw;
+                                height: 100vh;
+                                pointer-events: none;
+                                z-index: 95;
+                            }
+                            .weather-pill {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 5px;
+                                padding: 3px 9px;
+                                height: 26px;
+                                border-radius: 999px;
+                                background: var(--soft);
+                                border: 1px solid var(--border);
+                                color: var(--ink);
+                                font-size: 11px;
+                                font-weight: 700;
+                                cursor: pointer;
+                                white-space: nowrap;
+                                transition: background .15s, border-color .15s, transform .1s;
+                            }
+                            .weather-pill:hover {
+                                background: var(--accent-soft);
+                                border-color: #93c5fd;
+                            }
+                            .weather-pill:active {
+                                transform: scale(.96);
+                            }
+                            @media (max-width: 390px) {
+                                .weather-pill { padding: 3px 7px; font-size: 10.5px; }
+                            }
+                            
+                        </style>
+                        <style id="artcher-layout">
+                            :root { --side: 0px; }
+                            .view { left: var(--side); }
+                            
+                            /* ===== TOP BAR: brand | weather | online ===== */
+                            .topbar > div { flex-shrink: 0; }
+                            .brand { flex: 1 1 auto; min-width: 0; }
+                            .brand-stack { min-width: 0; overflow: hidden; }
+                            .brand-text { overflow: hidden; text-overflow: ellipsis; }
+                            .brand-greeting { max-width: 220px; }
+                            /* holiday message now lives in the header greeting, not as a pill on Home */
+                            .season-banner { display: none !important; }
+                            @media (max-width: 560px) { #nav-upload-btn { display: none; } }
+                            
+                            /* ===== RADIO: one small chip in the header, details open in a popover ===== */
+                            .radio-chip {
+                                height: 26px; width: 34px; padding: 0; border: 0; border-radius: 999px;
+                                background: var(--ink); cursor: pointer;
+                                display: inline-flex; align-items: center; justify-content: center;
+                            }
+                            .radio-chip:active { transform: scale(.94); }
+                            .mp-eq { display: flex; align-items: flex-end; gap: 2px; width: 14px; height: 13px; }
+                            .mp-eq i { flex: 1; height: 30%; background: #fff; border-radius: 1px; animation: mpEq 1s ease-in-out infinite; }
+                            .mp-eq i:nth-child(2) { animation-delay: .2s; }
+                            .mp-eq i:nth-child(3) { animation-delay: .4s; }
+                            @keyframes mpEq { 0%, 100% { height: 25%; } 50% { height: 100%; } }
+                            .radio-pop {
+                                position: absolute; top: 100%; right: 8px; margin-top: 8px; z-index: 130;
+                                width: min(300px, calc(100vw - 16px));
+                                padding: 10px 8px 10px 16px;
+                                display: flex; align-items: center; gap: 4px;
+                                background: var(--ink); color: #fff;
+                                border-radius: 16px; box-shadow: 0 12px 32px rgba(15, 23, 42, .28);
+                            }
+                            .mp-text { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+                            .mp-text strong { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                            .mp-text small { font-size: 11px; color: #94a3b8; }
+                            .mp-btn {
+                                width: 38px; height: 38px; border: 0; border-radius: 50%;
+                                background: transparent; color: #fff; cursor: pointer; flex-shrink: 0;
+                                display: inline-flex; align-items: center; justify-content: center;
+                            }
+                            .mp-btn:hover { background: rgba(255, 255, 255, .14); }
+                            .mp-btn:active { background: rgba(255, 255, 255, .26); }
+                            .mp-btn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+                            @media (prefers-reduced-motion: reduce) { .mp-eq i { animation: none; height: 60%; } }
+                            
+                            /* ===== LANDSCAPE: laptop, tablet, phone sideways ===== */
+                            @media (orientation: landscape) and (min-width: 640px) {
+                                :root { --nav: 0px; --side: 72px; }
+                                
+                                /* bottom nav becomes a left rail */
+                                .bottom-nav {
+                                    top: var(--top); bottom: 0; left: 0; right: auto;
+                                    width: var(--side); height: auto;
+                                    display: flex; flex-direction: column; align-items: stretch;
+                                    padding: 8px 4px calc(8px + var(--safe-b));
+                                    border-top: 0; border-right: 1px solid var(--border);
+                                    overflow-y: auto;
+                                }
+                                .nav-item { flex: none; height: 62px; margin-bottom: 2px; gap: 3px; }
+                                .nav-badge { top: 6px; left: calc(50% + 6px); }
+                                
+                                /* three columns: tools | big canvas | controls */
+                                #view-draw {
+                                    --panel: clamp(240px, 28vw, 340px);
+                                    --cv: max(160px, min(
+                                    calc(100dvh - var(--top) - var(--safe-b) - 92px),
+                                    calc(100vw - var(--side) - 56px - var(--panel) - 76px)
+                                    ));
+                                    padding-left: 16px; padding-right: 16px;
+                                }
+                                
+                                .studio-wrap {
+                                    display: grid;
+                                    grid-template-columns: 56px var(--cv) var(--panel);
+                                    grid-template-rows: auto auto;
+                                    column-gap: 14px; row-gap: 10px;
+                                    justify-content: center; align-content: center;
+                                    width: 100%; max-width: none; margin: auto; padding: 12px 0;
+                                }
+                                .tool-dock {
+                                    grid-column: 1; grid-row: 1 / span 2; align-self: start;
+                                    display: flex; flex-direction: column; gap: 4px;
+                                    width: 56px; padding: 6px;
+                                    max-height: calc(100dvh - var(--top) - var(--safe-b) - 32px);
+                                    overflow-y: auto; scrollbar-width: none;
+                                }
+                                .tool-dock::-webkit-scrollbar { display: none; }
+                                .tool-btn { width: 42px; height: 42px; flex: none; }
+                                .tool-btn span { display: none; }
+                                .tool-btn svg { width: 20px; height: 20px; }
+                                
+                                .studio-bar { grid-column: 2; grid-row: 1; }
+                                .canvas-frame { grid-column: 2; grid-row: 2; width: var(--cv); min-width: 0; margin: 0; }
+                                .sheet {
+                                    grid-column: 3; grid-row: 1 / span 2; align-self: start;
+                                    max-height: calc(100dvh - var(--top) - var(--safe-b) - 32px);
+                                    overflow-y: auto;
+                                }
+                                .wall-fab { flex-direction: row; right: 50%; transform: translateX(50%); }
+                                .fab-sep { width: 1px; height: auto; margin: 6px 0; }
+                            }
+                            @media (orientation: landscape) and (max-height: 520px) {
+                                :root { --hdr: 46px; }
+                            }
+                        </style>
                         
-        /* ===== TOPBAR RADIO PILL & WALL CANVAS ===== */
-        .radio-mode-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
-            padding: 10px 16px;
-            border-top: 1px solid #f1f5f9;
-            background: var(--soft);
-            flex-wrap: wrap;
-        }
-        .radio-mode-controls {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .radio-top-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            height: 30px;
-            padding: 0 6px 0 9px;
-            border-radius: 999px;
-            background: var(--ink);
-            color: #fff;
-            font-size: 11px;
-            font-weight: 600;
-            max-width: 175px;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.14);
-        }
-        .radio-top-pill span {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            min-width: 0;
-        }
-        .radio-mini-btn {
-            border: 0;
-            background: rgba(255, 255, 255, 0.16);
-            color: #fff;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 10px;
-            font-weight: 700;
-            flex-shrink: 0;
-            padding: 0;
-        }
-        .radio-mini-btn:active { background: rgba(255, 255, 255, 0.3); }
-        #wall-canvas {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            display: block;
-            pointer-events: none;
-            z-index: 1;
-        }
-        .wall-tile {
-            background: transparent !important;
-        }
-        @media (max-width: 420px) {
-            .radio-top-pill { max-width: 124px; }
-            .brand-greeting { max-width: 110px; }
-        }
-
-        /* ===== OPTIONAL APK DOWNLOAD PROMPT ===== */
-        .apk-prompt-card {
-            margin: 18px auto 0;
-            max-width: 320px;
-            padding: 11px 13px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.94);
-            border: 1px solid var(--border);
-            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.07);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            text-align: left;
-            backdrop-filter: blur(8px);
-        }
-        .apk-prompt-info {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            min-width: 0;
-        }
-        .apk-prompt-ico {
-            width: 34px;
-            height: 34px;
-            border-radius: 10px;
-            background: var(--accent-soft);
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .apk-prompt-ico svg {
-            width: 18px;
-            height: 18px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-        .apk-prompt-text {
-            min-width: 0;
-        }
-        .apk-prompt-title {
-            font-size: 12.5px;
-            font-weight: 800;
-            color: var(--ink);
-            line-height: 1.2;
-        }
-        .apk-prompt-sub {
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--muted);
-            margin-top: 2px;
-            line-height: 1.25;
-        }
-        .apk-prompt-actions {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            flex-shrink: 0;
-        }
-        .apk-dismiss-btn {
-            border: 0;
-            background: transparent;
-            color: var(--muted);
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 700;
-        }
-        .apk-dismiss-btn:hover { background: var(--soft); color: var(--ink); }
-
-        /* ===== SEASONAL & HOLIDAY ENGINE ===== */
-        #seasonal-canvas {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 90;
-        }
-        .season-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 3px 9px;
-            border-radius: 999px;
-            background: var(--accent-soft);
-            border: 1px solid var(--border);
-            color: var(--accent);
-            font-size: 11px;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-        .season-banner {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 999px;
-            background: var(--accent-soft);
-            border: 1px solid var(--border);
-            color: var(--accent);
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 14px;
-        }
-
-                        
-        /* ===== AMBIENT & WEATHER-REACTIVE EFFECTS ===== */
-        #weather-canvas {
-            position: fixed;
-            inset: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 95;
-        }
-        .weather-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 3px 9px;
-            height: 26px;
-            border-radius: 999px;
-            background: var(--soft);
-            border: 1px solid var(--border);
-            color: var(--ink);
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: background .15s, border-color .15s, transform .1s;
-        }
-        .weather-pill:hover {
-            background: var(--accent-soft);
-            border-color: #93c5fd;
-        }
-        .weather-pill:active {
-            transform: scale(.96);
-        }
-        @media (max-width: 390px) {
-            .weather-pill { padding: 3px 7px; font-size: 10.5px; }
-        }
-
+                        <style id="artcher-v2">
+                            /* ===== V2 / 1. FIVE-TAB NAV ===== */
+                            .bottom-nav { grid-template-columns: repeat(5, 1fr); overflow: visible; }
+                            .nav-item.nav-draw { gap: 0; z-index: 2; }
+                            .nav-item.nav-draw .ico {
+                                width: 52px; height: 52px; border-radius: 50%;
+                                background: var(--accent); color: #fff;
+                                border: 3px solid #fff;
+                                box-shadow: 0 8px 20px rgba(29, 78, 216, 0.35);
+                                transform: translateY(-10px);
+                                transition: transform .18s cubic-bezier(.34, 1.56, .64, 1), box-shadow .18s;
+                            }
+                            .nav-item.nav-draw svg { width: 24px; height: 24px; }
+                            .nav-item.nav-draw.active .ico { background: var(--accent); transform: translateY(-10px) scale(1.1); }
+                            .nav-item.nav-draw:active .ico { transform: translateY(-8px) scale(.93); }
+                            .nav-item.nav-draw.active { color: var(--accent); }
+                            
+                            @media (orientation: landscape) and (min-width: 640px) {
+                                .nav-item.nav-draw { height: 74px; }
+                                .nav-item.nav-draw .ico { transform: none; }
+                                .nav-item.nav-draw.active .ico { transform: scale(1.1); }
+                                .nav-item.nav-draw:active .ico { transform: scale(.93); }
+                            }
+                            @media (orientation: landscape) and (max-height: 520px) {
+                                .nav-item { height: 54px; }
+                                .nav-item.nav-draw { height: 66px; }
+                            }
+                            
+                            /* ===== V2 / 2. LEADERBOARD ===== */
+                            #view-leaderboard { flex-direction: column; align-items: center; padding-left: 14px; padding-right: 14px; }
+                            .lb-sub { font-size: 13px; color: var(--muted); font-weight: 500; margin-top: -8px; }
+                            .lb-row {
+                                display: flex; align-items: center; gap: 10px;
+                                padding: 10px 12px; border-top: 1px solid #f1f5f9;
+                                cursor: pointer; width: 100%; background: #fff;
+                            }
+                            .lb-row:first-child { border-top: 0; }
+                            .lb-row:active { background: var(--soft); }
+                            .lb-rank {
+                                flex-shrink: 0; min-width: 38px; height: 28px; padding: 0 6px;
+                                display: inline-flex; align-items: center; justify-content: center;
+                                border-radius: 999px; font-family: 'JetBrains Mono', monospace;
+                                font-size: 12px; font-weight: 700; color: var(--muted); background: var(--soft);
+                            }
+                            .lb-rank.gold   { background: #f59e0b; color: #fff; box-shadow: 0 2px 8px rgba(245, 158, 11, .4); }
+                            .lb-rank.silver { background: #94a3b8; color: #fff; }
+                            .lb-rank.bronze { background: #b45309; color: #fff; }
+                            .lb-thumb {
+                                flex-shrink: 0; width: 56px; height: 56px; border-radius: 10px;
+                                overflow: hidden; border: 1px solid var(--border); background: #fff;
+                            }
+                            .lb-thumb canvas { width: 100%; height: 100%; display: block; }
+                            .lb-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+                            .lb-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                            .lb-tile { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); }
+                            .lb-heart {
+                                flex-shrink: 0; padding: 4px 9px; border-radius: 999px;
+                                background: #fff1f2; border: 1px solid #fecdd3; color: #be123c;
+                                font-size: 12px; font-weight: 800; white-space: nowrap;
+                            }
+                            .lb-empty { padding: 26px 16px; text-align: center; color: var(--muted); font-size: 13.5px; font-weight: 500; }
+                            
+                            /* ===== V2 / 3. CAPTCHA ===== */
+                            #captcha-modal { z-index: 260; }
+                            .cap-box { max-width: 380px; gap: 12px; }
+                            .cap-canvas-wrap { position: relative; }
+                            #captcha-canvas {
+                                width: 100%; height: auto; display: block; aspect-ratio: 320 / 190;
+                                border: 1px solid var(--border); border-radius: 12px;
+                                background: #f8fafc; cursor: pointer; touch-action: manipulation;
+                            }
+                            .cap-canvas-wrap.shake { animation: capShake .42s ease; }
+                            @keyframes capShake {
+                                0%, 100% { transform: translateX(0); }
+                                20% { transform: translateX(-9px); } 40% { transform: translateX(8px); }
+                                60% { transform: translateX(-6px); } 80% { transform: translateX(4px); }
+                            }
+                            .cap-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+                            #captcha-target-order {
+                                display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px;
+                                padding: 10px; border: 1px dashed var(--border); border-radius: 12px; background: var(--soft);
+                            }
+                            .cap-step {
+                                position: relative; width: 52px; height: 52px; border-radius: 12px;
+                                border: 2px solid var(--border); background: #fff;
+                                display: flex; align-items: center; justify-content: center;
+                                transition: border-color .15s, background .15s, transform .15s;
+                            }
+                            .cap-step canvas { width: 36px; height: 36px; }
+                            .cap-step b {
+                                position: absolute; top: -7px; left: -7px; width: 18px; height: 18px; border-radius: 50%;
+                                background: var(--ink); color: #fff; font-size: 10px; display: flex; align-items: center; justify-content: center;
+                            }
+                            .cap-step.done { border-color: #16a34a; background: #f0fdf4; transform: scale(1.06); }
+                            .cap-step.done b { background: #16a34a; }
+                            .cap-arrow { color: var(--muted); font-weight: 800; }
+                            .cap-msg { min-height: 18px; text-align: center; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+                            .cap-msg.ok { color: #16a34a; }
+                            
+                            
+                            /* ===== V2 / 4. TILE PICKER ===== */
+                            #tilepick-modal { z-index: 255; }
+                            .tp-box { max-width: 400px; gap: 10px; }
+                            .tp-scroll {
+                                width: 100%; height: 300px; overflow: auto; background: #fff;
+                                border: 1px solid var(--border); border-radius: 12px; -webkit-overflow-scrolling: touch;
+                            }
+                            #tilepick-canvas { display: block; cursor: pointer; }
+                            .tp-legend { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; font-size: 11px; font-weight: 600; color: var(--muted); }
+                            .tp-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
                         </style>
                     </head>
                     <body>
@@ -926,16 +1145,29 @@
                                 </span>
                             </button>
                             <div style="display:flex;align-items:center;gap:6px;min-width:0;">
-                                <div class="radio-top-pill" id="radio-mini-pill" hidden>
-                                    <span>📻 <strong id="radio-mini-title">Radio</strong></span>
-                                    <button type="button" class="radio-mini-btn" onclick="nextRadioStation()" title="Next station" aria-label="Next station">&#9197;</button>
-                                    <button type="button" class="radio-mini-btn" onclick="toggleMusic()" title="Stop radio" aria-label="Stop radio">&times;</button>
-                                </div>
                                 <button class="btn btn-amber" id="nav-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
+                                <!-- RADIO CHIP -->
+                                <div class="radio-chip-wrap" id="radio-mini-pill" hidden>
+                                    <button type="button" class="radio-chip" id="radio-chip-btn" onclick="toggleRadioPopover(event)" aria-haspopup="true" aria-expanded="false" aria-label="Now playing" title="Now playing">
+                                        <span class="mp-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+                                    </button>
+                                    <div class="radio-pop" id="radio-pop" hidden role="dialog" aria-label="Radio player">
+                                        <span class="mp-text"><strong id="radio-mini-title">Radio</strong><small>Live radio</small></span>
+                                        <button type="button" class="mp-btn" onclick="prevRadioStation()" aria-label="Previous station" title="Previous station">
+                                            <svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20" style="fill:currentColor"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                                        </button>
+                                        <button type="button" class="mp-btn" onclick="nextRadioStation()" aria-label="Next station" title="Next station">
+                                            <svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4" style="fill:currentColor"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                                        </button>
+                                        <button type="button" class="mp-btn" onclick="closeRadioPopover(); toggleMusic()" aria-label="Stop radio" title="Stop radio">
+                                            <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
                                 <button type="button" class="weather-pill" id="weather-pill" onclick="cycleWeatherPreview()" title="Live sky weather · Tap to preview weather effects"><span id="weather-pill-text">🌤️ Sky</span></button>
                                 <span class="live-pill" id="online-pill" title="Users currently viewing or drawing">
                                     <span class="live-dot"></span>
-                                    <span id="online-count">1 online</span>
+                                    <span id="online-count">1</span>
                                 </span>
                             </div>
                         </header>
@@ -1260,7 +1492,7 @@
                                     </span>
                                 </a>
                             </div>
-
+                            
                             <div class="card">
                                 <div class="card-head">Profile</div>
                                 <button class="list-row" onclick="openNicknameOverlay(true)">
@@ -1348,7 +1580,7 @@
                                     <span class="switch"><input type="checkbox" id="opt-season-fx" checked onchange="applySeasonEffectsToggle()"></span>
                                 </label>
                             </div>
-
+                            
                             <div class="card">
                                 <div class="card-head">Options</div>
                                 <label class="list-row">
@@ -1369,19 +1601,35 @@
                         </div>
                     </section>
                     
+                    <!-- LEADERBOARD TAB -->
+                    <section id="view-leaderboard" class="view">
+                        <div class="more-wrap">
+                            <h2 class="more-title">Leaderboard</h2>
+                            <p class="lb-sub">Top 10 drawings ranked by ❤️ hearts.</p>
+                            <div class="card">
+                                <div class="card-head">Top 10 · most hearted</div>
+                                <div id="lb-list" aria-live="polite"></div>
+                            </div>
+                        </div>
+                    </section>
+                    
                     <!-- BOTTOM NAV -->
                     <nav class="bottom-nav" aria-label="Main navigation">
                         <button class="nav-item active" data-view="home" onclick="switchView('home')">
                             <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>
                             <span>Home</span>
                         </button>
-                        <button class="nav-item" data-view="draw" onclick="switchView('draw')">
-                            <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
-                            <span>Draw</span>
-                        </button>
                         <button class="nav-item" data-view="wall" onclick="switchView('wall')">
                             <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
                             <span>Wall</span>
+                        </button>
+                        <button class="nav-item" data-view="draw" onclick="switchView('draw')" aria-label="Draw">
+                            <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
+                            <span>Draw</span>
+                        </button>
+                        <button class="nav-item" data-view="leaderboard" onclick="switchView('leaderboard')">
+                            <span class="ico"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span>
+                            <span>Leaders</span>
                         </button>
                         <button class="nav-item" data-view="more" onclick="switchView('more')">
                             <span class="ico"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></span>
@@ -1427,6 +1675,50 @@
                         </section>
                     </div>
                     
+                    <!-- CAPTCHA MODAL -->
+                    <div class="modal-backdrop" id="captcha-modal" onclick="if(event.target===this) closeCaptcha()">
+                        <div class="modal-box cap-box" role="dialog" aria-modal="true" aria-labelledby="captcha-title">
+                            <div class="modal-head">
+                                <h3 id="captcha-title">Human Check</h3>
+                                <button type="button" class="btn btn-sm" onclick="closeCaptcha()">Cancel</button>
+                            </div>
+                            <div class="cap-canvas-wrap" id="captcha-wrap">
+                                <canvas id="captcha-canvas" width="320" height="190" aria-label="Icon puzzle"></canvas>
+                            </div>
+                            <div class="cap-label">Tap these on the picture, in this order:</div>
+                            <div id="captcha-target-order"></div>
+                            <div class="cap-msg" id="captcha-msg"></div>
+                            <div class="modal-actions">
+                                <button type="button" class="btn" onclick="capShuffle()">Shuffle</button>
+                                <button type="button" class="btn btn-accent" id="captcha-submit" onclick="capSubmit()">Submit</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- TILE PICKER MODAL -->
+                    <div class="modal-backdrop" id="tilepick-modal" onclick="if(event.target===this) closeTilePicker()">
+                        <div class="modal-box tp-box" role="dialog" aria-modal="true" aria-labelledby="tilepick-title">
+                            <div class="modal-head">
+                                <h3 id="tilepick-title">Choose Your Tile</h3>
+                                <button type="button" class="btn btn-sm" onclick="closeTilePicker()">Cancel</button>
+                            </div>
+                            <div class="tp-scroll" id="tilepick-scroll">
+                                <canvas id="tilepick-canvas" aria-label="Wall tile map"></canvas>
+                            </div>
+                            <div class="cap-msg" id="tilepick-msg"></div>
+                            <div class="tp-legend">
+                                <span><i style="background:#cbd5e1"></i>Taken</span>
+                                <span><i style="background:#dbeafe"></i>Center logo</span>
+                                <span><i style="border:1.5px dashed #94a3b8"></i>Free</span>
+                                <span><i style="background:#1d4ed8"></i>Your pick</span>
+                            </div>
+                            <div class="modal-actions">
+                                <button type="button" class="btn" onclick="tpRandom()">Random spot</button>
+                                <button type="button" class="btn btn-accent" id="tilepick-go" onclick="tpContinue()">Continue</button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <canvas id="seasonal-canvas"></canvas>
                     <canvas id="weather-canvas"></canvas>
                     <canvas id="confetti-canvas"></canvas>
@@ -1468,11 +1760,11 @@
                         let showFavRadiosOnly = false;
                         let radioStations = Array.isArray(favoriteRadios) ? favoriteRadios.slice() : [];
                         let currentStationIdx = 0;
-
+                        
                         function isStationFavorite(url) {
                             return favoriteRadios.some(f => f.url === url);
                         }
-
+                        
                         function toggleFavoriteRadio(station, e) {
                             if (e) e.stopPropagation();
                             if (!station || !station.url) return;
@@ -1488,7 +1780,7 @@
                             sortStationsWithFavorites();
                             renderRadioStationList();
                         }
-
+                        
                         function sortStationsWithFavorites() {
                             const activeUrl = radioStations[currentStationIdx]?.url;
                             const favUrls = new Set(favoriteRadios.map(f => f.url));
@@ -1498,14 +1790,14 @@
                                 if (newIdx !== -1) currentStationIdx = newIdx;
                             }
                         }
-
+                        
                         function toggleFavRadioFilter() {
                             showFavRadiosOnly = !showFavRadiosOnly;
                             const btn = document.getElementById("radio-fav-filter-btn");
                             if (btn) btn.classList.toggle("btn-accent", showFavRadiosOnly);
                             renderRadioStationList();
                         }
-
+                        
                         function pruneBrokenStation(station) {
                             if (!station || !station.url) return;
                             deadRadioUrls.add(station.url);
@@ -1697,27 +1989,27 @@
                             renderRadioStationList();
                             return radioStations;
                         }
-
+                        
                         function renderRadioStationList() {
                             const list = document.getElementById("radio-station-list");
                             if (!list) return;
                             list.replaceChildren();
                             const visibleStations = showFavRadiosOnly
-                                ? radioStations.filter(s => isStationFavorite(s.url))
-                                : radioStations;
-
+                            ? radioStations.filter(s => isStationFavorite(s.url))
+                            : radioStations;
+                            
                             if (visibleStations.length === 0) {
                                 const empty = document.createElement("button");
                                 empty.type = "button";
                                 empty.className = "radio-station-option";
                                 empty.disabled = true;
                                 empty.innerHTML = showFavRadiosOnly
-                                    ? "<span>No favorite stations yet · Tap ☆ to save one</span>"
-                                    : "<span>No stations loaded yet</span>";
+                                ? "<span>No favorite stations yet · Tap ☆ to save one</span>"
+                                : "<span>No stations loaded yet</span>";
                                 list.appendChild(empty);
                                 return;
                             }
-
+                            
                             const activeUrl = radioStations[currentStationIdx]?.url;
                             visibleStations.forEach((station) => {
                                 const realIndex = radioStations.findIndex(s => s.url === station.url);
@@ -1727,7 +2019,7 @@
                                 option.setAttribute("role", "button");
                                 option.tabIndex = 0;
                                 option.classList.toggle("active", station.url === activeUrl);
-
+                                
                                 const star = document.createElement("button");
                                 star.type = "button";
                                 star.className = "radio-fav-btn" + (isFav ? " is-fav" : "");
@@ -1736,17 +2028,17 @@
                                 star.setAttribute("aria-label", star.title);
                                 star.addEventListener("click", (e) => toggleFavoriteRadio(station, e));
                                 option.appendChild(star);
-
+                                
                                 const name = document.createElement("span");
                                 name.textContent = station.name;
                                 option.appendChild(name);
-
+                                
                                 if (station.country) {
                                     const country = document.createElement("small");
                                     country.textContent = station.country;
                                     option.appendChild(country);
                                 }
-
+                                
                                 option.addEventListener("click", () => selectRadioStation(realIndex));
                                 option.addEventListener("keydown", (e) => {
                                     if (e.key === "Enter" || e.key === " ") {
@@ -1757,7 +2049,7 @@
                                 list.appendChild(option);
                             });
                         }
-
+                        
                         function selectRadioStation(index) {
                             if (!radioStations.length) return;
                             currentStationIdx = index;
@@ -1795,7 +2087,7 @@
                             
                             radioAudio.volume = musicVolume;
                             radioAudio.src = station.url;
-
+                            
                             let settled = false;
                             const failTimeout = setTimeout(() => {
                                 if (settled || !musicPlaying) return;
@@ -1843,7 +2135,7 @@
                         let radioAutoDJ = false;
                         let radioAutoDJTimer = null;
                         let radioSleepTimer = null;
-
+                        
                         function nextRadioStation() {
                             if (!radioStations.length) {
                                 if (!musicPlaying) toggleMusic();
@@ -1853,7 +2145,7 @@
                             selectRadioStation(currentStationIdx);
                             showToast(`📻 ${radioStations[currentStationIdx].name}`);
                         }
-
+                        
                         function prevRadioStation() {
                             if (!radioStations.length) {
                                 if (!musicPlaying) toggleMusic();
@@ -1863,7 +2155,7 @@
                             selectRadioStation(currentStationIdx);
                             showToast(`📻 ${radioStations[currentStationIdx].name}`);
                         }
-
+                        
                         function toggleRadioAutoDJ() {
                             radioAutoDJ = !radioAutoDJ;
                             const btn = document.getElementById("radio-autodj-btn");
@@ -1886,7 +2178,7 @@
                                 showToast("Auto-DJ turned off");
                             }
                         }
-
+                        
                         function setRadioSleepTimer(minsStr) {
                             const mins = Number(minsStr) || 0;
                             clearTimeout(radioSleepTimer);
@@ -1903,7 +2195,7 @@
                             }, mins * 60 * 1000);
                             showToast(`Radio will stop in ${mins} min`);
                         }
-
+                        
                         function updateMuteIcon(customStatus = null) {
                             const btn = document.getElementById("mute-btn");
                             const icon = document.getElementById("mute-icon");
@@ -1918,7 +2210,7 @@
                                 if (status) status.textContent = label;
                                 if (volRow) volRow.hidden = false;
                                 if (miniPill) miniPill.hidden = false;
-                                if (miniTitle) miniTitle.textContent = label.replace(/^Live:\s*/i, "");
+                                if (miniTitle) miniTitle.textContent = label.replace(/^Live:\s*/i, "").replace(/\[[^\]]*\]\s*/, "");
                                 icon.innerHTML = `
                     <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
@@ -2159,6 +2451,12 @@
                         // =========================================================================
                         let userProfile = lsGet(LS_PROFILE, null);
                         
+                        const SEASON_GREETINGS = { christmas: "Merry Christmas", newyear: "Happy New Year", valentines: "Happy Valentine's Day", halloween: "Happy Halloween", philippines: "Mabuhay" };
+                        function greetingFor(name) {
+                            const g = activeSeason ? SEASON_GREETINGS[activeSeason.id] : "";
+                            if (!g) return name ? `Hi, ${name}!` : "";
+                            return name ? `${g}, ${name}!` : `${g}!`;
+                        }
                         function applyProfileUI() {
                             const greetingEl = document.getElementById("nav-greeting");
                             const authorInput = document.getElementById("author-input");
@@ -2169,11 +2467,11 @@
                             
                             if (greetingEl) {
                                 if (isNamed) {
-                                    greetingEl.textContent = `Hi, ${cleanName}!`;
+                                    greetingEl.textContent = greetingFor(cleanName);
                                     greetingEl.hidden = false;
                                 } else {
-                                    greetingEl.textContent = "";
-                                    greetingEl.hidden = true;
+                                    greetingEl.textContent = greetingFor("");
+                                    greetingEl.hidden = !greetingEl.textContent;
                                 }
                             }
                             if (authorInput) authorInput.value = isNamed ? cleanName : "";
@@ -2241,12 +2539,12 @@
                             const greetingEl = document.getElementById("nav-greeting");
                             const moreNameEl = document.getElementById("more-profile-name");
                             if (trimmed) {
-                                greetingEl.textContent = `Hi, ${trimmed}!`;
+                                greetingEl.textContent = greetingFor(trimmed);
                                 greetingEl.hidden = false;
                                 moreNameEl.textContent = trimmed;
                             } else {
-                                greetingEl.textContent = "";
-                                greetingEl.hidden = true;
+                                greetingEl.textContent = greetingFor("");
+                                greetingEl.hidden = !greetingEl.textContent;
                                 moreNameEl.textContent = "Anonymous";
                             }
                         }
@@ -2281,7 +2579,7 @@
                             const state = wallChannel.presenceState();
                             const count = Math.max(1, Object.keys(state).length);
                             const el = document.getElementById("online-count");
-                            if (el) el.textContent = `${count} online`;
+                            if (el) el.textContent = String(count);
                         }
                         
                         if (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes("YOUR_")) {
@@ -3251,25 +3549,25 @@
                             const buf32 = new Uint32Array(img.data.buffer);
                             const [fr, fg, fb, fa] = hexToRgba(fillColor, alpha);
                             const fillPacked = ((fa << 24) | (fb << 16) | (fg << 8) | fr) >>> 0;
-
+                            
                             const startVal = buf32[sy * dim + sx];
                             const sr = startVal & 255, sg = (startVal >>> 8) & 255, sb = (startVal >>> 16) & 255, sa = (startVal >>> 24) & 255;
                             const tol = 32;
                             if (Math.abs(sr - fr) <= 4 && Math.abs(sg - fg) <= 4 && Math.abs(sb - fb) <= 4 && Math.abs(sa - fa) <= 10) return;
-
+                            
                             const total = dim * dim;
                             const visited = new Uint8Array(total);
                             const stack = new Int32Array(total * 2);
                             let sp = 0;
                             stack[sp++] = sx;
                             stack[sp++] = sy;
-
+                            
                             while (sp > 0) {
                                 const y = stack[--sp];
                                 const x = stack[--sp];
                                 const rowOff = y * dim;
                                 if (visited[rowOff + x]) continue;
-
+                                
                                 let lx = x;
                                 while (lx > 0 && !visited[rowOff + lx - 1]) {
                                     const v = buf32[rowOff + lx - 1];
@@ -3282,12 +3580,12 @@
                                     if (Math.abs((v & 255) - sr) > tol || Math.abs(((v >>> 8) & 255) - sg) > tol || Math.abs(((v >>> 16) & 255) - sb) > tol || Math.abs(((v >>> 24) & 255) - sa) > tol) break;
                                     rx++;
                                 }
-
+                                
                                 for (let cx = lx; cx <= rx; cx++) {
                                     const cPos = rowOff + cx;
                                     visited[cPos] = 1;
                                     buf32[cPos] = fillPacked;
-
+                                    
                                     if (y > 0) {
                                         const uPos = cPos - dim;
                                         if (!visited[uPos]) {
@@ -3608,26 +3906,26 @@
                         const committedCtx = committedCanvas.getContext("2d", { willReadFrequently: true });
                         let committedCount = -1;
                         let studioDrawRaf = 0;
-
+                        
                         function rebuildCommittedLayer() {
                             const activeCount = isDrawing && currentStroke ? (1 + mirrorStrokes.length) : 0;
                             const baseCount = Math.max(0, strokes.length - activeCount);
                             renderStrokesInstant(committedCtx, strokes.slice(0, baseCount), 500, true);
                             committedCount = baseCount;
                         }
-
+                        
                         function redrawStudio() {
                             const activeCount = isDrawing && currentStroke ? (1 + mirrorStrokes.length) : 0;
                             const baseCount = Math.max(0, strokes.length - activeCount);
                             if (committedCount !== baseCount) rebuildCommittedLayer();
-
+                            
                             drawCtx.clearRect(0, 0, 500, 500);
                             drawCtx.drawImage(committedCanvas, 0, 0);
                             if (activeCount > 0) {
                                 renderStrokesInstant(drawCtx, strokes.slice(baseCount), 500, false);
                             }
                         }
-
+                        
                         function scheduleStudioRedraw() {
                             if (studioDrawRaf) return;
                             studioDrawRaf = requestAnimationFrame(() => {
@@ -4391,7 +4689,18 @@
                             }
                         }
                         
-                        async function submitToWall() {
+                        function submitToWall() {
+                            deselectText();
+                            const probe = strokes.concat(getTextItems());
+                            if (probe.length === 0) {
+                                showToast("Draw something first before posting.");
+                                return;
+                            }
+                            // user-initiated posts: choose a tile, then pass the human check
+                            openTilePicker(() => openCaptcha(() => submitToWallCore()));
+                        }
+                        
+                        async function submitToWallCore() {
                             deselectText();
                             const items = strokes.concat(getTextItems());
                             if (items.length && paperBg !== "#ffffff") items.unshift({ k: "bg", c: paperBg });
@@ -4400,7 +4709,8 @@
                                 return;
                             }
                             
-                            const slot = pickRandomOpenSlot(wallEntries);
+                            const cs = window.__chosenSlot; window.__chosenSlot = null;
+                            const slot = (cs && !wallEntries.some(e => e.gx === cs.gx && e.gy === cs.gy)) ? cs : pickRandomOpenSlot(wallEntries);
                             const rawAuthor = document.getElementById("author-input").value.trim();
                             const author = rawAuthor || (userProfile && !userProfile.anonymous && userProfile.name ? userProfile.name : "Anonymous");
                             const entry = {
@@ -4622,7 +4932,7 @@
                         const activeReplayAnims = new Map();
                         let wallPaintRaf = 0;
                         let batchReplayRaf = 0;
-
+                        
                         function getCachedTileCanvas(entry) {
                             let cached = tileBitmapCache.get(entry.id);
                             if (cached) return cached;
@@ -4636,12 +4946,12 @@
                             tileBitmapCache.set(entry.id, cvs);
                             return cvs;
                         }
-
+                        
                         function paintWallViewport() {
                             wallPaintRaf = 0;
                             const wallCvs = document.getElementById("wall-canvas");
                             if (!wallCvs || !document.getElementById("view-wall").classList.contains("active")) return;
-
+                            
                             const dpr = Math.min(window.devicePixelRatio || 1, 2);
                             const vw = wallViewport.clientWidth || window.innerWidth;
                             const vh = wallViewport.clientHeight || window.innerHeight;
@@ -4651,19 +4961,19 @@
                                 wallCvs.width = targetW;
                                 wallCvs.height = targetH;
                             }
-
+                            
                             const ctx = wallCvs.getContext("2d");
                             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                             ctx.clearRect(0, 0, vw, vh);
-
+                            
                             const showBorders = document.getElementById("opt-borders") && document.getElementById("opt-borders").checked;
                             const tileScreenSize = CELL_SIZE * scale;
-
+                            
                             for (const entry of wallEntries) {
                                 const sx = entry.gx * tileScreenSize + panX;
                                 const sy = entry.gy * tileScreenSize + panY;
                                 if (sx + tileScreenSize < -40 || sx > vw + 40 || sy + tileScreenSize < -40 || sy > vh + 40) continue;
-
+                                
                                 const replayCvs = activeReplayAnims.get(entry.id);
                                 if (replayCvs) {
                                     ctx.fillStyle = bgOf(entry.strokes);
@@ -4673,7 +4983,7 @@
                                     const bmp = getCachedTileCanvas(entry);
                                     ctx.drawImage(bmp, sx, sy, tileScreenSize, tileScreenSize);
                                 }
-
+                                
                                 if (showBorders) {
                                     ctx.strokeStyle = "#e2e8f0";
                                     ctx.lineWidth = 1;
@@ -4681,12 +4991,12 @@
                                 }
                             }
                         }
-
+                        
                         function scheduleWallPaint() {
                             if (wallPaintRaf) return;
                             wallPaintRaf = requestAnimationFrame(paintWallViewport);
                         }
-
+                        
                         function buildReplaySegments(strokeList) {
                             const segments = [];
                             for (const st of strokeList || []) {
@@ -4713,7 +5023,7 @@
                             }
                             return segments;
                         }
-
+                        
                         function drawSegmentBatch(ctx, segments, startIdx, endIdx, dim) {
                             const ratio = dim / 500;
                             ctx.lineCap = "round";
@@ -4758,18 +5068,18 @@
                                 ctx.restore();
                             }
                         }
-
+                        
                         function startUnifiedWallReplay(entriesToPlay) {
                             if (batchReplayRaf) {
                                 cancelAnimationFrame(batchReplayRaf);
                                 batchReplayRaf = 0;
                             }
                             activeReplayAnims.clear();
-
+                            
                             const dim = scale < 0.45 ? 160 : 220;
                             const jobs = [];
                             const startTime = performance.now();
-
+                            
                             entriesToPlay.forEach((entry, index) => {
                                 const segments = buildReplaySegments(entry.strokes);
                                 const buf = document.createElement("canvas");
@@ -4788,24 +5098,24 @@
                                     done: segments.length === 0
                                 });
                             });
-
+                            
                             function tick(now) {
                                 let remaining = 0;
                                 const vw = wallViewport.clientWidth || window.innerWidth;
                                 const vh = wallViewport.clientHeight || window.innerHeight;
                                 const tileScreenSize = CELL_SIZE * scale;
-
+                                
                                 for (const job of jobs) {
                                     if (job.done) continue;
                                     if (now - startTime < job.delay) {
                                         remaining++;
                                         continue;
                                     }
-
+                                    
                                     const sx = job.entry.gx * tileScreenSize + panX;
                                     const sy = job.entry.gy * tileScreenSize + panY;
                                     const inView = !(sx + tileScreenSize < -60 || sx > vw + 60 || sy + tileScreenSize < -60 || sy > vh + 60);
-
+                                    
                                     const nextIdx = Math.min(job.segments.length, job.idx + job.stepRate);
                                     if (inView) {
                                         drawSegmentBatch(job.ctx, job.segments, job.idx, nextIdx, dim);
@@ -4817,7 +5127,7 @@
                                             renderStrokesInstant(job.ctx, job.entry.strokes || [], dim, true);
                                         }
                                     }
-
+                                    
                                     if (job.idx >= job.segments.length) {
                                         job.done = true;
                                         activeReplayAnims.delete(job.entry.id);
@@ -4827,7 +5137,7 @@
                                         remaining++;
                                     }
                                 }
-
+                                
                                 paintWallViewport();
                                 if (remaining > 0) {
                                     batchReplayRaf = requestAnimationFrame(tick);
@@ -4835,15 +5145,15 @@
                                     batchReplayRaf = 0;
                                 }
                             }
-
+                            
                             paintWallViewport();
                             batchReplayRaf = requestAnimationFrame(tick);
                         }
-
+                        
                         function startTileReplayOnWall(entry) {
                             startUnifiedWallReplay([entry]);
                         }
-
+                        
                         function createWallTile(entry, animate = false, isNewArrival = false) {
                             const stage = document.getElementById("wall-stage");
                             const tile = document.createElement("div");
@@ -4853,7 +5163,7 @@
                             tile.style.top = entry.gy * CELL_SIZE + "px";
                             tile.style.width = CELL_SIZE + "px";
                             tile.style.height = CELL_SIZE + "px";
-
+                            
                             const tag = document.createElement("div");
                             tag.className = "wall-tile-tag";
                             tag.textContent = (entry.author || "Anonymous") + (entry._pending ? " · not uploaded" : "");
@@ -4861,27 +5171,27 @@
                             const pill = document.createElement("div");
                             pill.className = "wall-tile-react";
                             tile.appendChild(pill);
-
+                            
                             tile.onclick = (e) => {
                                 e.stopPropagation();
                                 if (dragMoved) return;
                                 openModal(entry);
                             };
-
+                            
                             stage.appendChild(tile);
                             updateTilePill(entry.id);
                             updateMinimap();
-
+                            
                             if (animate) startTileReplayOnWall(entry);
                             else {
                                 getCachedTileCanvas(entry);
                                 scheduleWallPaint();
                             }
-
+                            
                             if (isNewArrival) setTimeout(() => tile.classList.remove("just-arrived"), 5000);
                             return null;
                         }
-
+                        
                         function renderWall(autoPlay = true) {
                             wallTileAnimators.forEach(a => a.cancel());
                             wallTileAnimators = [];
@@ -4890,27 +5200,27 @@
                                 batchReplayRaf = 0;
                             }
                             activeReplayAnims.clear();
-
+                            
                             const stage = document.getElementById("wall-stage");
                             stage.querySelectorAll(".wall-tile").forEach(el => el.remove());
-
+                            
                             layoutMonument();
                             updateWallCount();
-
+                            
                             if (!userMoved) fitWallToScreen();
                             else applyStageTransform();
-
+                            
                             wallEntries.forEach((entry) => createWallTile(entry, false, false));
-
+                            
                             if (autoPlay && wallEntries.length > 0) {
                                 startUnifiedWallReplay(wallEntries);
                             } else {
                                 scheduleWallPaint();
                             }
                         }
-
+                        
                         function replayAllDrawings() { renderWall(true); }
-
+                        
                         function applyStageTransform() {
                             const stage = document.getElementById("wall-stage");
                             stage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
@@ -5218,13 +5528,13 @@
                         
                         let myTileCycleIdx = -1;
                         let lastMyTileFocusId = null;
-
+                        
                         function jumpToMyTile() {
                             const mine = wallEntries
                             .filter(t => myTileIds.includes(t.id))
                             .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                             if (!mine.length) { showToast("You haven't posted a tile on this device yet."); return; }
-
+                            
                             myTileCycleIdx = (myTileCycleIdx + 1) % mine.length;
                             if (mine.length > 1 && mine[myTileCycleIdx].id === lastMyTileFocusId) {
                                 myTileCycleIdx = (myTileCycleIdx + 1) % mine.length;
@@ -5448,7 +5758,7 @@
                             exportReplayVideo(getAllItems(), "freedom-wall-replay-" + Date.now(), { meta: { author: currentAuthorName() } });
                         }
                         
-
+                        
                         // =========================================================================
                         // WEATHER STATE DECLARATIONS (Hoisted before Seasonal Engine)
                         // =========================================================================
@@ -5459,13 +5769,13 @@
                         let weatherSplashes = [];
                         let weatherLightning = 0;
                         let weatherRaf = null;
-
+                        
                         // =========================================================================
                         // SEASONAL & HOLIDAY ENGINE
                         // =========================================================================
                         const LS_SEASON_OVERRIDE = "fw_season_override_v1";
                         const LS_SEASON_FX = "fw_season_fx_v1";
-
+                        
                         const SEASONS = {
                             christmas: {
                                 id: "christmas",
@@ -5544,7 +5854,7 @@
                                 }
                             }
                         };
-
+                        
                         function detectCalendarSeason(now = new Date()) {
                             const m = now.getMonth() + 1;
                             const d = now.getDate();
@@ -5555,36 +5865,36 @@
                             if ((m === 6 && d <= 15) || m === 8) return "philippines";
                             return "none";
                         }
-
+                        
                         let activeSeason = null;
                         let seasonFxRaf = null;
-
+                        
                         function getResolvedSeason() {
                             const override = lsGet(LS_SEASON_OVERRIDE, "auto");
                             const key = override === "auto" ? detectCalendarSeason() : override;
                             return SEASONS[key] || null;
                         }
-
+                        
                         function setSeasonOverride(val) {
                             lsSet(LS_SEASON_OVERRIDE, val);
                             applySeasonalTheme();
                             showToast(val === "auto" ? "Seasonal theme set to Auto" : "Updated seasonal theme");
                         }
-
+                        
                         function applySeasonEffectsToggle() {
                             const enabled = document.getElementById("opt-season-fx").checked;
                             lsSet(LS_SEASON_FX, enabled);
                             startSeasonalParticles();
                         }
-
+                        
                         function applySeasonalTheme() {
                             const override = lsGet(LS_SEASON_OVERRIDE, "auto");
                             const sel = document.getElementById("season-preview-select");
                             if (sel) sel.value = override;
-
+                            
                             const fxCheck = document.getElementById("opt-season-fx");
                             if (fxCheck) fxCheck.checked = lsGet(LS_SEASON_FX, true) !== false;
-
+                            
                             activeSeason = getResolvedSeason();
                             const root = document.documentElement;
                             const pill = document.getElementById("season-pill");
@@ -5592,12 +5902,12 @@
                             const monumentSub = document.querySelector(".center-event-sub");
                             const moreIcon = document.getElementById("season-more-icon");
                             const moreLabel = document.getElementById("season-more-label");
-
+                            
                             // Remove old seasonal stencils before injecting new ones
                             Object.keys(STENCILS).forEach(k => {
                                 if (k.startsWith("season_")) delete STENCILS[k];
                             });
-
+                            
                             if (!activeSeason) {
                                 root.style.setProperty("--accent", "#1d4ed8");
                                 root.style.setProperty("--accent-hover", "#1e40af");
@@ -5622,13 +5932,14 @@
                                 if (monumentSub) monumentSub.textContent = activeSeason.sub;
                                 if (moreIcon) moreIcon.textContent = activeSeason.icon;
                                 if (moreLabel) moreLabel.textContent = activeSeason.name;
-
+                                
                                 // Add seasonal stencils
                                 Object.entries(activeSeason.stencils || {}).forEach(([k, val]) => {
                                     STENCILS["season_" + k] = val;
                                 });
                             }
-
+                            
+                            applyProfileUI();
                             // Refresh stencil buttons
                             const stencilList = document.getElementById("stencil-list");
                             if (stencilList) {
@@ -5643,10 +5954,10 @@
                                     stencilList.appendChild(b);
                                 });
                             }
-
+                            
                             startSeasonalParticles();
                         }
-
+                        
                         function startSeasonalParticles() {
                             if (seasonFxRaf) {
                                 cancelAnimationFrame(seasonFxRaf);
@@ -5656,19 +5967,19 @@
                             if (!cvs) return;
                             const ctx = cvs.getContext("2d");
                             ctx.clearRect(0, 0, cvs.width, cvs.height);
-
+                            
                             const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
                             const enabled = lsGet(LS_SEASON_FX, true) !== false;
                             const wMode = typeof getActiveWeatherMode === "function" ? getActiveWeatherMode() : "clear";
                             const isWetWeather = wMode === "rain" || wMode === "storm";
                             if (!activeSeason || !enabled || reduced || isWetWeather) return;
-
+                            
                             const resize = () => {
                                 cvs.width = window.innerWidth;
                                 cvs.height = window.innerHeight;
                             };
                             resize();
-
+                            
                             const mode = activeSeason.particle;
                             const count = 26;
                             const items = Array.from({ length: count }, () => ({
@@ -5680,7 +5991,7 @@
                                 phase: Math.random() * Math.PI * 2,
                                 glyph: mode === "hearts" ? "♥" : mode === "spooky" ? (Math.random() > 0.5 ? "✦" : "🦇") : "✦"
                             }));
-
+                            
                             function tick() {
                                 ctx.clearRect(0, 0, cvs.width, cvs.height);
                                 // Only render ambient particles on Home or Wall tabs so Draw stays distraction-free
@@ -5692,7 +6003,7 @@
                                         if (p.y > cvs.height + 12) { p.y = -10; p.x = Math.random() * cvs.width; }
                                         if (p.x > cvs.width + 12) p.x = -10;
                                         if (p.x < -12) p.x = cvs.width + 10;
-
+                                        
                                         ctx.save();
                                         ctx.globalAlpha = 0.42;
                                         if (mode === "snow") {
@@ -5712,59 +6023,59 @@
                             }
                             seasonFxRaf = requestAnimationFrame(tick);
                         }
-
+                        
                         renderRadioStationList();
                         // =========================================================================
                         // OPTIONAL APK DOWNLOAD PROMPT (WEB BROWSER ONLY)
                         // =========================================================================
                         const APK_DOWNLOAD_URL = "download/ARTcher-v1.3.apk";
                         const LS_APK_DISMISSED = "fw_apk_prompt_dismissed_v1";
-
+                        
                         function isRunningInsideAppOrPWA() {
                             const ua = navigator.userAgent || "";
                             const ref = document.referrer || "";
                             const params = new URLSearchParams(window.location.search);
-
+                            
                             const isAndroidWebView = /; wv\)/i.test(ua) || (/Android/i.test(ua) && /Version\/\d+\.\d+/i.test(ua));
                             const isCustomWrapper = /ArcherFreedom|ARTcherApp|ArcherStudio/i.test(ua) || Boolean(window.AndroidInterface || window.ReactNativeWebView);
                             const isAndroidReferrer = ref.startsWith("android-app://") || ref.startsWith("file://");
                             const isEmbeddedIframe = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
                             const hasAppParam = params.get("app") === "1" || params.get("source") === "apk";
                             const isStandalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
-
+                            
                             return isAndroidWebView || isCustomWrapper || isAndroidReferrer || isEmbeddedIframe || hasAppParam || isStandalone;
                         }
-
+                        
                         function initApkDownloadPrompt() {
                             if (isRunningInsideAppOrPWA()) return;
-
+                            
                             const promptCard = document.getElementById("apk-prompt-card");
                             const moreApkCard = document.getElementById("more-apk-card");
                             const promptLink = document.getElementById("apk-prompt-link");
                             const moreLink = document.getElementById("more-apk-link");
-
+                            
                             if (promptLink) promptLink.href = APK_DOWNLOAD_URL;
                             if (moreLink) moreLink.href = APK_DOWNLOAD_URL;
                             if (moreApkCard) moreApkCard.hidden = false;
-
+                            
                             const dismissed = lsGet(LS_APK_DISMISSED, false);
                             if (promptCard && !dismissed) {
                                 promptCard.hidden = false;
                             }
                         }
-
+                        
                         function dismissApkPrompt() {
                             lsSet(LS_APK_DISMISSED, true);
                             const promptCard = document.getElementById("apk-prompt-card");
                             if (promptCard) promptCard.hidden = true;
                             showToast("You can still download the APK anytime in More.");
                         }
-
+                        
                         function trackApkDownload() {
                             haptic(10);
                             showToast("Downloading Android APK…");
                         }
-
+                        
                         initApkDownloadPrompt();
                         initUserProfile();
                         applySeasonalTheme();
@@ -5785,26 +6096,27 @@
                         if (AUTO_UPLOAD && pending.length > 0 && navigator.onLine) {
                             uploadPending(true);
                         }
-
+                        
                         // =========================================================================
                         // AMBIENT & WEATHER-REACTIVE WALL EFFECTS (Open-Meteo + Live Preview)
                         // =========================================================================
-
-
+                        
+                        
                         function getActiveWeatherMode() {
                             return weatherOverride === "auto" ? liveWeatherState.mode : weatherOverride;
                         }
-
+                        
                         function updateWeatherPillUI() {
                             const el = document.getElementById("weather-pill-text");
                             if (!el) return;
                             const mode = getActiveWeatherMode();
                             const icons = { clear: "☀️", cloudy: "☁️", rain: "🌧️", storm: "⛈️" };
                             const names = { clear: "Clear", cloudy: "Cloudy", rain: "Rain", storm: "Storm" };
-                            const tag = weatherOverride === "auto" ? `${liveWeatherState.temp}°C ${names[mode]}` : `Preview: ${names[mode]}`;
+                            const tag = weatherOverride === "auto" ? `${liveWeatherState.temp}°` : names[mode];
+                            if (el.parentElement) el.parentElement.title = `${liveWeatherState.temp}°C ${names[mode]} · Tap to preview weather effects`;
                             el.textContent = `${icons[mode] || "🌤️"} ${tag}`;
                         }
-
+                        
                         function cycleWeatherPreview() {
                             const nextIdx = (WEATHER_MODES.indexOf(weatherOverride) + 1) % WEATHER_MODES.length;
                             weatherOverride = WEATHER_MODES[nextIdx];
@@ -5814,11 +6126,11 @@
                             haptic(8);
                             const mode = getActiveWeatherMode();
                             showToast(weatherOverride === "auto"
-                                ? `Sky synced to live weather (${liveWeatherState.temp}°C ${liveWeatherState.label})`
-                                : `Weather effect preview: ${mode.toUpperCase()}`
+                            ? `Sky synced to live weather (${liveWeatherState.temp}°C ${liveWeatherState.label})`
+                            : `Weather effect preview: ${mode.toUpperCase()}`
                             );
                         }
-
+                        
                         function rebuildWeatherParticles() {
                             const cvs = document.getElementById("weather-canvas");
                             if (!cvs) return;
@@ -5827,7 +6139,7 @@
                             const mode = getActiveWeatherMode();
                             weatherParticles = [];
                             weatherSplashes = [];
-
+                            
                             if (mode === "rain" || mode === "storm") {
                                 const count = mode === "storm" ? 130 : 75;
                                 for (let i = 0; i < count; i++) {
@@ -5847,32 +6159,32 @@
                                         y: 50 + Math.random() * (cvs.height * 0.65),
                                         r: 95 + Math.random() * 115,
                                         vx: 0.25 + Math.random() * 0.35,
-                                        alpha: 0.14 + Math.random() * 0.10
+                                        alpha: 0.05 + Math.random() * 0.04
                                     });
                                 }
                             }
                         }
-
+                        
                         function startWeatherEngine() {
                             if (weatherRaf) cancelAnimationFrame(weatherRaf);
                             const cvs = document.getElementById("weather-canvas");
                             if (!cvs) return;
                             const ctx = cvs.getContext("2d");
                             rebuildWeatherParticles();
-
+                            
                             window.addEventListener("resize", rebuildWeatherParticles);
-
+                            
                             function tick() {
                                 if (cvs.width !== window.innerWidth || cvs.height !== window.innerHeight) {
                                     cvs.width = window.innerWidth;
                                     cvs.height = window.innerHeight;
                                 }
                                 ctx.clearRect(0, 0, cvs.width, cvs.height);
-
+                                
                                 // Visible on Home & Wall; subtle on Draw so sketching stays unobstructed
                                 const viewAlphaScale = currentView === "draw" ? 0.22 : 1.0;
                                 const mode = getActiveWeatherMode();
-
+                                
                                 if (mode === "cloudy") {
                                     for (const c of weatherParticles) {
                                         c.x += c.vx;
@@ -5889,7 +6201,7 @@
                                     // Cool overcast tint
                                     ctx.fillStyle = `rgba(30, 58, 138, ${(mode === "storm" ? 0.08 : 0.04) * viewAlphaScale})`;
                                     ctx.fillRect(0, 0, cvs.width, cvs.height);
-
+                                    
                                     ctx.lineWidth = 1.5;
                                     for (const d of weatherParticles) {
                                         ctx.strokeStyle = `rgba(59, 130, 246, ${d.alpha * viewAlphaScale})`;
@@ -5897,7 +6209,7 @@
                                         ctx.moveTo(d.x, d.y);
                                         ctx.lineTo(d.x + d.vx * 1.4, d.y + d.len);
                                         ctx.stroke();
-
+                                        
                                         d.x += d.vx;
                                         d.y += d.vy;
                                         if (d.y > cvs.height - 62) {
@@ -5909,7 +6221,7 @@
                                         }
                                         if (d.x < -40) d.x = cvs.width + 40;
                                     }
-
+                                    
                                     // Raindrop splash rings above bottom nav
                                     for (let i = weatherSplashes.length - 1; i >= 0; i--) {
                                         const s = weatherSplashes[i];
@@ -5922,7 +6234,7 @@
                                         ctx.ellipse(s.x, s.y, s.r, s.r * 0.35, 0, 0, Math.PI * 2);
                                         ctx.stroke();
                                     }
-
+                                    
                                     // Storm lightning flash
                                     if (mode === "storm" && Math.random() < 0.005) {
                                         weatherLightning = 0.32;
@@ -5933,12 +6245,12 @@
                                         weatherLightning -= 0.025;
                                     }
                                 }
-
+                                
                                 weatherRaf = requestAnimationFrame(tick);
                             }
                             weatherRaf = requestAnimationFrame(tick);
                         }
-
+                        
                         async function syncLiveWeather(lat = 14.569, lon = 121.132) {
                             try {
                                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code`;
@@ -5946,13 +6258,13 @@
                                 const data = await res.json();
                                 const code = data.current?.weather_code ?? 0;
                                 const temp = Math.round(data.current?.temperature_2m ?? 29);
-
+                                
                                 let mode = "clear";
                                 let label = "Clear";
                                 if ([95, 96, 99].includes(code)) { mode = "storm"; label = "Storm"; }
                                 else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) { mode = "rain"; label = "Rain"; }
                                 else if ([1, 2, 3, 45, 48].includes(code)) { mode = "cloudy"; label = "Cloudy"; }
-
+                                
                                 liveWeatherState = { mode, temp, label };
                                 rebuildWeatherParticles();
                                 updateWeatherPillUI();
@@ -5960,17 +6272,493 @@
                                 updateWeatherPillUI();
                             }
                         }
-
+                        
                         startWeatherEngine();
                         if (navigator.geolocation) {
                             navigator.geolocation.getCurrentPosition(
-                                pos => syncLiveWeather(pos.coords.latitude, pos.coords.longitude),
-                                () => syncLiveWeather()
+                            pos => syncLiveWeather(pos.coords.latitude, pos.coords.longitude),
+                            () => syncLiveWeather()
                             );
                         } else {
                             syncLiveWeather();
                         }
-
+                        
+                    </script>
+                    <script id="artcher-layout-js">
+                        function closeRadioPopover() {
+                            const p = document.getElementById("radio-pop"), b = document.getElementById("radio-chip-btn");
+                            if (p) p.hidden = true;
+                            if (b) b.setAttribute("aria-expanded", "false");
+                        }
+                        function toggleRadioPopover(e) {
+                            if (e) e.stopPropagation();
+                            const p = document.getElementById("radio-pop"), b = document.getElementById("radio-chip-btn");
+                            if (!p) return;
+                            p.hidden = !p.hidden;
+                            if (b) b.setAttribute("aria-expanded", String(!p.hidden));
+                        }
+                        document.addEventListener("pointerdown", (e) => {
+                            if (!e.target.closest("#radio-pop, #radio-chip-btn")) closeRadioPopover();
+                        });
+                        document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeRadioPopover(); });
+                    </script>
+                    
+                    <script id="artcher-v2-js">
+                        (function () {
+                            "use strict";
+                            
+                            // ======================================================================
+                            // 2. LEADERBOARD
+                            // ======================================================================
+                            function lbHearts(e) { return (reactions[e.id] && reactions[e.id].heart) || 0; }
+                            
+                            function lbTop() {
+                                return wallEntries
+                                .filter(e => !e._pending)
+                                .slice()
+                                .sort((a, b) => lbHearts(b) - lbHearts(a) || (b.timestamp || 0) - (a.timestamp || 0))
+                                .slice(0, 10);
+                            }
+                            
+                            function lbActive() {
+                                const v = document.getElementById("view-leaderboard");
+                                return !!(v && v.classList.contains("active"));
+                            }
+                            
+                            function renderLeaderboard() {
+                                const list = document.getElementById("lb-list");
+                                if (!list) return;
+                                list.replaceChildren();
+                                const top = lbTop();
+                                if (!top.length) {
+                                    const d = document.createElement("div");
+                                    d.className = "lb-empty";
+                                    d.textContent = "No drawings yet. Be the first to post!";
+                                    list.appendChild(d);
+                                    return;
+                                }
+                                top.forEach((entry, i) => {
+                                    const rank = i + 1;
+                                    const row = document.createElement("div");
+                                    row.className = "lb-row";
+                                    row.setAttribute("role", "button");
+                                    row.tabIndex = 0;
+                                    
+                                    const badge = document.createElement("span");
+                                    badge.className = "lb-rank" + (rank === 1 ? " gold" : rank === 2 ? " silver" : rank === 3 ? " bronze" : "");
+                                    badge.textContent = "#" + rank;
+                                    
+                                    const thumb = document.createElement("span");
+                                    thumb.className = "lb-thumb";
+                                    const cv = document.createElement("canvas");
+                                    cv.width = cv.height = 112;
+                                    const c = cv.getContext("2d", { willReadFrequently: true });
+                                    c.fillStyle = bgOf(entry.strokes);
+                                    c.fillRect(0, 0, 112, 112);
+                                    renderStrokesInstant(c, entry.strokes || [], 112, false);
+                                    thumb.appendChild(cv);
+                                    
+                                    const info = document.createElement("span");
+                                    info.className = "lb-info";
+                                    const name = document.createElement("span");
+                                    name.className = "lb-name";
+                                    name.textContent = entry.author || "Anonymous";
+                                    const tile = document.createElement("span");
+                                    tile.className = "lb-tile";
+                                    tile.textContent = "Tile " + entry.gx + ", " + entry.gy;
+                                    info.appendChild(name);
+                                    info.appendChild(tile);
+                                    
+                                    const pill = document.createElement("span");
+                                    pill.className = "lb-heart";
+                                    pill.textContent = "❤️ " + lbHearts(entry);
+                                    
+                                    const loc = document.createElement("button");
+                                    loc.type = "button";
+                                    loc.className = "btn btn-sm";
+                                    loc.textContent = "Locate";
+                                    loc.title = "Locate on Wall";
+                                    loc.setAttribute("aria-label", "Locate " + (entry.author || "Anonymous") + " on wall");
+                                    loc.addEventListener("click", (ev) => {
+                                        ev.stopPropagation();
+                                        switchView("wall");
+                                        focusTile(entry);
+                                    });
+                                    
+                                    row.append(badge, thumb, info, pill, loc);
+                                    row.addEventListener("click", () => openModal(entry));
+                                    row.addEventListener("keydown", (ev) => {
+                                        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); openModal(entry); }
+                                    });
+                                    list.appendChild(row);
+                                });
+                            }
+                            window.renderLeaderboard = renderLeaderboard;
+                            
+                            let lbTimer = 0;
+                            function lbSoon() {
+                                if (!lbActive()) return;
+                                clearTimeout(lbTimer);
+                                lbTimer = setTimeout(renderLeaderboard, 120);
+                            }
+                            
+                            // hook the existing functions (they are looked up by name at call time)
+                            const _switchView = switchView;
+                            switchView = function (name) {
+                                _switchView(name);
+                                if (name === "leaderboard") {
+                                    renderLeaderboard();
+                                    loadWallEntries({ autoPlay: false, manual: false, isLiveSync: true });
+                                }
+                            };
+                            
+                            const _loadReactions = loadReactions;
+                            loadReactions = async function () {
+                                const r = await _loadReactions.apply(this, arguments);
+                                lbSoon();
+                                return r;
+                            };
+                            
+                            const _toggleReaction = toggleReaction;
+                            toggleReaction = async function () {
+                                const p = _toggleReaction.apply(this, arguments);
+                                lbSoon();                       // optimistic update already applied
+                                const r = await p;
+                                lbSoon();
+                                return r;
+                            };
+                            
+                            const _loadWallEntries = loadWallEntries;
+                            loadWallEntries = async function () {
+                                const r = await _loadWallEntries.apply(this, arguments);
+                                lbSoon();
+                                return r;
+                            };
+                            
+                            const _updateTilePill = updateTilePill;   // also fires for realtime reaction broadcasts
+                            updateTilePill = function (id) {
+                                _updateTilePill(id);
+                                lbSoon();
+                            };
+                            
+                            // ======================================================================
+                            // 3. ICON-ORDER CAPTCHA
+                            // ======================================================================
+                            const CAP_W = 320, CAP_H = 190, CAP_SIZE = 44, CAP_HIT = 28;
+                            const CAP_DEF = {
+                                brush:   { p: ["M12 19l7-7 3 3-7 7-3-3z", "M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"], c: "#1d4ed8" },
+                                star:    { p: ["M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"], c: "#d97706" },
+                                heart:   { p: ["M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"], c: "#dc2626" },
+                                bolt:    { p: ["M13 2L3 14h9l-1 8 10-12h-9l1-8z"], c: "#7c3aed" },
+                                palette: { p: ["M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-8.8-10-8.8z"],
+                                dots: [[13.5, 6.5], [17.5, 10.5], [8.5, 7.5], [6.5, 12.5]], c: "#16a34a" }
+                            };
+                            const CAP_KEYS = Object.keys(CAP_DEF);
+                            const cap = { targets: [], icons: [], done: [], base: null, onOk: null, busy: false };
+                            const rnd = (a, b) => a + Math.random() * (b - a);
+                            const shuffleArr = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+                            
+                            function capDrawIcon(ctx, key, x, y, size, rot, alpha) {
+                                const d = CAP_DEF[key];
+                                ctx.save();
+                                ctx.globalAlpha = alpha == null ? 1 : alpha;
+                                ctx.translate(x, y);
+                                ctx.rotate(rot || 0);
+                                const s = size / 24;
+                                ctx.scale(s, s);
+                                ctx.translate(-12, -12);
+                                ctx.lineWidth = 2;
+                                ctx.lineJoin = "round";
+                                ctx.lineCap = "round";
+                                ctx.strokeStyle = d.c;
+                                ctx.fillStyle = d.c + "33";
+                                d.p.forEach(str => { const P = new Path2D(str); ctx.fill(P); ctx.stroke(P); });
+                                if (d.dots) { ctx.fillStyle = d.c; d.dots.forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(dx, dy, 1.5, 0, Math.PI * 2); ctx.fill(); }); }
+                                ctx.restore();
+                            }
+                            
+                            function capLayout() {
+                                const pad = CAP_SIZE / 2 + 8, minDist = CAP_SIZE + 22;
+                                const pts = [];
+                                CAP_KEYS.forEach(() => {
+                                    let p = null;
+                                    for (let t = 0; t < 400 && !p; t++) {
+                                        const c = { x: rnd(pad, CAP_W - pad), y: rnd(pad, CAP_H - pad) };
+                                        if (pts.every(q => Math.hypot(q.x - c.x, q.y - c.y) >= minDist)) p = c;
+                                    }
+                                    if (!p) { // fallback grid slot
+                                        const i = pts.length;
+                                        p = { x: pad + (i % 3) * ((CAP_W - pad * 2) / 2), y: pad + Math.floor(i / 3) * (CAP_H - pad * 2) };
+                                    }
+                                    pts.push(p);
+                                });
+                                const keys = shuffleArr(CAP_KEYS);
+                                return keys.map((k, i) => ({ key: k, x: pts[i].x, y: pts[i].y, rot: rnd(-0.35, 0.35) }));
+                            }
+                            
+                            function capBuildBase() {
+                                const b = document.createElement("canvas");
+                                b.width = CAP_W; b.height = CAP_H;
+                                const c = b.getContext("2d");
+                                c.fillStyle = "#f8fafc";
+                                c.fillRect(0, 0, CAP_W, CAP_H);
+                                c.strokeStyle = "rgba(148,163,184,.28)";
+                                c.lineWidth = 1;
+                                const off = rnd(0, 20);
+                                for (let x = off; x < CAP_W; x += 20) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x + rnd(-3, 3), CAP_H); c.stroke(); }
+                                for (let y = off; y < CAP_H; y += 20) { c.beginPath(); c.moveTo(0, y); c.lineTo(CAP_W, y + rnd(-3, 3)); c.stroke(); }
+                                const cols = ["#94a3b8", "#60a5fa", "#f472b6", "#fbbf24", "#34d399"];
+                                for (let i = 0; i < 90; i++) {
+                                    c.fillStyle = cols[i % cols.length] + "66";
+                                    c.beginPath(); c.arc(rnd(0, CAP_W), rnd(0, CAP_H), rnd(0.6, 2.2), 0, Math.PI * 2); c.fill();
+                                }
+                                for (let i = 0; i < 7; i++) {
+                                    c.strokeStyle = cols[i % cols.length] + "88";
+                                    c.lineWidth = rnd(1, 2);
+                                    c.beginPath();
+                                    c.moveTo(rnd(0, CAP_W), rnd(0, CAP_H));
+                                    c.bezierCurveTo(rnd(0, CAP_W), rnd(0, CAP_H), rnd(0, CAP_W), rnd(0, CAP_H), rnd(0, CAP_W), rnd(0, CAP_H));
+                                    c.stroke();
+                                }
+                                for (let i = 0; i < 9; i++) capDrawIcon(c, CAP_KEYS[i % CAP_KEYS.length], rnd(0, CAP_W), rnd(0, CAP_H), rnd(12, 20), rnd(-3, 3), 0.16);
+                                return b;
+                            }
+                            
+                            function capRedraw() {
+                                const cv = document.getElementById("captcha-canvas");
+                                const c = cv.getContext("2d");
+                                c.clearRect(0, 0, CAP_W, CAP_H);
+                                c.drawImage(cap.base, 0, 0);
+                                cap.icons.forEach(ic => capDrawIcon(c, ic.key, ic.x, ic.y, CAP_SIZE, ic.rot, 1));
+                                cap.done.forEach((key, i) => {
+                                    const ic = cap.icons.find(q => q.key === key);
+                                    if (!ic) return;
+                                    c.save();
+                                    c.strokeStyle = "#16a34a"; c.lineWidth = 3;
+                                    c.beginPath(); c.arc(ic.x, ic.y, CAP_HIT - 2, 0, Math.PI * 2); c.stroke();
+                                    c.fillStyle = "#16a34a";
+                                    c.beginPath(); c.arc(ic.x + 20, ic.y - 20, 9, 0, Math.PI * 2); c.fill();
+                                    c.fillStyle = "#fff"; c.font = "800 11px Inter, sans-serif";
+                                    c.textAlign = "center"; c.textBaseline = "middle";
+                                    c.fillText(String(i + 1), ic.x + 20, ic.y - 19.5);
+                                    c.restore();
+                                });
+                            }
+                            
+                            function capBuildStrip() {
+                                const strip = document.getElementById("captcha-target-order");
+                                strip.replaceChildren();
+                                cap.targets.forEach((key, i) => {
+                                    if (i > 0) { const a = document.createElement("span"); a.className = "cap-arrow"; a.textContent = "→"; strip.appendChild(a); }
+                                    const step = document.createElement("div");
+                                    step.className = "cap-step";
+                                    step.dataset.i = String(i);
+                                    const cv = document.createElement("canvas");
+                                    cv.width = cv.height = 72;
+                                    capDrawIcon(cv.getContext("2d"), key, 36, 36, 56, 0, 1);
+                                    const n = document.createElement("b");
+                                    n.textContent = String(i + 1);
+                                    step.append(cv, n);
+                                    strip.appendChild(step);
+                                });
+                            }
+                            
+                            function capMsg(text, ok) {
+                                const m = document.getElementById("captcha-msg");
+                                m.textContent = text || "";
+                                m.classList.toggle("ok", !!ok);
+                            }
+                            
+                            function capReset() {
+                                const count = Math.random() < 0.5 ? 3 : 4;
+                                cap.targets = shuffleArr(CAP_KEYS).slice(0, count);
+                                cap.icons = capLayout();
+                                cap.done = [];
+                                cap.base = capBuildBase();
+                                cap.busy = false;
+                                capBuildStrip();
+                                capRedraw();
+                                capMsg("Tap " + count + " icons in the order shown.", false);
+                            }
+                            
+                            function capIsOpen() { return document.getElementById("captcha-modal").classList.contains("open"); }
+                            
+                            window.openCaptcha = function (onOk) {
+                                if (capIsOpen()) return;
+                                cap.onOk = onOk;
+                                capReset();
+                                document.getElementById("captcha-modal").classList.add("open");
+                            };
+                            window.closeCaptcha = function () {
+                                document.getElementById("captcha-modal").classList.remove("open");
+                                cap.onOk = null;
+                            };
+                            window.capShuffle = function () { if (!cap.busy) { haptic(6); capReset(); } };
+                            window.capSubmit = function () {
+                                if (cap.busy) return;
+                                if (cap.done.length !== cap.targets.length) { showToast("Tap all the icons in order first."); return; }
+                                const fn = cap.onOk;
+                                window.closeCaptcha();
+                                if (typeof fn === "function") fn();
+                            };
+                            
+                            function capTap(e) {
+                                if (cap.busy || cap.done.length === cap.targets.length) return;
+                                const cv = document.getElementById("captcha-canvas");
+                                const r = cv.getBoundingClientRect();
+                                const x = (e.clientX - r.left) * (CAP_W / r.width);
+                                const y = (e.clientY - r.top) * (CAP_H / r.height);
+                                let hit = null, best = CAP_HIT;
+                                cap.icons.forEach(ic => { const d = Math.hypot(ic.x - x, ic.y - y); if (d <= best) { best = d; hit = ic; } });
+                                if (!hit) return;
+                                if (cap.done.includes(hit.key)) return;              // already verified, ignore
+                                
+                                if (hit.key === cap.targets[cap.done.length]) {
+                                    cap.done.push(hit.key);
+                                    haptic(8);
+                                    capRedraw();
+                                    const step = document.querySelector('#captcha-target-order .cap-step[data-i="' + (cap.done.length - 1) + '"]');
+                                    if (step) step.classList.add("done");
+                                    if (cap.done.length === cap.targets.length) capMsg("Verified ✓ Tap Submit to post.", true);
+                                    else capMsg(cap.done.length + " of " + cap.targets.length + " ✓", false);
+                                } else {
+                                    cap.busy = true;
+                                    haptic(25);
+                                    capMsg("Wrong order. Reshuffling…", false);
+                                    const wrap = document.getElementById("captcha-wrap");
+                                    wrap.classList.add("shake");
+                                    setTimeout(() => { wrap.classList.remove("shake"); capReset(); }, 440);
+                                }
+                            }
+                            
+                            document.getElementById("captcha-canvas").addEventListener("pointerdown", (e) => { e.preventDefault(); capTap(e); });
+                            document.addEventListener("keydown", (e) => { if (e.key === "Escape" && capIsOpen()) window.closeCaptcha(); });
+                            
+                            // ======================================================================
+                            // 4. TILE PICKER (choose your spot before posting)
+                            // ======================================================================
+                            const TP_CELL = 30;
+                            const tp = { minX: -4, minY: -4, cols: 8, rows: 8, sel: null, onOk: null };
+                            const tpReserved = (gx, gy) => (gx === -1 || gx === 0) && (gy === -1 || gy === 0);
+                            const tpEntryAt = (gx, gy) => wallEntries.find(e => e.gx === gx && e.gy === gy);
+                            const tpOpen = () => document.getElementById("tilepick-modal").classList.contains("open");
+                            
+                            function tpBounds() {
+                                let minX = -4, maxX = 3, minY = -4, maxY = 3;
+                                const pts = wallEntries.map(e => [e.gx, e.gy]);
+                                if (tp.sel) pts.push([tp.sel.gx, tp.sel.gy]);
+                                pts.forEach(([x, y]) => {
+                                    minX = Math.min(minX, x - 2); maxX = Math.max(maxX, x + 2);
+                                    minY = Math.min(minY, y - 2); maxY = Math.max(maxY, y + 2);
+                                });
+                                tp.minX = Math.max(-60, minX); tp.minY = Math.max(-60, minY);
+                                tp.cols = Math.min(60, maxX) - tp.minX + 1;
+                                tp.rows = Math.min(60, maxY) - tp.minY + 1;
+                            }
+                            
+                            function tpMsg() {
+                                const m = document.getElementById("tilepick-msg");
+                                const go = document.getElementById("tilepick-go");
+                                if (tp.sel) { m.textContent = "Your tile: " + tp.sel.gx + ", " + tp.sel.gy; m.classList.add("ok"); }
+                                else { m.textContent = "Tap a free square to claim it."; m.classList.remove("ok"); }
+                                if (go) go.disabled = !tp.sel;
+                            }
+                            
+                            function tpDraw() {
+                                const cv = document.getElementById("tilepick-canvas");
+                                const C = TP_CELL;
+                                cv.width = tp.cols * C; cv.height = tp.rows * C;
+                                const c = cv.getContext("2d");
+                                c.fillStyle = "#fff"; c.fillRect(0, 0, cv.width, cv.height);
+                                const accent = (getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#1d4ed8").trim();
+                                for (let r = 0; r < tp.rows; r++) {
+                                    for (let k = 0; k < tp.cols; k++) {
+                                        const gx = tp.minX + k, gy = tp.minY + r, x = k * C, y = r * C;
+                                        const entry = tpEntryAt(gx, gy);
+                                        if (tpReserved(gx, gy)) {
+                                            c.fillStyle = "#dbeafe"; c.fillRect(x, y, C, C);
+                                        } else if (entry) {
+                                            c.drawImage(getCachedTileCanvas(entry), x + 1, y + 1, C - 2, C - 2);
+                                            c.fillStyle = "rgba(148,163,184,.5)"; c.fillRect(x, y, C, C);
+                                        } else {
+                                            c.save();
+                                            c.strokeStyle = "#cbd5e1"; c.lineWidth = 1; c.setLineDash([3, 3]);
+                                            c.strokeRect(x + 3.5, y + 3.5, C - 7, C - 7);
+                                            c.restore();
+                                        }
+                                        c.strokeStyle = "rgba(226,232,240,.9)"; c.lineWidth = 1;
+                                        c.strokeRect(x + 0.5, y + 0.5, C, C);
+                                    }
+                                }
+                                // origin crosshair label
+                                const ox = (0 - tp.minX) * C, oy = (0 - tp.minY) * C;
+                                c.fillStyle = "#1d4ed8"; c.font = "800 9px Inter, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
+                                c.fillText("ART", ox, oy);
+                                if (tp.sel) {
+                                    const x = (tp.sel.gx - tp.minX) * C, y = (tp.sel.gy - tp.minY) * C;
+                                    c.fillStyle = accent + "33"; c.fillRect(x, y, C, C);
+                                    c.strokeStyle = accent; c.lineWidth = 3; c.strokeRect(x + 1.5, y + 1.5, C - 3, C - 3);
+                                    c.fillStyle = accent; c.font = "800 14px Inter, sans-serif";
+                                    c.fillText("✓", x + C / 2, y + C / 2 + 1);
+                                }
+                            }
+                            
+                            function tpScrollTo(gx, gy) {
+                                const sc = document.getElementById("tilepick-scroll");
+                                sc.scrollLeft = (gx - tp.minX + 0.5) * TP_CELL - sc.clientWidth / 2;
+                                sc.scrollTop = (gy - tp.minY + 0.5) * TP_CELL - sc.clientHeight / 2;
+                            }
+                            
+                            function tpRender(recenter) {
+                                tpBounds(); tpDraw(); tpMsg();
+                                if (recenter) requestAnimationFrame(() => tp.sel ? tpScrollTo(tp.sel.gx, tp.sel.gy) : tpScrollTo(0, 0));
+                            }
+                            
+                            window.openTilePicker = function (onOk) {
+                                if (tpOpen()) return;
+                                tp.onOk = onOk;
+                                if (tp.sel && (tpReserved(tp.sel.gx, tp.sel.gy) || tpEntryAt(tp.sel.gx, tp.sel.gy))) tp.sel = null;
+                                document.getElementById("tilepick-modal").classList.add("open");
+                                tpRender(true);
+                                // pull the freshest wall so taken squares are accurate
+                                Promise.resolve(loadWallEntries({ autoPlay: false, manual: false, isLiveSync: true })).then(() => {
+                                    if (!tpOpen()) return;
+                                    if (tp.sel && tpEntryAt(tp.sel.gx, tp.sel.gy)) { tp.sel = null; showToast("Your pick was just taken. Choose another."); }
+                                    tpRender(false);
+                                }).catch(() => {});
+                            };
+                            window.closeTilePicker = function () {
+                                document.getElementById("tilepick-modal").classList.remove("open");
+                                tp.onOk = null;
+                            };
+                            window.tpRandom = function () {
+                                const s = pickRandomOpenSlot(wallEntries);
+                                tp.sel = { gx: s.gx, gy: s.gy };
+                                haptic(6);
+                                tpRender(false);
+                                tpScrollTo(s.gx, s.gy);
+                            };
+                            window.tpContinue = function () {
+                                if (!tp.sel) { showToast("Tap a free square first."); return; }
+                                if (tpEntryAt(tp.sel.gx, tp.sel.gy)) { tp.sel = null; tpRender(false); showToast("That tile was just taken."); return; }
+                                window.__chosenSlot = { gx: tp.sel.gx, gy: tp.sel.gy };
+                                const fn = tp.onOk;
+                                window.closeTilePicker();
+                                if (typeof fn === "function") fn();
+                            };
+                            
+                            document.getElementById("tilepick-canvas").addEventListener("click", (e) => {
+                                const cv = e.currentTarget, r = cv.getBoundingClientRect();
+                                const gx = tp.minX + Math.floor(((e.clientX - r.left) * (cv.width / r.width)) / TP_CELL);
+                                const gy = tp.minY + Math.floor(((e.clientY - r.top) * (cv.height / r.height)) / TP_CELL);
+                                if (tpReserved(gx, gy)) { showToast("The center is reserved for the logo."); return; }
+                                if (tpEntryAt(gx, gy)) { showToast("That tile is already taken."); return; }
+                                tp.sel = { gx, gy };
+                                haptic(8);
+                                tpRender(false);
+                            });
+                            document.addEventListener("keydown", (e) => { if (e.key === "Escape" && tpOpen()) window.closeTilePicker(); });
+                        })();
                     </script>
                 </body>
                 </html>
