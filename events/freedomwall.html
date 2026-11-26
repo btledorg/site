@@ -471,6 +471,12 @@
         .list-row .lead svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
         .list-row:active { background: var(--soft); }
         #mute-btn.playing { color: var(--accent); }
+        .radio-station-list { display: flex; flex-direction: column; max-height: 240px; overflow-y: auto; }
+        .radio-station-option { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 16px; border: 0; border-top: 1px solid #f1f5f9; background: #fff; color: var(--ink); text-align: left; font: 500 12.5px 'Inter', sans-serif; cursor: pointer; }
+        .radio-station-option:hover, .radio-station-option.active { background: var(--accent-soft); color: var(--accent); }
+        .radio-station-option:disabled { cursor: default; color: var(--muted); }
+        .radio-station-option span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .radio-station-option small { margin-left: auto; flex-shrink: 0; color: var(--muted); }
         .switch { position: relative; width: 46px; height: 28px; flex-shrink: 0; }
         .switch input { appearance: none; -webkit-appearance: none; width: 46px; height: 28px; border-radius: 999px; background: #cbd5e1; position: relative; cursor: pointer; transition: background .2s; }
         .switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
@@ -1044,10 +1050,9 @@
                                         </svg>
                                         <span style="min-width:0;">Live Lo-Fi Radio<small id="music-status">Off · Tap to tune in</small></span>
                                     </span>
-                                    <button type="button" class="btn btn-sm" id="next-station-btn" onclick="event.stopPropagation(); nextRadioStation()" title="Play next radio station" aria-label="Play next radio station" style="flex-shrink:0;" hidden>
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16l11-8z"></path><line x1="19" y1="5" x2="19" y2="19"></line></svg>
-                                        Next
-                                    </button>
+                                </div>
+                                <div class="radio-station-list" id="radio-station-list" aria-label="Available radio stations">
+                                    <button class="radio-station-option" type="button" disabled><span>Turn on radio to load stations</span></button>
                                 </div>
                                 <div class="list-row" id="volume-row" hidden style="cursor:default; padding-top:8px; padding-bottom:12px;">
                                     <div class="slider-row" style="width:100%;">
@@ -1286,8 +1291,8 @@
                         async function fetchLiveLofiStations() {
                             if (radioStations.length > 0) return radioStations;
                             
-                            const PER_CATEGORY = 15;   // stations kept per category after ranking
-                            const FETCH_LIMIT = "60";  // pulled from the API so ranking has a pool to pick from
+                            const PER_CATEGORY = 15;
+                            const FETCH_LIMIT = "60";
                             
                             const common = {
                                 limit: FETCH_LIMIT,
@@ -1379,7 +1384,55 @@
                             }
                             
                             radioStations = mixed;
+                            renderRadioStationList();
                             return radioStations;
+                        }
+
+                        function renderRadioStationList() {
+                            const list = document.getElementById("radio-station-list");
+                            if (!list) return;
+                            list.replaceChildren();
+                            if (radioStations.length === 0) {
+                                const empty = document.createElement("button");
+                                empty.type = "button";
+                                empty.className = "radio-station-option";
+                                empty.disabled = true;
+                                empty.innerHTML = "<span>No stations loaded yet</span>";
+                                list.appendChild(empty);
+                                return;
+                            }
+                            radioStations.forEach((station, index) => {
+                                const option = document.createElement("button");
+                                option.type = "button";
+                                option.className = "radio-station-option";
+                                option.classList.toggle("active", index === currentStationIdx % radioStations.length);
+                                option.setAttribute("aria-pressed", String(index === currentStationIdx % radioStations.length));
+                                const name = document.createElement("span");
+                                name.textContent = station.name;
+                                option.appendChild(name);
+                                if (station.country) {
+                                    const country = document.createElement("small");
+                                    country.textContent = station.country;
+                                    option.appendChild(country);
+                                }
+                                option.addEventListener("click", () => selectRadioStation(index));
+                                list.appendChild(option);
+                            });
+                        }
+
+                        function selectRadioStation(index) {
+                            if (!radioStations.length) return;
+                            currentStationIdx = index;
+                            renderRadioStationList();
+                            if (!musicPlaying) {
+                                musicPlaying = true;
+                                const slider = document.getElementById("music-volume-slider");
+                                const value = document.getElementById("music-volume-val");
+                                if (slider) slider.value = Math.round(musicVolume * 100);
+                                if (value) value.textContent = Math.round(musicVolume * 100) + "%";
+                            }
+                            updateMuteIcon(`Connecting: ${radioStations[index].name}...`);
+                            playCurrentStation(0);
                         }
                         
                         async function playCurrentStation(attempt = 0) {
@@ -1425,17 +1478,6 @@
                             }
                         }
                         
-                        function nextRadioStation() {
-                            if (!musicPlaying) return;
-                            haptic(8);
-                            if (radioStations.length === 0) {
-                                playCurrentStation(0);
-                                return;
-                            }
-                            currentStationIdx = (currentStationIdx + 1) % radioStations.length;
-                            playCurrentStation(0);
-                        }
-                        
                         function setMusicVolume(val) {
                             musicVolume = clamp(Number(val) / 100, 0, 1);
                             lsSet(LS_MUSIC_VOL, musicVolume);
@@ -1448,13 +1490,11 @@
                             const btn = document.getElementById("mute-btn");
                             const icon = document.getElementById("mute-icon");
                             const status = document.getElementById("music-status");
-                            const nextBtn = document.getElementById("next-station-btn");
                             const volRow = document.getElementById("volume-row");
                             
                             if (musicPlaying) {
                                 btn.classList.add("playing");
                                 if (status) status.textContent = customStatus || "Live Radio Playing";
-                                if (nextBtn) nextBtn.hidden = false;
                                 if (volRow) volRow.hidden = false;
                                 icon.innerHTML = `
                     <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
@@ -1463,7 +1503,6 @@
                             } else {
                                 btn.classList.remove("playing");
                                 if (status) status.textContent = "Off · Tap to tune in";
-                                if (nextBtn) nextBtn.hidden = true;
                                 if (volRow) volRow.hidden = true;
                                 icon.innerHTML = `
                     <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
