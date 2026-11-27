@@ -2021,6 +2021,14 @@ function preloadAllFonts() {
             if (enableSheetTabDragging.bound) return;
             let drag = null;
             let suppressClick = false;
+            document.querySelectorAll(".sheet-tabs").forEach(tabs => {
+                let scrollTimer = 0;
+                tabs.addEventListener("scroll", () => {
+                    tabs.classList.add("is-scrolling");
+                    window.clearTimeout(scrollTimer);
+                    scrollTimer = window.setTimeout(() => tabs.classList.remove("is-scrolling"), 700);
+                }, { passive: true });
+            });
             document.addEventListener("pointerdown", event => {
                 if (event.pointerType !== "mouse" || event.button !== 0) return;
                 const tabs = event.target.closest && event.target.closest(".sheet-tabs");
@@ -4603,14 +4611,25 @@ function preloadAllFonts() {
                             row.classList.toggle("menu-open", open);
                             moreBtn.setAttribute("aria-expanded", String(open));
                             if (open) {
+                                menu.style.maxHeight = "";
                                 const triggerRect = moreBtn.getBoundingClientRect();
                                 const menuRect = menu.getBoundingClientRect();
                                 const viewportWidth = document.documentElement.clientWidth;
-                                const viewportHeight = window.innerHeight;
+                                const bottomNav = document.querySelector(".bottom-nav");
+                                const bottomNavTop = bottomNav ? bottomNav.getBoundingClientRect().top : window.innerHeight;
+                                const viewportBottom = bottomNavTop > 0 ? Math.min(window.innerHeight, bottomNavTop) : window.innerHeight;
+                                const maxBottom = viewportBottom - 8;
                                 const left = Math.max(8, Math.min(triggerRect.right - menuRect.width, viewportWidth - menuRect.width - 8));
-                                let top = triggerRect.bottom + 4;
-                                if (top + menuRect.height > viewportHeight - 8) top = triggerRect.top - menuRect.height - 4;
-                                top = Math.max(8, Math.min(top, viewportHeight - menuRect.height - 8));
+                                const belowSpace = Math.max(0, maxBottom - triggerRect.bottom - 4);
+                                const aboveSpace = Math.max(0, triggerRect.top - 12);
+                                const placeAbove = menuRect.height > belowSpace && aboveSpace > belowSpace;
+                                const availableSpace = placeAbove ? aboveSpace : belowSpace;
+                                if (menuRect.height > availableSpace) {
+                                    menu.style.maxHeight = Math.max(64, availableSpace) + "px";
+                                }
+                                const adjustedHeight = menu.getBoundingClientRect().height;
+                                let top = placeAbove ? triggerRect.top - adjustedHeight - 4 : triggerRect.bottom + 4;
+                                top = Math.max(8, Math.min(top, maxBottom - adjustedHeight));
                                 menu.style.left = left + "px";
                                 menu.style.top = top + "px";
                             }

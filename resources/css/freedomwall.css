@@ -294,6 +294,12 @@ button { font-family: inherit; }
 .sheet-tabs::-webkit-scrollbar { height: 5px; }
 .sheet-tabs::-webkit-scrollbar-track { background: #f1f5f9; }
 .sheet-tabs::-webkit-scrollbar-thumb { border-radius: 999px; background: #94a3b8; }
+@media (max-width: 700px), (pointer: coarse) {
+    .sheet-tabs { scrollbar-width: none; }
+    .sheet-tabs::-webkit-scrollbar { display: none; }
+    .sheet-tabs.is-scrolling { scrollbar-width: thin; scrollbar-color: #94a3b8 #f1f5f9; }
+    .sheet-tabs.is-scrolling::-webkit-scrollbar { display: block; height: 4px; }
+}
 .layer-list { display: flex; flex-direction: column; gap: 6px; max-height: 185px; overflow-y: auto; padding-right: 2px; }
 .layer-row {
     position: relative; display: flex; align-items: center; gap: 7px; padding: 6px 8px;
