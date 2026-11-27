@@ -847,6 +847,10 @@ function preloadAllFonts() {
         try { localStorage.setItem(key, JSON.stringify(val)); return true; }
         catch (e) { return false; }
     }
+    function lsRemove(key) {
+        try { localStorage.removeItem(key); return true; }
+        catch (e) { return false; }
+    }
     
     // =========================================================================
     // DRAFT AUTO-SAVE
@@ -2076,6 +2080,8 @@ function preloadAllFonts() {
         function setDrawTab(name) {
             document.querySelectorAll(".sheet-tab").forEach(t => t.classList.toggle("active", t.dataset.pane === name));
             document.querySelectorAll(".sheet-pane").forEach(p => p.classList.toggle("active", p.id === "pane-" + name));
+            const sheet = document.querySelector(".sheet");
+            if (sheet) sheet.dataset.activePane = name;
             const activeTab = document.querySelector('.sheet-tab[data-pane="' + name + '"]');
             if (activeTab) activeTab.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
             haptic(6);
@@ -2240,6 +2246,195 @@ function preloadAllFonts() {
                 loadWallEntries({ autoPlay: true });
             }
         }
+
+        const tutorialSteps = [
+            { view: "home", target: ".landing-title", title: "Welcome to ARTcher", copy: "This short tour shows you how to draw, use the studio tools, post to the wall, join events, and collaborate. Use Next and Back to move through it; nothing is changed or posted for you." },
+            { view: "home", target: ".landing-buttons .btn-primary", title: "Start a drawing", copy: "Choose Start drawing to open the studio. Your drawing stays on this device until you save or post it." },
+            { view: "draw", pane: "style", target: "#canvas-frame", title: "Your canvas", copy: "Draw in this area with your selected tool. Use Undo and Redo if you want to reverse a stroke. On touch screens, you can draw directly with your finger or stylus.", focus: true },
+            { view: "draw", pane: "style", target: ".tool-dock", title: "Choose a tool", copy: "Brush draws, Eraser removes marks, and Hand moves around the canvas or repositions text and reference images. Shapes, Fill, and Picker add more ways to work.", focus: true },
+            { view: "draw", pane: "style", target: "#swatch-list", title: "Pick a color and brush style", copy: "Choose a color here. The Style panel also lets you adjust brush size, opacity, brush type, stabilizer, and paper color.", focus: true },
+            { view: "draw", pane: "style", target: "#brush-size-slider", title: "Adjust brush size", copy: "Drag this slider to change the brush size. Your brush and color settings apply to new strokes.", focus: true },
+            { view: "draw", pane: "style", target: ".studio-zoom-group", title: "Zoom and move the view", copy: "Use the plus and minus buttons to zoom, tap the percentage to reset, and use rotate or flip when helpful. Zooming changes the view, not the artwork itself.", focus: true },
+            { view: "draw", pane: "ref", target: function () { return document.getElementById("ref-controls").hidden ? document.getElementById("ref-empty-state") : document.querySelector("#ref-controls .slider-row"); }, title: "Add a reference image", copy: "In Trace, upload an image from your device to use as a guide. Adjust its size, opacity, and rotation, then hide or remove it when you are done.", focus: true },
+            { view: "draw", pane: "text", target: "#pane-text .text-tools", title: "Add and edit text", copy: "Add text to the canvas, choose a font, and resize it. Select the text to move it; Stamp bakes it into the artwork so it becomes part of the drawing.", focus: true },
+            { view: "draw", pane: "layers", target: "#pane-layers .wip-controls", title: "Use layers and drafts", copy: "Layers keep drawing and text elements separate, so you can select, hide, or edit parts independently. Drafts let you keep multiple works in progress on this device.", focus: true },
+            { view: "draw", pane: "shapes", target: "#shape-grid", title: "Draw precise shapes", copy: "Pick a shape, then drag on the canvas to create it. You can adjust its stroke and fill, and edit a selected shape afterward.", focus: true },
+            { view: "draw", pane: "post", target: "#submit-btn", title: "Save, share, or post", copy: "Post to wall sends your drawing to the current wall. The other buttons let you save a PNG, share it, replay the drawing, or make a video. Posting is never triggered by this tour.", focus: true },
+            { view: "wall", target: ".wall-fab", title: "Explore the wall", copy: "Drag the wall to move around, and use its controls to zoom, refresh, or view the minimap. Tap a drawing to open its details and reactions." },
+            { view: "wall", target: "#event-btn", title: "Open event options", copy: "Events have their own wall. Open Event to join with a code or QR invite, or to manage an event you host." },
+            { view: "wall", eventModal: true, target: "#event-code-input", title: "Join with a code", copy: "Enter the event code you received, or use the QR scan option on the next step. Invites are handled inside ARTcher." },
+            { view: "wall", eventModal: true, target: ".ev-scan-btn", title: "Scan an invite QR", copy: "The scanner can read event and collaboration invites. It will ask for camera permission only if you choose to start the scanner; you can also paste a code or link instead." },
+            { view: "wall", eventModal: true, hostDetails: true, target: "#event-host > summary", title: "Host and focus an event", copy: "Hosts can create an event, hide or reveal its art, and choose whether invite links open directly in the drawing studio with focus mode. This tour does not change those settings." },
+            { view: "draw", pane: "team", target: function () { var start = document.getElementById("collab-start-btn"); var leave = document.getElementById("collab-leave-btn"); return start && !start.hidden ? start : (leave && !leave.hidden ? leave : document.querySelector("#pane-team .collab-actions")); }, title: "Draw together in Teams", copy: "Start a shared room or join with an invite link or QR. Strokes and pointers sync live between two artists. Joining a room replaces the current drawing, so save or switch drafts first.", focus: true },
+            { view: "more", target: "#acct-profile-card", title: "Profile and preferences", copy: "More contains your guest name, optional account sign-in, upload status, and app preferences. You can use ARTcher as a guest; an account is optional." },
+            { view: "home", target: ".landing-title", title: "You're ready to create", copy: "That covers the main ARTcher workflows. You can restart this guided tour at any time using the information button in the top bar—or the studio toolbar in focus mode." }
+        ];
+        let tutorialStepsForRun = [];
+        let tutorialIndex = 0;
+        let tutorialReturnState = null;
+        let tutorialReturnFocus = null;
+
+        function tutorialTarget(step) {
+            if (!step || !step.target) return null;
+            return typeof step.target === "function" ? step.target() : document.querySelector(step.target);
+        }
+
+        function prepareTutorialStep(step) {
+            const eventModal = document.getElementById("event-modal");
+            if (eventModal && eventModal.classList.contains("open") && !step.eventModal) closeEventModal();
+            if (step.view && currentView !== step.view) switchView(step.view);
+            if (step.pane) {
+                setDrawTab(step.pane);
+                if (step.pane === "layers") renderLayersPanel();
+                if (step.pane === "shapes") syncShapePane();
+            }
+            if (step.eventModal) openEventModal();
+            if (step.hostDetails) {
+                const hostDetails = document.getElementById("event-host");
+                if (hostDetails) hostDetails.open = true;
+            }
+        }
+
+        function positionTutorial() {
+            const overlay = document.getElementById("tutorial-overlay");
+            if (!overlay || overlay.hidden) return;
+            const step = tutorialStepsForRun[tutorialIndex];
+            const target = tutorialTarget(step);
+            const card = document.getElementById("tutorial-card");
+            const highlight = document.getElementById("tutorial-highlight");
+            const shade = document.getElementById("tutorial-shade");
+            const maskBase = document.getElementById("tutorial-mask-base");
+            const maskCutout = document.getElementById("tutorial-mask-cutout");
+            const maskDim = document.getElementById("tutorial-mask-dim");
+            const width = document.documentElement.clientWidth;
+            const height = document.documentElement.clientHeight;
+            let rect = null;
+            if (target && target.getClientRects().length) {
+                const style = window.getComputedStyle(target);
+                if (style.display !== "none" && style.visibility !== "hidden") rect = target.getBoundingClientRect();
+            }
+
+            shade.setAttribute("viewBox", "0 0 " + width + " " + height);
+            maskBase.setAttribute("width", width);
+            maskBase.setAttribute("height", height);
+            maskDim.setAttribute("width", width);
+            maskDim.setAttribute("height", height);
+
+            if (rect && rect.width > 0 && rect.height > 0) {
+                const left = Math.max(4, rect.left - 7);
+                const top = Math.max(4, rect.top - 7);
+                const right = Math.min(width - 4, rect.right + 7);
+                const bottom = Math.min(height - 4, rect.bottom + 7);
+                maskCutout.setAttribute("x", left);
+                maskCutout.setAttribute("y", top);
+                maskCutout.setAttribute("width", Math.max(0, right - left));
+                maskCutout.setAttribute("height", Math.max(0, bottom - top));
+                highlight.style.display = "block";
+                highlight.style.left = left + "px";
+                highlight.style.top = top + "px";
+                highlight.style.width = Math.max(0, right - left) + "px";
+                highlight.style.height = Math.max(0, bottom - top) + "px";
+            } else {
+                maskCutout.setAttribute("width", 0);
+                maskCutout.setAttribute("height", 0);
+                highlight.style.display = "none";
+            }
+
+            const cardRect = card.getBoundingClientRect();
+            const cardWidth = cardRect.width;
+            const cardHeight = cardRect.height;
+            let left = (width - cardWidth) / 2;
+            let top = (height - cardHeight) / 2;
+            if (rect && rect.width > 0 && rect.height > 0) {
+                left = rect.left + rect.width / 2 - cardWidth / 2;
+                if (rect.bottom + cardHeight + 20 <= height - 12) top = rect.bottom + 14;
+                else if (rect.top - cardHeight - 14 >= 12) top = rect.top - cardHeight - 14;
+                else top = Math.max(12, height - cardHeight - 12);
+            }
+            card.style.left = Math.max(12, Math.min(left, width - cardWidth - 12)) + "px";
+            card.style.top = Math.max(12, Math.min(top, height - cardHeight - 12)) + "px";
+        }
+
+        function showTutorialStep() {
+            const step = tutorialStepsForRun[tutorialIndex];
+            if (!step) return;
+            prepareTutorialStep(step);
+            const target = tutorialTarget(step);
+            if (target && target.getClientRects().length) target.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
+            document.getElementById("tutorial-progress").textContent = "Step " + (tutorialIndex + 1) + " of " + tutorialStepsForRun.length;
+            document.getElementById("tutorial-title").textContent = step.title;
+            document.getElementById("tutorial-copy").textContent = step.copy;
+            document.getElementById("tutorial-back").disabled = tutorialIndex === 0;
+            document.getElementById("tutorial-next").textContent = tutorialIndex === tutorialStepsForRun.length - 1 ? "Finish" : "Next";
+            window.requestAnimationFrame(positionTutorial);
+        }
+
+        function startTutorial() {
+            if (tutorialReturnState) return;
+            const activeTab = document.querySelector(".sheet-tab.active");
+            tutorialReturnState = { view: currentView, pane: activeTab ? activeTab.dataset.pane : "style" };
+            tutorialReturnFocus = document.activeElement;
+            tutorialStepsForRun = focusModeActive ? tutorialSteps.filter(function (step) { return step.focus; }) : tutorialSteps.slice();
+            tutorialIndex = 0;
+            document.getElementById("tutorial-overlay").hidden = false;
+            showTutorialStep();
+            document.getElementById("tutorial-next").focus();
+        }
+
+        function tutorialNext() {
+            if (tutorialIndex >= tutorialStepsForRun.length - 1) {
+                closeTutorial();
+                return;
+            }
+            tutorialIndex++;
+            showTutorialStep();
+        }
+
+        function tutorialBack() {
+            if (tutorialIndex <= 0) return;
+            tutorialIndex--;
+            showTutorialStep();
+        }
+
+        function closeTutorial() {
+            if (!tutorialReturnState) return;
+            const returnState = tutorialReturnState;
+            const returnFocus = tutorialReturnFocus;
+            tutorialReturnState = null;
+            tutorialReturnFocus = null;
+            tutorialStepsForRun = [];
+            document.getElementById("tutorial-overlay").hidden = true;
+            const eventModal = document.getElementById("event-modal");
+            if (eventModal && eventModal.classList.contains("open")) closeEventModal();
+            if (!focusModeActive && currentView !== returnState.view) switchView(returnState.view);
+            if (returnState.view === "draw" && returnState.pane) setDrawTab(returnState.pane);
+            if (returnFocus && document.contains(returnFocus) && typeof returnFocus.focus === "function") returnFocus.focus();
+        }
+
+        document.addEventListener("keydown", function (event) {
+            const overlay = document.getElementById("tutorial-overlay");
+            if (!overlay || overlay.hidden) return;
+            if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+                closeTutorial();
+                return;
+            }
+            if (event.key === "Tab") {
+                const controls = Array.prototype.slice.call(overlay.querySelectorAll("button:not(:disabled)"));
+                if (!controls.length) return;
+                const first = controls[0];
+                const last = controls[controls.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
+            }
+        }, true);
+        window.addEventListener("resize", positionTutorial);
         
         function clampStudioPan() {
             const w = canvasFrame.clientWidth || 460;
@@ -2269,7 +2464,7 @@ function preloadAllFonts() {
         }
         
         function applyStudioTransform() {
-            if (studioScale <= 1.001 && Math.abs(studioRotation % 360) < 0.001) {
+            if (Math.abs(studioScale - 1) <= 0.001 && Math.abs(studioRotation % 360) < 0.001) {
                 studioScale = 1;
                 studioPanX = 0;
                 studioPanY = 0;
@@ -2284,7 +2479,7 @@ function preloadAllFonts() {
         }
         
         function zoomStudioAt(newScale, anchorX, anchorY) {
-            const clampedScale = Math.min(4, Math.max(1, newScale));
+            const clampedScale = Math.min(4, Math.max(0.1, newScale));
             const w = canvasFrame.clientWidth || 460, h = canvasFrame.clientHeight || 460;
             const cx = anchorX !== undefined ? anchorX : w / 2;
             const cy = anchorY !== undefined ? anchorY : h / 2;
@@ -4447,17 +4642,23 @@ function preloadAllFonts() {
                 function renderLayersPanel() {
                     const list = document.getElementById("layer-list");
                     if (!list) return;
+                    const closeMenu = menu => {
+                        menu.hidden = true;
+                        if (menu._layerRow) menu._layerRow.classList.remove("menu-open");
+                        const trigger = menu._layerTrigger || menu.parentElement.querySelector(".layer-more-btn");
+                        if (trigger) trigger.setAttribute("aria-expanded", "false");
+                        if (menu.parentElement === document.body && menu._layerHome) {
+                            menu._layerHome.appendChild(menu);
+                        }
+                    };
                     if (!renderLayersPanel.menuDismissBound) {
                         const dismissOpenMenus = () => {
                             document.querySelectorAll(".layer-more-menu:not([hidden])").forEach(menu => {
-                                menu.hidden = true;
-                                menu.closest(".layer-row")?.classList.remove("menu-open");
-                                const trigger = menu.parentElement.querySelector(".layer-more-btn");
-                                if (trigger) trigger.setAttribute("aria-expanded", "false");
+                                closeMenu(menu);
                             });
                         };
                         document.addEventListener("pointerdown", event => {
-                            if (event.target.closest && event.target.closest(".layer-actions")) return;
+                            if (event.target.closest && event.target.closest(".layer-actions, .layer-more-menu")) return;
                             dismissOpenMenus();
                         });
                         document.addEventListener("scroll", event => {
@@ -4468,17 +4669,13 @@ function preloadAllFonts() {
                         document.addEventListener("keydown", event => {
                             if (event.key !== "Escape") return;
                             document.querySelectorAll(".layer-more-menu:not([hidden])").forEach(menu => {
-                                menu.hidden = true;
-                                menu.closest(".layer-row")?.classList.remove("menu-open");
-                                const trigger = menu.parentElement.querySelector(".layer-more-btn");
-                                if (trigger) {
-                                    trigger.setAttribute("aria-expanded", "false");
-                                    trigger.focus();
-                                }
+                                closeMenu(menu);
+                                if (menu._layerTrigger) menu._layerTrigger.focus();
                             });
                         });
                         renderLayersPanel.menuDismissBound = true;
                     }
+                    document.querySelectorAll(".layer-more-menu:not([hidden])").forEach(closeMenu);
                     list.replaceChildren();
                     for (let i = layers.length - 1; i >= 0; i--) {
                         const lyr = layers[i];
@@ -4593,6 +4790,9 @@ function preloadAllFonts() {
                         menu.hidden = true;
                         menu.setAttribute("role", "menu");
                         menu.append(alphaBtn, clipBtn, upBtn, dnBtn, delBtn);
+                        menu.addEventListener("click", event => {
+                            if (event.target.closest && event.target.closest(".layer-menu-item")) closeMenu(menu);
+                        });
 
                         const moreBtn = document.createElement("button");
                         moreBtn.type = "button";
@@ -4605,24 +4805,22 @@ function preloadAllFonts() {
                         moreBtn.onclick = e => {
                             e.stopPropagation();
                             const open = menu.hidden;
-                            list.querySelectorAll(".layer-more-menu").forEach(otherMenu => {
-                                otherMenu.hidden = true;
-                                otherMenu.closest(".layer-row")?.classList.remove("menu-open");
-                                const trigger = otherMenu.parentElement.querySelector(".layer-more-btn");
-                                if (trigger) trigger.setAttribute("aria-expanded", "false");
+                            document.querySelectorAll(".layer-more-menu:not([hidden])").forEach(otherMenu => {
+                                closeMenu(otherMenu);
                             });
+                            menu._layerHome = acts;
+                            menu._layerRow = row;
+                            menu._layerTrigger = moreBtn;
                             menu.hidden = !open;
                             row.classList.toggle("menu-open", open);
                             moreBtn.setAttribute("aria-expanded", String(open));
                             if (open) {
+                                document.body.appendChild(menu);
                                 menu.style.maxHeight = "";
                                 const triggerRect = moreBtn.getBoundingClientRect();
                                 const menuRect = menu.getBoundingClientRect();
                                 const viewportWidth = document.documentElement.clientWidth;
-                                const bottomNav = document.querySelector(".bottom-nav");
-                                const bottomNavTop = bottomNav ? bottomNav.getBoundingClientRect().top : window.innerHeight;
-                                const viewportBottom = bottomNavTop > 0 ? Math.min(window.innerHeight, bottomNavTop) : window.innerHeight;
-                                const maxBottom = viewportBottom - 8;
+                                const maxBottom = document.documentElement.clientHeight - 8;
                                 const left = Math.max(8, Math.min(triggerRect.right - menuRect.width, viewportWidth - menuRect.width - 8));
                                 const belowSpace = Math.max(0, maxBottom - triggerRect.bottom - 4);
                                 const aboveSpace = Math.max(0, triggerRect.top - 12);
@@ -5331,9 +5529,33 @@ function preloadAllFonts() {
                         clearTimeout(to);
                     }
                 }
+
+                function focusPostedKey(code = evCode()) {
+                    return code ? "fw_focus_posted_v1_" + encodeURIComponent(String(code).trim().toUpperCase()) : "";
+                }
+
+                function hasFocusPostForEvent(code = evCode()) {
+                    const key = focusPostedKey(code);
+                    return !!key && !!lsGet(key, null);
+                }
+
+                function syncFocusPostUI() {
+                    const blocked = hasFocusPostForEvent();
+                    ["submit-btn", "focus-quick-post-btn"].forEach(id => {
+                        const button = document.getElementById(id);
+                        if (!button) return;
+                        button.disabled = blocked;
+                        button.textContent = blocked ? "Already posted" : "Post to wall";
+                        button.title = blocked ? "This device has already posted to this event." : "";
+                    });
+                }
                 
                 function submitToWall() {
                     deselectText();
+                    if (hasFocusPostForEvent()) {
+                        showToast("This device has already posted to this event.");
+                        return;
+                    }
                     const probe = getAllFlattenedStrokes(false);
                     if (probe.length === 0) {
                         showToast("Draw something first before posting.");
@@ -5346,6 +5568,12 @@ function preloadAllFonts() {
                 
                 async function submitToWallCore() {
                     deselectText();
+                    if (hasFocusPostForEvent()) {
+                        showToast("This device has already posted to this event.");
+                        return;
+                    }
+                    const postingInFocusMode = focusModeActive && !!evCode();
+                    const postedKey = postingInFocusMode ? focusPostedKey() : "";
                     const items = getAllFlattenedStrokes(false);
                     if (items.length && paperBg !== "#ffffff") items.unshift({ k: "bg", c: paperBg });
                     if (items.length === 0) {
@@ -5369,15 +5597,33 @@ function preloadAllFonts() {
                         event: evCode()
                     };
                     
+                    if (postedKey && !lsSet(postedKey, entry.id)) {
+                        showToast("Couldn't save this device's one-post limit. Free up device storage and try again.");
+                        return;
+                    }
                     pending.push(entry);
                     myTileIds.push(entry.id); lsSet(LS_MINE, myTileIds.slice(-50));
                     if (!lsSet(LS_QUEUE, pending)) {
                         pending.pop();
+                        myTileIds = myTileIds.filter(id => id !== entry.id);
+                        lsSet(LS_MINE, myTileIds.slice(-50));
+                        const lockCleared = !postedKey || lsRemove(postedKey);
+                        if (!lockCleared) {
+                            syncFocusPostUI();
+                            showToast("Device storage is full; the drawing was not queued and the one-post limit could not be cleared.");
+                            return;
+                        }
                         showToast("Device storage is full. Upload the saved drawings first.");
                         return;
                     }
                     document.getElementById("post-anonymous").checked = false;
                     
+                    if (postingInFocusMode) {
+                        focusModeActive = false;
+                        document.body.classList.remove("focus-mode");
+                        syncFocusPostUI();
+                        window.dispatchEvent(new Event("resize"));
+                    }
                     rebuildEntries();
                     setUploadUI();
                     clearCanvas(true);
@@ -5387,6 +5633,7 @@ function preloadAllFonts() {
                     launchConfetti();
                     playPopTone(660);
                     haptic(20);
+                    if (postingInFocusMode) showToast("Posted! This device has used its one entry for this event.");
                     
                     if (AUTO_UPLOAD && await hasGoodInternet()) {
                         showToast("Uploading to the wall...");
@@ -6187,6 +6434,198 @@ function preloadAllFonts() {
                     const inp = evEl("event-code-input");
                     if (await joinEventByCode(inp.value)) { inp.value = ""; closeEventModal(); switchView("wall"); }
                 }
+
+                const qrScanState = { stream: null, detector: null, frame: 0, busy: false, processing: false, opening: false, lastScanAt: 0 };
+
+                function setQRScanStatus(message) {
+                    const status = evEl("qr-scan-status");
+                    if (status) status.textContent = message;
+                }
+
+                function stopQRScanCamera() {
+                    if (qrScanState.frame) cancelAnimationFrame(qrScanState.frame);
+                    qrScanState.frame = 0;
+                    qrScanState.detector = null;
+                    if (qrScanState.stream) {
+                        qrScanState.stream.getTracks().forEach(track => track.stop());
+                        qrScanState.stream = null;
+                    }
+                    const video = evEl("qr-scan-video");
+                    if (video) {
+                        video.pause();
+                        video.srcObject = null;
+                        video.classList.remove("active");
+                    }
+                }
+
+                function closeQRScanner() {
+                    stopQRScanCamera();
+                    const modal = evEl("qr-scan-modal");
+                    if (modal) modal.classList.remove("open");
+                }
+
+                function openQRScanner(context) {
+                    const modal = evEl("qr-scan-modal");
+                    const input = evEl("qr-scan-input");
+                    if (!modal) return;
+                    if (input) input.value = "";
+                    modal.classList.add("open");
+                    setQRScanStatus(context === "team"
+                        ? "Allow camera access and point it at a collaboration invite QR."
+                        : "Allow camera access and point it at an event or collaboration invite QR.");
+                    startQRScanner();
+                }
+
+                async function startQRScanner() {
+                    if (qrScanState.opening || qrScanState.stream) return;
+                    stopQRScanCamera();
+                    const video = evEl("qr-scan-video");
+                    if (!window.BarcodeDetector) {
+                        setQRScanStatus("This browser cannot scan QR codes with its camera. Paste an invite link or enter an event code below.");
+                        return;
+                    }
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        setQRScanStatus("Camera access requires a secure connection. Paste an invite link or enter an event code below.");
+                        return;
+                    }
+                    qrScanState.opening = true;
+                    try {
+                        const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+                        const stream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: { ideal: "environment" } },
+                            audio: false
+                        });
+                        if (!evEl("qr-scan-modal").classList.contains("open")) {
+                            stream.getTracks().forEach(track => track.stop());
+                            return;
+                        }
+                        qrScanState.detector = detector;
+                        qrScanState.stream = stream;
+                        video.srcObject = stream;
+                        video.classList.add("active");
+                        await video.play();
+                        setQRScanStatus("Scanning… hold the QR inside the camera view.");
+                        scanQRFrame();
+                    } catch (error) {
+                        console.error("Unable to start the QR camera scanner.", error);
+                        stopQRScanCamera();
+                        if (error && error.name === "NotAllowedError") {
+                            setQRScanStatus("Camera permission was denied. Allow camera access or paste the invite link below.");
+                        } else if (error && error.name === "NotFoundError") {
+                            setQRScanStatus("No camera was found. Paste the invite link or enter an event code below.");
+                        } else {
+                            setQRScanStatus("Couldn't start the camera. Check permissions or paste the invite link below.");
+                        }
+                    } finally {
+                        qrScanState.opening = false;
+                    }
+                }
+
+                function scanQRFrame() {
+                    if (!qrScanState.detector || !qrScanState.stream) return;
+                    qrScanState.frame = requestAnimationFrame(scanQRFrame);
+                    const video = evEl("qr-scan-video");
+                    const now = performance.now();
+                    if (qrScanState.busy || video.readyState < 2 || now - qrScanState.lastScanAt < 200) return;
+                    qrScanState.lastScanAt = now;
+                    qrScanState.busy = true;
+                    qrScanState.detector.detect(video).then(codes => {
+                        const result = codes.find(code => code.rawValue);
+                        if (result) {
+                            stopQRScanCamera();
+                            processScannedQR(result.rawValue);
+                        }
+                    }).catch(error => {
+                        console.error("Unable to read a QR code from the camera.", error);
+                        stopQRScanCamera();
+                        setQRScanStatus("Couldn't read the QR. Restart the camera or paste the invite link below.");
+                    }).finally(() => {
+                        qrScanState.busy = false;
+                    });
+                }
+
+                function parseScannedQR(value) {
+                    const text = String(value || "").trim();
+                    if (/^[a-f0-9]{32}$/i.test(text)) return { roomId: text.toLowerCase() };
+                    if (/^[a-z0-9]{4,8}$/i.test(text)) return { eventCode: normCode(text), focus: false };
+                    let url;
+                    try { url = new URL(text); }
+                    catch (error) { return null; }
+                    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+                    const eventCode = normCode(url.searchParams.get("event"));
+                    const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+                    const roomId = hash.get("collab") || url.searchParams.get("collab") || "";
+                    if (roomId && !/^[a-f0-9]{32}$/i.test(roomId)) return null;
+                    if ((!eventCode || eventCode.length < 4) && !roomId) return null;
+                    return {
+                        eventCode: eventCode.length >= 4 ? eventCode : "",
+                        focus: url.searchParams.get("focus") === "1",
+                        roomId: roomId.toLowerCase()
+                    };
+                }
+
+                function setScannedEventInUrl(code, focus) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set("event", code);
+                    if (focus) url.searchParams.set("focus", "1");
+                    else url.searchParams.delete("focus");
+                    history.replaceState(null, "", url.toString());
+                }
+
+                async function processScannedQR(value) {
+                    if (qrScanState.processing) return false;
+                    const invite = parseScannedQR(value);
+                    if (!invite) {
+                        setQRScanStatus("That QR isn't a recognized ARTcher event or collaboration invite.");
+                        return false;
+                    }
+                    qrScanState.processing = true;
+                    setQRScanStatus("Invite found. Opening it inside ARTcher…");
+                    try {
+                        if (invite.eventCode) {
+                            const previousFocusRequest = focusLinkRequested;
+                            focusLinkRequested = invite.focus;
+                            const joined = await joinEventByCode(invite.eventCode);
+                            if (!joined) {
+                                focusLinkRequested = previousFocusRequest;
+                                setQRScanStatus("Couldn't join that event. Check the code or connection and try again.");
+                                return false;
+                            }
+                            setScannedEventInUrl(invite.eventCode, invite.focus);
+                        }
+                        closeEventModal();
+                        if (invite.roomId) {
+                            setCollabRoomInUrl(invite.roomId);
+                            initializeCollaborationFromInvite();
+                        } else {
+                            switchView("wall");
+                        }
+                        closeQRScanner();
+                        return true;
+                    } catch (error) {
+                        console.error("Unable to open the scanned ARTcher invite.", error);
+                        setQRScanStatus("Couldn't open that invite. Try again or enter the event code manually.");
+                        return false;
+                    } finally {
+                        qrScanState.processing = false;
+                    }
+                }
+
+                async function submitScannedQR() {
+                    const input = evEl("qr-scan-input");
+                    if (!input || !input.value.trim()) {
+                        setQRScanStatus("Enter an event code or paste an invite link.");
+                        return;
+                    }
+                    stopQRScanCamera();
+                    if (await processScannedQR(input.value)) input.value = "";
+                }
+
+                window.openQRScanner = openQRScanner;
+                window.closeQRScanner = closeQRScanner;
+                window.startQRScanner = startQRScanner;
+                window.submitScannedQR = submitScannedQR;
+
                 function copyTextSafe(text, okMsg, failMsg) {
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         return navigator.clipboard.writeText(text)
@@ -8797,10 +9236,11 @@ function preloadAllFonts() {
                                                     var curtainRun = 0;
 
                                                     function syncFocusMode() {
-                                                        var active = focusLinkRequested && hiddenForMe();
+                                                        var active = focusLinkRequested && hiddenForMe() && !hasFocusPostForEvent();
                                                         var changed = document.body.classList.contains("focus-mode") !== active;
                                                         focusModeActive = active;
                                                         document.body.classList.toggle("focus-mode", active);
+                                                        syncFocusPostUI();
                                                         if (active && currentView !== "draw") window.switchView("draw");
                                                         if (!active && typeof window.flushPendingWhatsNew === "function") window.flushPendingWhatsNew();
                                                         if (changed) requestAnimationFrame(function () { window.dispatchEvent(new Event("resize")); });
@@ -10160,7 +10600,6 @@ function preloadAllFonts() {
                                                             haptic(8);
                                                             if (hasNativeUpdate()) {
                                                                 window.Android.checkForUpdate();
-                                                                showToast("Checking… the update installs right after it downloads");
                                                             } else if (ver && ver.apkUrl) {
                                                                 showToast("This app version can't self-install. Downloading the APK, tap it when finished.");
                                                                 window.location.href = ver.apkUrl;

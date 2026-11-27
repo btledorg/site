@@ -92,6 +92,9 @@
             </span>
         </button>
         <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+            <button type="button" class="btn btn-sm tutorial-launch-btn" onclick="startTutorial()" aria-label="Start the guided tour" title="Guided tour">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="11" x2="12" y2="16"></line><circle cx="12" cy="7.5" r=".7" fill="currentColor" stroke="none"></circle></svg>
+            </button>
             <button class="btn btn-amber" id="nav-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
             <div class="radio-chip-wrap" id="radio-mini-pill" hidden>
                 <button type="button" class="radio-chip" id="radio-chip-btn" onclick="toggleRadioPopover(event)" aria-haspopup="true" aria-expanded="false" aria-label="Now playing" title="Now playing">
@@ -176,6 +179,9 @@
                 </div>
                 <div class="studio-extra">
                     <button class="btn btn-amber btn-sm" id="focus-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
+                    <button type="button" class="chip-btn studio-tutorial-btn" id="studio-tutorial-btn" onclick="startTutorial()" aria-label="Start the drawing tutorial" title="Guided tour">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="11" x2="12" y2="16"></line><circle cx="12" cy="7.5" r=".7" fill="currentColor" stroke="none"></circle></svg>
+                    </button>
                     
                     <button type="button" class="chip-btn" id="ref-overlay-quick" onclick="toggleRefOverlay()" hidden aria-label="Show or hide reference overlay" title="Show / hide reference overlay">
                         <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -237,7 +243,7 @@
             </div>
             
             <div class="draw-hud" id="draw-hud" role="status"><span class="dh-dot"></span><span id="dh-tool">Brush</span><span class="dh-sep">·</span><span id="dh-layer">Layer 1</span></div>
-            <div class="sheet">
+            <div class="sheet" data-active-pane="style">
                 <div class="sheet-tabs" role="tablist">
                     <button class="sheet-tab active" data-pane="style" role="tab" onclick="setDrawTab('style')">
                         <svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.8.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-8.8-10-8.8z"/></svg>Style
@@ -476,11 +482,13 @@
                     <button type="button" class="btn btn-sm" onclick="copyCollabInvite()">Copy link</button>
                 </div>
                 <div class="collab-note" id="collab-note">Joining replaces the active draft with the host's drawing. Save or switch drafts first if needed.</div>
+                <button type="button" class="btn btn-block" onclick="openQRScanner('team')">Scan collaboration invite QR</button>
                 <div class="collab-actions">
                     <button type="button" class="btn btn-accent" id="collab-start-btn" onclick="startCollaboration()">Start shared room</button>
                     <button type="button" class="btn btn-danger" id="collab-leave-btn" onclick="leaveCollaboration()" hidden>Leave room</button>
                 </div>
             </div>
+            <button type="button" class="btn btn-accent btn-block focus-quick-post" id="focus-quick-post-btn" onclick="submitToWall()">Post to wall</button>
         </div>
     </div>
 </section>
@@ -879,16 +887,20 @@
             </div>
         </div>
 
-        <div>
-            <div class="saved-label" style="margin-bottom:6px;">Join with code</div>
-            <div style="display:flex;gap:8px;">
-                <input type="text" id="event-code-input" class="name-input code" maxlength="8" placeholder="K7M2QX" autocomplete="off" autocapitalize="characters"
+        <div class="ev-join-block">
+            <div class="saved-label">Join with code</div>
+            <div class="ev-join-row">
+                <input type="text" id="event-code-input" class="name-input code" maxlength="8" placeholder="K7M2QX" aria-label="Event code" autocomplete="off" autocapitalize="characters"
                 onkeydown="if(event.key==='Enter') submitJoinCode()">
                 <button type="button" class="btn btn-accent ev-ico-btn" onclick="submitJoinCode()">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     <span>Join</span>
                 </button>
             </div>
+            <button type="button" class="btn btn-block ev-ico-btn ev-scan-btn" onclick="openQRScanner('event')">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v2M14 20h2M19 19h2v2"/></svg>
+                <span>Scan QR to join or connect</span>
+            </button>
         </div>
 
         <button type="button" class="btn btn-block ev-ico-btn" id="event-lib-btn" onclick="openEventLibrary()">
@@ -944,6 +956,23 @@
     </div>
 </div>
 
+<div class="modal-backdrop" id="qr-scan-modal" onclick="if(event.target===this) closeQRScanner()">
+    <section class="modal-box qr-scan-box" role="dialog" aria-modal="true" aria-labelledby="qr-scan-title">
+        <div class="modal-head">
+            <h3 id="qr-scan-title">Scan an ARTcher QR</h3>
+            <button type="button" class="btn btn-sm" onclick="closeQRScanner()" aria-label="Close QR scanner">Cancel</button>
+        </div>
+        <video id="qr-scan-video" class="qr-scan-video" playsinline muted aria-label="Camera QR preview"></video>
+        <p id="qr-scan-status" class="qr-scan-status" role="status" aria-live="polite">Starting camera…</p>
+        <button type="button" class="btn btn-accent btn-block" id="qr-scan-start" onclick="startQRScanner()">Start camera</button>
+        <div class="qr-scan-manual">
+            <label for="qr-scan-input">Or paste an event code or invite link</label>
+            <input type="text" id="qr-scan-input" class="name-input" maxlength="1000" autocomplete="off" placeholder="Event code or ARTcher invite link" onkeydown="if(event.key==='Enter') submitScannedQR()" />
+            <button type="button" class="btn btn-block" onclick="submitScannedQR()">Open invite in ARTcher</button>
+        </div>
+    </section>
+</div>
+
 <div class="modal-backdrop" id="captcha-modal" onclick="if(event.target===this) closeCaptcha()">
     <div class="modal-box cap-box" role="dialog" aria-modal="true" aria-labelledby="captcha-title">
         <div class="modal-head">
@@ -989,6 +1018,31 @@
 <canvas id="weather-canvas"></canvas>
 <canvas id="confetti-canvas"></canvas>
 <div class="toast" id="toast"></div>
+
+<div class="tutorial-overlay" id="tutorial-overlay" hidden>
+    <svg class="tutorial-shade" id="tutorial-shade" aria-hidden="true">
+        <defs>
+            <mask id="tutorial-mask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse">
+                <rect id="tutorial-mask-base" fill="#fff"></rect>
+                <rect id="tutorial-mask-cutout" fill="#000" rx="10"></rect>
+            </mask>
+        </defs>
+        <rect id="tutorial-mask-dim" fill="rgba(8, 15, 30, .76)" mask="url(#tutorial-mask)"></rect>
+    </svg>
+    <div class="tutorial-highlight" id="tutorial-highlight" aria-hidden="true"></div>
+    <section class="tutorial-card" id="tutorial-card" role="dialog" aria-modal="true" aria-labelledby="tutorial-title" aria-describedby="tutorial-copy" tabindex="-1">
+        <div class="tutorial-card-top">
+            <span class="tutorial-progress" id="tutorial-progress"></span>
+            <button type="button" class="tutorial-skip" onclick="closeTutorial()">Skip tour</button>
+        </div>
+        <h2 id="tutorial-title"></h2>
+        <p id="tutorial-copy"></p>
+        <div class="tutorial-actions">
+            <button type="button" class="btn" id="tutorial-back" onclick="tutorialBack()">Back</button>
+            <button type="button" class="btn btn-accent" id="tutorial-next" onclick="tutorialNext()">Next</button>
+        </div>
+    </section>
+</div>
 
 <script src="../resources/js/freedom.js">
 
