@@ -10064,7 +10064,7 @@ function preloadAllFonts() {
                                                             var modal = $("whats-new-modal");
                                                             if (!modal) return;
                                                             $("whats-new-version").textContent = "v" + info.appVersion;
-                                                            $("whats-new-copy").textContent = String(info.changeLog || "New improvements and updates are ready.").trim();
+                                                            $("whats-new-copy").textContent = String(info.siteChangeLog || "Website improvements and updates are ready.").trim();
                                                             lsSet(LS_WHATS_NEW_VER, info.appVersion);
                                                             modal.classList.add("open");
                                                         };
