@@ -1153,6 +1153,10 @@
 .wall-tile-tag { font-size: 12px; transform: translateX(-50%) scale(var(--pill-s, 1)); transform-origin: bottom center; }
 #wall-stage.far .wall-tile-react { display: none !important; }
 </style>
+
+<style id="artcher-react-toggle">
+#wall-stage.hide-reactions .wall-tile-react { display: none !important; }
+</style>
 </head>
                     <body>
                         
@@ -1691,7 +1695,7 @@
                                 </div>
                             </div>
                             
-                            <div class="card">
+                            <div class="card" id="season-card">
                                 <div class="card-head">Seasonal &amp; Holiday Theme</div>
                                 <div class="list-row" style="cursor:default;">
                                     <span class="lead">
@@ -1731,6 +1735,14 @@
                                 <label class="list-row">
                                     <span>Wall tile borders</span>
                                     <span class="switch"><input type="checkbox" id="opt-borders" onchange="applyOptions()"></span>
+                                </label>
+                                <label class="list-row">
+                                    <span>Seasonal events<small>Holiday themes, greetings &amp; effects</small></span>
+                                    <span class="switch"><input type="checkbox" id="opt-seasons" checked onchange="applySeasonsToggle(true)"></span>
+                                </label>
+                                <label class="list-row">
+                                    <span>Wall reactions<small>Show heart / star / fire counts on tiles</small></span>
+                                    <span class="switch"><input type="checkbox" id="opt-wall-reactions" checked onchange="applyWallReactionsToggle(true)"></span>
                                 </label>
                                 <label class="list-row">
                                     <span>Wall minimap<small>Navigator map on the wall</small></span>
@@ -1878,7 +1890,7 @@
                         const SUPABASE_URL = "https://hfxwmkrgmiftwdikouzj.supabase.co";
                         const SUPABASE_ANON_KEY = "sb_publishable_gy8Ly-OisNJ9aQZkrZnojA_P5oQ8Vte";
                         
-                        const LOGO_PATH = "../resources/image/logo/freedom.png";
+                        const LOGO_PATH = "../resources/image/logo/archer.png";
                         const AUTO_UPLOAD = true;
                         
                         const LS_QUEUE = "fw_pending_v1";
@@ -6103,9 +6115,9 @@
                             const mList = entry.strokes || [];
                             const mName = "freedom-wall-" + (entry.id || Date.now()) + ".png";
                             const mMeta = { author: entry.author || "Anonymous", gx: entry.gx, gy: entry.gy };
-                            document.getElementById("modal-save-btn").onclick = () => exportStrokesPNG(mList, mName, mMeta);
+                            document.getElementById("modal-save-btn").onclick = () => askConsent("Save as PNG?", `Download ${mMeta.author}'s drawing to this device as a PNG?`, () => exportStrokesPNG(mList, mName, mMeta), { okLabel: "Save PNG" });
                             document.getElementById("modal-share-btn").onclick = () => shareStrokesPNG(mList, mName, mMeta);
-                            document.getElementById("modal-video-btn").onclick = () => exportReplayVideo(mList, mName, { meta: mMeta });
+                            document.getElementById("modal-video-btn").onclick = () => askConsent("Record replay video?", `Record ${mMeta.author}'s drawing as a video and save it? This takes a few seconds.`, () => exportReplayVideo(mList, mName, { meta: mMeta }), { okLabel: "Record" });
                             updateReactBar();
                             loadReactions();
                             play();
@@ -6754,6 +6766,7 @@
                         let seasonFxRaf = null;
                         
                         function getResolvedSeason() {
+                            if (lsGet("fw_seasons_on_v1", true) === false) return null;
                             const raw = lsGet(LS_SEASON_OVERRIDE, "auto");
                             const override = (raw === "auto" || raw === "none" || SEASONS[raw]) ? raw : "auto";
                             const key = override === "auto" ? detectCalendarSeason() : override;
@@ -7170,6 +7183,297 @@
 
                         v3Ready = true;
                         scheduleSizeUpdate(200);
+
+                        // =========================================================================
+                        // PART C: native Android bridge (AndroidRadio / AndroidHaptic)
+                        // Wrappers call the original code whenever the bridge is absent.
+                        // =========================================================================
+                        var nativeRadioSig = "";
+                        var nativePaused = false;
+                        function hasNativeRadio() { return typeof window.AndroidRadio !== "undefined" && window.AndroidRadio !== null; }
+                        function hasNativeHaptic() { return typeof window.AndroidHaptic !== "undefined" && window.AndroidHaptic !== null; }
+
+                        function nativeSendStations() {
+                            const list = radioStations.map(s => ({ name: s.name, url: s.url, country: s.country || "" }));
+                            const sig = JSON.stringify(list);
+                            if (sig !== nativeRadioSig) {
+                                nativeRadioSig = sig;
+                                window.AndroidRadio.setStations(sig);
+                            }
+                        }
+                        function nativePlay(idx) {
+                            nativeSendStations();
+                            try { window.AndroidRadio.setVolume(Math.round(musicVolume * 100)); } catch (e) {}
+                            window.AndroidRadio.play(idx);
+                        }
+
+                        // ---- play: HTML <audio> replaced by the native service ----
+                        const _origPlayCurrentStation = playCurrentStation;
+                        playCurrentStation = async function (attempt = 0) {
+                            if (!hasNativeRadio()) return _origPlayCurrentStation.apply(this, arguments);
+                            if (!musicPlaying) return;
+                            const stations = await fetchLiveLofiStations();
+                            if (!musicPlaying) return;
+                            if (!stations.length) { startSynthFallback("Offline chill synth ♪"); return; }
+                            stopSynthFallback();
+                            if (radioAudio) { try { radioAudio.pause(); radioAudio.removeAttribute("src"); } catch (e) {} }
+                            nativePaused = false;
+                            nativePlay(currentStationIdx % stations.length);
+                        };
+
+                        // ---- stop (More-page row, topbar pill X, sleep timer) ----
+                        const _origToggleMusic = toggleMusic;
+                        toggleMusic = function () {
+                            if (hasNativeRadio() && musicPlaying) { try { window.AndroidRadio.stop(); } catch (e) {} nativePaused = false; }
+                            return _origToggleMusic.apply(this, arguments);
+                        };
+
+                        // ---- volume ----
+                        const _origSetMusicVolume = setMusicVolume;
+                        setMusicVolume = function (val) {
+                            _origSetMusicVolume.apply(this, arguments);
+                            if (hasNativeRadio()) { try { window.AndroidRadio.setVolume(Math.round(musicVolume * 100)); } catch (e) {} }
+                        };
+
+                        // ---- sleep timer: must run natively, JS timers freeze when the screen is off ----
+                        const _origSetRadioSleepTimer = setRadioSleepTimer;
+                        setRadioSleepTimer = function (minsStr) {
+                            _origSetRadioSleepTimer.apply(this, arguments);
+                            if (!hasNativeRadio()) return;
+                            const mins = Number(minsStr) || 0;
+                            clearTimeout(radioSleepTimer);
+                            try { window.AndroidRadio.setSleepTimer(mins); } catch (e) {}
+                        };
+
+                        // ---- native -> web state (notification buttons, headset keys, errors) ----
+                        window.onNativeRadio = function (s) {
+                            if (typeof s === "string") { try { s = JSON.parse(s); } catch (e) { return; } }
+                            if (!s) return;
+
+                            let idx = s.name ? radioStations.findIndex(st => st.name === s.name) : -1;
+                            if (idx < 0 && Number.isInteger(s.index) && s.index >= 0 && s.index < radioStations.length) idx = s.index;
+                            if (idx >= 0) currentStationIdx = idx;
+
+                            if (typeof s.volume === "number") {
+                                musicVolume = clamp(s.volume / 100, 0, 1);
+                                const sl = document.getElementById("music-volume-slider");
+                                const lb = document.getElementById("music-volume-val");
+                                if (sl) sl.value = Math.round(musicVolume * 100);
+                                if (lb) lb.textContent = Math.round(musicVolume * 100) + "%";
+                                lsSet(LS_MUSIC_VOL, musicVolume);
+                            }
+
+                            const st = radioStations[currentStationIdx];
+                            const nm = st ? st.name : (s.name || "Radio");
+                            const tag = st && st.country ? ` (${st.country})` : "";
+
+                            switch (s.state) {
+                                case "buffering":
+                                    musicPlaying = true; nativePaused = false;
+                                    updateMuteIcon(`Connecting: ${nm}...`);
+                                    break;
+                                case "playing":
+                                    musicPlaying = true; nativePaused = false;
+                                    stopSynthFallback();
+                                    updateMuteIcon(`Live: ${nm}${tag}`);
+                                    break;
+                                case "paused":
+                                    musicPlaying = true; nativePaused = true;
+                                    updateMuteIcon(`Paused: ${nm}`);
+                                    break;
+                                case "stopped":
+                                    musicPlaying = false; nativePaused = false;
+                                    stopSynthFallback();
+                                    updateMuteIcon();
+                                    break;
+                                case "error":
+                                    showToast("Stream failed, trying the next station...");
+                                    break;
+                            }
+                            renderRadioStationList();
+                        };
+
+                        // ---- haptics: real vibration through the app ----
+                        const _origHaptic = haptic;
+                        var _nativeHapticAt = 0;
+                        haptic = function (ms = 8) {
+                            if (!hasNativeHaptic()) return _origHaptic.apply(this, arguments);
+                            if (typeof hapticOn !== "undefined" && !hapticOn) return;
+                            const now = performance.now();
+                            if (now - _nativeHapticAt < 35) return;
+                            _nativeHapticAt = now;
+                            try {
+                                if (Array.isArray(ms)) window.AndroidHaptic.pattern(JSON.stringify(ms));
+                                else window.AndroidHaptic.vibrate(Math.max(1, Math.min(200, Math.round(Number(ms)) || 8)));
+                            } catch (e) { return _origHaptic.apply(this, arguments); }
+                        };
+
+                        // ---- app re-opened while the service is still playing ----
+                        try {
+                            if (hasNativeRadio() && window.AndroidRadio.isPlaying()) {
+                                musicPlaying = true;
+                                updateMuteIcon("Live Radio Playing");
+                                fetchLiveLofiStations();
+                                if (typeof window.AndroidRadio.requestState === "function") window.AndroidRadio.requestState();
+                            }
+                        } catch (e) {}
+
+                        // ---- wall reactions on/off ----
+                        var LS_WALL_REACT = "fw_wall_reactions_v1";
+                        function applyWallReactionsToggle(fromUser) {
+                            const box = document.getElementById("opt-wall-reactions");
+                            const stage = document.getElementById("wall-stage");
+                            if (!box || !stage) return;
+                            stage.classList.toggle("hide-reactions", !box.checked);
+                            lsSet(LS_WALL_REACT, box.checked);
+                            if (fromUser) {
+                                if (typeof haptic === "function") haptic(6);
+                                showToast(box.checked ? "Wall reactions shown" : "Wall reactions hidden");
+                            }
+                        }
+                        (function () {
+                            const box = document.getElementById("opt-wall-reactions");
+                            if (box) { box.checked = lsGet(LS_WALL_REACT, true) !== false; applyWallReactionsToggle(false); }
+                        })();
+
+                        // =========================================================================
+                        // CONSENT DIALOGS + SEASONAL MASTER SWITCH
+                        // =========================================================================
+                        var RADIO_DOUBLE_TAP_MS = 2500;   // stopping the radio / un-starring within this time of the last change asks first. Use Infinity to always ask.
+                        var _radioStartedAt = 0, _favAt = {};
+
+                        function askConsent(title, message, onOk, opts) {
+                            opts = opts || {};
+                            if (typeof confirmCriticalAction !== "function") { onOk(); return; }
+                            if (pendingCriticalAction) return;                 // a dialog is already open
+                            confirmCriticalAction(title, message, onOk);
+                            const b = document.getElementById("confirm-continue");
+                            if (b) {
+                                b.textContent = opts.okLabel || "Continue";
+                                b.classList.toggle("btn-danger", !!opts.danger);
+                                b.classList.toggle("btn-accent", !opts.danger);
+                            }
+                            if (typeof haptic === "function") haptic(10);
+                        }
+
+                        // the shared dialog goes back to its default look after every use (Clear canvas relies on it)
+                        const _cancelCritical = cancelCriticalAction;
+                        cancelCriticalAction = function () {
+                            _cancelCritical.apply(this, arguments);
+                            const b = document.getElementById("confirm-continue");
+                            if (b) { b.textContent = "Continue"; b.classList.add("btn-danger"); b.classList.remove("btn-accent"); }
+                        };
+
+                        // ---- saving / exporting ----
+                        const _saveStudioPNG = saveStudioPNG;
+                        saveStudioPNG = function () {
+                            if (getAllFlattenedStrokes(false).length === 0) return _saveStudioPNG.apply(this, arguments);   // shows its own "draw something" toast
+                            askConsent("Save as PNG?", "Your drawing will be downloaded to this device as a PNG image.", () => _saveStudioPNG(), { okLabel: "Save PNG" });
+                        };
+
+                        const _saveWallPNG = saveWallPNG;
+                        saveWallPNG = function () {
+                            askConsent("Save the whole wall as PNG?", "This renders every tile into one 4K (3840 x 2160) image. It can take several seconds and use a lot of memory on older phones.",
+                                () => _saveWallPNG(), { okLabel: "Save wall" });
+                        };
+
+                        const _videoStudio = videoStudio;
+                        videoStudio = function () {
+                            if (getAllFlattenedStrokes(false).length === 0) return _videoStudio.apply(this, arguments);
+                            askConsent("Record replay video?", "Your drawing is played back in real time and saved as a video. This takes a few seconds and the page must stay open.",
+                                () => _videoStudio(), { okLabel: "Record" });
+                        };
+
+                        // ---- layers ----
+                        const _deleteLayerById = deleteLayerById;
+                        deleteLayerById = function (id, e) {
+                            if (e && e.stopPropagation) e.stopPropagation();
+                            const lyr = layers.find(l => l.id === id);
+                            if (!lyr) return;
+                            const isText = lyr.type === "text";
+                            const onlyDraw = !isText && layers.filter(l => l.type === "draw").length <= 1;
+                            const detail = isText ? "text layer" : `${lyr.strokes.length} stroke${lyr.strokes.length === 1 ? "" : "s"}`;
+                            askConsent(onlyDraw ? "Clear this layer?" : "Delete layer?",
+                                `"${lyr.name}" (${detail}) will be ${onlyDraw ? "cleared" : "deleted"}. This can't be undone.`,
+                                () => _deleteLayerById(id, null), { danger: true, okLabel: onlyDraw ? "Clear" : "Delete" });
+                        };
+
+                        const _mergeLayerDown = mergeLayerDown;
+                        mergeLayerDown = function () {
+                            const idx = layers.findIndex(l => l.id === activeLayerId);
+                            if (idx <= 0 || layers[idx - 1].type !== "draw") return _mergeLayerDown.apply(this, arguments);   // original explains why it can't
+                            askConsent("Merge layers?", `"${layers[idx].name}" will be merged into "${layers[idx - 1].name}". You won't be able to separate them again.`,
+                                () => _mergeLayerDown(), { okLabel: "Merge" });
+                        };
+
+                        // ---- trace image + text ----
+                        const _removeRefImage = removeRefImage;
+                        removeRefImage = function () {
+                            if (!refState.loaded) return _removeRefImage.apply(this, arguments);
+                            askConsent("Remove reference image?", "The tracing image is removed from this canvas. You'll need to upload it again to keep tracing.",
+                                () => _removeRefImage(), { danger: true, okLabel: "Remove" });
+                        };
+
+                        const _removeSelectedOrAllText = removeSelectedOrAllText;
+                        removeSelectedOrAllText = function () {
+                            if (!selectedText && texts.length > 1) {
+                                askConsent("Remove all text?", `${texts.length} text boxes will be removed.`,
+                                    () => _removeSelectedOrAllText(), { danger: true, okLabel: "Remove all" });
+                                return;
+                            }
+                            return _removeSelectedOrAllText.apply(this, arguments);
+                        };
+
+                        // ---- tile popup: save PNG / replay video (patched below in openModal) ----
+
+                        // ---- radio: guard against double taps ----
+                        const _toggleMusicConsent = toggleMusic;
+                        toggleMusic = function () {
+                            const ev = window.event;
+                            const byUser = !!(ev && ev.isTrusted);           // sleep timer / native stop are not user taps
+                            if (!musicPlaying) { _radioStartedAt = performance.now(); return _toggleMusicConsent.apply(this, arguments); }
+                            if (byUser && performance.now() - _radioStartedAt < RADIO_DOUBLE_TAP_MS) {
+                                askConsent("Stop the radio?", "You tapped twice in a row. Stop the live radio?",
+                                    () => _toggleMusicConsent(), { danger: true, okLabel: "Stop radio" });
+                                return;
+                            }
+                            return _toggleMusicConsent.apply(this, arguments);
+                        };
+
+                        const _toggleFavoriteConsent = toggleFavoriteRadio;
+                        toggleFavoriteRadio = function (station, e) {
+                            if (!station || !station.url) return _toggleFavoriteConsent.apply(this, arguments);
+                            const removing = isStationFavorite(station.url);
+                            const recent = performance.now() - (_favAt[station.url] || -1e9) < RADIO_DOUBLE_TAP_MS;
+                            if (removing && recent) {
+                                if (e && e.stopPropagation) e.stopPropagation();
+                                askConsent("Remove from favorites?", `"${station.name}" was just starred. Remove it from your favorite stations?`,
+                                    () => { _favAt[station.url] = performance.now(); _toggleFavoriteConsent(station, null); }, { danger: true, okLabel: "Remove" });
+                                return;
+                            }
+                            _favAt[station.url] = performance.now();
+                            return _toggleFavoriteConsent.apply(this, arguments);
+                        };
+
+                        // ---- seasonal master switch ----
+                        function seasonsEnabled() { return lsGet("fw_seasons_on_v1", true) !== false; }
+                        function syncSeasonCard() {
+                            const box = document.getElementById("opt-seasons");
+                            const card = document.getElementById("season-card");
+                            if (box) box.checked = seasonsEnabled();
+                            if (card) card.hidden = !seasonsEnabled();
+                        }
+                        function applySeasonsToggle(fromUser) {
+                            const box = document.getElementById("opt-seasons");
+                            if (box) lsSet("fw_seasons_on_v1", box.checked);
+                            syncSeasonCard();
+                            applySeasonalTheme();
+                            if (fromUser) {
+                                if (typeof haptic === "function") haptic(6);
+                                showToast(seasonsEnabled() ? "Seasonal events on" : "Seasonal events off");
+                            }
+                        }
+                        syncSeasonCard();
 
                         const APK_DOWNLOAD_URL = "download/ARTcher-v1.3.apk";
                         const LS_APK_DISMISSED = "fw_apk_prompt_dismissed_v1";
