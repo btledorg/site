@@ -1,7 +1,7 @@
 
 /* MODULE MAP (script blocks in this file)
 main ................ state, studio tools, layers, shape layers, tracing, wall, events, seasons, weather
-artcher-layout-js ... radio popover
+artcher-layout-js ... Radio Mode and compact player
 artcher-v2-js ....... leaderboard, captcha, tile picker
 artcher-busy-js ..... spinners / progress bar
 artcher-curtain-js .. host curtain reveal
@@ -23,7 +23,6 @@ const AUTO_UPLOAD = true;
 
 const LS_QUEUE = "fw_pending_v1";
 const LS_CACHE = "fw_cache_v1";
-const LS_MUSIC_TIME = "fw_music_time_v1";
 const LS_OPTIONS = "fw_options_v1";
 const LS_PROFILE = "fw_profile_v1";
 const LS_SAVED_COLORS = "fw_saved_colors_v1";
@@ -47,14 +46,99 @@ const RADIO_API_ENDPOINTS = [
 /* FAVORITE RADIOS & DEAD STREAM PRUNING */
 const LS_MUSIC_VOL = "fw_music_vol_v1";
 const LS_FAV_RADIOS = "fw_fav_radios_v1";
+const LS_RADIO_SETTINGS = "fw_radio_settings_v1";
+const LS_RADIO_CACHE = "fw_radio_cache_v1";
+
+const RADIO_FILTERS = ["all", "filipino", "english", "lofi", "favorites"];
+
+function normalizeRadioUrl(value) {
+    if (typeof value !== "string") return "";
+    try {
+        const url = new URL(value);
+        return url.protocol === "https:" && !url.username && !url.password ? url.href : "";
+    } catch (e) {
+        return "";
+    }
+}
+
+function normalizeRadioStation(item) {
+    if (!item || typeof item !== "object") return null;
+    const url = normalizeRadioUrl(item.url);
+    if (!url) return null;
+    return {
+        name: String(item.name || "Radio station").trim().slice(0, 100),
+        url,
+        country: String(item.country || "").trim().slice(0, 48),
+        category: ["filipino", "english", "lofi"].includes(item.category) ? item.category : "all",
+        language: String(item.language || "").trim().slice(0, 80)
+    };
+}
+
+function loadFavoriteRadios() {
+    const saved = lsGet(LS_FAV_RADIOS, []);
+    if (!Array.isArray(saved)) return [];
+    const seen = new Set();
+    return saved.reduce((stations, item) => {
+        const station = normalizeRadioStation(item);
+        if (!station || seen.has(station.url)) return stations;
+        seen.add(station.url);
+        stations.push(station);
+        return stations;
+    }, []);
+}
+
+function loadRadioDirectoryCache() {
+    const saved = lsGet(LS_RADIO_CACHE, null);
+    if (!saved || typeof saved !== "object" || !Array.isArray(saved.stations)) return [];
+    const savedAt = Number(saved.savedAt);
+    if (!Number.isFinite(savedAt) || savedAt <= 0 || Date.now() - savedAt > 30 * 24 * 60 * 60 * 1000) return [];
+    const seen = new Set();
+    return saved.stations.reduce((stations, item) => {
+        const station = normalizeRadioStation(item);
+        if (!station || seen.has(station.url)) return stations;
+        seen.add(station.url);
+        stations.push(station);
+        return stations;
+    }, []);
+}
+
+function loadRadioSettings() {
+    const saved = lsGet(LS_RADIO_SETTINGS, {});
+    return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+}
+
+function persistRadioSettings() {
+    lsSet(LS_RADIO_SETTINGS, {
+        filter: radioStationFilter,
+        selectedUrl: selectedRadioUrl,
+        autoDJ: radioAutoDJ
+    });
+}
+
+function persistRadioDirectory() {
+    lsSet(LS_RADIO_CACHE, {
+        savedAt: Date.now(),
+        stations: radioStations.slice(0, 120)
+    });
+}
 
 let audioCtx = null;
 let radioAudio = null;
-let favoriteRadios = lsGet(LS_FAV_RADIOS, []);
+let favoriteRadios = loadFavoriteRadios();
 let deadRadioUrls = new Set();
-let showFavRadiosOnly = false;
-let radioStations = Array.isArray(favoriteRadios) ? favoriteRadios.slice() : [];
-let currentStationIdx = 0;
+const storedRadioSettings = loadRadioSettings();
+let radioStationFilter = RADIO_FILTERS.includes(storedRadioSettings.filter) ? storedRadioSettings.filter : "all";
+let selectedRadioUrl = normalizeRadioUrl(storedRadioSettings.selectedUrl);
+let radioStations = Array.from(new Map(
+    loadRadioDirectoryCache().concat(favoriteRadios).map(station => [station.url, station])
+).values());
+let currentStationIdx = Math.max(0, radioStations.findIndex(station => station.url === selectedRadioUrl));
+let radioDirectoryLoaded = false;
+let radioDirectoryPromise = null;
+let radioAutoDJ = storedRadioSettings.autoDJ === true;
+let radioAutoDJTimer = null;
+let radioSleepTimer = null;
+let radioIsPaused = false;
 
 function isStationFavorite(url) {
     return favoriteRadios.some(f => f.url === url);
@@ -119,7 +203,13 @@ function toggleFavoriteRadio(station, e) {
         favoriteRadios = favoriteRadios.filter(f => f.url !== station.url);
         showToast(`Removed from favorites: ${station.name}`);
     } else {
-        favoriteRadios = [{ name: station.name, url: station.url, country: station.country || "" }].concat(favoriteRadios);
+        favoriteRadios = [{
+            name: station.name,
+            url: station.url,
+            country: station.country || "",
+            category: station.category || "all",
+            language: station.language || ""
+        }].concat(favoriteRadios);
         showToast(`★ Saved favorite: ${station.name}`);
     }
     lsSet(LS_FAV_RADIOS, favoriteRadios);
@@ -137,27 +227,25 @@ function sortStationsWithFavorites() {
     }
 }
 
-function toggleFavRadioFilter() {
-    showFavRadiosOnly = !showFavRadiosOnly;
-    const btn = document.getElementById("radio-fav-filter-btn");
-    if (btn) btn.classList.toggle("btn-accent", showFavRadiosOnly);
-    renderRadioStationList();
-}
-
 function pruneBrokenStation(station) {
     if (!station || !station.url) return;
     deadRadioUrls.add(station.url);
     radioStations = radioStations.filter(s => s.url !== station.url);
-    if (isStationFavorite(station.url)) {
-        favoriteRadios = favoriteRadios.filter(f => f.url !== station.url);
-        lsSet(LS_FAV_RADIOS, favoriteRadios);
-    }
     if (currentStationIdx >= radioStations.length) currentStationIdx = 0;
+    selectedRadioUrl = radioStations[currentStationIdx]?.url || "";
+    persistRadioDirectory();
     renderRadioStationList();
-    showToast(`Removed unplayable radio: ${station.name}`);
+    persistRadioSettings();
 }
 let musicPlaying = false;
-let musicVolume = clamp(Number(lsGet(LS_MUSIC_VOL, 0.4)), 0, 1);
+const storedMusicVolumeValue = lsGet(LS_MUSIC_VOL, 0.4);
+const storedMusicVolume = (typeof storedMusicVolumeValue === "number" ||
+    (typeof storedMusicVolumeValue === "string" && storedMusicVolumeValue.trim()))
+    ? Number(storedMusicVolumeValue)
+    : NaN;
+let musicVolume = Number.isFinite(storedMusicVolume)
+    ? Math.max(0, Math.min(1, storedMusicVolume > 1 ? storedMusicVolume / 100 : storedMusicVolume))
+    : 0.4;
 let usingSynthFallback = false;
 let musicTimer = null;
 let chordStep = 0;
@@ -218,151 +306,242 @@ function stopSynthFallback() {
     musicTimer = null;
 }
 
-const FAMOUS_STATIONS = {
-    "PH": [
-        "love radio", "magic 89.9", "wish 107.5", "monster", "barangay ls", "easy rock",
-        "mellow 94.7", "idol", "retro 105.9", "kiss fm", "yes the best", "dzmm", "dzbb",
-        "dwrr", "jam 88.3", "rj 100", "hit radio"
-    ],
-    "Lo-Fi": ["lofi girl", "chillhop", "lofi hip hop", "box lofi", "chilled cow", "lofi radio"],
-    "Mainstream": ["bbc radio 1", "capital", "kiss", "z100", "hot 97", "nrj", "virgin radio", "energy", "power 105"]
+const RADIO_FEATURED_NAMES = {
+    filipino: ["love radio", "barangay ls", "yes fm", "wish 107.5", "dzmm", "dzbb"],
+    english: ["magic 89.9", "easy rock", "jam 88.3", "rj 100", "bbc radio", "capital fm"],
+    lofi: ["lofi girl", "chillhop", "box lofi", "lofi radio"]
 };
 
-async function fetchLiveLofiStations() {
-    if (radioStations.some(s => !isStationFavorite(s.url))) return radioStations;
-    
-    const PER_CATEGORY = 15;
-    const FETCH_LIMIT = "60";
-    
-    const common = {
-        limit: FETCH_LIMIT,
-        order: "clickcount",
-        reverse: "true",
-        hidebroken: "true",
-        is_https: "true"
-    };
-    
-    const categories = [
-        { label: "PH",         query: { ...common, countrycode: "PH" } },
-        { label: "Lo-Fi",      query: { ...common, tag: "lofi" } },
-        { label: "Mainstream", query: { ...common, tag: "top 40" } }
-    ];
-    
-    function rank(list, label) {
-        const famous = (FAMOUS_STATIONS[label] || []).map(f => f.toLowerCase());
-        const seenName = new Set();
-        
-        return list
-        .filter(s =>
-            s.url_resolved &&
-            s.url_resolved.startsWith("https://") &&
-            !s.url_resolved.endsWith(".m3u8") &&
-            s.name
-        )
-        .filter(s => {
-            const key = s.name.toLowerCase().replace(/[^a-z0-9]/g, "");
-            if (!key || seenName.has(key)) return false;
-            seenName.add(key);
-            return true;
-        })
-        .map(s => {
-            const nm = s.name.toLowerCase();
-            const isFamous = famous.some(f => nm.includes(f));
-            const score =
-            (isFamous ? 1_000_000 : 0) +
-            (s.clickcount || 0) +
-            (s.votes || 0) * 5 +
-            (s.clicktrend || 0) * 2 +
-            ((s.bitrate || 0) >= 96 ? 50 : 0);
-            return { s, score };
-        })
-        .sort((a, b) => b.score - a.score)
-        .slice(0, PER_CATEGORY)
-        .map(({ s }) => ({
-            name: `[${label}] ${(s.name || "Radio").trim()}`.slice(0, 38),
-            url: s.url_resolved,
-            country: s.countrycode || ""
-        }));
+const RADIO_ENGLISH_COUNTRIES = new Set(["US", "GB", "CA", "AU", "NZ", "IE"]);
+
+function stationHasLanguage(station, category) {
+    const values = [station.language, station.languagecodes]
+        .filter(Boolean)
+        .join(",")
+        .toLowerCase()
+        .split(/[,;|/]+/)
+        .map(value => value.trim())
+        .filter(Boolean);
+    const country = String(station.countrycode || station.country || "").toUpperCase();
+    if (category === "filipino") {
+        return country === "PH" || values.some(value => ["filipino", "fil", "tagalog", "tgl", "tl"].includes(value));
     }
-    
-    async function queryCategory({ label, query }) {
-        const params = new URLSearchParams(query);
-        for (const base of RADIO_API_ENDPOINTS) {
-            const ctrl = new AbortController();
-            const to = setTimeout(() => ctrl.abort(), 5000);
-            try {
-                const res = await fetch(`${base}?${params.toString()}`, { signal: ctrl.signal });
-                clearTimeout(to);
-                if (!res.ok) continue;
-                const data = await res.json();
-                const valid = rank(data, label);
-                if (valid.length > 0) return valid;
-            } catch (e) {
-                clearTimeout(to);
+    if (category === "english") {
+        if (values.some(value => value === "english" || value === "eng" || value === "en" || value.includes("english"))) return true;
+        return values.length === 0 && RADIO_ENGLISH_COUNTRIES.has(country);
+    }
+    return true;
+}
+
+function stationMatchesRadioFilter(station, filter) {
+    if (filter === "all") return true;
+    if (filter === "favorites") return isStationFavorite(station.url);
+    if (station.category === filter) return true;
+    return filter === "filipino" || filter === "english"
+        ? stationHasLanguage(station, filter)
+        : false;
+}
+
+async function fetchRadioStations(force = false) {
+    if (radioDirectoryLoaded && !force) return radioStations;
+    if (radioDirectoryPromise) return radioDirectoryPromise;
+
+    radioDirectoryLoaded = false;
+    radioDirectoryPromise = (async function () {
+        const perCategory = 24;
+        const common = {
+            limit: "100",
+            order: "clickcount",
+            reverse: "true",
+            hidebroken: "true",
+            is_https: "true"
+        };
+        const categories = [
+            { id: "filipino", label: "Filipino", query: { ...common, countrycode: "PH" } },
+            { id: "filipino", label: "Filipino", query: { ...common, language: "filipino" } },
+            { id: "filipino", label: "Filipino", query: { ...common, language: "tagalog" } },
+            { id: "english", label: "English", query: { ...common, language: "english" } },
+            { id: "english", label: "English", query: { ...common, countrycode: "US" } },
+            { id: "english", label: "English", query: { ...common, countrycode: "GB" } },
+            { id: "english", label: "English", query: { ...common, countrycode: "CA" } },
+            { id: "english", label: "English", query: { ...common, countrycode: "AU" } },
+            { id: "english", label: "English", query: { ...common, countrycode: "NZ" } },
+            { id: "english", label: "English", query: { ...common, countrycode: "IE" } },
+            { id: "lofi", label: "Lo-Fi", query: { ...common, tag: "lofi" } }
+        ];
+
+        function rank(list, category) {
+            const featured = RADIO_FEATURED_NAMES[category.id] || [];
+            const seenNames = new Set();
+            return list
+                .filter(station => station && typeof station.name === "string" &&
+                    station.name.trim() && normalizeRadioUrl(station.url_resolved))
+                .filter(station => !station.url_resolved.toLowerCase().endsWith(".m3u8"))
+                .filter(station => stationHasLanguage(station, category.id))
+                .filter(station => {
+                    const key = station.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+                    if (!key || seenNames.has(key)) return false;
+                    seenNames.add(key);
+                    return true;
+                })
+                .map(station => {
+                    const name = station.name.trim();
+                    const isFeatured = featured.some(item => name.toLowerCase().includes(item));
+                    const score = (isFeatured ? 1000000 : 0) +
+                        (Number(station.clickcount) || 0) +
+                        (Number(station.votes) || 0) * 5 +
+                        (Number(station.clicktrend) || 0) * 2 +
+                        (Number(station.bitrate) >= 96 ? 50 : 0);
+                    return { station, score };
+                })
+                .sort((a, b) => b.score - a.score)
+                .slice(0, perCategory)
+                .map(({ station }) => ({
+                    name: station.name.trim().slice(0, 100),
+                    url: normalizeRadioUrl(station.url_resolved),
+                    country: String(station.countrycode || "").trim().slice(0, 48),
+                    category: category.id,
+                    language: String(station.language || station.languagecodes || "").trim().slice(0, 80)
+                }));
+        }
+
+        async function queryCategory(category) {
+            const params = new URLSearchParams(category.query);
+            for (const base of RADIO_API_ENDPOINTS) {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 5000);
+                try {
+                    const response = await fetch(`${base}?${params.toString()}`, { signal: controller.signal });
+                    clearTimeout(timeout);
+                    if (!response.ok) continue;
+                    const data = await response.json();
+                    const stations = rank(Array.isArray(data) ? data : [], category);
+                    if (stations.length) return stations;
+                } catch (e) {
+                    clearTimeout(timeout);
+                }
+            }
+            return [];
+        }
+
+        const buckets = await Promise.all(categories.map(queryCategory));
+        const seenUrls = new Set();
+        const discovered = [];
+        const maxLength = Math.max(0, ...buckets.map(bucket => bucket.length));
+        for (let i = 0; i < maxLength; i++) {
+            for (const bucket of buckets) {
+                const station = bucket[i];
+                if (station && !seenUrls.has(station.url)) {
+                    seenUrls.add(station.url);
+                    discovered.push(station);
+                }
             }
         }
-        return [];
-    }
-    
-    const buckets = await Promise.all(categories.map(queryCategory));
-    
-    const seen = new Set();
-    const mixed = [];
-    const maxLen = Math.max(0, ...buckets.map(b => b.length));
-    
-    for (let i = 0; i < maxLen; i++) {
-        for (const bucket of buckets) {
-            const st = bucket[i];
-            if (st && !seen.has(st.url)) {
-                seen.add(st.url);
-                mixed.push(st);
-            }
+
+        const combinedByUrl = new Map();
+        for (const station of radioStations) {
+            if (!deadRadioUrls.has(station.url)) combinedByUrl.set(station.url, { ...station });
         }
+        for (const station of favoriteRadios) {
+            if (!deadRadioUrls.has(station.url)) combinedByUrl.set(station.url, { ...station });
+        }
+        for (const station of discovered) {
+            if (deadRadioUrls.has(station.url)) continue;
+            const saved = combinedByUrl.get(station.url);
+            combinedByUrl.set(station.url, saved
+                ? { ...station, ...saved, category: station.category, language: station.language }
+                : station);
+        }
+
+        const activeUrl = radioStations[currentStationIdx]?.url || selectedRadioUrl;
+        radioStations = Array.from(combinedByUrl.values());
+        const preferredIndex = radioStations.findIndex(station => station.url === selectedRadioUrl);
+        const activeIndex = radioStations.findIndex(station => station.url === activeUrl);
+        currentStationIdx = preferredIndex >= 0 ? preferredIndex : Math.max(0, activeIndex);
+        selectedRadioUrl = radioStations[currentStationIdx]?.url || "";
+        sortStationsWithFavorites();
+        radioDirectoryLoaded = true;
+        persistRadioDirectory();
+        persistRadioSettings();
+        renderRadioStationList();
+        return radioStations;
+    })();
+
+    try {
+        return await radioDirectoryPromise;
+    } finally {
+        radioDirectoryPromise = null;
     }
-    
-    const seenAll = new Set();
-    const combined = [];
-    for (const st of favoriteRadios.concat(mixed)) {
-        if (!st || !st.url || deadRadioUrls.has(st.url) || seenAll.has(st.url)) continue;
-        seenAll.add(st.url);
-        combined.push(st);
-    }
-    radioStations = combined;
-    sortStationsWithFavorites();
+}
+
+function setRadioStationFilter(filter) {
+    if (!RADIO_FILTERS.includes(filter)) return;
+    radioStationFilter = filter;
+    persistRadioSettings();
     renderRadioStationList();
-    return radioStations;
+}
+
+function renderRadioStationFilters() {
+    document.querySelectorAll("[data-radio-filter]").forEach(button => {
+        const selected = button.dataset.radioFilter === radioStationFilter;
+        button.classList.toggle("active", selected);
+        button.setAttribute("aria-pressed", String(selected));
+    });
 }
 
 function renderRadioStationList() {
     const list = document.getElementById("radio-station-list");
     if (!list) return;
     list.replaceChildren();
-    const visibleStations = showFavRadiosOnly
-    ? radioStations.filter(s => isStationFavorite(s.url))
-    : radioStations;
+    renderRadioStationFilters();
+
+    const search = (document.getElementById("radio-search-input")?.value || "").trim().toLowerCase();
+    const visibleStations = radioStations.filter(station => {
+        const matchesFilter = stationMatchesRadioFilter(station, radioStationFilter);
+        const searchable = `${station.name} ${station.country} ${station.language}`.toLowerCase();
+        return matchesFilter && (!search || searchable.includes(search));
+    });
     
     if (visibleStations.length === 0) {
-        const empty = document.createElement("button");
-        empty.type = "button";
-        empty.className = "radio-station-option";
-        empty.disabled = true;
-        empty.innerHTML = showFavRadiosOnly
-        ? "<span>No favorite stations yet · Tap ☆ to save one</span>"
-        : "<span>No stations loaded yet</span>";
+        const empty = document.createElement("p");
+        empty.className = "radio-empty-state";
+        empty.textContent = radioStationFilter === "favorites" && !search
+            ? "No favorites yet. Tap the star on a station to save it."
+            : radioDirectoryLoaded
+                ? "No stations match this filter."
+                : "Loading stations…";
         list.appendChild(empty);
         return;
     }
     
     const activeUrl = radioStations[currentStationIdx]?.url;
-    visibleStations.forEach((station) => {
-        const realIndex = radioStations.findIndex(s => s.url === station.url);
+    visibleStations.forEach(station => {
+        const realIndex = radioStations.findIndex(item => item.url === station.url);
         const isFav = isStationFavorite(station.url);
         const option = document.createElement("div");
-        option.className = "radio-station-option";
-        option.setAttribute("role", "button");
-        option.tabIndex = 0;
-        option.classList.toggle("active", station.url === activeUrl);
-        
+        option.className = "radio-station-option" + (station.url === activeUrl ? " active" : "");
+        option.setAttribute("role", "listitem");
+
+        const select = document.createElement("button");
+        select.type = "button";
+        select.className = "radio-station-select";
+        select.setAttribute("aria-pressed", String(station.url === activeUrl));
+        select.addEventListener("click", () => selectRadioStation(realIndex));
+
+        const details = document.createElement("span");
+        details.className = "radio-station-details";
+        const name = document.createElement("strong");
+        name.textContent = station.name;
+        details.appendChild(name);
+        const metadata = document.createElement("small");
+        const category = station.category === "filipino" ? "Filipino" :
+            station.category === "english" ? "English" :
+            station.category === "lofi" ? "Lo-Fi · Worldwide" : "Saved station";
+        metadata.textContent = [category, station.country].filter(Boolean).join(" · ");
+        details.appendChild(metadata);
+        select.appendChild(details);
+        option.appendChild(select);
+
         const star = document.createElement("button");
         star.type = "button";
         star.className = "radio-fav-btn" + (isFav ? " is-fav" : "");
@@ -371,34 +550,20 @@ function renderRadioStationList() {
         star.setAttribute("aria-label", star.title);
         star.addEventListener("click", (e) => toggleFavoriteRadio(station, e));
         option.appendChild(star);
-        
-        const name = document.createElement("span");
-        name.textContent = station.name;
-        option.appendChild(name);
-        
-        if (station.country) {
-            const country = document.createElement("small");
-            country.textContent = station.country;
-            option.appendChild(country);
-        }
-        
-        option.addEventListener("click", () => selectRadioStation(realIndex));
-        option.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                selectRadioStation(realIndex);
-            }
-        });
         list.appendChild(option);
     });
 }
 
 function selectRadioStation(index) {
-    if (!radioStations.length) return;
+    if (!Number.isInteger(index) || index < 0 || index >= radioStations.length) return;
     currentStationIdx = index;
+    radioIsPaused = false;
+    selectedRadioUrl = radioStations[index].url;
+    persistRadioSettings();
     renderRadioStationList();
     if (!musicPlaying) {
         musicPlaying = true;
+        syncRadioAutoDJTimer();
         const slider = document.getElementById("music-volume-slider");
         const value = document.getElementById("music-volume-val");
         if (slider) slider.value = Math.round(musicVolume * 100);
@@ -410,7 +575,13 @@ function selectRadioStation(index) {
 
 async function playCurrentStation(attempt = 0) {
     if (!musicPlaying) return;
-    const stations = await fetchLiveLofiStations();
+    let stations;
+    if (!radioDirectoryLoaded && radioStations.length) {
+        stations = radioStations;
+        fetchRadioStations().catch(error => console.error("Unable to refresh radio stations.", error));
+    } else {
+        stations = await fetchRadioStations();
+    }
     if (!musicPlaying) return;
     
     if (stations.length === 0 || attempt >= Math.min(4, stations.length)) {
@@ -461,6 +632,13 @@ async function playCurrentStation(attempt = 0) {
         clearTimeout(failTimeout);
         if (!settled && musicPlaying) {
             settled = true;
+            if (err && err.name === "NotAllowedError") {
+                musicPlaying = false;
+                clearInterval(radioAutoDJTimer);
+                radioAutoDJTimer = null;
+                updateMuteIcon("Tap Play to allow radio audio");
+                return;
+            }
             pruneBrokenStation(station);
             playCurrentStation(attempt + 1);
         }
@@ -468,16 +646,28 @@ async function playCurrentStation(attempt = 0) {
 }
 
 function setMusicVolume(val) {
-    musicVolume = clamp(Number(val) / 100, 0, 1);
+    const parsed = Number(val);
+    musicVolume = Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed / 100)) : 0.4;
     lsSet(LS_MUSIC_VOL, musicVolume);
     const label = document.getElementById("music-volume-val");
     if (label) label.textContent = Math.round(musicVolume * 100) + "%";
     if (radioAudio) radioAudio.volume = musicVolume;
 }
 
-let radioAutoDJ = false;
-let radioAutoDJTimer = null;
-let radioSleepTimer = null;
+function syncRadioAutoDJTimer() {
+    clearInterval(radioAutoDJTimer);
+    radioAutoDJTimer = null;
+    if (!radioAutoDJ || !musicPlaying || radioIsPaused) return;
+    radioAutoDJTimer = setInterval(() => {
+        if (musicPlaying && radioStations.length > 1) {
+            const randomIndex = Math.floor(Math.random() * radioStations.length);
+            currentStationIdx = randomIndex === currentStationIdx
+                ? (randomIndex + 1) % radioStations.length
+                : randomIndex;
+            selectRadioStation(currentStationIdx);
+        }
+    }, 12 * 60 * 1000);
+}
 
 function nextRadioStation() {
     if (!radioStations.length) {
@@ -501,30 +691,28 @@ function prevRadioStation() {
 
 function toggleRadioAutoDJ() {
     radioAutoDJ = !radioAutoDJ;
-    const btn = document.getElementById("radio-autodj-btn");
+    persistRadioSettings();
+    const btn = document.getElementById("radio-mode-autodj-btn");
     if (btn) {
-        btn.textContent = radioAutoDJ ? "Auto-DJ: On" : "Auto-DJ: Off";
+        btn.textContent = radioAutoDJ ? "Auto-DJ on" : "Auto-DJ off";
         btn.classList.toggle("btn-accent", radioAutoDJ);
+        btn.setAttribute("aria-pressed", String(radioAutoDJ));
     }
-    clearInterval(radioAutoDJTimer);
     if (radioAutoDJ) {
-        if (!musicPlaying) toggleMusic();
-        radioAutoDJTimer = setInterval(() => {
-            if (musicPlaying && radioStations.length > 1) {
-                const rand = Math.floor(Math.random() * radioStations.length);
-                currentStationIdx = rand === currentStationIdx ? (rand + 1) % radioStations.length : rand;
-                selectRadioStation(currentStationIdx);
-            }
-        }, 12 * 60 * 1000);
+        if (!musicPlaying || radioIsPaused) toggleMusic();
+        syncRadioAutoDJTimer();
         showToast("Auto-DJ enabled (rotates every 12m)");
     } else {
+        syncRadioAutoDJTimer();
         showToast("Auto-DJ turned off");
     }
 }
 
 function setRadioSleepTimer(minsStr) {
-    const mins = Number(minsStr) || 0;
+    const parsed = Number(minsStr);
+    const mins = Number.isFinite(parsed) ? Math.max(0, Math.min(240, parsed)) : 0;
     clearTimeout(radioSleepTimer);
+    radioSleepTimer = null;
     if (mins <= 0) {
         showToast("Sleep timer off");
         return;
@@ -534,9 +722,60 @@ function setRadioSleepTimer(minsStr) {
         if (musicPlaying) toggleMusic();
         const sel = document.getElementById("radio-sleep-select");
         if (sel) sel.value = "0";
+        radioSleepTimer = null;
         showToast("Sleep timer finished · Radio stopped");
     }, mins * 60 * 1000);
     showToast(`Radio will stop in ${mins} min`);
+}
+
+function updateRadioModeUI(status = "") {
+    const station = radioStations[currentStationIdx];
+    const title = document.getElementById("radio-mode-title");
+    const state = document.getElementById("radio-mode-state");
+    const meta = document.getElementById("radio-mode-meta");
+    const playButton = document.getElementById("radio-mode-play-btn");
+    const playLabel = document.getElementById("radio-mode-play-label");
+    const autoDJButton = document.getElementById("radio-mode-autodj-btn");
+    const toolButton = document.getElementById("radio-tool-btn");
+    const wallButton = document.getElementById("wall-radio-btn");
+
+    if (title) title.textContent = station ? station.name : "Choose a station";
+    if (state) state.textContent = status || (musicPlaying ? "Radio is playing" : "Ready when you are");
+    if (meta) {
+        meta.textContent = usingSynthFallback
+            ? "Offline chill synth"
+            : station
+                ? [station.category === "filipino" ? "Filipino" : station.category === "english" ? "English" : station.category === "lofi" ? "Lo-Fi · Worldwide" : "Saved station", station.country].filter(Boolean).join(" · ")
+                : "Filipino · English · Lo-Fi worldwide";
+    }
+    if (playButton) {
+        const isPlaying = musicPlaying && !radioIsPaused;
+        playButton.classList.toggle("is-playing", isPlaying);
+        playButton.setAttribute("aria-pressed", String(isPlaying));
+        playButton.setAttribute("aria-label", radioIsPaused ? "Resume radio" : musicPlaying ? "Stop radio" : "Play radio");
+    }
+    if (playLabel) playLabel.textContent = radioIsPaused ? "Resume" : musicPlaying ? "Stop" : "Play";
+    const volumeSlider = document.getElementById("music-volume-slider");
+    const volumeLabel = document.getElementById("music-volume-val");
+    if (volumeSlider) volumeSlider.value = String(Math.round(musicVolume * 100));
+    if (volumeLabel) volumeLabel.textContent = Math.round(musicVolume * 100) + "%";
+    if (autoDJButton) {
+        autoDJButton.textContent = radioAutoDJ ? "Auto-DJ on" : "Auto-DJ off";
+        autoDJButton.classList.toggle("btn-accent", radioAutoDJ);
+        autoDJButton.setAttribute("aria-pressed", String(radioAutoDJ));
+    }
+    if (toolButton) {
+        const isPlaying = musicPlaying && !radioIsPaused;
+        toolButton.classList.toggle("is-playing", isPlaying);
+        toolButton.setAttribute("aria-pressed", String(isPlaying));
+        toolButton.setAttribute("aria-label", radioIsPaused ? "Resume radio and open Radio Mode" : musicPlaying ? "Open radio controls" : "Play radio and open Radio Mode");
+    }
+    if (wallButton) {
+        const isPlaying = musicPlaying && !radioIsPaused;
+        wallButton.classList.toggle("is-playing", isPlaying);
+        wallButton.setAttribute("aria-pressed", String(isPlaying));
+        wallButton.setAttribute("aria-label", radioIsPaused ? "Resume radio and open Radio Mode" : musicPlaying ? "Open radio controls" : "Play radio and open Radio Mode");
+    }
 }
 
 function updateMuteIcon(customStatus = null) {
@@ -548,30 +787,38 @@ function updateMuteIcon(customStatus = null) {
     const miniTitle = document.getElementById("radio-mini-title");
     
     if (musicPlaying) {
-        btn.classList.add("playing");
+        if (btn) {
+            btn.classList.add("playing");
+            btn.setAttribute("aria-pressed", "true");
+        }
         const label = customStatus || "Live Radio Playing";
         if (status) status.textContent = label;
         if (volRow) volRow.hidden = false;
         if (miniPill) miniPill.hidden = false;
         if (miniTitle) miniTitle.textContent = label.replace(/^Live:\s*/i, "").replace(/\[[^\]]*\]\s*/, "");
-        icon.innerHTML = `
+        if (icon) icon.innerHTML = `
                     <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                     <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>`;
     } else {
-        btn.classList.remove("playing");
+        if (btn) {
+            btn.classList.remove("playing");
+            btn.setAttribute("aria-pressed", "false");
+        }
         if (status) status.textContent = "Off · Tap to tune in";
-        if (volRow) volRow.hidden = true;
+        if (volRow) volRow.hidden = false;
         if (miniPill) miniPill.hidden = true;
-        icon.innerHTML = `
+        if (icon) icon.innerHTML = `
                     <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
                     <line x1="23" y1="9" x2="17" y2="15"></line>
                     <line x1="17" y1="9" x2="23" y2="15"></line>`;
     }
+    updateRadioModeUI(customStatus || "");
 }
 
 async function toggleMusic() {
     musicPlaying = !musicPlaying;
+    radioIsPaused = false;
     haptic(8);
     
     if (musicPlaying) {
@@ -579,11 +826,14 @@ async function toggleMusic() {
         const volVal = document.getElementById("music-volume-val");
         if (volSlider) volSlider.value = Math.round(musicVolume * 100);
         if (volVal) volVal.textContent = Math.round(musicVolume * 100) + "%";
+        syncRadioAutoDJTimer();
         
-        updateMuteIcon("Fetching live lo-fi stations...");
+        updateMuteIcon("Finding stations…");
         await playCurrentStation(0);
-        showToast("Live lo-fi radio on ♪");
+        if (musicPlaying) showToast("Radio is on ♪");
     } else {
+        clearInterval(radioAutoDJTimer);
+        radioAutoDJTimer = null;
         if (radioAudio) {
             radioAudio.pause();
             radioAudio.removeAttribute("src");
@@ -594,6 +844,58 @@ async function toggleMusic() {
         showToast("Radio stopped");
     }
 }
+
+function openRadioMode(playIfStopped = false) {
+    const modal = document.getElementById("radio-mode-modal");
+    if (!modal) return;
+    modal.dataset.returnFocusId = document.activeElement?.id || "";
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("radio-mode-open");
+    const popover = document.getElementById("radio-pop");
+    const miniButton = document.getElementById("radio-chip-btn");
+    if (popover) popover.hidden = true;
+    if (miniButton) miniButton.setAttribute("aria-expanded", "false");
+    renderRadioStationList();
+    updateRadioModeUI();
+    if (!radioDirectoryLoaded) {
+        fetchRadioStations().catch(() => {
+            radioDirectoryLoaded = true;
+            renderRadioStationList();
+            updateMuteIcon("Could not load stations");
+        });
+    }
+    if (playIfStopped && (!musicPlaying || radioIsPaused)) toggleMusic();
+    requestAnimationFrame(() => document.getElementById("radio-mode-close")?.focus());
+}
+
+function closeRadioMode() {
+    const modal = document.getElementById("radio-mode-modal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("radio-mode-open");
+    const returnFocus = modal.dataset.returnFocusId && document.getElementById(modal.dataset.returnFocusId);
+    if (returnFocus) returnFocus.focus();
+}
+
+function refreshRadioStations() {
+    radioDirectoryLoaded = false;
+    deadRadioUrls.clear();
+    radioStations = favoriteRadios.slice();
+    currentStationIdx = Math.max(0, radioStations.findIndex(station => station.url === selectedRadioUrl));
+    renderRadioStationList();
+    fetchRadioStations(true).catch(() => {
+        radioDirectoryLoaded = true;
+        renderRadioStationList();
+        updateMuteIcon("Could not load stations");
+    });
+}
+
+document.addEventListener("keydown", event => {
+    const modal = document.getElementById("radio-mode-modal");
+    if (event.key === "Escape" && modal?.classList.contains("open")) closeRadioMode();
+});
 
 function playPopTone(freq = 520) {
     if (!musicPlaying || !audioCtx) return;
@@ -2267,8 +2569,8 @@ function preloadAllFonts() {
             { view: "wall", eventModal: true, target: ".ev-scan-btn", title: "Scan an invite QR", copy: "The scanner can read event and collaboration invites. It will ask for camera permission only if you choose to start the scanner; you can also paste a code or link instead." },
             { view: "wall", eventModal: true, hostDetails: true, target: "#event-host > summary", title: "Host and focus an event", copy: "Hosts can create an event, hide or reveal its art, and choose whether invite links open directly in the drawing studio with focus mode. This tour does not change those settings." },
             { view: "draw", pane: "team", target: function () { var start = document.getElementById("collab-start-btn"); var leave = document.getElementById("collab-leave-btn"); return start && !start.hidden ? start : (leave && !leave.hidden ? leave : document.querySelector("#pane-team .collab-actions")); }, title: "Draw together in Teams", copy: "Start a shared room or join with an invite link or QR. Strokes and pointers sync live between two artists. Joining a room replaces the current drawing, so save or switch drafts first.", focus: true },
-            { view: "more", target: "#acct-profile-card", title: "Profile and preferences", copy: "More contains your guest name, optional account sign-in, upload status, and app preferences. You can use ARTcher as a guest; an account is optional." },
-            { view: "home", target: ".landing-title", title: "You're ready to create", copy: "That covers the main ARTcher workflows. You can restart this guided tour at any time using the information button in the top bar—or the studio toolbar in focus mode." }
+            { view: "more", target: "#acct-profile-card", title: "Profile and preferences", copy: "More contains your profile, weather location, guided help, upload status, and app preferences. You can use ARTcher as a guest; an account is optional." },
+            { view: "home", target: ".landing-title", title: "You're ready to create", copy: "That covers the main ARTcher workflows. You can restart this guided tour from Help & information in More or the studio toolbar in focus mode." }
         ];
         let tutorialStepsForRun = [];
         let tutorialIndex = 0;
@@ -2898,20 +3200,6 @@ function preloadAllFonts() {
                 defaultTextFs = f;
                 showToast("Text size set. Tap Add text.");
             }
-        }
-        
-        function getTextItems() {
-            return texts
-            .filter(t => (t.t || "").trim().length > 0)
-            .map(t => ({
-                k: "text",
-                t: t.t.slice(0, 120),
-                x: Math.round(t.x),
-                y: Math.round(t.y),
-                c: t.c,
-                f: t.f,
-                fn: t.fn || "Inter"
-            }));
         }
         
         function clearTexts() {
@@ -7023,7 +7311,7 @@ function preloadAllFonts() {
                 // =========================================================================
                 const WEATHER_MODES = ["auto", "clear", "cloudy", "rain", "storm"];
                 let weatherOverride = "auto";
-                let liveWeatherState = { mode: "clear", temp: 29, label: "Clear" };
+                let liveWeatherState = { mode: "clear", temp: 29, label: "Clear", timezone: "" };
                 let weatherParticles = [];
                 let weatherSplashes = [];
                 let weatherLightning = 0;
@@ -7327,7 +7615,9 @@ function preloadAllFonts() {
                 // =========================================================================
                 // OPTIONAL APK DOWNLOAD PROMPT (WEB BROWSER ONLY)
                 // =========================================================================
+                const DEFAULT_WEATHER_COORDS = [14.569, 121.132];
                 var weatherOn = true, minimapOn = true, weatherReady = false, weatherSyncStarted = false, weatherCoords = null;
+                var weatherLocationStatus = "Using default location · Manila";
                 var shapeLock = false;
                 var POST_WARN_MB = 0.19;
                 var sizeTimer = 0, lastSizeMB = 0, _hudLive = false, _lastSizeTick = 0;
@@ -7350,14 +7640,59 @@ function preloadAllFonts() {
                         return;
                     }
                     weatherSyncStarted = true;
+                    weatherLocationStatus = "Checking device location…";
+                    updateWeatherLocationUI();
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
-                            pos => { weatherCoords = [pos.coords.latitude, pos.coords.longitude]; syncLiveWeather(weatherCoords[0], weatherCoords[1]); },
-                            () => syncLiveWeather()
+                            pos => {
+                                weatherCoords = [pos.coords.latitude, pos.coords.longitude];
+                                weatherLocationStatus = "Using device location";
+                                updateWeatherLocationUI();
+                                syncLiveWeather(weatherCoords[0], weatherCoords[1]);
+                            },
+                            error => {
+                                weatherLocationStatus = error && error.code === 1
+                                    ? "Location permission denied · using Manila default"
+                                    : "Device location unavailable · using Manila default";
+                                updateWeatherLocationUI();
+                                syncLiveWeather();
+                            },
+                            { maximumAge: 300000, timeout: 10000, enableHighAccuracy: false }
                         );
                     } else {
+                        weatherLocationStatus = "Device location unavailable · using Manila default";
+                        updateWeatherLocationUI();
                         syncLiveWeather();
                     }
+                }
+
+                function refreshWeatherLocation() {
+                    if (!navigator.geolocation) {
+                        weatherLocationStatus = "Device location is unavailable in this browser";
+                        updateWeatherLocationUI();
+                        showToast(weatherLocationStatus);
+                        return;
+                    }
+                    weatherLocationStatus = "Checking device location…";
+                    updateWeatherLocationUI();
+                    navigator.geolocation.getCurrentPosition(
+                        pos => {
+                            weatherCoords = [pos.coords.latitude, pos.coords.longitude];
+                            weatherSyncStarted = true;
+                            weatherLocationStatus = "Using device location";
+                            updateWeatherLocationUI();
+                            syncLiveWeather(weatherCoords[0], weatherCoords[1]);
+                            showToast("Weather location updated");
+                        },
+                        error => {
+                            weatherLocationStatus = error && error.code === 1
+                                ? "Location permission denied · keeping previous location"
+                                : "Could not refresh · keeping previous location";
+                            updateWeatherLocationUI();
+                            showToast(weatherLocationStatus);
+                        },
+                        { maximumAge: 0, timeout: 10000, enableHighAccuracy: false }
+                    );
                 }
                 
                 function applyWeatherToggle(changed) {
@@ -7610,7 +7945,24 @@ function preloadAllFonts() {
                 playCurrentStation = async function (attempt = 0) {
                     if (!hasNativeRadio()) return _origPlayCurrentStation.apply(this, arguments);
                     if (!musicPlaying) return;
-                    const stations = await fetchLiveLofiStations();
+                    let stations;
+                    if (!radioDirectoryLoaded && radioStations.length) {
+                        stations = radioStations;
+                        const startedIndex = currentStationIdx % stations.length;
+                        const startedUrl = stations[startedIndex]?.url;
+                        fetchRadioStations().then(() => {
+                            if (!musicPlaying || !hasNativeRadio()) return;
+                            nativeSendStations();
+                            const updatedStation = radioStations[currentStationIdx];
+                            if (updatedStation &&
+                                (updatedStation.url !== startedUrl || currentStationIdx !== startedIndex)) {
+                                nativePaused = false;
+                                nativePlay(currentStationIdx);
+                            }
+                        }).catch(error => console.error("Unable to refresh radio stations.", error));
+                    } else {
+                        stations = await fetchRadioStations();
+                    }
                     if (!musicPlaying) return;
                     if (!stations.length) { startSynthFallback("Offline chill synth ♪"); return; }
                     stopSynthFallback();
@@ -7622,7 +7974,13 @@ function preloadAllFonts() {
                 // ---- stop (More-page row, topbar pill X, sleep timer) ----
                 const _origToggleMusic = toggleMusic;
                 toggleMusic = function () {
-                    if (hasNativeRadio() && musicPlaying) { try { window.AndroidRadio.stop(); } catch (e) {} nativePaused = false; }
+                    if (hasNativeRadio() && musicPlaying && nativePaused) {
+                        nativePaused = false;
+                        radioIsPaused = false;
+                        syncRadioAutoDJTimer();
+                        return playCurrentStation(0);
+                    }
+                    if (hasNativeRadio() && musicPlaying) { try { window.AndroidRadio.stop(); } catch (e) {} nativePaused = false; radioIsPaused = false; }
                     return _origToggleMusic.apply(this, arguments);
                 };
                 
@@ -7667,20 +8025,27 @@ function preloadAllFonts() {
                     
                     switch (s.state) {
                         case "buffering":
-                        musicPlaying = true; nativePaused = false;
+                        musicPlaying = true; nativePaused = false; radioIsPaused = false;
                         updateMuteIcon(`Connecting: ${nm}...`);
                         break;
                         case "playing":
-                        musicPlaying = true; nativePaused = false;
+                        musicPlaying = true; nativePaused = false; radioIsPaused = false;
                         stopSynthFallback();
+                        syncRadioAutoDJTimer();
                         updateMuteIcon(`Live: ${nm}${tag}`);
                         break;
                         case "paused":
-                        musicPlaying = true; nativePaused = true;
+                        musicPlaying = true; nativePaused = true; radioIsPaused = true;
+                        clearInterval(radioAutoDJTimer);
+                        radioAutoDJTimer = null;
                         updateMuteIcon(`Paused: ${nm}`);
                         break;
                         case "stopped":
-                        musicPlaying = false; nativePaused = false;
+                        musicPlaying = false; nativePaused = false; radioIsPaused = false;
+                        clearInterval(radioAutoDJTimer);
+                        radioAutoDJTimer = null;
+                        const sleepSelect = document.getElementById("radio-sleep-select");
+                        if (sleepSelect) sleepSelect.value = "0";
                         stopSynthFallback();
                         updateMuteIcon();
                         break;
@@ -7709,9 +8074,10 @@ function preloadAllFonts() {
                 // ---- app re-opened while the service is still playing ----
                 try {
                     if (hasNativeRadio() && window.AndroidRadio.isPlaying()) {
-                        musicPlaying = true;
+                        musicPlaying = true; radioIsPaused = false;
                         updateMuteIcon("Live Radio Playing");
-                        fetchLiveLofiStations();
+                        syncRadioAutoDJTimer();
+                        fetchRadioStations();
                         if (typeof window.AndroidRadio.requestState === "function") window.AndroidRadio.requestState();
                     }
                 } catch (e) {}
@@ -8328,8 +8694,30 @@ function preloadAllFonts() {
                                                 return weatherOverride === "auto" ? liveWeatherState.mode : weatherOverride;
                                             }
                                             
+                                            function updateWeatherLocationUI() {
+                                                const status = document.getElementById("weather-location-status");
+                                                const coordinates = document.getElementById("weather-location-coordinates");
+                                                const mapLink = document.getElementById("weather-location-map");
+                                                const point = weatherCoords || DEFAULT_WEATHER_COORDS;
+                                                const lat = Number(point[0]);
+                                                const lon = Number(point[1]);
+                                                const timezone = liveWeatherState.timezone
+                                                    ? ` · ${liveWeatherState.timezone.replace(/_/g, " ")}`
+                                                    : "";
+                                                if (status) status.textContent = `${weatherLocationStatus}${timezone}`;
+                                                if (coordinates) coordinates.textContent = `${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
+                                                if (mapLink) {
+                                                    const mapUrl = new URL("https://www.openstreetmap.org/");
+                                                    mapUrl.searchParams.set("mlat", lat.toFixed(5));
+                                                    mapUrl.searchParams.set("mlon", lon.toFixed(5));
+                                                    mapUrl.hash = `map=15/${lat.toFixed(5)}/${lon.toFixed(5)}`;
+                                                    mapLink.href = mapUrl.href;
+                                                }
+                                            }
+
                                             function updateWeatherPillUI() {
                                                 const el = document.getElementById("weather-pill-text");
+                                                updateWeatherLocationUI();
                                                 if (!el) return;
                                                 const mode = getActiveWeatherMode();
                                                 const icons = { clear: "☀️", cloudy: "☁️", rain: "🌧️", storm: "⛈️" };
@@ -8404,7 +8792,7 @@ function preloadAllFonts() {
                                                     }
                                                     ctx.clearRect(0, 0, cvs.width, cvs.height);
                                                     
-                                                    const viewAlphaScale = currentView === "draw" ? 0.22 : 1.0;
+                                                    const viewAlphaScale = currentView === "draw" ? 0.65 : 1.0;
                                                     const mode = getActiveWeatherMode();
                                                     
                                                     if (mode === "cloudy") {
@@ -8471,7 +8859,7 @@ function preloadAllFonts() {
                                                 weatherRaf = requestAnimationFrame(tick);
                                             }
                                             
-                                            async function syncLiveWeather(lat = 14.569, lon = 121.132) {
+                                            async function syncLiveWeather(lat = DEFAULT_WEATHER_COORDS[0], lon = DEFAULT_WEATHER_COORDS[1]) {
                                                 try {
                                                     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code`;
                                                     const res = await fetch(url);
@@ -8485,7 +8873,7 @@ function preloadAllFonts() {
                                                     else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) { mode = "rain"; label = "Rain"; }
                                                     else if ([1, 2, 3, 45, 48].includes(code)) { mode = "cloudy"; label = "Cloudy"; }
                                                     
-                                                    liveWeatherState = { mode, temp, label };
+                                                    liveWeatherState = { mode, temp, label, timezone: String(data.timezone || "") };
                                                     rebuildWeatherParticles();
                                                     updateWeatherPillUI();
                                                 } catch (e) {
@@ -10147,21 +10535,6 @@ function preloadAllFonts() {
                                                         function closeEventQR() { $("evqr-modal").classList.remove("open"); qrCur = null; }
                                                         window.openEventQR = openEventQR;
                                                         
-                                                        async function qrForTypedCode() {
-                                                            var code = normCode($("evqr-code").value);
-                                                            if (code.length < 4) { showToast("Enter the event code."); return; }
-                                                            var rec = libGet().find(function (e) { return e.code === code; });
-                                                            if (!rec) {
-                                                                try {
-                                                                    var res = await fetch(GAS_WEB_APP_URL + "?module=fwevent&code=" + code + "&_t=" + Date.now());
-                                                                    var j = await res.json();
-                                                                    if (!j.ok || !j.event) { showToast("No event with that code."); return; }
-                                                                    rec = j.event;
-                                                                } catch (e) { showToast("Couldn't reach the server."); return; }
-                                                            }
-                                                            openEventQR(rec);
-                                                        }
-                                                        
                                                         function copyQrLink() {
                                                             if (!qrCur) return;
                                                             var url = inviteUrl(qrCur.code);
@@ -11285,8 +11658,8 @@ function preloadAllFonts() {
                                                                 bell.setAttribute("aria-label", "Notifications");
                                                                 bell.innerHTML = NT_ICONS.bell + '<span class="notif-badge" id="notif-badge" hidden>0</span>';
                                                                 
-                                                                var cluster = document.querySelector(".topbar > div");
-                                                                if (cluster) cluster.insertBefore(bell, $("weather-pill") || cluster.firstChild);
+                                                                var slot = $("notif-bell-slot");
+                                                                if (slot) slot.appendChild(bell);
                                                                 
                                                                 document.body.insertAdjacentHTML("beforeend",
                                                                     '<div class="modal-backdrop" id="notif-modal">' +
