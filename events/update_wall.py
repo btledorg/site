@@ -1,30 +1,27 @@
 #!/usr/bin/env python3
 """
-update_wall.py  -  adds "Hide arts for now" + theater-curtain reveal to freedomwall.html
+update_wall_landscape.py  -  landscape / horizontal-device upgrade for freedomwall.html
 
-Usage:   python update_wall.py freedomwall.html
+Usage:   python update_wall_landscape.py freedomwall.html
 
-What it does
-  * Host (Event > host panel) gets a "Hide arts for now" switch, an "Ask before revealing" option,
-    and a "Start with the curtain closed" checkbox when creating an event.
-  * While hidden, everyone except the host sees a blank wall: closed curtain + logo + app name + "No drawing yet!".
-  * Host flips the switch back -> (optional confirmation) -> curtain opens on every device ->
-    after the curtain is gone the drawings start replaying.
+What it adds (landscape, width >= 640px only; portrait is untouched)
+  * Canvas uses the full screen height (the old 92px of spare room is gone).
+  * Undo / redo / mirror / zoom move into the right column so they no longer eat canvas height.
+  * On short landscape screens (height <= 600px) the top bar hides while you are in Draw.
+  * LEFT sidebar (nav rail): small edge tab to collapse / expand it. Remembered.
+  * RIGHT sidebar (Style / Trace / Text / Layers / Shapes / Post): "panel" button in the toolbar
+    collapses it to a slim vertical toolbar so the canvas can grow. Remembered.
+  * Fullscreen button (browser Fullscreen API; hidden where unsupported, e.g. most WebViews).
 
-Run the Apps Script part (events_hidden.gs) FIRST, then redeploy the web app.
-A backup is written to <file>.bak before anything changes. Safe to re-run (it detects itself).
+Independent of update_wall.py; either order works. Writes <file>.bak first. Safe to re-run.
 """
 import shutil
 import sys
 
-# --- change these if you like -------------------------------------------------------------
-CURTAIN_IMG = "https://img.magnific.com/premium-photo/red-theatre-entertainment-event-curtain-3d-rendering_601748-35555.jpg?semt=ais_hybrid&w=740&q=80"
-CURTAIN_LOGO = "../resources/image/logo/logo4.png"
-CURTAIN_TITLE = "THE ARTcher"
-CURTAIN_SUB = "ARCHERSTUDIO"
-# -------------------------------------------------------------------------------------------
+# top bar is hidden in Draw when the landscape screen is this short (px). Set to 0 to never hide it.
+HIDE_TOPBAR_BELOW = 600
 
-MARKER = 'id="artcher-curtain-js"'
+MARKER = 'id="artcher-landscape-js"'
 
 
 def rep(src, old, new, label):
@@ -34,323 +31,191 @@ def rep(src, old, new, label):
     return src.replace(old, new, 1)
 
 
-# =============================== CSS ===============================
 CSS = r'''
-<style id="artcher-curtain">
-/* ---- host controls ---- */
-.host-controls{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--soft)}
-.host-switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
-.host-switch-row strong{display:block;font-size:14px}
-.host-switch-row small{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-top:2px;line-height:1.3}
+<style id="artcher-landscape">
+/* ---- new buttons: hidden outside landscape (fullscreen button is shown by JS when supported) ---- */
+.studio-extra{display:flex;gap:5px}
+#panel-toggle{display:none}
+.rail-tab{display:none;position:fixed;z-index:101;top:50%;left:var(--side,0px);width:18px;height:56px;margin-top:-28px;padding:0;
+  align-items:center;justify-content:center;cursor:pointer;color:var(--muted);background:#fff;
+  border:1px solid var(--border);border-left:0;border-radius:0 12px 12px 0;box-shadow:2px 2px 8px rgba(15,23,42,.08)}
+.rail-tab:active{background:var(--soft)}
+.rail-tab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+body.rail-collapsed .rail-tab svg{transform:rotate(180deg)}
 
-/* ---- wall state while the curtain is involved ---- */
-#view-wall.curtain-hold .wall-tile{visibility:hidden}
-#view-wall.curtain-closed .wall-hud > :not(#event-btn):not(#event-pill):not(#dock-upload-btn){display:none!important}
-#view-wall.curtain-closed #minimap,
-#view-wall.curtain-closed .wall-fab{display:none!important}
+@media (orientation: landscape) and (min-width: 640px) {
+  .rail-tab{display:flex}
+  #panel-toggle{display:inline-flex}
 
-/* ---- the curtain ---- */
-.curtain-stage{position:absolute;inset:0;z-index:12;overflow:hidden;touch-action:none;
-  background:radial-gradient(ellipse at 50% 0%,#3b0a0a,#12030a 75%);--curtain-ms:2800ms}
-.curtain-panel{position:absolute;top:0;bottom:0;width:50.4%;
-  background-color:#7f1d1d;
-  background-image:url("__CURTAIN_IMG__"),repeating-linear-gradient(90deg,#7f1d1d 0,#b91c1c 22px,#7f1d1d 44px);
-  background-size:200% 100%,auto;
-  transition:transform var(--curtain-ms) cubic-bezier(.6,.02,.2,1);
-  will-change:transform}
-.curtain-panel.left{left:0;background-position:left center,0 0;transform-origin:left center;box-shadow:inset -22px 0 30px rgba(0,0,0,.38)}
-.curtain-panel.right{right:0;background-position:right center,0 0;transform-origin:right center;box-shadow:inset 22px 0 30px rgba(0,0,0,.38)}
-.curtain-panel::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0,rgba(0,0,0,0) 14px,rgba(255,255,255,.05) 28px,rgba(0,0,0,.22) 42px)}
-.curtain-stage.open .curtain-panel{transform:scaleX(.12)}
+  /* ---- collapsible left rail ---- */
+  .bottom-nav{transition:transform .22s ease}
+  body.rail-collapsed{--side:0px}
+  body.rail-collapsed .bottom-nav{transform:translateX(-100%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s}
 
-.curtain-emblem{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:10px;text-align:center;padding:24px;pointer-events:none;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.7);
-  transition:opacity .6s ease,transform .9s ease}
-.curtain-emblem img{width:clamp(84px,24vw,140px);height:auto;filter:drop-shadow(0 6px 18px rgba(0,0,0,.55))}
-.curtain-name{font-size:clamp(26px,7vw,44px);font-weight:900;letter-spacing:.06em;text-transform:uppercase;line-height:1.05}
-.curtain-sub{font:600 11px 'JetBrains Mono',monospace;letter-spacing:.24em;text-transform:uppercase;opacity:.85}
-.curtain-event{font-size:13px;font-weight:700;opacity:.9;max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.curtain-empty{margin-top:8px;padding:8px 16px;border-radius:999px;background:rgba(0,0,0,.45);
-  border:1px solid rgba(255,255,255,.28);font-size:13px;font-weight:700;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-.curtain-stage.open .curtain-emblem{opacity:0;transform:scale(1.12)}
-.curtain-stage.no-anim .curtain-panel,.curtain-stage.no-anim .curtain-emblem{transition:none!important}
+  /* ---- full-height canvas ---- */
+  #view-draw{
+    --pad:12px;
+    --panel:clamp(240px,28vw,340px);
+    --cv:max(160px,min(
+      calc(100dvh - var(--top) - var(--safe-b) - 2 * var(--pad)),
+      calc(100vw - var(--side) - 56px - var(--panel) - 76px)));
+  }
+  #view-draw.panel-off{--panel:52px}
+
+  .studio-wrap{
+    grid-template-columns:56px var(--cv) var(--panel);
+    grid-template-rows:auto auto 1fr;
+    align-items:start;
+    padding:var(--pad) 0;
+  }
+  .tool-dock{grid-column:1;grid-row:1 / span 3}
+  .canvas-frame{grid-column:2;grid-row:1 / span 3;width:var(--cv);min-width:0;margin:0}
+  .studio-bar{grid-column:3;grid-row:1;flex-wrap:wrap;gap:6px}
+  .draw-hud{grid-column:3;grid-row:2;width:auto;min-width:0}
+  .sheet{grid-column:3;grid-row:3;max-height:calc(100dvh - var(--top) - var(--safe-b) - 140px);overflow-y:auto}
+
+  /* ---- right panel collapsed: slim vertical toolbar ---- */
+  #view-draw.panel-off .sheet,
+  #view-draw.panel-off .draw-hud{display:none}
+  #view-draw.panel-off .studio-bar{
+    flex-direction:column;align-items:center;flex-wrap:nowrap;gap:8px;
+    max-height:calc(100dvh - var(--top) - var(--safe-b) - 2 * var(--pad));
+    overflow-y:auto;scrollbar-width:none}
+  #view-draw.panel-off .studio-bar::-webkit-scrollbar{display:none}
+  #view-draw.panel-off .history,
+  #view-draw.panel-off .studio-extra,
+  #view-draw.panel-off .studio-zoom-group{flex-direction:column}
+  #view-draw.panel-off #sym-label{display:none}
+  #view-draw.panel-off .studio-zoom-btn{width:100%}
+  #view-draw.panel-off .studio-zoom-level{
+    border:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);min-width:34px;width:100%}
+}
+
+/* ---- short landscape screens: give Draw the whole height ---- */
+@media (orientation: landscape) and (min-width: 640px) and (max-height: __HIDE__px) {
+  body[data-view="draw"]{--top:var(--safe-t)}
+  body[data-view="draw"] .topbar{display:none}
+}
 </style>
-'''.replace("__CURTAIN_IMG__", CURTAIN_IMG)
+'''.replace("__HIDE__", str(HIDE_TOPBAR_BELOW if HIDE_TOPBAR_BELOW > 0 else 0))
 
-# =============================== curtain markup ===============================
-CURTAIN_HTML = r'''
-                        <div class="curtain-stage" id="curtain-stage" hidden role="status" aria-live="polite">
-                            <div class="curtain-panel left"></div>
-                            <div class="curtain-panel right"></div>
-                            <div class="curtain-emblem">
-                                <img src="__LOGO__" alt="" onerror="this.style.display='none'">
-                                <div class="curtain-name">__TITLE__</div>
-                                <div class="curtain-sub">__SUB__</div>
-                                <div class="curtain-event" id="curtain-event-name"></div>
-                                <div class="curtain-empty">No drawing yet!</div>
-                            </div>
-                        </div>
-'''.replace("__LOGO__", CURTAIN_LOGO).replace("__TITLE__", CURTAIN_TITLE).replace("__SUB__", CURTAIN_SUB)
+# when HIDE_TOPBAR_BELOW is 0 the media query can never match a real screen (max-height:0px)
 
-# =============================== host controls markup ===============================
-HOST_CONTROLS = r'''<div class="host-controls" id="event-host-controls" hidden>
-                                <label class="host-switch-row">
-                                    <span><strong>Hide arts for now</strong><small>Guests see a closed curtain and an empty wall. Only you can see the drawings.</small></span>
-                                    <span class="switch"><input type="checkbox" id="event-hide-switch" onchange="onHideSwitch(this)"></span>
-                                </label>
-                                <label class="anon-check-row" for="event-confirm-reveal">
-                                    <input type="checkbox" id="event-confirm-reveal" checked onchange="onConfirmRevealToggle(this)">
-                                    <span>Ask before revealing</span>
-                                </label>
-                            </div>
+RAIL_TAB = r'''<!-- SIDEBAR TAB -->
+                    <button type="button" class="rail-tab" id="rail-tab" onclick="toggleRail()" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar">
+                        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
 
-                            <details id="event-host">'''
+                    <!-- BOTTOM NAV -->'''
 
-START_HIDDEN = r'''<label class="anon-check-row" for="event-start-hidden">
-                                        <input type="checkbox" id="event-start-hidden">
-                                        <span>Start with the curtain closed (hide arts)</span>
-                                    </label>
-                                    <button type="button" class="btn btn-primary" onclick="hostEvent()">Create event</button>'''
+TOOLBAR_EXTRA = r'''<div class="studio-extra">
+                                        <button type="button" class="chip-btn" id="panel-toggle" onclick="togglePanel()" aria-pressed="false" aria-label="Collapse side panel" title="Collapse / expand the side panel">
+                                            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="15" y1="4" x2="15" y2="20"></line></svg>
+                                        </button>
+                                        <button type="button" class="chip-btn" id="fs-btn" onclick="toggleFullscreen()" hidden aria-label="Fullscreen" title="Fullscreen">
+                                            <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="studio-zoom-group" role="group" aria-label="Canvas zoom controls">'''
 
-# =============================== JS ===============================
 JS = r'''
-<script id="artcher-curtain-js">
+<script id="artcher-landscape-js">
 (function () {
     "use strict";
     var $ = function (id) { return document.getElementById(id); };
-    var LS_CONFIRM = "fw_reveal_confirm_v1";
-    var reduceMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    var CURTAIN_MS = reduceMotion ? 700 : 2800;
+    var LS_RAIL = "fw_rail_collapsed_v1";
+    var LS_PANEL = "fw_panel_collapsed_v1";
 
-    window.curtainHold = false;            // while true the wall canvas stays blank
-    var curtainClosedShown = false;        // a closed curtain is (or was) on screen
-    var revealing = false;
-    var lastHiddenForMe = null;
-    var curtainRun = 0;
-
-    function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-    function wrap(name, make) {
-        var orig = window[name];
-        if (typeof orig !== "function") return;
-        window[name] = make(orig);
+    // after a layout change: let the canvas / wall / weather re-measure themselves
+    function relayout() {
+        setTimeout(function () {
+            window.dispatchEvent(new Event("resize"));
+            try { syncUnit(); } catch (e) {}
+            try { if (typeof scheduleWallPaint === "function") scheduleWallPaint(); } catch (e) {}
+        }, 40);
     }
 
-    // true for everybody except the host while the host has the arts hidden
-    function hiddenForMe() {
-        return !!curEvent && !!curEvent.hidden && curEvent.status === "active" && !isHost();
-    }
-    window.evHiddenForMe = hiddenForMe;
-
-    function setHold(on) {
-        window.curtainHold = !!on;
-        var v = $("view-wall");
-        if (v) v.classList.toggle("curtain-hold", !!on);
-        if (!on && typeof scheduleWallPaint === "function") scheduleWallPaint();
-    }
-
-    function paintClosedText() {
-        var n = $("curtain-event-name");
-        if (n) n.textContent = curEvent ? curEvent.name : "";
-    }
-
-    // curtain is shown closed. animate=true plays the "curtain closes" animation.
-    function showClosed(animate) {
-        var st = $("curtain-stage"), v = $("view-wall");
-        curtainRun++;
-        revealing = false;
-        setHold(true);
-        v.classList.add("curtain-closed");
-        paintClosedText();
-        curtainClosedShown = true;
-        st.style.setProperty("--curtain-ms", CURTAIN_MS + "ms");
-        st.hidden = false;
-        if (animate) {
-            st.classList.add("no-anim", "open");
-            void st.offsetWidth;
-            st.classList.remove("no-anim");
-            void st.offsetWidth;
-            st.classList.remove("open");
-        } else {
-            st.classList.remove("open");
+    // ---------------- left rail ----------------
+    function applyRail(collapsed) {
+        document.body.classList.toggle("rail-collapsed", !!collapsed);
+        var t = $("rail-tab");
+        if (t) {
+            t.setAttribute("aria-expanded", String(!collapsed));
+            var label = collapsed ? "Show sidebar" : "Collapse sidebar";
+            t.setAttribute("aria-label", label);
+            t.title = label;
         }
     }
+    window.toggleRail = function () {
+        var c = !document.body.classList.contains("rail-collapsed");
+        lsSet(LS_RAIL, c);
+        applyRail(c);
+        haptic(8);
+        relayout();
+    };
 
-    // curtain rolls open, then the drawings start drawing
-    async function playReveal() {
-        if (revealing) return;
-        revealing = true;
-        var run = ++curtainRun;
-        var st = $("curtain-stage"), v = $("view-wall");
+    // ---------------- right panel (Draw) ----------------
+    function applyPanel(collapsed) {
+        var v = $("view-draw");
+        if (v) v.classList.toggle("panel-off", !!collapsed);
+        var b = $("panel-toggle");
+        if (b) {
+            b.classList.toggle("active", !!collapsed);
+            b.setAttribute("aria-pressed", String(!!collapsed));
+            var label = collapsed ? "Show side panel" : "Collapse side panel";
+            b.setAttribute("aria-label", label);
+            b.title = label;
+        }
+    }
+    window.togglePanel = function () {
+        var v = $("view-draw");
+        var c = !(v && v.classList.contains("panel-off"));
+        lsSet(LS_PANEL, c);
+        applyPanel(c);
+        haptic(8);
+        relayout();
+    };
+
+    // ---------------- fullscreen ----------------
+    var d = document, root = d.documentElement;
+    var fsSupported = !!(d.fullscreenEnabled || d.webkitFullscreenEnabled);
+    function fsActive() { return !!(d.fullscreenElement || d.webkitFullscreenElement); }
+    function syncFsButton() {
+        var b = $("fs-btn");
+        if (!b) return;
+        b.hidden = !fsSupported;
+        b.classList.toggle("active", fsActive());
+    }
+    window.toggleFullscreen = function () {
         try {
-            setHold(true);
-            for (var i = 0; i < 40 && loadingWall; i++) await sleep(150);
-            if (run !== curtainRun) return;
-            try { await loadWallEntries({ autoPlay: false, manual: false }); } catch (e) {}
-            if (run !== curtainRun) return;
-
-            haptic(20);
-            st.style.setProperty("--curtain-ms", CURTAIN_MS + "ms");
-            st.classList.add("open");
-            await sleep(CURTAIN_MS + 150);
-            if (run !== curtainRun) return;
-
-            st.hidden = true;
-            st.classList.remove("open");
-            v.classList.remove("curtain-closed");
-            curtainClosedShown = false;
-            setHold(false);
-            if (currentView === "wall") { userMoved = false; renderWall(true); }   // drawings start now
-            launchConfetti();
-            showToast("🎭 The art is revealed!");
-        } finally {
-            if (run === curtainRun) revealing = false;
-        }
-    }
-
-    function refreshCurtain() {
-        var st = $("curtain-stage"), v = $("view-wall");
-        if (!st || !v) return;
-        var must = hiddenForMe();
-        var was = lastHiddenForMe;
-        lastHiddenForMe = must;
-
-        if (must) {
-            if (!curtainClosedShown || st.hidden || revealing) showClosed(was === false && currentView === "wall");
-            else paintClosedText();
-            return;
-        }
-        if (curtainClosedShown) {                       // it was hidden, now it is not
-            if (currentView === "wall") playReveal();   // otherwise wait until the Wall tab is opened
-            return;
-        }
-        st.hidden = true;
-        v.classList.remove("curtain-closed");
-        if (window.curtainHold) setHold(false);
-    }
-
-    // ---------------- host actions ----------------
-    var hideBusy = false;
-    async function setEventHidden(hide) {
-        if (!curEvent || !isHost() || hideBusy) return;
-        hideBusy = true;
-        var code = curEvent.code;
-        try {
-            var j = await gasPost({ action: "setFWEventHidden", code: code, hostToken: hostToken(code), hidden: !!hide });
-            if (!j || !j.ok) { showToast((j && j.error) || "Couldn't update the event."); return; }
-            if (curEvent && curEvent.code === code) {
-                curEvent = Object.assign({}, curEvent, j.event);
-                lsSet(LS_EVENT, curEvent);
-            }
-            try {
-                if (wallChannel && wallChannel.state === "joined") {
-                    wallChannel.send({ type: "broadcast", event: "event-visibility", payload: { code: code, hidden: !!hide } });
-                }
-            } catch (e) {}
-            applyEventUI();
-            showToast(hide ? "Arts hidden · guests see the closed curtain 🎭" : "Arts revealed 🎉");
-            haptic(12);
+            var p;
+            if (fsActive()) p = (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+            else p = (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
+            if (p && p.catch) p.catch(function () { showToast("Fullscreen isn't available here."); });
         } catch (e) {
-            showToast("Couldn't reach the server.");
-        } finally {
-            hideBusy = false;
-            renderEventModal();
-        }
-    }
-
-    // the switch means "arts are hidden". Turning it off = reveal.
-    window.onHideSwitch = function (sw) {
-        if (!curEvent || !isHost()) { sw.checked = !!(curEvent && curEvent.hidden); return; }
-        if (sw.checked) { setEventHidden(true); return; }
-        sw.checked = true;                               // stays on until the reveal really happened
-        var go = function () { setEventHidden(false); };
-        if (lsGet(LS_CONFIRM, true) !== false) {
-            askConsent("Reveal the art?",
-                "The curtain opens on every guest's screen and all drawings start replaying. You can hide them again later.",
-                go, { okLabel: "Open curtain" });
-        } else {
-            go();
+            showToast("Fullscreen isn't available here.");
         }
     };
-    window.onConfirmRevealToggle = function (cb) {
-        lsSet(LS_CONFIRM, !!cb.checked);
-        showToast(cb.checked ? "Will ask before revealing" : "Reveal won't ask first");
-    };
+    ["fullscreenchange", "webkitfullscreenchange"].forEach(function (ev) {
+        d.addEventListener(ev, function () { syncFsButton(); relayout(); });
+    });
 
-    // ---------------- guests: realtime + polling ----------------
-    async function syncEventMeta() {
-        if (!curEvent) return;
-        var code = curEvent.code;
-        try {
-            var res = await fetch(GAS_WEB_APP_URL + "?module=fwevent&code=" + encodeURIComponent(code) + "&_t=" + Date.now());
-            var j = await res.json();
-            if (j && j.ok && j.event && curEvent && curEvent.code === code) noteEventMeta(j.event);
-        } catch (e) {}
+    // ---------------- current view on <body> (lets CSS hide the top bar in Draw) ----------------
+    var _switchView = window.switchView;
+    if (typeof _switchView === "function") {
+        window.switchView = function (name) {
+            var r = _switchView.apply(this, arguments);
+            document.body.dataset.view = name;
+            return r;
+        };
     }
-    // the broadcast is only a nudge; the server decides (so a fake broadcast can't open the curtain)
-    window.onEventVisibility = function (p) {
-        if (!p || !curEvent || p.code !== curEvent.code) return;
-        syncEventMeta();
-    };
-    setInterval(function () {
-        if (curEvent && curEvent.hidden && curEvent.status === "active" && !isHost() && !document.hidden && navigator.onLine) syncEventMeta();
-    }, 10000);
+    document.body.dataset.view = (typeof currentView === "string" && currentView) || "home";
 
-    // ---------------- hook into the existing functions ----------------
-    wrap("setScope", function (orig) {
-        return function () {
-            curtainRun++;
-            revealing = false;
-            curtainClosedShown = false;
-            lastHiddenForMe = null;
-            var st = $("curtain-stage"), v = $("view-wall");
-            if (st) { st.hidden = true; st.classList.remove("open"); }
-            if (v) v.classList.remove("curtain-closed");
-            setHold(false);
-            return orig.apply(this, arguments);
-        };
-    });
-
-    wrap("applyEventUI", function (orig) {
-        return function () {
-            var r = orig.apply(this, arguments);
-            try {
-                if (curEvent && curEvent.hidden && curEvent.status === "active") {
-                    var pill = $("event-pill");
-                    if (pill && !pill.hidden && isHost()) pill.textContent += " · 🎭 hidden";
-                    var note = $("event-post-note");
-                    if (note) note.textContent += isHost() ? " · hidden from guests" : " · art stays hidden until the host reveals it";
-                }
-                refreshCurtain();
-            } catch (e) {}
-            return r;
-        };
-    });
-
-    wrap("renderEventModal", function (orig) {
-        return function () {
-            var r = orig.apply(this, arguments);
-            var box = $("event-host-controls");
-            if (!box) return r;
-            var show = !!curEvent && curEvent.status === "active" && isHost();
-            box.hidden = !show;
-            if (show) {
-                $("event-hide-switch").checked = !!curEvent.hidden;
-                $("event-confirm-reveal").checked = lsGet(LS_CONFIRM, true) !== false;
-            }
-            return r;
-        };
-    });
-
-    wrap("switchView", function (orig) {
-        return function (name) {
-            var r = orig.apply(this, arguments);
-            if (name === "wall") refreshCurtain();
-            return r;
-        };
-    });
-
-    refreshCurtain();
+    // ---------------- restore saved state ----------------
+    applyRail(lsGet(LS_RAIL, false) === true);
+    applyPanel(lsGet(LS_PANEL, false) === true);
+    syncFsButton();
+    relayout();
 })();
 </script>
 '''
@@ -358,7 +223,7 @@ JS = r'''
 
 def main():
     if len(sys.argv) < 2:
-        sys.exit("Usage: python update_wall.py freedomwall.html")
+        sys.exit("Usage: python update_wall_landscape.py freedomwall.html")
     path = sys.argv[1]
     with open(path, "r", encoding="utf-8") as f:
         html = f.read()
@@ -367,79 +232,14 @@ def main():
         print("Already applied - nothing to do.")
         return
 
-    # 1. css
     html = rep(html, "</head>", CSS + "</head>", "css (</head>)")
-
-    # 2. curtain markup at the top of the wall view
-    wall_open = '<section id="view-wall" class="view">'
-    html = rep(html, wall_open, wall_open + "\n" + CURTAIN_HTML, "curtain markup")
-
-    # 3. host controls (above the 'Host an event' block)
-    html = rep(html, '<details id="event-host">', HOST_CONTROLS, "host controls")
-
-    # 4. 'start hidden' checkbox in the create-event form
+    html = rep(html, "<!-- BOTTOM NAV -->", RAIL_TAB, "sidebar tab")
     html = rep(
         html,
-        '<button type="button" class="btn btn-primary" onclick="hostEvent()">Create event</button>',
-        START_HIDDEN,
-        "start-hidden checkbox",
+        '<div class="studio-zoom-group" role="group" aria-label="Canvas zoom controls">',
+        TOOLBAR_EXTRA,
+        "toolbar buttons",
     )
-
-    # 5. send 'hidden' when creating an event
-    html = rep(
-        html,
-        'const j = await gasPost({ action: "createFWEvent", name, hours });',
-        'const j = await gasPost({ action: "createFWEvent", name, hours, hidden: !!(evEl("event-start-hidden") && evEl("event-start-hidden").checked) });',
-        "createFWEvent payload",
-    )
-
-    # 6. the host's token lets the server return the drawings of a hidden event
-    html = rep(
-        html,
-        "?module=freedomwall&event=${encodeURIComponent(code)}&_t=${Date.now()}",
-        "?module=freedomwall&event=${encodeURIComponent(code)}&hostToken=${encodeURIComponent(hostToken(code))}&_t=${Date.now()}",
-        "fetchServerEntries hostToken",
-    )
-
-    # 7. keep the wall canvas blank while the curtain holds it
-    border_line = 'const showBorders = document.getElementById("opt-borders") && document.getElementById("opt-borders").checked;'
-    html = rep(html, border_line, "if (window.curtainHold) return;\n                            " + border_line, "paint hold")
-
-    # 8. realtime: listen for hide/reveal (must be added before .subscribe)
-    new_tile_on = '.on("broadcast", { event: "new-tile" }, ({ payload }) => {'
-    html = rep(
-        html,
-        new_tile_on,
-        '.on("broadcast", { event: "event-visibility" }, ({ payload }) => { if (window.onEventVisibility) window.onEventVisibility(payload); })\n                            '
-        + new_tile_on,
-        "realtime event-visibility",
-    )
-
-    # 9. guests ignore live tiles of a hidden event
-    html = rep(
-        html,
-        'if ((payload.event || "") !== evCode()) return;',
-        'if ((payload.event || "") !== evCode()) return;\n                                if (window.evHiddenForMe && window.evHiddenForMe()) return;',
-        "ignore live tiles while hidden",
-    )
-
-    # 10. don't broadcast strokes of a hidden event
-    html = rep(
-        html,
-        "payload: rawSize < 200000",
-        'payload: (rawSize < 200000 && !(curEvent && curEvent.hidden && (entry.event || "") === curEvent.code))',
-        "broadcast without strokes while hidden",
-    )
-
-    # 11. the server may move a tile to a free square (guests can't see taken squares while hidden)
-    html = rep(
-        html,
-        "snap.occupied.push(entry);",
-        'if (typeof json.gx === "number" && typeof json.gy === "number") { entry.gx = json.gx; entry.gy = json.gy; }\n                                        snap.occupied.push(entry);',
-        "adopt server slot",
-    )
-
-    # 12. the new script, last thing before </body>
     html = rep(html, "</body>", JS + "</body>", "script (</body>)")
 
     shutil.copyfile(path, path + ".bak")
