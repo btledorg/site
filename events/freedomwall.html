@@ -655,6 +655,20 @@
             </div>
         </div>
 
+        <div class="card" id="app-diagnostics-card">
+            <div class="diagnostics-heading">
+                <div>
+                    <div class="card-head">App diagnostics</div>
+                    <small>Recent radio activity, console warnings, and errors. Logs stay on this device.</small>
+                </div>
+                <div class="diagnostics-actions">
+                    <button type="button" class="btn btn-sm" onclick="copyAppDiagnostics()">Copy</button>
+                    <button type="button" class="btn btn-sm" onclick="clearAppDiagnostics()">Clear</button>
+                </div>
+            </div>
+            <pre id="app-diagnostics-log" role="log" aria-live="polite">Waiting for app activity…</pre>
+        </div>
+
         <div class="card">
             <div class="card-head">Events &amp; Wall</div>
             <button class="list-row" onclick="openEventModal()">

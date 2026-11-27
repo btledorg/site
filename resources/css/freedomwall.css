@@ -702,6 +702,17 @@ body.focus-mode #view-draw .sheet[data-active-pane="post"] .focus-quick-post { d
 .radio-fav-btn.is-fav { color: #f59e0b; }
 .radio-empty-state { padding: 18px 12px; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
 .radio-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px 14px; color: var(--muted); font-size: 11px; }
+.diagnostics-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 0 16px 10px; }
+.diagnostics-heading .card-head { padding: 12px 0 3px; }
+.diagnostics-heading > div:first-child { min-width: 0; }
+.diagnostics-heading small { display: block; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.diagnostics-actions { display: flex; flex: 0 0 auto; gap: 6px; }
+#app-diagnostics-log {
+    max-height: 220px; overflow: auto; margin: 0 12px 12px; padding: 10px;
+    border: 1px solid #263449; border-radius: 10px; background: #0f172a; color: #dbeafe;
+    font: 10px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+    white-space: pre-wrap; overflow-wrap: anywhere; overscroll-behavior: contain;
+}
 .radio-access-btn.is-playing { background: var(--accent-soft); color: var(--accent); }
 .wall-radio-btn.is-playing { border-color: #93c5fd; background: var(--accent-soft); color: var(--accent); }
 body.radio-mode-open { overflow: hidden; }
