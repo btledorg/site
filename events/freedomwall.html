@@ -1101,7 +1101,59 @@
                             .tp-legend { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; font-size: 11px; font-weight: 600; color: var(--muted); }
                             .tp-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
                         </style>
-                    </head>
+                    
+<style id="artcher-v3">
+/* ---- sheet tabs: 6 tabs now ---- */
+.sheet-tabs { grid-template-columns: repeat(6, 1fr); }
+.sheet-tab { font-size: 11.5px; gap: 4px; padding: 0 2px; }
+@media (max-width: 400px) { .sheet-tab svg { display: none; } }
+.tool-dock { grid-template-columns: repeat(6, 1fr); }
+
+/* ---- shapes pane ---- */
+.shape-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.shape-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  height: 54px; padding: 0; border: 1px solid var(--border); border-radius: 10px; background: #fff;
+  color: var(--muted); font-size: 9.5px; font-weight: 700; cursor: pointer; transition: transform .1s, background .12s; }
+.shape-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.shape-btn svg polyline { vector-effect: non-scaling-stroke; }
+.shape-btn:active { transform: scale(.95); }
+.shape-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.shape-grid.filled .shape-btn svg { fill: currentColor; fill-opacity: .22; }
+
+/* ---- draw indicator on canvas ---- */
+.draw-hud { position: absolute; left: 8px; top: 8px; z-index: 8; display: flex; align-items: center; gap: 6px;
+  max-width: calc(100% - 16px); padding: 4px 9px; border-radius: 999px; white-space: nowrap; overflow: hidden;
+  background: rgba(255,255,255,.93); border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(15,23,42,.1);
+  font: 700 10.5px 'JetBrains Mono', monospace; color: var(--muted); pointer-events: none; transition: border-color .15s, color .15s; }
+.dh-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; flex-shrink: 0; }
+#dh-layer { max-width: 84px; overflow: hidden; text-overflow: ellipsis; }
+.dh-sep { opacity: .5; }
+.draw-hud.live { color: var(--ink); border-color: #fecaca; }
+.draw-hud.live .dh-dot { background: #ef4444; animation: dhPulse .8s ease-in-out infinite; }
+.draw-hud.warn #dh-size { color: #d97706; }
+@keyframes dhPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: .55; } }
+.canvas-frame.is-drawing { border-color: var(--accent); }
+.studio-stats.warn { color: #d97706; }
+@media (prefers-reduced-motion: reduce) { .draw-hud.live .dh-dot { animation: none; } }
+
+/* ---- layers: long-press reorder ---- */
+.layer-list { max-height: 260px; padding: 2px 2px 4px; }
+.layer-row { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.layer-row.dragging { position: relative; z-index: 6; background: #fff; border-color: var(--accent);
+  box-shadow: 0 10px 22px rgba(15,23,42,.22); transition: none; cursor: grabbing; }
+.layer-row.drop-before { box-shadow: 0 -3px 0 0 var(--accent); }
+.layer-row.drop-after  { box-shadow: 0 3px 0 0 var(--accent); }
+.layer-hint { font-size: 10.5px; font-weight: 600; color: var(--muted); text-align: center; }
+.list-row small { line-height: 1.3; }
+
+/* ---- wall reactions: stage must sit ABOVE the wall canvas, and pills keep a readable size ---- */
+#wall-canvas { z-index: 1; }
+#wall-stage { z-index: 2; }
+.wall-tile-react { font-size: 12px; padding: 3px 8px; transform: scale(var(--pill-s, 1)); transform-origin: bottom right; }
+.wall-tile-tag { font-size: 12px; transform: translateX(-50%) scale(var(--pill-s, 1)); transform-origin: bottom center; }
+#wall-stage.far .wall-tile-react { display: none !important; }
+</style>
+</head>
                     <body>
                         
                         <!-- FULLSCREEN NICKNAME OVERLAY -->
@@ -1276,14 +1328,8 @@
                                     <button type="button" class="tool-btn" data-tool="hand" onclick="setTool('hand')" title="Hand / Pan & Move Ref/Text (H)">
                                         <svg viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg><span>Hand</span>
                                     </button>
-                                    <button type="button" class="tool-btn" data-tool="line" onclick="setTool('line')" title="Line (L)">
-                                        <svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5"></line></svg><span>Line</span>
-                                    </button>
-                                    <button type="button" class="tool-btn" data-tool="rect" onclick="setTool('rect')" title="Rectangle (R)">
-                                        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg><span>Box</span>
-                                    </button>
-                                    <button type="button" class="tool-btn" data-tool="circle" onclick="setTool('circle')" title="Circle (O)">
-                                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg><span>Circle</span>
+                                    <button type="button" class="tool-btn" data-tool="shape" onclick="setTool('shape'); setDrawTab('shapes'); syncShapePane();" title="Shapes (S)">
+                                        <svg viewBox="0 0 24 24"><path d="M3 20 L9 8 L15 20 Z"></path><circle cx="16.5" cy="8.5" r="4.5"></circle></svg><span>Shapes</span>
                                     </button>
                                     <button type="button" class="tool-btn" data-tool="fill" onclick="setTool('fill')" title="Fill (G)">
                                         <svg viewBox="0 0 24 24"><path d="M19 11l-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 .8 2.8 0L19 11z"></path><path d="M5 2l5 5"></path><path d="M2 13h15"></path><path d="M22 20a2 2 0 1 1-4 0c0-1.6 1.7-2.4 2-4 .3 1.6 2 2.4 2 4z"></path></svg><span>Fill</span>
@@ -1294,7 +1340,8 @@
                                 </div>
                                 
                                 <div class="canvas-frame" id="canvas-frame">
-                                    <div class="canvas-stage" id="canvas-stage">
+                                    <div class="draw-hud" id="draw-hud" aria-hidden="true"><span class="dh-dot"></span><span id="dh-tool">Brush</span><span class="dh-sep">·</span><span id="dh-layer">Layer 1</span><span class="dh-sep">·</span><span id="dh-size">0.000 MB</span></div>
+                                        <div class="canvas-stage" id="canvas-stage">
                                         <div class="ref-layer" id="ref-layer" hidden>
                                             <img id="ref-img" alt="Reference tracing overlay" />
                                         </div>
@@ -1323,6 +1370,9 @@
                                         </button>
                                         <button class="sheet-tab" data-pane="layers" role="tab" onclick="setDrawTab('layers'); renderLayersPanel();">
                                             <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Layers
+                                        </button>
+                                        <button class="sheet-tab" data-pane="shapes" role="tab" onclick="setDrawTab('shapes'); syncShapePane();">
+                                            <svg viewBox="0 0 24 24"><polygon points="12 3 22 20 2 20"/></svg>Shapes
                                         </button>
                                         <button class="sheet-tab" data-pane="post" role="tab" onclick="setDrawTab('post')">
                                             <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Post
@@ -1388,6 +1438,8 @@
                                             <input type="range" id="ref-rot-slider" min="-180" max="180" step="5" value="0" oninput="updateRefTransform()" />
                                             <span class="slider-val" id="ref-rot-val">0°</span>
                                         </div>
+                                        <button type="button" class="btn btn-sm btn-block" id="ref-pick-btn" onclick="toggleRefPickMode()">Picker: Auto</button>
+                                        <div class="ref-badge-note">Picker tool samples the reference's original colors (ignores opacity &amp; B&amp;W).</div>
                                         <div class="ref-actions-row">
                                             <button type="button" class="btn btn-sm" id="ref-gray-btn" onclick="toggleRefGrayscale()">B&amp;W</button>
                                             <button type="button" class="btn btn-sm" id="ref-vis-btn" onclick="toggleRefVisibility()">Hide</button>
@@ -1452,8 +1504,27 @@
                                         <button type="button" class="btn btn-sm" onclick="mergeLayerDown()" title="Merge active layer down">Merge ↓</button>
                                     </div>
                                     <div class="layer-list" id="layer-list"></div>
+                                    <div class="layer-hint">Long-press a layer, then drag to reorder</div>
                                 </div>
                                 
+                                <!-- SHAPES PANE -->
+                                <div class="sheet-pane" id="pane-shapes">
+                                    <div class="shape-grid" id="shape-grid"></div>
+                                    <div class="slider-row">
+                                        <span>Stroke</span>
+                                        <input type="range" id="shape-size-slider" min="1" max="40" step="1" value="5" oninput="setShapeStroke(this.value)" />
+                                        <span class="slider-val" id="shape-size-val">5px</span>
+                                    </div>
+                                    <div class="row-between">
+                                        <button type="button" class="fill-toggle-btn shape-fill-toggle" onclick="toggleShapeFill()">
+                                            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:currentColor;"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                                            <span>Fill shape</span>
+                                        </button>
+                                        <button type="button" class="fill-toggle-btn" id="shape-lock-btn" onclick="toggleShapeLock()">Perfect shapes</button>
+                                    </div>
+                                    <div class="ref-badge-note">Drag on the canvas to draw. Color &amp; opacity come from the Style tab. Shift also gives perfect shapes.</div>
+                                </div>
+
                                 <!-- POST PANE -->
                                 <div class="sheet-pane" id="pane-post">
                                     <div class="action-grid">
@@ -1474,6 +1545,7 @@
                                     <input type="text" id="author-input" class="name-input" maxlength="24" placeholder="Your name or alias (optional)" oninput="handleStudioAuthorInput(this.value)" />
                                     <button class="btn btn-accent btn-lg btn-block" id="submit-btn" onclick="submitToWall()">Post to wall</button>
                                     <div class="studio-stats" id="studio-stats">0 strokes · 0 on wall</div>
+                                    <div class="studio-stats" id="studio-size-stats">Estimated post size: ~0.000 MB</div>
                                 </div>
                             </div>
                         </div>
@@ -1659,6 +1731,18 @@
                                 <label class="list-row">
                                     <span>Wall tile borders</span>
                                     <span class="switch"><input type="checkbox" id="opt-borders" onchange="applyOptions()"></span>
+                                </label>
+                                <label class="list-row">
+                                    <span>Wall minimap<small>Navigator map on the wall</small></span>
+                                    <span class="switch"><input type="checkbox" id="opt-minimap" checked onchange="applyOptions()"></span>
+                                </label>
+                                <label class="list-row">
+                                    <span>Weather system<small>Live sky, rain &amp; storm effects</small></span>
+                                    <span class="switch"><input type="checkbox" id="opt-weather" checked onchange="applyOptions()"></span>
+                                </label>
+                                <label class="list-row">
+                                    <span>Haptic feedback<small>Vibration on taps, strokes &amp; actions</small></span>
+                                    <span class="switch"><input type="checkbox" id="opt-haptic" checked onchange="applyOptions()"></span>
                                 </label>
                             </div>
                             
@@ -2333,8 +2417,33 @@
                             osc.stop(now + 0.12);
                         }
                         
+                        var hapticOn = true, lastHapticAt = 0, iosHapticLabel = null, v3Ready = false;
                         function haptic(ms = 8) {
-                            try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
+                            if (!hapticOn) return;
+                            const now = performance.now();
+                            if (now - lastHapticAt < 35) return;      // de-dupe stacked calls
+                            lastHapticAt = now;
+                            try {
+                                if (navigator.vibrate) { navigator.vibrate(ms); return; }
+                            } catch (e) {}
+                            // iOS 17.4+ Safari: toggling a hidden <input switch> fires a native tick
+                            try {
+                                if (!iosHapticLabel) {
+                                    const input = document.createElement("input");
+                                    input.type = "checkbox";
+                                    input.setAttribute("switch", "");
+                                    input.id = "ios-haptic-switch";
+                                    input.tabIndex = -1;
+                                    const label = document.createElement("label");
+                                    label.htmlFor = "ios-haptic-switch";
+                                    label.setAttribute("aria-hidden", "true");
+                                    label.style.cssText = "position:fixed;left:-100px;top:-100px;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;";
+                                    label.appendChild(input);
+                                    document.body.appendChild(label);
+                                    iosHapticLabel = label;
+                                }
+                                iosHapticLabel.click();
+                            } catch (e) {}
                         }
                         
                         function popDoodle(el) {
@@ -3137,10 +3246,25 @@
                         const canvasStage = document.getElementById("canvas-stage");
                         const textLayer = document.getElementById("text-layer");
                         
+                        var SHAPE_DEFS = [
+                            ["line", "Line"], ["rect", "Box"], ["rounded", "Rounded"], ["circle", "Circle"], ["triangle", "Triangle"],
+                            ["rtriangle", "Right tri"], ["diamond", "Diamond"], ["pentagon", "Pentagon"], ["hexagon", "Hexagon"], ["octagon", "Octagon"],
+                            ["star", "Star"], ["heart", "Heart"], ["arrow", "Arrow"], ["plus", "Plus"], ["slant", "Slant"]
+                        ];
+                        var SHAPE_KEYS = SHAPE_DEFS.map(s => s[0]);
+                        var lastShape = "rect";
+                        function isShapeTool(t) { return SHAPE_KEYS.indexOf(t) !== -1; }
+
                         function setTool(tool) {
+                            if (tool === "shape") tool = lastShape;
+                            if (isShapeTool(tool)) lastShape = tool;
                             currentTool = tool;
+                            const dockKey = isShapeTool(tool) ? "shape" : tool;
                             document.querySelectorAll(".tool-btn").forEach(btn => {
-                                btn.classList.toggle("active", btn.dataset.tool === tool);
+                                btn.classList.toggle("active", btn.dataset.tool === dockKey);
+                            });
+                            document.querySelectorAll(".shape-btn").forEach(btn => {
+                                btn.classList.toggle("active", btn.dataset.shape === tool);
                             });
                             canvasFrame.classList.remove("mode-hand", "mode-eraser", "mode-fill", "mode-eyedropper");
                             if (tool === "hand") canvasFrame.classList.add("mode-hand");
@@ -3148,9 +3272,11 @@
                             if (tool === "fill") canvasFrame.classList.add("mode-fill");
                             if (tool === "eyedropper") canvasFrame.classList.add("mode-eyedropper");
                             if (tool !== "hand") deselectText();
+                            if (isShapeTool(tool)) syncShapePane();
+                            if (v3Ready) updateDrawHud();
                             haptic(6);
                         }
-                        
+
                         function cycleSymmetry() {
                             const order = ["none", "x", "y", "xy"];
                             const labels = { none: "Off", x: "Mirror X", y: "Mirror Y", xy: "4-Way" };
@@ -3182,7 +3308,8 @@
                         
                         function toggleShapeFill() {
                             shapeFilled = !shapeFilled;
-                            document.getElementById("shape-fill-btn").classList.toggle("active", shapeFilled);
+                            document.querySelectorAll("#shape-fill-btn, .shape-fill-toggle").forEach(b => b.classList.toggle("active", shapeFilled));
+                            const sg = document.getElementById("shape-grid"); if (sg) sg.classList.toggle("filled", shapeFilled);
                             haptic(6);
                             showToast(shapeFilled ? "Shapes will be filled" : "Shapes outline only");
                         }
@@ -3241,6 +3368,9 @@
                             renderSavedColorsUI();
                             initCustomColorPickerEvents();
                             initUpgradeControls();
+                            initShapePane();
+                            initLayerDrag();
+                            initDrawHud();
                             
                             const sizeList = document.getElementById("size-list");
                             SIZES.forEach((sz, i) => {
@@ -3376,7 +3506,7 @@
                                 return;
                             }
                             
-                            const keyMap = { b: "brush", e: "eraser", h: "hand", l: "line", r: "rect", o: "circle", g: "fill", i: "eyedropper" };
+                            const keyMap = { b: "brush", e: "eraser", h: "hand", l: "line", r: "rect", o: "circle", t: "triangle", s: "shape", g: "fill", i: "eyedropper" };
                             const mapped = keyMap[e.key.toLowerCase()];
                             if (mapped) setTool(mapped);
                         });
@@ -3390,32 +3520,52 @@
                             }
                         });
                         
+                        var weatherApplied = false;
                         function applyOptions() {
                             const showGrid = document.getElementById("opt-grid").checked;
                             smoothStrokes = document.getElementById("opt-smooth").checked;
                             const showBorders = document.getElementById("opt-borders").checked;
-                            
+                            const showMinimap = document.getElementById("opt-minimap").checked;
+                            const wxOn = document.getElementById("opt-weather").checked;
+                            const hapOn = document.getElementById("opt-haptic").checked;
+
                             canvasFrame.classList.toggle("show-grid", showGrid);
                             document.getElementById("wall-stage").classList.toggle("wall-stage-bordered", showBorders);
+
+                            hapticOn = hapOn;
+                            minimapOn = showMinimap;
+                            applyMinimapToggle();
+
+                            const wxChanged = !weatherApplied || weatherOn !== wxOn;
+                            weatherOn = wxOn;
+                            weatherApplied = true;
+                            applyWeatherToggle(wxChanged);
+
                             if (typeof scheduleWallPaint === "function") scheduleWallPaint();
-                            
+
                             lsSet(LS_OPTIONS, {
                                 grid: showGrid,
                                 smooth: smoothStrokes,
-                                borders: showBorders
+                                borders: showBorders,
+                                minimap: showMinimap,
+                                weather: wxOn,
+                                haptic: hapOn
                             });
-                            
+
                             redrawStudio();
                         }
-                        
+
                         function loadOptions() {
-                            const saved = lsGet(LS_OPTIONS, { grid: false, smooth: true, borders: false });
+                            const saved = lsGet(LS_OPTIONS, { grid: false, smooth: true, borders: false, minimap: true, weather: true, haptic: true });
                             document.getElementById("opt-grid").checked = Boolean(saved.grid);
                             document.getElementById("opt-smooth").checked = saved.smooth !== false;
                             document.getElementById("opt-borders").checked = Boolean(saved.borders);
+                            document.getElementById("opt-minimap").checked = saved.minimap !== false;
+                            document.getElementById("opt-weather").checked = saved.weather !== false;
+                            document.getElementById("opt-haptic").checked = saved.haptic !== false;
                             applyOptions();
                         }
-                        
+
                         let texts = [];
                         let selectedText = null;
                         
@@ -3702,7 +3852,7 @@
                         function buildShapePoints(shapeType, p0, p1, constrain = false) {
                             let [x0, y0] = p0;
                             let [x1, y1] = p1;
-                            
+
                             if (shapeType === "line") {
                                 if (constrain) {
                                     const dx = x1 - x0;
@@ -3714,38 +3864,99 @@
                                 }
                                 return [[x0, y0], [x1, y1]];
                             }
-                            
-                            if (shapeType === "rect") {
-                                if (constrain) {
-                                    const side = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
-                                    x1 = x0 + Math.sign(x1 - x0 || 1) * side;
-                                    y1 = y0 + Math.sign(y1 - y0 || 1) * side;
-                                }
-                                return [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]];
+
+                            if (constrain) {
+                                const side = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+                                x1 = x0 + Math.sign(x1 - x0 || 1) * side;
+                                y1 = y0 + Math.sign(y1 - y0 || 1) * side;
                             }
-                            
-                            if (shapeType === "circle") {
-                                if (constrain) {
-                                    const side = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
-                                    x1 = x0 + Math.sign(x1 - x0 || 1) * side;
-                                    y1 = y0 + Math.sign(y1 - y0 || 1) * side;
-                                }
-                                const cx = (x0 + x1) / 2;
-                                const cy = (y0 + y1) / 2;
-                                const rx = Math.abs(x1 - x0) / 2;
-                                const ry = Math.abs(y1 - y0) / 2;
+
+                            const L = Math.min(x0, x1), R = Math.max(x0, x1);
+                            const T = Math.min(y0, y1), B = Math.max(y0, y1);
+                            const w = R - L, h = B - T;
+                            const cx = (L + R) / 2, cy = (T + B) / 2;
+                            const rx = w / 2, ry = h / 2;
+                            const done = (pts) => pts.map(([x, y]) => [Math.round(x), Math.round(y)]);
+                            const ngon = (n, rot) => {
                                 const pts = [];
-                                const steps = 40;
-                                for (let i = 0; i <= steps; i++) {
-                                    const a = (i / steps) * Math.PI * 2;
-                                    pts.push([Math.round(cx + Math.cos(a) * rx), Math.round(cy + Math.sin(a) * ry)]);
+                                for (let i = 0; i < n; i++) {
+                                    const a = rot + (i / n) * Math.PI * 2;
+                                    pts.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]);
                                 }
+                                pts.push(pts[0]);
                                 return pts;
+                            };
+
+                            switch (shapeType) {
+                                case "rect":
+                                    return done([[L, T], [R, T], [R, B], [L, B], [L, T]]);
+                                case "rounded": {
+                                    const r = Math.min(w, h) * 0.22;
+                                    const pts = [];
+                                    const corner = (ccx, ccy, a0) => {
+                                        for (let i = 0; i <= 6; i++) {
+                                            const a = a0 + (i / 6) * (Math.PI / 2);
+                                            pts.push([ccx + Math.cos(a) * r, ccy + Math.sin(a) * r]);
+                                        }
+                                    };
+                                    corner(R - r, T + r, -Math.PI / 2);
+                                    corner(R - r, B - r, 0);
+                                    corner(L + r, B - r, Math.PI / 2);
+                                    corner(L + r, T + r, Math.PI);
+                                    pts.push(pts[0]);
+                                    return done(pts);
+                                }
+                                case "circle":
+                                    return done(ngon(48, 0));
+                                case "triangle":
+                                    return done([[cx, T], [R, B], [L, B], [cx, T]]);
+                                case "rtriangle":
+                                    return done([[L, T], [L, B], [R, B], [L, T]]);
+                                case "diamond":
+                                    return done([[cx, T], [R, cy], [cx, B], [L, cy], [cx, T]]);
+                                case "pentagon":
+                                    return done(ngon(5, -Math.PI / 2));
+                                case "hexagon":
+                                    return done(ngon(6, 0));
+                                case "octagon":
+                                    return done(ngon(8, -Math.PI / 2 + Math.PI / 8));
+                                case "star": {
+                                    const pts = [];
+                                    for (let i = 0; i < 10; i++) {
+                                        const a = -Math.PI / 2 + (i / 10) * Math.PI * 2;
+                                        const k = i % 2 ? 0.42 : 1;
+                                        pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]);
+                                    }
+                                    pts.push(pts[0]);
+                                    return done(pts);
+                                }
+                                case "heart": {
+                                    const pts = [];
+                                    for (let i = 0; i <= 64; i++) {
+                                        const t = (i / 64) * Math.PI * 2;
+                                        const hx = 16 * Math.pow(Math.sin(t), 3);
+                                        const hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+                                        pts.push([cx + (hx / 16) * rx, T + ((12 - hy) / 29) * h]);
+                                    }
+                                    return done(pts);
+                                }
+                                case "arrow": {
+                                    const s = h * 0.18, neck = L + w * 0.58;
+                                    return done([[L, cy - s], [neck, cy - s], [neck, T], [R, cy], [neck, B], [neck, cy + s], [L, cy + s], [L, cy - s]]);
+                                }
+                                case "plus": {
+                                    const a = w / 3, b = h / 3;
+                                    return done([[L + a, T], [R - a, T], [R - a, T + b], [R, T + b], [R, B - b], [R - a, B - b],
+                                                 [R - a, B], [L + a, B], [L + a, B - b], [L, B - b], [L, T + b], [L + a, T + b], [L + a, T]]);
+                                }
+                                case "slant": {
+                                    const s = w * 0.25;
+                                    return done([[L + s, T], [R, T], [R - s, B], [L, B], [L + s, T]]);
+                                }
                             }
-                            
-                            return [p0, p1];
+                            return done([[L, T], [R, T], [R, B], [L, B], [L, T]]);
                         }
-                        
+
                         function hexToRgba(hex, alpha = 1) {
                             let clean = (hex || "#0f172a").replace("#", "");
                             if (clean.length === 3) clean = clean.split("").map(ch => ch + ch).join("");
@@ -3757,15 +3968,83 @@
                             return "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
                         }
                         
+                        var refPickMode = "auto";
+                        function toggleRefPickMode() {
+                            refPickMode = refPickMode === "auto" ? "ref" : "auto";
+                            const b = document.getElementById("ref-pick-btn");
+                            if (b) b.textContent = refPickMode === "ref" ? "Picker: Reference first" : "Picker: Auto";
+                            haptic(6);
+                            showToast(refPickMode === "ref" ? "Picker reads the reference image first" : "Picker reads your drawing, then the reference");
+                        }
+
+                        var _refSampler = null;
+                        // returns the ORIGINAL pixel color of the trace image under canvas point (x, y), or null
+                        function sampleRefColor(x, y) {
+                            try {
+                                const img = document.getElementById("ref-img");
+                                if (!img || !refState.loaded || !refState.visible || !img.complete || !img.naturalWidth) return null;
+                                const W = canvasStage.offsetWidth || 460;
+                                const dw = img.offsetWidth, dh = img.offsetHeight;
+                                if (!dw || !dh) return null;
+                                // canvas point -> stage px, relative to stage centre, undo translate / scale / rotate
+                                const px = (x / 500) * W - W / 2 - refState.x;
+                                const py = (y / 500) * W - W / 2 - refState.y;
+                                const s = refState.scale || 1;
+                                const a = -(refState.rot || 0) * Math.PI / 180;
+                                const vx = px / s, vy = py / s;
+                                const rx = vx * Math.cos(a) - vy * Math.sin(a);
+                                const ry = vx * Math.sin(a) + vy * Math.cos(a);
+                                const lx = rx + dw / 2, ly = ry + dh / 2;
+                                const nw = img.naturalWidth, nh = img.naturalHeight;
+                                const k = Math.min(dw / nw, dh / nh);                  // object-fit: contain
+                                const ox = (dw - nw * k) / 2, oy = (dh - nh * k) / 2;
+                                const ix = (lx - ox) / k, iy = (ly - oy) / k;
+                                if (ix < 0 || iy < 0 || ix >= nw || iy >= nh) return null;
+                                if (!_refSampler) {
+                                    _refSampler = document.createElement("canvas");
+                                    _refSampler.width = _refSampler.height = 1;
+                                    _refSampler.ctx = _refSampler.getContext("2d", { willReadFrequently: true });
+                                }
+                                const c = _refSampler.ctx;
+                                const sw = Math.min(3, nw), sh = Math.min(3, nh);       // tiny 3x3 average = steadier on JPEGs
+                                const sx = Math.max(0, Math.min(nw - sw, Math.floor(ix) - 1));
+                                const sy = Math.max(0, Math.min(nh - sh, Math.floor(iy) - 1));
+                                c.clearRect(0, 0, 1, 1);
+                                c.drawImage(img, sx, sy, sw, sh, 0, 0, 1, 1);
+                                const d = c.getImageData(0, 0, 1, 1).data;
+                                if (d[3] < 40) return null;
+                                return rgbToHex(d[0], d[1], d[2]);
+                            } catch (e) { return null; }
+                        }
+
+                        function sampleDrawColor(x, y) {
+                            const px = drawCtx.getImageData(clamp(x, 0, 499), clamp(y, 0, 499), 1, 1).data;
+                            return px[3] < 20 ? null : rgbToHex(px[0], px[1], px[2]);
+                        }
+
+                        function samplePickColor(x, y) {
+                            const ref = sampleRefColor(x, y);
+                            const dr = sampleDrawColor(x, y);
+                            if (refPickMode === "ref") {
+                                if (ref) return { hex: ref, from: "ref" };
+                                if (dr) return { hex: dr, from: "draw" };
+                            } else {
+                                if (dr) return { hex: dr, from: "draw" };
+                                if (ref) return { hex: ref, from: "ref" };
+                            }
+                            return null;
+                        }
+
                         function pickColorAt(pt) {
                             const [x, y] = pt;
-                            const px = drawCtx.getImageData(clamp(x, 0, 499), clamp(y, 0, 499), 1, 1).data;
-                            const hex = px[3] < 20 ? "#ffffff" : rgbToHex(px[0], px[1], px[2]);
+                            const sp = samplePickColor(x, y);
+                            const hex = sp ? sp.hex : paperBg;
                             rememberUsedColor(hex);
                             selectColor(hex, true);
-                            showToast("Picked color " + hex.toUpperCase());
+                            haptic(10);
+                            showToast((sp && sp.from === "ref" ? "Picked from reference " : "Picked color ") + hex.toUpperCase());
                         }
-                        
+
                         function applyFloodFill(ctx, startX, startY, fillColor, alpha, dim) {
                             const sx = clamp(Math.round((startX / 500) * dim), 0, dim - 1);
                             const sy = clamp(Math.round((startY / 500) * dim), 0, dim - 1);
@@ -3893,14 +4172,14 @@
                             if (currentTool === "fill") {
                                 redoStack = [];
                                 rememberUsedColor(currentColor);
-                                strokes.push({ k: "fill", c: currentColor, a: currentOpacity, x: pt[0], y: pt[1] });
+                                strokes.push({ k: "fill", c: currentColor, a: currentOpacity, x: pt[0], y: pt[1] }); haptic(12);
                                 redrawStudio();
                                 updateHistoryUI();
                                 scheduleDraftSave();
                                 return;
                             }
                             
-                            if (currentTool === "line" || currentTool === "rect" || currentTool === "circle") {
+                            if (isShapeTool(currentTool)) {
                                 isDrawing = true;
                                 shapeStart = pt;
                                 return;
@@ -3920,7 +4199,7 @@
                                 sm: !isEraser && smoothStrokes,
                                 p: [symPts[0]]
                             };
-                            strokes.push(currentStroke);
+                            strokes.push(currentStroke); haptic(4);
                             
                             mirrorStrokes = [];
                             for (let i = 1; i < symPts.length; i++) {
@@ -3977,9 +4256,9 @@
                             e.preventDefault();
                             const pt = getCanvasPoint(e);
                             
-                            if (shapeStart && (currentTool === "line" || currentTool === "rect" || currentTool === "circle")) {
-                                const pts = buildShapePoints(currentTool, shapeStart, pt, shiftPressed);
-                                const isFilled = shapeFilled && (currentTool === "rect" || currentTool === "circle");
+                            if (shapeStart && (isShapeTool(currentTool))) {
+                                const pts = buildShapePoints(currentTool, shapeStart, pt, shiftPressed || shapeLock);
+                                const isFilled = shapeFilled && isShapeTool(currentTool) && currentTool !== "line";
                                 renderStrokesInstant(previewCtx, [{ c: currentColor, s: currentSize, a: currentOpacity, sm: false, fl: isFilled, p: pts }], 500, true);
                                 return;
                             }
@@ -4004,18 +4283,18 @@
                                 canvasFrame.classList.remove("panning");
                             }
                             
-                            if (isDrawing && shapeStart && (currentTool === "line" || currentTool === "rect" || currentTool === "circle")) {
+                            if (isDrawing && shapeStart && (isShapeTool(currentTool))) {
                                 previewCtx.clearRect(0, 0, 500, 500);
                                 const pt = e && (e.changedTouches ? [
                                 Math.max(0, Math.min(500, Math.round(((e.changedTouches[0].clientX - drawCanvas.getBoundingClientRect().left) / drawCanvas.getBoundingClientRect().width) * 500))),
                                 Math.max(0, Math.min(500, Math.round(((e.changedTouches[0].clientY - drawCanvas.getBoundingClientRect().top) / drawCanvas.getBoundingClientRect().height) * 500)))
                                 ] : getCanvasPoint(e));
                                 
-                                const pts = buildShapePoints(currentTool, shapeStart, pt || shapeStart, shiftPressed);
-                                const isFilled = shapeFilled && (currentTool === "rect" || currentTool === "circle");
+                                const pts = buildShapePoints(currentTool, shapeStart, pt || shapeStart, shiftPressed || shapeLock);
+                                const isFilled = shapeFilled && isShapeTool(currentTool) && currentTool !== "line";
                                 redoStack = [];
                                 rememberUsedColor(currentColor);
-                                strokes.push({ c: currentColor, s: currentSize, a: currentOpacity, sm: false, fl: isFilled, p: pts });
+                                strokes.push({ c: currentColor, s: currentSize, a: currentOpacity, sm: false, fl: isFilled, p: pts }); haptic(8);
                                 shapeStart = null;
                                 isDrawing = false;
                                 redrawStudio();
@@ -4029,7 +4308,7 @@
                             currentStroke = null;
                             mirrorStrokes = [];
                             shapeStart = null;
-                            committedCount = -1;
+                            committedCount = -1; haptic(5);
                             redrawStudio();
                             updateHistoryUI();
                             scheduleDraftSave();
@@ -4041,6 +4320,7 @@
                             if (statsEl) statsEl.textContent = `${strokeTxt} · ${wallEntries.length} on wall`;
                             document.getElementById("undo-btn").disabled = strokes.length === 0;
                             document.getElementById("redo-btn").disabled = redoStack.length === 0;
+                            onHistoryChanged();
                         }
                         
                         drawCanvas.addEventListener("mousedown", startDraw);
@@ -4313,6 +4593,7 @@
                                 const lyr = layers[i];
                                 const row = document.createElement("div");
                                 row.className = "layer-row" + (lyr.id === activeLayerId ? " active" : "") + (!lyr.visible ? " is-hidden" : "");
+                                row.dataset.id = lyr.id;
                                 row.onclick = () => selectLayer(lyr.id);
 
                                 const thumb = document.createElement("div");
@@ -4388,7 +4669,7 @@
                         
                         function undoStroke() {
                             if (isPreviewing || strokes.length === 0) return;
-                            redoStack.push(strokes.pop());
+                            redoStack.push(strokes.pop()); haptic(6);
                             redrawStudio();
                             updateHistoryUI();
                             scheduleDraftSave();
@@ -4396,7 +4677,7 @@
                         
                         function redoStroke() {
                             if (isPreviewing || redoStack.length === 0) return;
-                            strokes.push(redoStack.pop());
+                            strokes.push(redoStack.pop()); haptic(6);
                             redrawStudio();
                             updateHistoryUI();
                             scheduleDraftSave();
@@ -5678,6 +5959,8 @@
                         function applyStageTransform() {
                             const stage = document.getElementById("wall-stage");
                             stage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+                            stage.style.setProperty("--pill-s", Math.min(2.5, 1 / scale).toFixed(3));
+                            stage.classList.toggle("far", scale < 0.28);
                             scheduleWallPaint();
                             updateMinimap();
                         }
@@ -6071,7 +6354,7 @@
                         let mmMap = null, mmDragging = false, mmRaf = 0;
                         
                         function updateMinimap() {
-                            if (mmRaf) return;
+                            if (!minimapOn || mmRaf) return;
                             mmRaf = requestAnimationFrame(() => { mmRaf = 0; drawMinimap(); });
                         }
                         
@@ -6133,16 +6416,9 @@
                         }
                         
                         // ---------- stencils (DOM-only guides, never posted/exported) ----------
-                        function perspectiveLines() {
-                            let d = "M0 200H500";
-                            for (let x = 0; x <= 500; x += 62.5) d += `M250 200L${x} 500M250 200L${x} 0`;
-                            return `<path d="${d}"/>`;
-                        }
-                        const STENCILS = {
+                                                const STENCILS = {
                             comic:  ["4-panel", () => `<rect x="20" y="20" width="225" height="225"/><rect x="255" y="20" width="225" height="225"/><rect x="20" y="255" width="225" height="225"/><rect x="255" y="255" width="225" height="225"/>`],
                             face:   ["Face", () => `<ellipse cx="250" cy="250" rx="140" ry="180"/><path d="M250 70V430M110 250H390M215 335H285M200 380H300"/><ellipse cx="190" cy="250" rx="32" ry="16"/><ellipse cx="310" cy="250" rx="32" ry="16"/>`],
-                            grid:   ["Perspective", perspectiveLines],
-                            bubble: ["Bubble", () => `<path d="M70 90Q70 60 100 60H400Q430 60 430 90V270Q430 300 400 300H250L180 370L195 300H100Q70 300 70 270Z"/>`]
                         };
                         let activeStencil = "";
                         
@@ -6166,8 +6442,8 @@
                             if (currentTool === "eyedropper") {
                                 d = 28;
                                 const [x, y] = getCanvasPoint(e);
-                                const px = drawCtx.getImageData(clamp(x, 0, 499), clamp(y, 0, 499), 1, 1).data;
-                                fill = px[3] < 20 ? paperBg : `rgb(${px[0]},${px[1]},${px[2]})`;
+                                const sp = samplePickColor(x, y);
+                                fill = sp ? sp.hex : paperBg;
                             } else if (currentTool === "fill") {
                                 d = 18;
                             }
@@ -6637,6 +6913,264 @@
                         // =========================================================================
                         // OPTIONAL APK DOWNLOAD PROMPT (WEB BROWSER ONLY)
                         // =========================================================================
+                        // =========================================================================
+                        // V3 ADDITIONS: settings toggles, shapes, layer reorder, size + draw indicator, haptics
+                        // =========================================================================
+                        var weatherOn = true, minimapOn = true, weatherReady = false, weatherSyncStarted = false, weatherCoords = null;
+                        var shapeLock = false;
+                        var POST_WARN_MB = 0.19;   // ~200,000 chars: above this the live broadcast falls back to a light notice. Change to your backend's real limit.
+                        var sizeTimer = 0, lastSizeMB = 0, _hudLive = false, _lastSizeTick = 0;
+                        var layerDrag = null, layerDragJustEnded = false;
+
+                        // ---------- settings: minimap ----------
+                        function applyMinimapToggle() {
+                            const el = document.getElementById("minimap");
+                            if (!el) return;
+                            el.hidden = !minimapOn;
+                            if (minimapOn) updateMinimap();
+                        }
+
+                        // ---------- settings: weather ----------
+                        function initWeatherSync() {
+                            if (!weatherOn) return;
+                            if (weatherSyncStarted) {
+                                if (weatherCoords) syncLiveWeather(weatherCoords[0], weatherCoords[1]);
+                                else syncLiveWeather();
+                                return;
+                            }
+                            weatherSyncStarted = true;
+                            if (navigator.geolocation) {
+                                navigator.geolocation.getCurrentPosition(
+                                    pos => { weatherCoords = [pos.coords.latitude, pos.coords.longitude]; syncLiveWeather(weatherCoords[0], weatherCoords[1]); },
+                                    () => syncLiveWeather()
+                                );
+                            } else {
+                                syncLiveWeather();
+                            }
+                        }
+
+                        function applyWeatherToggle(changed) {
+                            const pill = document.getElementById("weather-pill");
+                            const cvs = document.getElementById("weather-canvas");
+                            if (pill) pill.hidden = !weatherOn;
+                            if (cvs) cvs.style.display = weatherOn ? "" : "none";
+                            if (!changed) return;
+                            if (!weatherOn) weatherOverride = "auto";
+                            rebuildWeatherParticles();
+                            updateWeatherPillUI();
+                            if (typeof startSeasonalParticles === "function") startSeasonalParticles();
+                            if (weatherReady && weatherOn) {
+                                if (!weatherRaf) startWeatherEngine();
+                                initWeatherSync();
+                            }
+                        }
+
+                        // ---------- shapes pane ----------
+                        function initShapePane() {
+                            const grid = document.getElementById("shape-grid");
+                            if (!grid) return;
+                            grid.replaceChildren();
+                            SHAPE_DEFS.forEach(([key, label]) => {
+                                const b = document.createElement("button");
+                                b.type = "button";
+                                b.className = "shape-btn" + (currentTool === key ? " active" : "");
+                                b.dataset.shape = key;
+                                b.title = label;
+                                b.setAttribute("aria-label", label);
+                                const pts = buildShapePoints(key, [30, 30], [210, 210], false).map(p => p[0] + "," + p[1]).join(" ");
+                                b.innerHTML = `<svg viewBox="0 0 240 240"><polyline points="${pts}"/></svg><span>${label}</span>`;
+                                b.onclick = () => setTool(key);
+                                grid.appendChild(b);
+                            });
+                            syncShapePane();
+                        }
+                        function syncShapePane() {
+                            const s = document.getElementById("shape-size-slider");
+                            const v = document.getElementById("shape-size-val");
+                            if (s) s.value = currentSize;
+                            if (v) v.textContent = currentSize + "px";
+                        }
+                        function setShapeStroke(val) {
+                            currentSize = clamp(Number(val) || 1, 1, 40);
+                            document.querySelectorAll(".size-btn").forEach(b => b.classList.remove("active"));
+                            const v = document.getElementById("shape-size-val");
+                            if (v) v.textContent = currentSize + "px";
+                        }
+                        function toggleShapeLock() {
+                            shapeLock = !shapeLock;
+                            const b = document.getElementById("shape-lock-btn");
+                            if (b) b.classList.toggle("active", shapeLock);
+                            haptic(6);
+                            showToast(shapeLock ? "Perfect shapes: on" : "Perfect shapes: off");
+                        }
+
+                        // ---------- post size estimate + draw indicator ----------
+                        function estimatePayloadMB() {
+                            const items = getAllFlattenedStrokes(false);
+                            if (!items.length) return 0;
+                            if (paperBg !== "#ffffff") items.unshift({ k: "bg", c: paperBg });
+                            return (new Blob([JSON.stringify(items)]).size + 260) / 1048576;   // +260 B for id/author/grid fields
+                        }
+                        function fmtMB(mb) { return mb.toFixed(3) + " MB"; }
+                        function scheduleSizeUpdate(delay) {
+                            clearTimeout(sizeTimer);
+                            sizeTimer = setTimeout(refreshSizeUI, delay == null ? 120 : delay);
+                        }
+                        function refreshSizeUI() {
+                            sizeTimer = 0;
+                            lastSizeMB = estimatePayloadMB();
+                            const txt = fmtMB(lastSizeMB);
+                            const warn = lastSizeMB >= POST_WARN_MB;
+                            const hs = document.getElementById("dh-size");
+                            if (hs) hs.textContent = txt;
+                            const hud = document.getElementById("draw-hud");
+                            if (hud) hud.classList.toggle("warn", warn);
+                            const st = document.getElementById("studio-size-stats");
+                            if (st) {
+                                st.textContent = "Estimated post size: ~" + txt + (warn ? " · large drawing, may upload slowly" : "");
+                                st.classList.toggle("warn", warn);
+                            }
+                        }
+                        function toolLabel() {
+                            if (isShapeTool(currentTool)) {
+                                const d = SHAPE_DEFS.find(s => s[0] === currentTool);
+                                return d ? d[1] : "Shape";
+                            }
+                            return ({ brush: "Brush", eraser: "Eraser", hand: "Hand", fill: "Fill", eyedropper: "Picker" })[currentTool] || currentTool;
+                        }
+                        function updateDrawHud() {
+                            const t = document.getElementById("dh-tool");
+                            if (!t) return;
+                            t.textContent = _hudLive ? "Drawing…" : toolLabel();
+                            const lyr = layers.find(l => l.id === activeLayerId);
+                            const ln = document.getElementById("dh-layer");
+                            if (ln) ln.textContent = lyr ? lyr.name : "Layer";
+                        }
+                        function onHistoryChanged() {
+                            if (!v3Ready) return;
+                            scheduleSizeUpdate();
+                            updateDrawHud();
+                        }
+                        function initDrawHud() {
+                            const hud = document.getElementById("draw-hud");
+                            setInterval(() => {
+                                if (currentView !== "draw") return;
+                                const live = !!(isDrawing && (currentStroke || shapeStart));
+                                if (live !== _hudLive) {
+                                    _hudLive = live;
+                                    if (hud) hud.classList.toggle("live", live);
+                                    canvasFrame.classList.toggle("is-drawing", live);
+                                    updateDrawHud();
+                                    if (!live) scheduleSizeUpdate(40);
+                                } else if (live) {
+                                    const now = performance.now();
+                                    if (now - _lastSizeTick > 350) { _lastSizeTick = now; refreshSizeUI(); }
+                                }
+                            }, 100);
+                        }
+
+                        // ---------- layers: long-press to reorder ----------
+                        function initLayerDrag() {
+                            const list = document.getElementById("layer-list");
+                            if (!list) return;
+                            const LONG_MS = 380, TOL = 9;
+                            let pend = null;
+
+                            const clearMarks = () => list.querySelectorAll(".drop-before,.drop-after").forEach(r => r.classList.remove("drop-before", "drop-after"));
+                            const others = () => [...list.children].filter(r => !layerDrag || r !== layerDrag.row);
+
+                            function startDrag() {
+                                if (!pend) return;
+                                const { row, id, y } = pend;
+                                pend = null;
+                                layerDrag = { row, id, startY: y, curY: y, startScroll: list.scrollTop, idx: 0, timer: 0 };
+                                row.classList.add("dragging");
+                                layerDrag.timer = setInterval(updateDrag, 60);
+                                haptic(18);
+                            }
+
+                            function updateDrag() {
+                                const d = layerDrag;
+                                if (!d) return;
+                                const lr = list.getBoundingClientRect();
+                                if (d.curY < lr.top + 22) list.scrollTop -= 7;
+                                else if (d.curY > lr.bottom - 22) list.scrollTop += 7;
+                                const dy = d.curY - d.startY + (list.scrollTop - d.startScroll);
+                                d.row.style.transform = `translateY(${dy}px) scale(1.02)`;
+                                const rows = others();
+                                d.idx = rows.filter(r => { const b = r.getBoundingClientRect(); return b.top + b.height / 2 < d.curY; }).length;
+                                clearMarks();
+                                if (!rows.length) return;
+                                if (d.idx < rows.length) rows[d.idx].classList.add("drop-before");
+                                else rows[rows.length - 1].classList.add("drop-after");
+                            }
+
+                            function commit(d) {
+                                const ids = [...list.children].map(r => r.dataset.id);
+                                const from = ids.indexOf(d.id);
+                                if (from < 0) return renderLayersPanel();
+                                ids.splice(from, 1);
+                                ids.splice(d.idx, 0, d.id);
+                                const next = ids.slice().reverse().map(id => layers.find(l => l.id === id)).filter(Boolean);   // list is shown top-first
+                                const changed = next.length === layers.length && next.some((l, i) => l !== layers[i]);
+                                if (changed) {
+                                    layers = next;
+                                    syncTextLayerZOrder();
+                                    redrawStudio();
+                                    scheduleDraftSave();
+                                    haptic(12);
+                                    showToast("Layer moved");
+                                }
+                                renderLayersPanel();
+                            }
+
+                            function finish(cancelled) {
+                                if (pend) { clearTimeout(pend.timer); pend = null; }
+                                if (!layerDrag) return;
+                                const d = layerDrag;
+                                layerDrag = null;
+                                clearInterval(d.timer);
+                                clearMarks();
+                                d.row.classList.remove("dragging");
+                                d.row.style.transform = "";
+                                layerDragJustEnded = true;
+                                setTimeout(() => { layerDragJustEnded = false; }, 80);
+                                if (cancelled) renderLayersPanel(); else commit(d);
+                            }
+
+                            list.addEventListener("pointerdown", (e) => {
+                                if (e.button !== undefined && e.button !== 0) return;
+                                const row = e.target.closest(".layer-row");
+                                if (!row || e.target.closest("button")) return;
+                                pend = { row, id: row.dataset.id, x: e.clientX, y: e.clientY, timer: setTimeout(startDrag, LONG_MS) };
+                            });
+                            window.addEventListener("pointermove", (e) => {
+                                if (pend) {
+                                    if (Math.hypot(e.clientX - pend.x, e.clientY - pend.y) > TOL) { clearTimeout(pend.timer); pend = null; }
+                                    return;
+                                }
+                                if (layerDrag) layerDrag.curY = e.clientY;
+                            });
+                            window.addEventListener("pointerup", () => finish(false));
+                            window.addEventListener("pointercancel", () => finish(true));
+                            list.addEventListener("touchmove", (e) => { if (layerDrag) e.preventDefault(); }, { passive: false });
+                            list.addEventListener("contextmenu", (e) => e.preventDefault());
+                            list.addEventListener("click", (e) => {
+                                if (layerDragJustEnded) { e.stopPropagation(); e.preventDefault(); }
+                            }, true);
+                        }
+
+                        // ---------- haptics: every button / switch / select ----------
+                        document.addEventListener("click", (e) => {
+                            if (e.target.closest && e.target.closest("button, .nav-item, .list-row, .swatch, .saved-swatch, .paper-chip, [role='button']")) haptic(5);
+                        });
+                        document.addEventListener("change", (e) => {
+                            if (e.target.matches && e.target.matches(".switch input, select, input[type=range]")) haptic(6);
+                        });
+
+                        v3Ready = true;
+                        scheduleSizeUpdate(200);
+
                         const APK_DOWNLOAD_URL = "download/ARTcher-v1.3.apk";
                         const LS_APK_DISMISSED = "fw_apk_prompt_dismissed_v1";
                         
@@ -6713,6 +7247,7 @@
                         
                         
                         function getActiveWeatherMode() {
+                            if (!weatherOn) return "clear";
                             return weatherOverride === "auto" ? liveWeatherState.mode : weatherOverride;
                         }
                         
@@ -6782,9 +7317,10 @@
                             const ctx = cvs.getContext("2d");
                             rebuildWeatherParticles();
                             
-                            window.addEventListener("resize", rebuildWeatherParticles);
+                            if (!window.__wxResize) { window.__wxResize = true; window.addEventListener("resize", rebuildWeatherParticles); }
                             
                             function tick() {
+                                if (!weatherOn) { ctx.clearRect(0, 0, cvs.width, cvs.height); weatherRaf = null; return; }
                                 if (cvs.width !== window.innerWidth || cvs.height !== window.innerHeight) {
                                     cvs.width = window.innerWidth;
                                     cvs.height = window.innerHeight;
@@ -6883,15 +7419,9 @@
                             }
                         }
                         
+                        weatherReady = true;
                         startWeatherEngine();
-                        if (navigator.geolocation) {
-                            navigator.geolocation.getCurrentPosition(
-                            pos => syncLiveWeather(pos.coords.latitude, pos.coords.longitude),
-                            () => syncLiveWeather()
-                            );
-                        } else {
-                            syncLiveWeather();
-                        }
+                        initWeatherSync();
                         
                     </script>
                     <script id="artcher-layout-js">
