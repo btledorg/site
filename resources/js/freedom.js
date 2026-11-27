@@ -14,6 +14,10 @@ const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx0yXSNWkVCPjNG
 const SUPABASE_URL = "https://hfxwmkrgmiftwdikouzj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_gy8Ly-OisNJ9aQZkrZnojA_P5oQ8Vte";
 
+var focusLinkRequested = new URLSearchParams(window.location.search).get("focus") === "1";
+var focusModeActive = false;
+var pendingWhatsNew = null;
+
 const LOGO_PATH = "../resources/image/logo/archer.png";
 const AUTO_UPLOAD = true;
 
@@ -4917,7 +4921,7 @@ function preloadAllFonts() {
                     ctx.fillText(`${WALL_VERSION}${tileTag} · ${exportDate}`, capX, 980 * S);
                     
                     let qrImg = null;
-                    try { qrImg = await loadQRForExport(WALL_SHARE_URL, 360); } catch (_) {}
+                    try { qrImg = await loadQRForExport(currentWallShareUrl(), 360); } catch (_) {}
                     
                     const nW = 190 * S, nH = 230 * S;
                     const nX = dim - 90 * S - nW, nY = 760 * S;
@@ -4979,6 +4983,9 @@ function preloadAllFonts() {
                 
                 const WALL_VERSION = "v1.0";
                 const WALL_SHARE_URL = "https://btledorg.github.io/site/events/freedomwall.html";
+                function currentWallShareUrl() {
+                    return curEvent ? buildEventInviteUrl(curEvent.code) : WALL_SHARE_URL;
+                }
                 
                 async function loadQRForExport(url, size = 320) {
                     const encoded = encodeURIComponent(url);
@@ -5096,7 +5103,7 @@ function preloadAllFonts() {
                     // ---------- 4. hub (logo + name) at the origin ----------
                     const [logoImg, qrImg] = await Promise.all([
                         loadLogoForExport(),
-                        loadQRForExport(WALL_SHARE_URL, 480)
+                        loadQRForExport(currentWallShareUrl(), 480)
                     ]);
                     
                     ctx.save();
@@ -6206,10 +6213,15 @@ function preloadAllFonts() {
                     if (!curEvent) return;
                     copyTextSafe(curEvent.code, "Event code copied: " + curEvent.code, "Code: " + curEvent.code);
                 }
+                function buildEventInviteUrl(code) {
+                    var url = new URL(location.pathname, location.origin);
+                    url.searchParams.set("event", code);
+                    url.searchParams.set("focus", "1");
+                    return url.toString();
+                }
                 function copyEventInvite() {
                     if (!curEvent) return;
-                    const url = location.origin + location.pathname + "?event=" + curEvent.code;
-                    copyTextSafe(url, "Invite link copied", "Share this code: " + curEvent.code);
+                    copyTextSafe(buildEventInviteUrl(curEvent.code), "Focus-mode invite link copied", "Share this code: " + curEvent.code);
                 }
                 
                 async function hostEvent() {
@@ -6425,7 +6437,7 @@ function preloadAllFonts() {
                                 files: [file],
                                 title: "Freedom Wall",
                                 text: meta.author ? `Drawn by ${meta.author} on the Freedom Wall` : "My Freedom Wall doodle",
-                                url: WALL_SHARE_URL
+                                url: currentWallShareUrl()
                             });
                         } catch (e) { if (e.name !== "AbortError") showToast("Couldn't open the share sheet."); }
                         return;
@@ -8765,6 +8777,16 @@ function preloadAllFonts() {
                                                     var revealing = false;
                                                     var lastHiddenForMe = null;
                                                     var curtainRun = 0;
+
+                                                    function syncFocusMode() {
+                                                        var active = focusLinkRequested && hiddenForMe();
+                                                        var changed = document.body.classList.contains("focus-mode") !== active;
+                                                        focusModeActive = active;
+                                                        document.body.classList.toggle("focus-mode", active);
+                                                        if (active && currentView !== "draw") window.switchView("draw");
+                                                        if (!active && typeof window.flushPendingWhatsNew === "function") window.flushPendingWhatsNew();
+                                                        if (changed) requestAnimationFrame(function () { window.dispatchEvent(new Event("resize")); });
+                                                    }
                                                     
                                                     function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
                                                     function wrap(name, make) {
@@ -8866,6 +8888,12 @@ function preloadAllFonts() {
                                                         if (window.curtainHold) setHold(false);
                                                     }
                                                     
+                                                    wrap("switchView", function (orig) {
+                                                        return function (name) {
+                                                            return orig.call(this, focusModeActive ? "draw" : name);
+                                                        };
+                                                    });
+
                                                     // ---------------- host actions ----------------
                                                     var hideBusy = false;
                                                     async function setEventHidden(hide) {
@@ -8959,6 +8987,7 @@ function preloadAllFonts() {
                                                                         if (note) note.textContent += isHost() ? " · hidden from guests" : " · art stays hidden until the host reveals it";
                                                                     }
                                                                     refreshCurtain();
+                                                                    syncFocusMode();
                                                                 } catch (e) {}
                                                                 return r;
                                                             };
@@ -8978,6 +9007,7 @@ function preloadAllFonts() {
                                                                 return r;
                                                             };
                                                         });
+                                                        syncFocusMode();
                                                         
                                                         wrap("switchView", function (orig) {
                                                             return function (name) {
@@ -9054,6 +9084,12 @@ function preloadAllFonts() {
                                                             if (!b) return;
                                                             b.hidden = !fsSupported;
                                                             b.classList.toggle("active", fsActive());
+                                                            var focusButton = $("focus-fullscreen-btn");
+                                                            if (focusButton) {
+                                                                focusButton.hidden = !fsSupported;
+                                                                focusButton.setAttribute("aria-label", fsActive() ? "Exit fullscreen" : "Enter fullscreen");
+                                                                focusButton.title = fsActive() ? "Exit fullscreen" : "Enter fullscreen";
+                                                            }
                                                         }
                                                         window.toggleFullscreen = function () {
                                                             try {
@@ -9356,7 +9392,7 @@ function preloadAllFonts() {
                                                             return e;
                                                         }
                                                         function evEnded() { return !!curEvent && !evIsLive(); }
-                                                        function inviteUrl(code) { return location.origin + location.pathname + "?event=" + code; }
+                                                        function inviteUrl(code) { return buildEventInviteUrl(code); }
                                                         
                                                         // ======================================================================
                                                         // 1. DRAW TAB LOCK WHEN THE EVENT HAS ENDED
@@ -9580,7 +9616,7 @@ function preloadAllFonts() {
                                                             }
                                                             
                                                             x.fillStyle = "#0f172a"; x.font = "900 34px Inter, sans-serif";
-                                                            x.fillText("Scan to join", W / 2, qy + qs + 80);
+                                                            x.fillText(rec.hidden ? "Scan to draw" : "Scan to join", W / 2, qy + qs + 80);
                                                             x.fillStyle = accent; x.font = '700 44px "JetBrains Mono", monospace';
                                                             x.fillText(rec.code.split("").join(" "), W / 2, qy + qs + 140);
                                                             x.fillStyle = "#64748b"; x.font = "600 20px Inter, sans-serif";
@@ -10014,8 +10050,31 @@ function preloadAllFonts() {
                                                         5. VERSION.JSON: APK link, appVersion, in-app "Download Update"
                                                         ====================================================================== */
                                                         var LS_VER = "fw_version_info_v1";
+                                                        var LS_WHATS_NEW_VER = "fw_whats_new_app_version_v1";
                                                         var ver = lsGet(LS_VER, null);
+                                                        if (!lsGet(LS_WHATS_NEW_VER, null) && ver && ver.appVersion) lsSet(LS_WHATS_NEW_VER, ver.appVersion);
                                                         var lastVerFetch = 0;
+
+                                                        window.closeWhatsNewModal = function () {
+                                                            var modal = $("whats-new-modal");
+                                                            if (modal) modal.classList.remove("open");
+                                                        };
+                                                        window.showWhatsNewModal = function (info) {
+                                                            if (focusModeActive) { pendingWhatsNew = info; return; }
+                                                            var modal = $("whats-new-modal");
+                                                            if (!modal) return;
+                                                            $("whats-new-version").textContent = "v" + info.appVersion;
+                                                            $("whats-new-copy").textContent = String(info.changeLog || "New improvements and updates are ready.").trim();
+                                                            lsSet(LS_WHATS_NEW_VER, info.appVersion);
+                                                            modal.classList.add("open");
+                                                        };
+                                                        window.flushPendingWhatsNew = function () {
+                                                            if (!focusModeActive && pendingWhatsNew) {
+                                                                var info = pendingWhatsNew;
+                                                                pendingWhatsNew = null;
+                                                                window.showWhatsNewModal(info);
+                                                            }
+                                                        };
                                                         
                                                         function hasNativeUpdate() { return !!(window.Android && typeof window.Android.checkForUpdate === "function"); }
                                                         function inAppShell() { return typeof window.AndroidRadio !== "undefined" || typeof window.Android !== "undefined"; }
@@ -10067,7 +10126,15 @@ function preloadAllFonts() {
                                                             return fetch("download/version.json?_t=" + Date.now(), { cache: "no-store" })
                                                             .then(function (r) { return r.ok ? r.json() : null; })
                                                             .then(function (j) {
-                                                                if (j && typeof j === "object") { ver = j; lsSet(LS_VER, j); }
+                                                                if (j && typeof j === "object") {
+                                                                    ver = j;
+                                                                    lsSet(LS_VER, j);
+                                                                    if (j.appVersion) {
+                                                                        var seenVersion = lsGet(LS_WHATS_NEW_VER, null);
+                                                                        if (seenVersion && String(seenVersion) !== String(j.appVersion)) window.showWhatsNewModal(j);
+                                                                        else if (!seenVersion) lsSet(LS_WHATS_NEW_VER, j.appVersion);
+                                                                    }
+                                                                }
                                                                 applyVersion();
                                                             })
                                                             .catch(function () { applyVersion(); });
@@ -10221,6 +10288,7 @@ function preloadAllFonts() {
                                                                 var sub = $("auth-sub"); if (sub && TAB_SUBS[name]) sub.textContent = TAB_SUBS[name];
                                                             }
                                                             function openAuth(tab, cancellable) {
+                                                                if (focusModeActive) return;
                                                                 authCancellable = !!cancellable;
                                                                 $("auth-cancel").hidden = !cancellable;
                                                                 var g = $("ag-nick"), a = $("ag-anon");
@@ -10942,7 +11010,7 @@ function preloadAllFonts() {
                                                             }
                                                             function boot() {
                                                                 buildAuth(); buildNotifUI(); buildMoreCards(); buildScopeUI(); buildShapeRotation();
-                                                                if (!userProfile) { var old = $("nickname-overlay"); if (old) old.hidden = true; openAuth("login", false); }
+                                                                if (!userProfile && !focusLinkRequested) { var old = $("nickname-overlay"); if (old) old.hidden = true; openAuth("login", false); }
                                                                 onKeyChanged();
                                                                 setInterval(function () { if (!document.hidden) pull(); }, 45000);
                                                                 document.addEventListener("visibilitychange", function () { if (!document.hidden) { pull(); checkPendingOpen(); } });

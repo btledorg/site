@@ -484,6 +484,10 @@
     </div>
 </section>
 
+<button type="button" class="focus-fullscreen-btn" id="focus-fullscreen-btn" onclick="toggleFullscreen()" aria-label="Enter fullscreen" title="Enter fullscreen" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+</button>
+
 <section id="view-wall" class="view">
     
     <div class="curtain-stage" id="curtain-stage" hidden role="status" aria-live="polite">
@@ -818,6 +822,17 @@
             <button type="submit" class="btn btn-accent">Save name</button>
         </div>
     </form>
+</div>
+
+<div class="modal-backdrop" id="whats-new-modal" onclick="if(event.target===this) closeWhatsNewModal()">
+    <section class="modal-box whats-new-box" role="dialog" aria-modal="true" aria-labelledby="whats-new-title" aria-describedby="whats-new-copy">
+        <div class="modal-head">
+            <h3 id="whats-new-title">What’s new</h3>
+            <span class="evlib-pill" id="whats-new-version"></span>
+        </div>
+        <p id="whats-new-copy"></p>
+        <button type="button" class="btn btn-accent btn-block" onclick="closeWhatsNewModal()">Got it</button>
+    </section>
 </div>
 
 <div class="modal-backdrop" id="event-modal" onclick="if(event.target===this) closeEventModal()">
