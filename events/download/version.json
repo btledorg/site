@@ -1,7 +1,7 @@
 {
-    "versionCode": 11,
-    "versionName": "1.11",
-    "apkUrl": "https://btledorg.github.io/site/events/download/ARTcher-v1.11.apk",
+    "versionCode": 12,
+    "versionName": "1.12",
+    "apkUrl": "https://btledorg.github.io/site/events/download/ARTcher-v1.12.apk",
     "changeLog": "Added new features and bug fixes!",
-    "appVersion": "1.0.19"
+    "appVersion": "1.0.20"
 }
