@@ -8105,31 +8105,19 @@ function preloadAllFonts() {
                         }
                         nativePlayTimer = setTimeout(() => {
                             if (requestId !== nativePlayRequestId || !nativePlayPending || !musicPlaying) return;
-                            let playing = false;
+                            logAppDiagnostic("warn", "No Android playback state received yet; retrying Play", { index: idx });
                             try {
-                                playing = !!window.AndroidRadio.isPlaying();
+                                window.AndroidRadio.play(idx);
                             } catch (error) {
-                                logAppDiagnostic("warn", "Android isPlaying check failed", error);
+                                logAppDiagnostic("error", "Android Play retry failed", error);
                             }
-                            if (!playing) {
-                                logAppDiagnostic("warn", "Android player has not started yet; retrying Play", { index: idx });
-                                try {
-                                    window.AndroidRadio.play(idx);
-                                } catch (error) {
-                                    logAppDiagnostic("error", "Android Play retry failed", error);
-                                }
-                                nativePlayTimer = setTimeout(() => {
-                                    if (requestId !== nativePlayRequestId || !nativePlayPending || !musicPlaying) return;
-                                    logAppDiagnostic("error", "Android player did not report playback after retry");
-                                    updateMuteIcon("Still connecting — see App diagnostics");
-                                    nativePlayPending = false;
-                                    nativePlayTimer = null;
-                                }, 5000);
-                            } else {
-                                logAppDiagnostic("info", "Android player reports active playback");
+                            nativePlayTimer = setTimeout(() => {
+                                if (requestId !== nativePlayRequestId || !nativePlayPending || !musicPlaying) return;
+                                logAppDiagnostic("error", "Android player did not report playback after retry");
+                                updateMuteIcon("Still connecting — see App diagnostics");
                                 nativePlayPending = false;
                                 nativePlayTimer = null;
-                            }
+                            }, 5000);
                         }, 2500);
                     }, 650);
                 }
@@ -8142,14 +8130,18 @@ function preloadAllFonts() {
                     let stations;
                     if (!radioDirectoryLoaded && radioStations.length) {
                         stations = radioStations;
-                        const startedIndex = currentStationIdx % stations.length;
-                        const startedUrl = stations[startedIndex]?.url;
+                        const startedCount = radioStations.length;
                         fetchRadioStations().then(() => {
                             if (!musicPlaying || !hasNativeRadio()) return;
+                            if (radioStations.length !== startedCount) {
+                                logAppDiagnostic("info", "Station directory refreshed during playback; restarting current station", {
+                                    previousCount: startedCount,
+                                    updatedCount: radioStations.length,
+                                    index: currentStationIdx
+                                });
+                            }
                             nativeSendStations();
-                            const updatedStation = radioStations[currentStationIdx];
-                            if (updatedStation &&
-                                (updatedStation.url !== startedUrl || currentStationIdx !== startedIndex)) {
+                            if (radioStations.length) {
                                 nativePaused = false;
                                 nativePlay(currentStationIdx);
                             }
@@ -8287,14 +8279,15 @@ function preloadAllFonts() {
                 
                 // ---- app re-opened while the service is still playing ----
                 try {
-                    if (hasNativeRadio() && window.AndroidRadio.isPlaying()) {
-                        musicPlaying = true; radioIsPaused = false;
-                        updateMuteIcon("Live Radio Playing");
-                        syncRadioAutoDJTimer();
+                    if (hasNativeRadio()) {
                         fetchRadioStations();
-                        if (typeof window.AndroidRadio.requestState === "function") window.AndroidRadio.requestState();
+                        if (typeof window.AndroidRadio.requestState === "function") {
+                            window.AndroidRadio.requestState();
+                        }
                     }
-                } catch (e) {}
+                } catch (error) {
+                    logAppDiagnostic("error", "Android radio state request failed", error);
+                }
                 
                 // ---- wall reactions on/off ----
                 var LS_WALL_REACT = "fw_wall_reactions_v1";
