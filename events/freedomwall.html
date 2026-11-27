@@ -10344,7 +10344,7 @@
         card.hidden = !inAppShell();
         var has = !!(ver && ver.versionCode && ni.versionCode && ver.versionCode > ni.versionCode);
         var title = $("update-title"), sub = $("update-sub"), pill = $("update-pill");
-        if (title) title.textContent = has ? "Download Update" : (hasNativeUpdate() ? "Check for updates" : "Download latest APK");
+        if (title) title.textContent = has ? "Install Update" : (hasNativeUpdate() ? "Check for updates" : "Update the app");
         if (sub) {
             if (has) sub.textContent = "v" + ver.versionName + " available · you have v" + ni.versionName;
             else if (ni.versionName) sub.textContent = "You have v" + ni.versionName + (ver && ver.versionName ? " · latest v" + ver.versionName : "");
@@ -10369,9 +10369,9 @@
         haptic(8);
         if (hasNativeUpdate()) {
             window.Android.checkForUpdate();
-            showToast("Checking for updates…");
+            showToast("Checking… the update installs right after it downloads");
         } else if (ver && ver.apkUrl) {
-            showToast("Downloading APK…");
+            showToast("This app version can't self-install. Downloading the APK, tap it when finished.");
             window.location.href = ver.apkUrl;
         } else {
             loadVersionInfo(true).then(function () { showToast(ver ? "Latest v" + ver.versionName : "Couldn't reach the server."); });
