@@ -1157,6 +1157,38 @@
 <style id="artcher-react-toggle">
 #wall-stage.hide-reactions .wall-tile-react { display: none !important; }
 </style>
+
+<style id="artcher-update1">
+/* canvas width is now a variable so the status strip can match it exactly */
+.studio-wrap { --cvw: min(100%, calc(100dvh - var(--top) - var(--bottom) - 308px)); }
+@media not all and (orientation: landscape) and (min-width: 640px) {
+  .canvas-frame { width: var(--cvw); }
+}
+.draw-hud {
+  position: static; left: auto; top: auto; z-index: auto;
+  align-self: center; box-sizing: border-box;
+  width: var(--cvw, 100%); min-width: 245px; max-width: 100%;
+  justify-content: flex-start; gap: 8px; padding: 6px 12px;
+  border-radius: 12px; background: var(--soft); box-shadow: none;
+  font-size: 11px; overflow: hidden;
+}
+.draw-hud #dh-tool { flex-shrink: 0; }
+.draw-hud #dh-layer { flex: 1 1 auto; min-width: 0; max-width: none; text-align: left; overflow: hidden; text-overflow: ellipsis; }
+.draw-hud #dh-size { margin-left: auto; flex-shrink: 0; }
+.draw-hud.live { background: #fef2f2; border-color: #fecaca; }
+@media (orientation: landscape) and (min-width: 640px) {
+  .draw-hud { grid-column: 2; grid-row: 3; width: auto; min-width: 0; }
+}
+</style>
+
+<style id="artcher-events">
+.ev-current{border:1px solid var(--border);border-radius:14px;padding:12px;background:var(--accent-soft);display:flex;flex-direction:column;gap:6px}
+.ev-code{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.18em;font-size:20px}
+.name-input.code{text-transform:uppercase;letter-spacing:.2em;font-family:'JetBrains Mono',monospace}
+#event-pill{max-width:190px;overflow:hidden;text-overflow:ellipsis}
+#event-host summary{cursor:pointer}
+.host-body{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+</style>
 </head>
                     <body>
                         
@@ -1344,8 +1376,7 @@
                                 </div>
                                 
                                 <div class="canvas-frame" id="canvas-frame">
-                                    <div class="draw-hud" id="draw-hud" aria-hidden="true"><span class="dh-dot"></span><span id="dh-tool">Brush</span><span class="dh-sep">·</span><span id="dh-layer">Layer 1</span><span class="dh-sep">·</span><span id="dh-size">0.000 MB</span></div>
-                                        <div class="canvas-stage" id="canvas-stage">
+                                    <div class="canvas-stage" id="canvas-stage">
                                         <div class="ref-layer" id="ref-layer" hidden>
                                             <img id="ref-img" alt="Reference tracing overlay" />
                                         </div>
@@ -1360,6 +1391,7 @@
                                     </div>
                                 </div>
                                 
+                                <div class="draw-hud" id="draw-hud" role="status"><span class="dh-dot"></span><span id="dh-tool">Brush</span><span class="dh-sep">·</span><span id="dh-layer">Layer 1</span><span id="dh-size">0.000 MB</span></div>
                                 <div class="sheet">
                                     <div class="sheet-tabs" role="tablist">
                                         <button class="sheet-tab active" data-pane="style" role="tab" onclick="setDrawTab('style')">
@@ -1546,6 +1578,7 @@
                                         <button class="btn" onclick="shareStudio()">Share</button>
                                         <button class="btn" onclick="videoStudio()">Replay video</button>
                                     </div>
+                                    <div class="ref-badge-note" id="event-post-note">Posting to the main wall</div>
                                     <input type="text" id="author-input" class="name-input" maxlength="24" placeholder="Your name or alias (optional)" oninput="handleStudioAuthorInput(this.value)" />
                                     <button class="btn btn-accent btn-lg btn-block" id="submit-btn" onclick="submitToWall()">Post to wall</button>
                                     <div class="studio-stats" id="studio-stats">0 strokes · 0 on wall</div>
@@ -1596,6 +1629,8 @@
                             <button type="button" class="btn btn-secondary" onclick="jumpToMyTile()" aria-label="Go to my tile">
                                 My tile
                             </button>
+                            <button type="button" class="btn btn-secondary" id="event-btn" onclick="openEventModal()">Event</button>
+                            <span class="hud-pill" id="event-pill" hidden></span>
                         </div>
                         
                         <canvas id="minimap" width="132" height="100" aria-label="Wall minimap"></canvas>
@@ -1678,6 +1713,16 @@
                                 </div>
                             </div>
                             
+                            <div class="card">
+                                <div class="card-head">Events</div>
+                                <button class="list-row" onclick="openEventModal()">
+                                    <span class="lead">
+                                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                        <span>Join or host an event<small>Enter a code to open its own canvas</small></span>
+                                    </span>
+                                </button>
+                            </div>
+
                             <div class="card">
                                 <div class="card-head">Wall</div>
                                 <button class="list-row" onclick="saveWallPNG()">
@@ -1836,6 +1881,54 @@
                         </section>
                     </div>
                     
+                    <!-- EVENT MODAL -->
+                    <div class="modal-backdrop" id="event-modal" onclick="if(event.target===this) closeEventModal()">
+                        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="event-title">
+                            <div class="modal-head">
+                                <h3 id="event-title">Events</h3>
+                                <button type="button" class="btn btn-sm" onclick="closeEventModal()">Close</button>
+                            </div>
+
+                            <div class="ev-current" id="event-current" hidden>
+                                <strong id="event-cur-name">—</strong>
+                                <span class="ev-code" id="event-cur-code">------</span>
+                                <small id="event-cur-left" style="color:var(--muted);font-weight:600;"></small>
+                                <div class="modal-actions" style="margin-top:6px;">
+                                    <button type="button" class="btn btn-sm" onclick="copyEventInvite()">Copy invite link</button>
+                                    <button type="button" class="btn btn-sm" onclick="leaveEvent(false)">Leave event</button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="saved-label" style="margin-bottom:6px;">Join with code</div>
+                                <div style="display:flex;gap:8px;">
+                                    <input type="text" id="event-code-input" class="name-input code" maxlength="8" placeholder="K7M2QX" autocomplete="off" autocapitalize="characters"
+                                           onkeydown="if(event.key==='Enter') submitJoinCode()">
+                                    <button type="button" class="btn btn-accent" onclick="submitJoinCode()">Join</button>
+                                </div>
+                            </div>
+
+                            <details id="event-host">
+                                <summary class="saved-label">Host an event</summary>
+                                <div class="host-body">
+                                    <input type="text" id="event-name-input" class="name-input" maxlength="40" placeholder="Event name">
+                                    <select id="event-hours-select" class="font-select">
+                                        <option value="1">Lasts 1 hour</option>
+                                        <option value="2">Lasts 2 hours</option>
+                                        <option value="4" selected>Lasts 4 hours</option>
+                                        <option value="8">Lasts 8 hours</option>
+                                        <option value="24">Lasts 1 day</option>
+                                        <option value="72">Lasts 3 days</option>
+                                        <option value="168">Lasts 1 week</option>
+                                    </select>
+                                    <input type="password" id="event-pin-input" class="name-input" placeholder="Host PIN" autocomplete="off">
+                                    <button type="button" class="btn btn-primary" onclick="createEvent()">Create event</button>
+                                    <button type="button" class="btn btn-danger" id="event-end-btn" onclick="endEventNow()" hidden>End &amp; archive current event now</button>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
                     <!-- CAPTCHA MODAL -->
                     <div class="modal-backdrop" id="captcha-modal" onclick="if(event.target===this) closeCaptcha()">
                         <div class="modal-box cap-box" role="dialog" aria-modal="true" aria-labelledby="captcha-title">
@@ -2829,14 +2922,19 @@
                             if (!userProfile) openNicknameOverlay(false);
                         }
                         
+                        const LS_EVENT = "fw_event_v1";
+                        let curEvent = lsGet(LS_EVENT, null);          // { code, name, startTs, endTs, status } or null = main wall
+                        function evCode() { return curEvent ? curEvent.code : ""; }
+                        function cacheKey() { return LS_CACHE + (curEvent ? ":" + curEvent.code : ""); }
+
                         pending = lsGet(LS_QUEUE, []);
-                        serverEntries = lsGet(LS_CACHE, []);
+                        serverEntries = lsGet(cacheKey(), []);
                         rebuildEntries();
                         
                         function rebuildEntries() {
                             const ids = new Set(serverEntries.map(e => e.id));
                             wallEntries = serverEntries.concat(
-                            pending.filter(p => !ids.has(p.id)).map(p => Object.assign({}, p, { _pending: true }))
+                            pending.filter(p => !ids.has(p.id) && (p.event || "") === evCode()).map(p => Object.assign({}, p, { _pending: true }))
                             );
                             updateWallCount();
                             updateHistoryUI();
@@ -2876,6 +2974,7 @@
                             })
                             .on("broadcast", { event: "new-tile" }, ({ payload }) => {
                                 if (!payload || !payload.id) return;
+                                if ((payload.event || "") !== evCode()) return;
                                 if (wallEntries.some(e => e.id === payload.id)) return;
                                 
                                 const who = payload.author || "Anonymous";
@@ -2883,7 +2982,7 @@
                                 
                                 if (Array.isArray(payload.strokes)) {
                                     serverEntries.push(payload);
-                                    lsSet(LS_CACHE, serverEntries);
+                                    lsSet(cacheKey(), serverEntries);
                                     rebuildEntries();
                                     
                                     if (document.getElementById("view-wall").classList.contains("active")) {
@@ -2912,7 +3011,7 @@
                                     event: "new-tile",
                                     payload: rawSize < 200000
                                     ? entry
-                                    : { id: entry.id, author: entry.author, gx: entry.gx, gy: entry.gy }
+                                    : { id: entry.id, author: entry.author, gx: entry.gx, gy: entry.gy, event: entry.event || "" }
                                 });
                             } catch (e) {}
                         }
@@ -4453,18 +4552,61 @@
                             committedCount = activeDraw.strokes.length - activeCount;
                         }
                         
-                        function redrawStudio() {
-                            rebuildCommittedLayer();
+                        var liveCache = null;
+                        function makeLayerCanvas() {
+                            const c = document.createElement("canvas");
+                            c.width = 500; c.height = 500;
+                            return c;
+                        }
+
+                        function drawLiveStroke(active, activeCount) {
+                            const baseStrokes = active.strokes.slice(0, Math.max(0, active.strokes.length - activeCount));
+                            const key = layers.map(l =>
+                                l.id + (l.visible ? "+" : "-") + (l.type === "draw" ? ":" + (l === active ? baseStrokes.length : l.strokes.length) : "")
+                            ).join("|");
+
+                            if (!liveCache || liveCache.key !== key) {
+                                const below = makeLayerCanvas(), above = makeLayerCanvas(), base = makeLayerCanvas();
+                                const belowCtx = below.getContext("2d"), aboveCtx = above.getContext("2d"), baseCtx = base.getContext("2d");
+                                let seenActive = false;
+                                for (const lyr of layers) {
+                                    if (lyr === active) {
+                                        seenActive = true;
+                                        renderStrokesInstant(baseCtx, baseStrokes, 500, true);
+                                        continue;
+                                    }
+                                    if (!lyr.visible || lyr.type !== "draw" || !lyr.strokes.length) continue;
+                                    renderStrokesInstant(layerScratchCtx, lyr.strokes, 500, true);
+                                    (seenActive ? aboveCtx : belowCtx).drawImage(layerScratchCanvas, 0, 0);
+                                }
+                                liveCache = { key, below, above, base };
+                            }
+
+                            // active layer = cached layer + the live stroke drawn on top of it (so the eraser really erases)
+                            layerScratchCtx.clearRect(0, 0, 500, 500);
+                            layerScratchCtx.drawImage(liveCache.base, 0, 0);
+                            renderStrokesInstant(layerScratchCtx, active.strokes.slice(-activeCount), 500, false);
+
                             drawCtx.clearRect(0, 0, 500, 500);
-                            drawCtx.drawImage(committedCanvas, 0, 0);
+                            drawCtx.drawImage(liveCache.below, 0, 0);
+                            drawCtx.drawImage(layerScratchCanvas, 0, 0);
+                            drawCtx.drawImage(liveCache.above, 0, 0);
+                        }
+
+                        function redrawStudio() {
                             const activeDraw = getActiveDrawLayer();
                             const activeCount = isDrawing && currentStroke ? (1 + mirrorStrokes.length) : 0;
-                            if (activeDraw.visible && activeCount > 0) {
-                                renderStrokesInstant(layerScratchCtx, activeDraw.strokes.slice(-activeCount), 500, true);
-                                drawCtx.drawImage(layerScratchCanvas, 0, 0);
-                            }
-                            if (document.getElementById("pane-layers")?.classList.contains("active")) {
-                                renderLayersPanel();
+                            const live = activeCount > 0 && activeDraw.visible;
+                            if (live) {
+                                drawLiveStroke(activeDraw, activeCount);
+                            } else {
+                                liveCache = null;
+                                rebuildCommittedLayer();
+                                drawCtx.clearRect(0, 0, 500, 500);
+                                drawCtx.drawImage(committedCanvas, 0, 0);
+                                if (document.getElementById("pane-layers")?.classList.contains("active")) {
+                                    renderLayersPanel();      // thumbnails only when not mid-stroke
+                                }
                             }
                         }
 
@@ -5443,6 +5585,7 @@
                                 showToast("Draw something first before posting.");
                                 return;
                             }
+                            if (curEvent && !evIsLive()) { showToast("This event has ended. Leave it to post on the main wall."); return; }
                             // user-initiated posts: choose a tile, then pass the human check
                             openTilePicker(() => openCaptcha(() => submitToWallCore()));
                         }
@@ -5466,7 +5609,8 @@
                                 gx: slot.gx,
                                 gy: slot.gy,
                                 strokes: items,
-                                timestamp: Date.now()
+                                timestamp: Date.now(),
+                                event: evCode()
                             };
                             
                             pending.push(entry);
@@ -5500,88 +5644,86 @@
                             lsSet(LS_QUEUE, pending);
                         }
                         
-                        async function fetchServerEntries() {
+                        async function fetchServerEntries(code = evCode()) {
                             const ctrl = new AbortController();
                             const to = setTimeout(() => ctrl.abort(), 20000);
                             try {
-                                const res = await fetch(`${GAS_WEB_APP_URL}?module=freedomwall&_t=${Date.now()}`, { signal: ctrl.signal });
+                                const res = await fetch(`${GAS_WEB_APP_URL}?module=freedomwall&event=${encodeURIComponent(code)}&_t=${Date.now()}`, { signal: ctrl.signal });
                                 const json = await res.json();
-                                if (json.ok && Array.isArray(json.data)) return json.data;
-                                throw new Error("Bad response");
+                                if (json.ok && Array.isArray(json.data)) {
+                                    if (code && code === evCode() && json.event) noteEventMeta(json.event);
+                                    return json.data;
+                                }
+                                throw new Error(json.error || "Bad response");
                             } finally {
                                 clearTimeout(to);
                             }
                         }
-                        
+
                         async function uploadPending(silent = false) {
                             if (uploading || pending.length === 0) return;
-                            if (!navigator.onLine) {
-                                if (!silent) showToast("No internet right now. Try again when connected.");
-                                return;
-                            }
-                            
+                            if (!navigator.onLine) { if (!silent) showToast("No internet right now. Try again when connected."); return; }
+
                             uploading = true;
                             setUploadUI();
                             const total = pending.length;
-                            let done = 0;
-                            
+                            let done = 0, dropped = 0;
+                            const snaps = {};                               // per-scope server snapshot
+
                             try {
-                                const latest = await fetchServerEntries();
-                                const occupied = latest.slice();
-                                const serverIds = new Set(latest.map(e => e.id));
-                                
                                 for (const entry of pending.slice()) {
-                                    if (serverIds.has(entry.id)) { removePending(entry.id); done++; continue; }
-                                    
-                                    if (occupied.some(o => o.gx === entry.gx && o.gy === entry.gy)) {
-                                        const others = pending.filter(p => p.id !== entry.id);
-                                        const slot = pickRandomOpenSlot(occupied.concat(others));
-                                        entry.gx = slot.gx;
-                                        entry.gy = slot.gy;
+                                    const code = entry.event || "";
+                                    if (!snaps[code]) {
+                                        const latest = await fetchServerEntries(code);
+                                        snaps[code] = { occupied: latest.slice(), ids: new Set(latest.map(e => e.id)) };
+                                    }
+                                    const snap = snaps[code];
+                                    if (snap.ids.has(entry.id)) { removePending(entry.id); done++; continue; }
+
+                                    if (snap.occupied.some(o => o.gx === entry.gx && o.gy === entry.gy)) {
+                                        const others = pending.filter(p => p.id !== entry.id && (p.event || "") === code);
+                                        const slot = pickRandomOpenSlot(snap.occupied.concat(others));
+                                        entry.gx = slot.gx; entry.gy = slot.gy;
                                         lsSet(LS_QUEUE, pending);
                                     }
-                                    
-                                    const payload = Object.assign({ action: "addFreedomWall" }, {
-                                        id: entry.id, author: entry.author, gx: entry.gx, gy: entry.gy,
-                                        strokes: entry.strokes, timestamp: entry.timestamp
-                                    });
-                                    
+
+                                    const payload = {
+                                        action: "addFreedomWall", id: entry.id, author: entry.author, gx: entry.gx, gy: entry.gy,
+                                        strokes: entry.strokes, timestamp: entry.timestamp, event: code
+                                    };
                                     const ctrl = new AbortController();
                                     const to = setTimeout(() => ctrl.abort(), 30000);
                                     let json;
                                     try {
                                         const res = await fetch(GAS_WEB_APP_URL, {
-                                            method: "POST",
-                                            headers: { "Content-Type": "text/plain;charset=utf-8" },
-                                            body: JSON.stringify(payload),
-                                            signal: ctrl.signal
+                                            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                            body: JSON.stringify(payload), signal: ctrl.signal
                                         });
                                         json = await res.json();
-                                    } finally {
-                                        clearTimeout(to);
-                                    }
-                                    
+                                    } finally { clearTimeout(to); }
+
                                     if (json && json.ok) {
                                         removePending(entry.id);
-                                        occupied.push(entry);
+                                        snap.occupied.push(entry);
                                         done++;
                                         broadcastWallEntry(entry);
+                                    } else if (json && json.code === "EVENT_ENDED") {
+                                        removePending(entry.id);            // event closed before this uploaded
+                                        dropped++;
                                     } else {
                                         throw new Error((json && json.error) || "Upload failed");
                                     }
                                 }
                             } catch (err) {}
-                            
+
                             uploading = false;
                             rebuildEntries();
                             setUploadUI();
-                            
-                            if (done === total) {
-                                if (done > 0) showToast(`Uploaded ${done} drawing${done === 1 ? "" : "s"} ✓`);
-                            } else {
-                                showToast(`Uploaded ${done} of ${total}. The rest are still saved here.`);
-                            }
-                            
+
+                            if (dropped) showToast(`${dropped} drawing${dropped === 1 ? "" : "s"} couldn't be posted because the event ended.`);
+                            else if (done === total) { if (done > 0) showToast(`Uploaded ${done} drawing${done === 1 ? "" : "s"} ✓`); }
+                            else showToast(`Uploaded ${done} of ${total}. The rest are still saved here.`);
+
                             loadWallEntries({ autoPlay: false });
                         }
                         
@@ -5624,13 +5766,15 @@
                             }
                             
                             try {
-                                const list = await fetchServerEntries();
+                                const evScope = evCode();
+                                const list = await fetchServerEntries(evScope);
+                                if (evScope !== evCode()) return;                 // user switched scope mid-request
                                 const prevIds = new Set(serverEntries.map(e => e.id));
                                 const newlyAdded = list.filter(e => !prevIds.has(e.id));
                                 const changed = sigOf(list) !== sigOf(serverEntries);
                                 
                                 serverEntries = list;
-                                lsSet(LS_CACHE, list);
+                                lsSet(cacheKey(), list);
                                 loadReactions();
                                 rebuildEntries();
                                 setUploadUI();
@@ -6303,6 +6447,172 @@
                         
                         
                         
+                        // =========================================================================
+                        // EVENTS
+                        // =========================================================================
+                        const evEl = id => document.getElementById(id);
+                        let evPin = "";
+
+                        function normCode(c) { return String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8); }
+                        function evIsLive() { return !!curEvent && curEvent.status === "active" && Date.now() < curEvent.endTs; }
+                        function fmtLeft(ms) {
+                            if (ms <= 0) return "ending…";
+                            const m = Math.floor(ms / 60000), h = Math.floor(m / 60), d = Math.floor(h / 24);
+                            if (d > 0) return `${d}d ${h % 24}h left`;
+                            if (h > 0) return `${h}h ${m % 60}m left`;
+                            return `${Math.max(1, m)}m left`;
+                        }
+                        async function gasPost(payload) {
+                            const res = await fetch(GAS_WEB_APP_URL, {
+                                method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload)
+                            });
+                            return res.json();
+                        }
+
+                        function applyEventUI() {
+                            const inEv = !!curEvent;
+                            const btn = evEl("event-btn");
+                            if (btn) btn.textContent = inEv ? "🎪 " + curEvent.code : "Event";
+
+                            const pill = evEl("event-pill");
+                            if (pill) {
+                                pill.hidden = !inEv;
+                                if (inEv) pill.textContent = curEvent.name.slice(0, 22) + " · " + (curEvent.status === "archived" ? "archived" : fmtLeft(curEvent.endTs - Date.now()));
+                            }
+                            const title = document.querySelector(".center-event-title");
+                            const sub = document.querySelector(".center-event-sub");
+                            if (title) {
+                                title.textContent = inEv ? curEvent.name : "THE ARTcher";
+                                title.style.fontSize = inEv && curEvent.name.length > 14 ? "18px" : "";
+                            }
+                            if (sub) sub.textContent = inEv ? "EVENT · " + curEvent.code : (activeSeason ? activeSeason.sub : "ARCHERSTUDIO");
+
+                            const note = evEl("event-post-note");
+                            if (note) note.textContent = inEv
+                                ? (evIsLive() ? `Posting to event: ${curEvent.name}` : "This event has ended · posting is closed")
+                                : "Posting to the main wall";
+                            renderEventModal();
+                        }
+
+                        function renderEventModal() {
+                            const box = evEl("event-current");
+                            if (!box) return;
+                            box.hidden = !curEvent;
+                            if (curEvent) {
+                                evEl("event-cur-name").textContent = curEvent.name;
+                                evEl("event-cur-code").textContent = curEvent.code;
+                                evEl("event-cur-left").textContent = curEvent.status === "archived" ? "Archived · read-only" : fmtLeft(curEvent.endTs - Date.now());
+                            }
+                            const endBtn = evEl("event-end-btn");
+                            if (endBtn) endBtn.hidden = !(curEvent && curEvent.status === "active");
+                        }
+
+                        // swap the whole app between the main wall and an event
+                        function setScope(ev) {
+                            curEvent = ev || null;
+                            lsSet(LS_EVENT, curEvent);
+                            serverEntries = lsGet(cacheKey(), []);
+                            tileBitmapCache.clear();
+                            loadingWall = false;
+                            userMoved = false;
+                            myTileCycleIdx = -1;
+                            rebuildEntries();
+                            setUploadUI();
+                            applyEventUI();
+                            if (currentView === "wall") renderWall(true);
+                            loadWallEntries({ autoPlay: true, manual: false });
+                        }
+
+                        // called whenever the server reports the current event's status
+                        function noteEventMeta(meta) {
+                            if (!curEvent || meta.code !== curEvent.code) return;
+                            const wasLive = curEvent.status === "active";
+                            curEvent = Object.assign({}, curEvent, meta);
+                            lsSet(LS_EVENT, curEvent);
+                            if (wasLive && meta.status === "archived") { setTimeout(() => leaveEvent(true), 0); return; }
+                            applyEventUI();
+                        }
+
+                        async function joinEventByCode(raw) {
+                            const code = normCode(raw);
+                            if (code.length < 4) { showToast("Enter the event code."); return false; }
+                            if (!navigator.onLine) { showToast("Joining needs internet."); return false; }
+                            try {
+                                const res = await fetch(`${GAS_WEB_APP_URL}?module=fwevent&code=${code}&_t=${Date.now()}`);
+                                const j = await res.json();
+                                if (!j.ok || !j.event) { showToast("No event with that code."); return false; }
+                                setScope(j.event);
+                                showToast(j.event.status === "archived" ? `Viewing archived event: ${j.event.name}` : `Joined ${j.event.name} 🎪`);
+                                haptic(12);
+                                return true;
+                            } catch (e) {
+                                showToast("Couldn't reach the server.");
+                                return false;
+                            }
+                        }
+
+                        function leaveEvent(auto) {
+                            if (!curEvent) return;
+                            const name = curEvent.name;
+                            try { localStorage.removeItem(cacheKey()); } catch (e) {}
+                            setScope(null);
+                            closeEventModal();
+                            showToast(auto ? `"${name}" has ended and was archived. Back to the main wall.` : "Back to the main wall");
+                        }
+
+                        function openEventModal() { renderEventModal(); evEl("event-modal").classList.add("open"); }
+                        function closeEventModal() { evEl("event-modal").classList.remove("open"); }
+
+                        async function submitJoinCode() {
+                            const inp = evEl("event-code-input");
+                            if (await joinEventByCode(inp.value)) { inp.value = ""; closeEventModal(); switchView("wall"); }
+                        }
+
+                        function copyEventInvite() {
+                            if (!curEvent) return;
+                            const url = location.origin + location.pathname + "?event=" + curEvent.code;
+                            (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject())
+                                .then(() => showToast("Invite link copied"))
+                                .catch(() => showToast("Share this code: " + curEvent.code));
+                        }
+
+                        async function createEvent() {
+                            const name = evEl("event-name-input").value.trim();
+                            const pin = evEl("event-pin-input").value.trim();
+                            const hours = Number(evEl("event-hours-select").value);
+                            if (!name) { showToast("Give the event a name."); return; }
+                            if (!pin) { showToast("Enter the host PIN."); return; }
+                            try {
+                                const j = await gasPost({ action: "createFWEvent", name, hours, pin });
+                                if (!j.ok) { showToast(j.error || "Couldn't create the event."); return; }
+                                evPin = pin;
+                                evEl("event-name-input").value = "";
+                                setScope(j.event);
+                                showToast(`Event created · code ${j.event.code}`);
+                            } catch (e) { showToast("Couldn't reach the server."); }
+                        }
+
+                        function endEventNow() {
+                            if (!curEvent) return;
+                            const pin = evEl("event-pin-input").value.trim() || evPin;
+                            if (!pin) { showToast("Enter the host PIN first."); return; }
+                            askConsent("End this event?", `"${curEvent.name}" will be archived now and everyone returns to the main wall.`, async () => {
+                                try {
+                                    const j = await gasPost({ action: "endFWEvent", code: curEvent.code, pin });
+                                    if (!j.ok) { showToast(j.error || "Couldn't end the event."); return; }
+                                    leaveEvent(true);
+                                } catch (e) { showToast("Couldn't reach the server."); }
+                            }, { danger: true, okLabel: "End & archive" });
+                        }
+
+                        // countdown + gentle server check so clients notice the end without refreshing
+                        setInterval(() => { if (curEvent) applyEventUI(); }, 30000);
+                        setInterval(() => {
+                            if (curEvent && curEvent.status === "active" && !document.hidden && navigator.onLine) {
+                                loadWallEntries({ autoPlay: false, manual: false, isLiveSync: true });
+                            }
+                        }, 60000);
+
                         // ---------- wall search + My tile ----------
                         const LS_MINE = "fw_mine_v1";
                         let myTileIds = lsGet(LS_MINE, []);
@@ -7537,6 +7847,10 @@
                         syncUnit();
                         loadWallEntries({ autoPlay: false, manual: false, isLiveSync: true });
                         
+                        applyEventUI();
+                        const _qEv = new URLSearchParams(location.search).get("event");
+                        if (_qEv) joinEventByCode(_qEv).then(ok => { if (ok) switchView("wall"); });
+
                         window.addEventListener("online", () => {
                             if (AUTO_UPLOAD && pending.length > 0) uploadPending(true);
                         });
