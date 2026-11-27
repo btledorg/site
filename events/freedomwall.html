@@ -481,6 +481,11 @@
                     <input type="text" id="collab-invite-link" readonly aria-label="Private collaboration invite link" />
                     <button type="button" class="btn btn-sm" onclick="copyCollabInvite()">Copy link</button>
                 </div>
+                <div class="collab-qr-card" id="collab-qr-card" hidden>
+                    <img id="collab-invite-qr" alt="QR code for the private shared drawing room" />
+                    <p id="collab-qr-status" role="status" aria-live="polite">Generating room QR code…</p>
+                    <a class="btn btn-sm" id="collab-qr-download" download>Save QR code</a>
+                </div>
                 <div class="collab-note" id="collab-note">Joining replaces the active draft with the host's drawing. Save or switch drafts first if needed.</div>
                 <button type="button" class="btn btn-block" onclick="openQRScanner('team')">Scan collaboration invite QR</button>
                 <div class="collab-actions">
@@ -1056,6 +1061,7 @@
     </section>
 </div>
 
+<script src="../resources/js/qrcode-generator.js"></script>
 <script src="../resources/js/freedom.js">
 
 </script>

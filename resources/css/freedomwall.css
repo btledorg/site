@@ -382,6 +382,10 @@ body.focus-mode #view-draw .sheet[data-active-pane="post"] .focus-quick-post { d
 .collab-participants, .collab-note { color: var(--muted); font-size: 11px; line-height: 1.4; }
 .collab-invite { display: flex; gap: 6px; }
 .collab-invite input { flex: 1; min-width: 0; height: 34px; padding: 0 9px; border: 1px solid var(--border); border-radius: 8px; color: var(--ink); font: 11px 'JetBrains Mono', monospace; }
+.collab-qr-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--soft); text-align: center; }
+.collab-qr-card img { display: block; width: min(220px, 100%); height: auto; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: #fff; image-rendering: pixelated; }
+.collab-qr-card p { color: var(--muted); font-size: 11.5px; line-height: 1.4; }
+.collab-qr-card a { text-decoration: none; }
 .collab-actions { display: flex; gap: 8px; }
 .collab-actions .btn { flex: 1; }
 

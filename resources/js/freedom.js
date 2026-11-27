@@ -3231,6 +3231,46 @@ function preloadAllFonts() {
                 return name || ("Artist " + (collabSelfKey || "").slice(-4));
             }
 
+            function renderCollabInviteQR() {
+                const wrapper = document.getElementById("collab-qr-card");
+                const image = document.getElementById("collab-invite-qr");
+                const status = document.getElementById("collab-qr-status");
+                const download = document.getElementById("collab-qr-download");
+                const invite = document.getElementById("collab-invite-link");
+                if (!wrapper || !image || !status || !download || !invite) return;
+
+                const inviteUrl = invite.value;
+                if (!collabChannel || !collabIsHost || !collabRoomId || !inviteUrl) {
+                    wrapper.hidden = true;
+                    wrapper.dataset.inviteUrl = "";
+                    image.removeAttribute("src");
+                    download.removeAttribute("href");
+                    return;
+                }
+
+                wrapper.hidden = false;
+                if (wrapper.dataset.inviteUrl === inviteUrl) return;
+                wrapper.dataset.inviteUrl = inviteUrl;
+                status.textContent = "Generating room QR code…";
+
+                try {
+                    if (typeof window.qrcode !== "function") throw new Error("The local QR encoder is unavailable.");
+                    const qr = window.qrcode(0, "M");
+                    qr.addData(inviteUrl);
+                    qr.make();
+                    const dataUrl = qr.createDataURL(5, 4);
+                    image.src = dataUrl;
+                    download.href = dataUrl;
+                    download.download = "artcher-team-invite-" + collabRoomId.slice(0, 8) + ".gif";
+                    status.textContent = "Scan this code to open the invite in ARTcher.";
+                } catch (error) {
+                    image.removeAttribute("src");
+                    download.removeAttribute("href");
+                    status.textContent = "QR couldn't be created. Copy the invite link instead.";
+                    console.error("Could not generate the local collaboration invite QR code.", error);
+                }
+            }
+
             function updateCollabUI(state, message) {
                 const status = document.getElementById("collab-status");
                 const participants = document.getElementById("collab-participants");
@@ -3245,6 +3285,7 @@ function preloadAllFonts() {
                 if (startButton) startButton.hidden = state === "connected" || state === "connecting" || !!collabChannel;
                 if (leaveButton) leaveButton.hidden = !collabChannel;
                 if (invite) invite.hidden = !collabChannel;
+                renderCollabInviteQR();
             }
 
             function setCollabRoomInUrl(roomId) {
@@ -3680,6 +3721,7 @@ function preloadAllFonts() {
                     showToast("Couldn't create the shared room");
                     return false;
                 }
+                renderCollabInviteQR();
                 collabChannel
                     .on("presence", { event: "sync" }, updateCollabPresenceUI)
                     .on("broadcast", { event: "pointer" }, ({ payload }) => renderCollabCursor(payload))
