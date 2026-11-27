@@ -1669,6 +1669,11 @@ body.focus-mode #view-draw.panel-off .draw-hud { display: flex; }
                                                                     .tutorial-launch-btn svg { width: 17px; height: 17px; }
                                                                     .studio-tutorial-btn { display: none; }
                                                                     body.focus-mode #studio-tutorial-btn { display: inline-flex; }
+                                                                    .tutorial-first-prompt { position: fixed; inset: 0; z-index: 180; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(15,23,42,.58); backdrop-filter: blur(4px); }
+                                                                    .tutorial-first-card { width: min(390px, 100%); padding: 22px; border: 1px solid rgba(255,255,255,.8); border-radius: 18px; background: #fff; box-shadow: 0 20px 70px rgba(0,0,0,.32); }
+                                                                    .tutorial-first-card h2 { margin: 10px 0 8px; color: var(--ink); font-size: 21px; line-height: 1.25; }
+                                                                    .tutorial-first-card p { color: #475569; font-size: 13px; line-height: 1.6; }
+                                                                    .tutorial-first-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
                                                                     .tutorial-overlay { position: fixed; inset: 0; z-index: 12000; }
                                                                     .tutorial-shade { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
                                                                     .tutorial-highlight {

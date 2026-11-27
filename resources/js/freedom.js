@@ -2220,6 +2220,7 @@ function preloadAllFonts() {
         // TAB NAVIGATION (bottom nav)
         // =========================================================================
         const LS_LAST_VIEW = "fw_last_view_v1";
+        const LS_TUTORIAL_PROMPTED = "fw_tutorial_prompted_v1";
         let currentView = "home";
         
         function switchView(viewName) {
@@ -2273,6 +2274,27 @@ function preloadAllFonts() {
         let tutorialIndex = 0;
         let tutorialReturnState = null;
         let tutorialReturnFocus = null;
+        let tutorialPromptResolved = lsGet(LS_TUTORIAL_PROMPTED, false) === true;
+
+        function maybePromptTutorial() {
+            if (tutorialPromptResolved || focusModeActive || focusLinkRequested) return;
+            const prompt = document.getElementById("tutorial-first-prompt");
+            const auth = document.getElementById("auth-overlay");
+            if (!prompt || (auth && !auth.hidden) || document.querySelector(".modal-backdrop.open")) return;
+            prompt.hidden = false;
+        }
+        window.maybePromptTutorial = maybePromptTutorial;
+
+        function dismissTutorialPrompt(startTour) {
+            const prompt = document.getElementById("tutorial-first-prompt");
+            if (prompt) prompt.hidden = true;
+            tutorialPromptResolved = true;
+            if (!lsSet(LS_TUTORIAL_PROMPTED, true)) {
+                console.error("Could not save the first-time tutorial choice to local storage.");
+                showToast("Your tutorial choice could not be saved on this device.");
+            }
+            if (startTour) startTutorial();
+        }
 
         function tutorialTarget(step) {
             if (!step || !step.target) return null;
@@ -10514,6 +10536,7 @@ function preloadAllFonts() {
                                                         window.closeWhatsNewModal = function () {
                                                             var modal = $("whats-new-modal");
                                                             if (modal) modal.classList.remove("open");
+                                                            window.setTimeout(function () { window.maybePromptTutorial(); }, 150);
                                                         };
                                                         window.showWhatsNewModal = function (info) {
                                                             if (focusModeActive) { pendingWhatsNew = info; return; }
@@ -10751,7 +10774,10 @@ function preloadAllFonts() {
                                                                 setTab(tab || "login");
                                                                 $("auth-overlay").hidden = false;
                                                             }
-                                                            function closeAuth() { $("auth-overlay").hidden = true; }
+                                                            function closeAuth() {
+                                                                $("auth-overlay").hidden = true;
+                                                                window.setTimeout(function () { window.maybePromptTutorial(); }, 450);
+                                                            }
                                                             
                                                             function applyAccount(p) {
                                                                 userProfile = {
@@ -11471,6 +11497,7 @@ function preloadAllFonts() {
                                                                 document.addEventListener("visibilitychange", function () { if (!document.hidden) { pull(); checkPendingOpen(); } });
                                                                 window.addEventListener("online", function () { pull(); registerDevice(); });
                                                                 checkPendingOpen();
+                                                                window.setTimeout(function () { window.maybePromptTutorial(); }, 1500);
                                                             }
                                                             boot();
                                                         })();
