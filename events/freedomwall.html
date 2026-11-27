@@ -1921,8 +1921,7 @@
                                         <option value="72">Lasts 3 days</option>
                                         <option value="168">Lasts 1 week</option>
                                     </select>
-                                    <input type="password" id="event-pin-input" class="name-input" placeholder="Host PIN" autocomplete="off">
-                                    <button type="button" class="btn btn-primary" onclick="createEvent()">Create event</button>
+                                    <button type="button" class="btn btn-primary" onclick="hostEvent()">Create event</button>
                                     <button type="button" class="btn btn-danger" id="event-end-btn" onclick="endEventNow()" hidden>End &amp; archive current event now</button>
                                 </div>
                             </details>
@@ -2156,7 +2155,6 @@
                             { label: "Mainstream", query: { ...common, tag: "top 40" } }
                             ];
                             
-                            // score = pinned famous name + listens + votes + current trend + audio quality
                             function rank(list, label) {
                                 const famous = (FAMOUS_STATIONS[label] || []).map(f => f.toLowerCase());
                                 const seenName = new Set();
@@ -6451,7 +6449,14 @@
                         // EVENTS
                         // =========================================================================
                         const evEl = id => document.getElementById(id);
-                        let evPin = "";
+                        const LS_HOST = "fw_host_tokens_v1";
+                        function hostToken(code) { return (lsGet(LS_HOST, {}) || {})[code] || ""; }
+                        function setHostToken(code, tok) {
+                            const m = lsGet(LS_HOST, {}) || {};
+                            if (tok) m[code] = tok; else delete m[code];
+                            lsSet(LS_HOST, m);
+                        }
+                        function isHost() { return !!curEvent && !!hostToken(curEvent.code); }
 
                         function normCode(c) { return String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8); }
                         function evIsLive() { return !!curEvent && curEvent.status === "active" && Date.now() < curEvent.endTs; }
@@ -6501,10 +6506,10 @@
                             if (curEvent) {
                                 evEl("event-cur-name").textContent = curEvent.name;
                                 evEl("event-cur-code").textContent = curEvent.code;
-                                evEl("event-cur-left").textContent = curEvent.status === "archived" ? "Archived · read-only" : fmtLeft(curEvent.endTs - Date.now());
+                                evEl("event-cur-left").textContent = (curEvent.status === "archived" ? "Archived · read-only" : fmtLeft(curEvent.endTs - Date.now())) + (isHost() ? " · You’re the host" : "");
                             }
                             const endBtn = evEl("event-end-btn");
-                            if (endBtn) endBtn.hidden = !(curEvent && curEvent.status === "active");
+                            if (endBtn) endBtn.hidden = !(curEvent && curEvent.status === "active" && isHost());
                         }
 
                         // swap the whole app between the main wall and an event
@@ -6576,16 +6581,14 @@
                                 .catch(() => showToast("Share this code: " + curEvent.code));
                         }
 
-                        async function createEvent() {
+                        async function hostEvent() {
                             const name = evEl("event-name-input").value.trim();
-                            const pin = evEl("event-pin-input").value.trim();
                             const hours = Number(evEl("event-hours-select").value);
                             if (!name) { showToast("Give the event a name."); return; }
-                            if (!pin) { showToast("Enter the host PIN."); return; }
                             try {
-                                const j = await gasPost({ action: "createFWEvent", name, hours, pin });
+                                const j = await gasPost({ action: "createFWEvent", name, hours });
                                 if (!j.ok) { showToast(j.error || "Couldn't create the event."); return; }
-                                evPin = pin;
+                                setHostToken(j.event.code, j.hostToken);
                                 evEl("event-name-input").value = "";
                                 setScope(j.event);
                                 showToast(`Event created · code ${j.event.code}`);
@@ -6593,13 +6596,13 @@
                         }
 
                         function endEventNow() {
-                            if (!curEvent) return;
-                            const pin = evEl("event-pin-input").value.trim() || evPin;
-                            if (!pin) { showToast("Enter the host PIN first."); return; }
+                            if (!curEvent || !isHost()) { showToast("Only the host can end this event."); return; }
+                            const code = curEvent.code, token = hostToken(code);
                             askConsent("End this event?", `"${curEvent.name}" will be archived now and everyone returns to the main wall.`, async () => {
                                 try {
-                                    const j = await gasPost({ action: "endFWEvent", code: curEvent.code, pin });
+                                    const j = await gasPost({ action: "endFWEvent", code, hostToken: token });
                                     if (!j.ok) { showToast(j.error || "Couldn't end the event."); return; }
+                                    setHostToken(code, "");
                                     leaveEvent(true);
                                 } catch (e) { showToast("Couldn't reach the server."); }
                             }, { danger: true, okLabel: "End & archive" });
