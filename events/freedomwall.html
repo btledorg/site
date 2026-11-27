@@ -175,6 +175,7 @@
                     </button>
                 </div>
                 <div class="studio-extra">
+                    <button class="btn btn-amber btn-sm" id="focus-upload-btn" onclick="uploadPending()" hidden>Upload (0)</button>
                     
                     <button type="button" class="chip-btn" id="ref-overlay-quick" onclick="toggleRefOverlay()" hidden aria-label="Show or hide reference overlay" title="Show / hide reference overlay">
                         <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -483,10 +484,6 @@
         </div>
     </div>
 </section>
-
-<button type="button" class="focus-fullscreen-btn" id="focus-fullscreen-btn" onclick="toggleFullscreen()" aria-label="Enter fullscreen" title="Enter fullscreen" hidden>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-</button>
 
 <section id="view-wall" class="view">
     
@@ -903,6 +900,10 @@
             <label class="host-switch-row">
                 <span><strong>Hide arts for now</strong><small>Guests see a closed curtain and an empty wall. Only you can see the drawings.</small></span>
                 <span class="switch"><input type="checkbox" id="event-hide-switch" onchange="onHideSwitch(this)"></span>
+            </label>
+            <label class="host-switch-row">
+                <span><strong>Focus mode for invite links</strong><small>Guests open the drawing studio while arts are hidden.</small></span>
+                <span class="switch"><input type="checkbox" id="event-focus-switch" checked onchange="onFocusModeSwitch(this)"></span>
             </label>
             <label class="anon-check-row" for="event-confirm-reveal">
                 <input type="checkbox" id="event-confirm-reveal" checked onchange="onConfirmRevealToggle(this)">

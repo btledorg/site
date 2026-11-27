@@ -1169,7 +1169,7 @@ function preloadAllFonts() {
             copy.className = "nickname-anonymous-copy";
             copy.innerHTML = '<strong>Be anonymous</strong><small>Hide my nickname when I post</small>';
             
-            row.className = "nickname-anonymous-option";
+            row.classList.add("anon-check-row", "nickname-anonymous-option");
             row.appendChild(anonCheck);
             row.appendChild(copy);
             row.setAttribute("for", anonCheck.id);
@@ -5488,7 +5488,7 @@ function preloadAllFonts() {
                 function setUploadUI() {
                     const n = pending.length;
                     const label = uploading ? "Uploading..." : `Upload (${n})`;
-                    ["nav-upload-btn", "dock-upload-btn", "more-upload-btn"].forEach(id => {
+                    ["nav-upload-btn", "dock-upload-btn", "more-upload-btn", "focus-upload-btn"].forEach(id => {
                         const b = document.getElementById(id);
                         if (!b) return;
                         b.hidden = n === 0;
@@ -6213,15 +6213,33 @@ function preloadAllFonts() {
                     if (!curEvent) return;
                     copyTextSafe(curEvent.code, "Event code copied: " + curEvent.code, "Code: " + curEvent.code);
                 }
+                const LS_EVENT_FOCUS = "fw_event_focus_v1";
+                function isEventFocusEnabled(code) {
+                    var settings = lsGet(LS_EVENT_FOCUS, {});
+                    return !settings || typeof settings[code] !== "boolean" ? true : settings[code];
+                }
+                function onFocusModeSwitch(sw) {
+                    if (!curEvent || !isHost()) {
+                        sw.checked = curEvent ? isEventFocusEnabled(curEvent.code) : true;
+                        return;
+                    }
+                    var settings = lsGet(LS_EVENT_FOCUS, {});
+                    if (!settings || typeof settings !== "object" || Array.isArray(settings)) settings = {};
+                    settings[curEvent.code] = !!sw.checked;
+                    lsSet(LS_EVENT_FOCUS, settings);
+                    showToast(sw.checked ? "Focus mode enabled for new invite links." : "Focus mode disabled for new invite links.");
+                }
+                window.onFocusModeSwitch = onFocusModeSwitch;
                 function buildEventInviteUrl(code) {
                     var url = new URL(location.pathname, location.origin);
                     url.searchParams.set("event", code);
-                    url.searchParams.set("focus", "1");
+                    if (isEventFocusEnabled(code)) url.searchParams.set("focus", "1");
                     return url.toString();
                 }
                 function copyEventInvite() {
                     if (!curEvent) return;
-                    copyTextSafe(buildEventInviteUrl(curEvent.code), "Focus-mode invite link copied", "Share this code: " + curEvent.code);
+                    var focusEnabled = isEventFocusEnabled(curEvent.code);
+                    copyTextSafe(buildEventInviteUrl(curEvent.code), focusEnabled ? "Focus-mode invite link copied" : "Invite link copied", "Share this code: " + curEvent.code);
                 }
                 
                 async function hostEvent() {
@@ -8736,7 +8754,7 @@ function preloadAllFonts() {
                                                             var r = orig.apply(this, arguments);
                                                             var on = false;
                                                             try { on = !!uploading; } catch (e) {}
-                                                            ["nav-upload-btn", "dock-upload-btn", "more-upload-btn"].forEach(function (id) {
+                                                            ["nav-upload-btn", "dock-upload-btn", "more-upload-btn", "focus-upload-btn"].forEach(function (id) {
                                                                 var b = $(id); if (b) b.classList.toggle("is-loading", on);
                                                             });
                                                             if (!on && upW) { var i = works.indexOf(upW); if (i > -1) works.splice(i, 1); upW = null; renderWork(); }
@@ -9002,6 +9020,7 @@ function preloadAllFonts() {
                                                                 box.hidden = !show;
                                                                 if (show) {
                                                                     $("event-hide-switch").checked = !!curEvent.hidden;
+                                                                    $("event-focus-switch").checked = isEventFocusEnabled(curEvent.code);
                                                                     $("event-confirm-reveal").checked = lsGet(LS_CONFIRM, true) !== false;
                                                                 }
                                                                 return r;
@@ -9084,12 +9103,6 @@ function preloadAllFonts() {
                                                             if (!b) return;
                                                             b.hidden = !fsSupported;
                                                             b.classList.toggle("active", fsActive());
-                                                            var focusButton = $("focus-fullscreen-btn");
-                                                            if (focusButton) {
-                                                                focusButton.hidden = !fsSupported;
-                                                                focusButton.setAttribute("aria-label", fsActive() ? "Exit fullscreen" : "Enter fullscreen");
-                                                                focusButton.title = fsActive() ? "Exit fullscreen" : "Enter fullscreen";
-                                                            }
                                                         }
                                                         window.toggleFullscreen = function () {
                                                             try {
@@ -9616,13 +9629,16 @@ function preloadAllFonts() {
                                                             }
                                                             
                                                             x.fillStyle = "#0f172a"; x.font = "900 34px Inter, sans-serif";
-                                                            x.fillText(rec.hidden ? "Scan to draw" : "Scan to join", W / 2, qy + qs + 80);
+                                                            var focusInvite = isEventFocusEnabled(rec.code) && !!rec.hidden && !entryEnded(rec);
+                                                            x.fillText(focusInvite ? "Scan to draw" : "Scan to join", W / 2, qy + qs + 80);
                                                             x.fillStyle = accent; x.font = '700 44px "JetBrains Mono", monospace';
                                                             x.fillText(rec.code.split("").join(" "), W / 2, qy + qs + 140);
                                                             x.fillStyle = "#64748b"; x.font = "600 20px Inter, sans-serif";
                                                             x.fillText(entryEnded(rec) ? "Archived · view only" : fmtLeft(rec.endTs - Date.now()), W / 2, qy + qs + 180);
                                                             
-                                                            $("evqr-msg").textContent = img ? "Scan to join · opens in the app if installed" : "Couldn't load the QR (offline?). Share the code instead.";
+                                                            $("evqr-msg").textContent = img
+                                                                ? (focusInvite ? "Scan to draw in focus mode · opens in the app if installed" : "Scan to join · opens in the app if installed")
+                                                                : "Couldn't load the QR (offline?). Share the code instead.";
                                                         }
                                                         function closeEventQR() { $("evqr-modal").classList.remove("open"); qrCur = null; }
                                                         window.openEventQR = openEventQR;
@@ -10288,7 +10304,7 @@ function preloadAllFonts() {
                                                                 var sub = $("auth-sub"); if (sub && TAB_SUBS[name]) sub.textContent = TAB_SUBS[name];
                                                             }
                                                             function openAuth(tab, cancellable) {
-                                                                if (focusModeActive) return;
+                                                                if (focusModeActive && tab !== "guest") return;
                                                                 authCancellable = !!cancellable;
                                                                 $("auth-cancel").hidden = !cancellable;
                                                                 var g = $("ag-nick"), a = $("ag-anon");

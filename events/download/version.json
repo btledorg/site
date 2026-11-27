@@ -3,6 +3,6 @@
     "versionName": "1.13",
     "apkUrl": "https://btledorg.github.io/site/events/download/ARTcher-v1.13.apk",
     "changeLog": "Added new features and bug fixes!",
-    "siteChangeLog": "• Event Focus Mode: Fullscreen drawing canvas with distraction-free sketching.\n• Live Collaboration: Real-time event walls, host curtain reveal, and Event Library.\n• Faster Sharing: One-tap Copy Code, invite links, and shareable event QR cards.\n• UI/UX Revamp: Crisp SVG icons across Events & Notifications and responsive 2-column action grids.\n• Exit Protection: Smart back navigation closes open modals first and confirms before closing the app.",
-    "appVersion": "1.0.25"
+    "siteChangeLog": "- Added a new Team tab for easier team management and collaboration.\n- Added new tools and features to enhance the experience.\n- Added focus mode to hide UI elements for a cleaner experience.\n- Improved anonymous nickname display with additional information.\n- Fixed layout issues in focus mode for better usability.",
+    "appVersion": "1.0.27"
 }
