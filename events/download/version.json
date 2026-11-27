@@ -3,5 +3,6 @@
     "versionName": "1.14",
     "apkUrl": "https://btledorg.github.io/site/events/download/ARTcher-v1.14.apk",
     "changeLog": "Added new features and bug fixes!",
+    "siteChangeLog": "- Updated the tutorial with new guidance.\n- Added a new Team tab for easier team management and collaboration.\n- Added new tools and features to enhance the experience.\n- Added focus mode to hide UI elements for a cleaner experience.\n- Improved anonymous nickname display with additional information.\n- Fixed layout issues in focus mode for better usability.",
     "appVersion": "1.0.28"
 }
