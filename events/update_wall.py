@@ -1,566 +1,453 @@
 #!/usr/bin/env python3
 """
-update_wall.py - patches freedomwall.html
+update_wall.py - patches freedomwall.html in place (a .bak copy is written first).
 
-  python update_wall.py freedomwall.html
+    python update_wall.py freedomwall.html
 
-Adds:
-  1. Draw tab is disabled while the current event has ended / is archived
-  2. Inside an event the tile picker is skipped, so the tile is always random
-  3. Event Library (events you joined or hosted, live + archived)
-  4. Event QR code generator (PNG save / share / copy link)
-  5. Android: tries to open the link in the app com.artcher.app,
-     and shows an "Open in app" bar as a tap-to-open fallback
+What it does
+  1. Wall rendering fix (the "whites"): tiles are now rendered at 500px (same as the
+     editor / popup) on a transparent layer, then scaled down and put over the paper
+     colour. Leaderboard thumbnails use the same renderer.
+  2. Post redesign: the size readout is removed from the draw-hud and moved into the
+     Post tab as a size meter (+ a small warning dot on the Post tab). The Post pane
+     is reordered: name -> size meter -> Post button -> tools row.
+  3. Two-finger double-tap on the canvas = Redo (Ctrl+Y works too).
+  4. Whiteboard-only fullscreen on the Wall (new button in the wall toolbar).
+  5. Download link + versions are read from download/version.json:
+       - APK links use apkUrl
+       - appVersion is shown under "ARCHERSTUDIO @ 2026"
+       - new "App updates" card inside the Android app, wired to the native updater
+         (needs the small MainActivity change).
+
+The script aborts without writing anything if any anchor is missing or ambiguous.
 """
+import pathlib
 import re
 import shutil
 import sys
-from pathlib import Path
 
-CSS = r"""
-/* ===== Event lock / library / QR / open-in-app ===== */
-.nav-item.is-disabled{opacity:.5}
-.nav-item.nav-draw.is-disabled .ico{background:#94a3b8;box-shadow:none}
-.landing-buttons .btn.is-disabled{opacity:.45}
+MARKER = 'id="artcher-update2"'
 
-#evlib-modal{z-index:205}
-#evqr-modal{z-index:206}
-.evlib-sub{font-size:12.5px;color:var(--muted);margin-top:-6px;line-height:1.4}
-.evlib-list{display:flex;flex-direction:column;gap:8px;max-height:min(60vh,420px);overflow-y:auto}
-.evlib-h{margin-top:4px}
-.evlib-row{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--border);border-radius:12px;background:#fff}
-.evlib-row.current{border-color:#93c5fd;background:var(--accent-soft)}
-.evlib-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
-.evlib-name{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.evlib-meta{font:600 10.5px 'JetBrains Mono',monospace;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.evlib-pill{align-self:flex-start;padding:1px 8px;border-radius:999px;font-size:10px;font-weight:800;background:#dcfce7;color:#166534}
-.evlib-pill.done{background:#e2e8f0;color:#475569}
-.evlib-actions{display:flex;gap:4px;flex-shrink:0}
-.evqr-wrap canvas{width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:12px;background:#fff}
-.evqr-row{display:flex;gap:8px}
-.evqr-row .name-input{text-transform:uppercase;letter-spacing:.15em;font-family:'JetBrains Mono',monospace}
 
-.app-open-bar{
-  position:fixed;left:12px;right:12px;bottom:calc(var(--bottom) + 12px);z-index:150;
-  max-width:420px;margin:0 auto;display:flex;align-items:center;gap:10px;
-  padding:10px 12px;border-radius:14px;background:#fff;border:1px solid var(--border);
-  box-shadow:0 10px 28px rgba(15,23,42,.18)}
-.app-open-bar .aob-text{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
-.app-open-bar strong{font-size:13px}
-.app-open-bar small{font-size:11px;color:var(--muted)}
-"""
+def replace_once(src, old, new, name):
+    n = src.count(old)
+    if n != 1:
+        sys.exit(f"[{name}] expected 1 match, found {n}. Nothing was written.")
+    return src.replace(old, new, 1)
 
-JS = r"""
+
+def regex_once(src, pattern, new, name):
+    m = list(re.finditer(pattern, src, flags=re.S))
+    if len(m) != 1:
+        sys.exit(f"[{name}] expected 1 match, found {len(m)}. Nothing was written.")
+    s, e = m[0].span()
+    return src[:s] + new + src[e:]
+
+
+# --------------------------------------------------------------------------- #
+# HTML pieces
+# --------------------------------------------------------------------------- #
+POST_PANE = r'''<div class="sheet-pane" id="pane-post">
+                                                                            <div class="post-where" id="event-post-note">Posting to the main wall</div>
+                                                                            <input type="text" id="author-input" class="name-input" maxlength="24" placeholder="Your name or alias (optional)" oninput="handleStudioAuthorInput(this.value)" />
+                                                                            <div class="post-meter" id="post-meter" data-state="empty">
+                                                                                <div class="pm-top"><span>Post size</span><span class="pm-val" id="pm-val">0.000 MB</span></div>
+                                                                                <div class="pm-track"><div class="pm-fill" id="pm-fill"></div></div>
+                                                                                <div class="pm-hint" id="pm-hint">Draw something to see the size</div>
+                                                                            </div>
+                                                                            <button class="btn btn-accent btn-lg btn-block" id="submit-btn" onclick="submitToWall()">Post to wall</button>
+                                                                            <div class="studio-stats" id="studio-stats">0 strokes · 0 on wall</div>
+                                                                            <div class="post-tools">
+                                                                                <button class="btn" onclick="previewDrawing()"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Replay</button>
+                                                                                <button class="btn" onclick="saveStudioPNG()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>PNG</button>
+                                                                                <button class="btn" onclick="shareStudio()"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line></svg>Share</button>
+                                                                                <button class="btn" onclick="videoStudio()"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg>Video</button>
+                                                                                <button class="btn btn-danger" onclick="clearCanvas()"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>Clear</button>
+                                                                            </div>
+                                                                        </div>'''
+
+WALL_CLEAN_BTN = r'''<button class="fab-btn" onclick="toggleWallClean()" title="Whiteboard only (hide menus)" aria-label="Whiteboard only">
+                                                                        <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                                                                    </button>
+                                                                    '''
+
+UPDATE_CARD = r'''<div class="card" id="update-card" hidden>
+                                                                        <div class="card-head">App updates</div>
+                                                                        <button class="list-row" id="update-row" type="button" onclick="runUpdateAction()">
+                                                                            <span class="lead">
+                                                                                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                                                                <span><span id="update-title">Check for updates</span><small id="update-sub">Tap to check</small></span>
+                                                                            </span>
+                                                                            <span class="evlib-pill" id="update-pill" hidden>New</span>
+                                                                        </button>
+                                                                    </div>
+                                                                    '''
+
+# --------------------------------------------------------------------------- #
+# CSS
+# --------------------------------------------------------------------------- #
+NEW_CSS = r'''<style id="artcher-update2">
+        /* ---- Post pane redesign ---- */
+        .post-where{font-size:11.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:6px 10px;border-radius:8px;text-align:center}
+        .post-meter{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--soft)}
+        .pm-top{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;font-weight:700;color:var(--muted)}
+        .pm-val{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink)}
+        .pm-track{height:6px;border-radius:999px;background:#e2e8f0;overflow:hidden}
+        .pm-fill{height:100%;width:0;border-radius:inherit;background:#16a34a;transition:width .25s ease,background .2s}
+        .pm-hint{font-size:11px;font-weight:600;color:var(--muted)}
+        .post-meter[data-state="mid"] .pm-fill{background:#d97706}
+        .post-meter[data-state="big"] .pm-fill{background:#dc2626}
+        .post-meter[data-state="big"] .pm-hint{color:#dc2626}
+        .post-tools{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding-top:10px;border-top:1px dashed var(--border)}
+        .post-tools .btn{flex-direction:column;gap:3px;min-height:48px;padding:6px 2px;font-size:10.5px}
+        .post-dot{width:6px;height:6px;border-radius:50%;background:#d97706;flex-shrink:0}
+        .post-dot[data-state="big"]{background:#dc2626}
+
+        /* ---- Wall: whiteboard-only mode ---- */
+        body.wall-clean{--top:0px;--bottom:0px;--side:0px}
+        body.wall-clean .topbar,
+        body.wall-clean .bottom-nav,
+        body.wall-clean .rail-tab,
+        body.wall-clean .wall-hud,
+        body.wall-clean .wall-fab,
+        body.wall-clean #minimap,
+        body.wall-clean .app-open-bar,
+        body.wall-clean .work-chip,
+        body.wall-clean #net-bar,
+        body.wall-clean #weather-canvas,
+        body.wall-clean #seasonal-canvas{display:none!important}
+        .wall-clean-exit{position:absolute;z-index:30;top:calc(env(safe-area-inset-top,0px) + 10px);right:10px;width:34px;height:34px;
+            border-radius:50%;border:1px solid var(--border);background:rgba(255,255,255,.88);color:var(--ink);
+            font-size:14px;font-weight:700;line-height:1;cursor:pointer;opacity:.4;transition:opacity .15s}
+        .wall-clean-exit:hover,.wall-clean-exit:active{opacity:1}
+    </style>
+'''
+
+# --------------------------------------------------------------------------- #
+# JS
+# --------------------------------------------------------------------------- #
+NEW_JS = r'''<script id="artcher-update2-js">
 (function () {
-  "use strict";
-  var $ = function (id) { return document.getElementById(id); };
-  var LS_LIB = "fw_event_library_v1";
-  var LS_OPENAPP = "fw_open_in_app_v1";
-  var SS_TRY = "fw_app_try_v1";
-  var SS_BAR = "fw_app_bar_closed_v1";
-  var APP_PKG = "com.artcher.app";
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var d = document, root = d.documentElement;
 
-  function wrap(name, make) {
-    var o = window[name];
-    if (typeof o === "function") window[name] = make(o);
-  }
-  function mk(tag, cls, text) {
-    var e = document.createElement(tag);
-    if (cls) e.className = cls;
-    if (text != null) e.textContent = text;
-    return e;
-  }
-  function evEnded() { return !!curEvent && !evIsLive(); }
-  function inviteUrl(code) { return location.origin + location.pathname + "?event=" + code; }
+    /* ======================================================================
+       1. WALL TILE RENDERING (fixes the stray whites)
+       Render at 500px on a transparent layer (same as the editor and the popup),
+       then scale down and lay it over the paper colour.
+       ====================================================================== */
+    var tileScratch = d.createElement("canvas");
+    tileScratch.width = tileScratch.height = 500;
+    var tileScratchCtx = tileScratch.getContext("2d", { willReadFrequently: true });
 
-  // ======================================================================
-  // 1. DRAW TAB LOCK WHEN THE EVENT HAS ENDED
-  // ======================================================================
-  function applyDrawLock() {
-    var ended = evEnded();
-    var nav = document.querySelector('.nav-item[data-view="draw"]');
-    if (nav) {
-      nav.classList.toggle("is-disabled", ended);
-      nav.setAttribute("aria-disabled", String(ended));
-      nav.title = ended ? "Event ended - drawing is closed" : "";
+    window.getCachedTileCanvas = function (entry) {
+        var hit = tileBitmapCache.get(entry.id);
+        if (hit) return hit;
+        var list = entry.strokes || [];
+        tileScratchCtx.clearRect(0, 0, 500, 500);
+        renderStrokesInstant(tileScratchCtx, list, 500, true);
+        var cvs = d.createElement("canvas");
+        cvs.width = cvs.height = 256;
+        var c = cvs.getContext("2d");
+        c.fillStyle = bgOf(list);
+        c.fillRect(0, 0, 256, 256);
+        c.imageSmoothingEnabled = true;
+        c.imageSmoothingQuality = "high";
+        c.drawImage(tileScratch, 0, 0, 256, 256);
+        tileBitmapCache.set(entry.id, cvs);
+        return cvs;
+    };
+    try { tileBitmapCache.clear(); scheduleWallPaint(); } catch (e) {}
+
+    /* ======================================================================
+       2. POST SIZE METER (moved out of the draw-hud)
+       ====================================================================== */
+    window.refreshSizeUI = function () {
+        window.sizeTimer = 0;
+        var mb = estimatePayloadMB();
+        window.lastSizeMB = mb;
+        var ratio = mb / POST_WARN_MB;
+        var state = mb === 0 ? "empty" : ratio >= 1 ? "big" : ratio >= 0.6 ? "mid" : "ok";
+        var hints = {
+            empty: "Draw something to see the size",
+            ok: "Light · uploads fast",
+            mid: "Getting large",
+            big: "Large drawing · may upload slowly"
+        };
+        var meter = $("post-meter"), val = $("pm-val"), fill = $("pm-fill"), hint = $("pm-hint"), dot = $("post-tab-dot");
+        if (meter) meter.dataset.state = state;
+        if (val) val.textContent = fmtMB(mb);
+        if (fill) fill.style.width = (mb === 0 ? 0 : Math.max(4, Math.min(100, ratio * 100))) + "%";
+        if (hint) hint.textContent = hints[state];
+        if (dot) { dot.hidden = !(state === "mid" || state === "big"); dot.dataset.state = state; }
+    };
+    window.refreshSizeUI();
+
+    /* ======================================================================
+       3. TWO-FINGER DOUBLE TAP = REDO  (Ctrl+Y on desktop)
+       A one-finger touch starts a stroke and wipes the redo list, so the list is
+       snapshotted on the first finger and restored when the second finger lands.
+       ====================================================================== */
+    (function () {
+        var frame = $("canvas-frame");
+        if (!frame) return;
+        var snapRedo = [], active = false, travel = false, t0 = 0, p0 = [], sc0 = 1, lastTap = 0;
+
+        frame.addEventListener("touchstart", function (e) {
+            if (e.touches.length === 1) {
+                try { snapRedo = window.redoStack.slice(); } catch (_) { snapRedo = []; }
+            } else if (e.touches.length === 2) {
+                if (currentStroke && currentStroke.p && currentStroke.p.length <= 2 && snapRedo.length) {
+                    try { window.redoStack = snapRedo.slice(); updateHistoryUI(); } catch (_) {}
+                }
+                active = true; travel = false; t0 = performance.now(); sc0 = studioScale;
+                p0 = [[e.touches[0].clientX, e.touches[0].clientY], [e.touches[1].clientX, e.touches[1].clientY]];
+            } else {
+                active = false;
+            }
+        }, { capture: true, passive: true });
+
+        frame.addEventListener("touchmove", function (e) {
+            if (!active || e.touches.length !== 2) return;
+            for (var i = 0; i < 2; i++) {
+                if (Math.hypot(e.touches[i].clientX - p0[i][0], e.touches[i].clientY - p0[i][1]) > 14) travel = true;
+            }
+        }, { passive: true });
+
+        frame.addEventListener("touchcancel", function () { active = false; }, { passive: true });
+
+        frame.addEventListener("touchend", function (e) {
+            if (!active || e.touches.length > 0) return;
+            active = false;
+            var now = performance.now();
+            if (now - t0 > 280 || travel || Math.abs(studioScale - sc0) > 0.02) { lastTap = 0; return; }
+            if (now - lastTap < 420) {
+                lastTap = 0;
+                if (window.redoStack.length) { redoStroke(); showToast("Redo"); haptic(10); }
+                else showToast("Nothing to redo");
+            } else {
+                lastTap = now;
+            }
+        }, { passive: true });
+
+        window.addEventListener("keydown", function (e) {
+            if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "y") return;
+            if (currentView !== "draw") return;
+            var ae = d.activeElement;
+            if (ae && (ae.tagName === "INPUT" || ae.isContentEditable)) return;
+            e.preventDefault();
+            redoStroke();
+        });
+    })();
+
+    /* ======================================================================
+       4. WALL: WHITEBOARD-ONLY FULLSCREEN
+       ====================================================================== */
+    var askedFs = false;
+    function fsOn() { return !!(d.fullscreenElement || d.webkitFullscreenElement); }
+
+    function relayout() {
+        setTimeout(function () {
+            window.dispatchEvent(new Event("resize"));
+            try { if (currentView === "wall" && !userMoved) fitWallToScreen(); scheduleWallPaint(); } catch (e) {}
+        }, 60);
     }
-    var start = document.querySelector(".landing-buttons .btn-primary");
-    if (start) start.classList.toggle("is-disabled", ended);
-    if (ended && currentView === "draw") window.switchView("wall");
-  }
 
-  wrap("switchView", function (o) {
-    return function (name) {
-      if (name === "draw" && evEnded()) {
-        showToast("This event has ended, so drawing is closed. Leave the event to draw on the main wall.");
-        haptic(20);
-        return;
-      }
-      return o.apply(this, arguments);
-    };
-  });
-
-  // ======================================================================
-  // 2. INSIDE AN EVENT: NO TILE PICKING, ALWAYS RANDOM
-  // ======================================================================
-  wrap("openTilePicker", function (o) {
-    return function (onOk) {
-      if (curEvent) {
-        window.__chosenSlot = null;            // submitToWallCore then uses pickRandomOpenSlot()
-        if (typeof onOk === "function") onOk();
-        return;
-      }
-      return o.apply(this, arguments);
-    };
-  });
-
-  wrap("applyEventUI", function (o) {
-    return function () {
-      var r = o.apply(this, arguments);
-      try {
-        var note = $("event-post-note");
-        if (note && curEvent && evIsLive() && note.textContent.indexOf("random tile") < 0) {
-          note.textContent += " · random tile";
-        }
-        applyDrawLock();
-      } catch (e) {}
-      return r;
-    };
-  });
-
-  // ======================================================================
-  // 3. EVENT LIBRARY
-  // ======================================================================
-  function libGet() { var a = lsGet(LS_LIB, []); return Array.isArray(a) ? a : []; }
-  function libSet(a) { lsSet(LS_LIB, a.slice(0, 60)); }
-  function entryEnded(e) { return e.status !== "active" || Date.now() >= (e.endTs || 0); }
-  function fmtDate(ts) {
-    try { return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); }
-    catch (x) { return ""; }
-  }
-
-  function libUpsert(ev, keepOrder) {
-    if (!ev || !ev.code) return;
-    var a = libGet();
-    var i = a.findIndex(function (x) { return x.code === ev.code; });
-    var old = i >= 0 ? a[i] : null;
-    var rec = {
-      code: ev.code,
-      name: ev.name || (old && old.name) || ev.code,
-      startTs: ev.startTs || (old && old.startTs) || 0,
-      endTs: ev.endTs || (old && old.endTs) || 0,
-      status: ev.status || (old && old.status) || "active",
-      joinedAt: old ? old.joinedAt : Date.now(),
-      hosted: !!((old && old.hosted) || hostToken(ev.code))
-    };
-    if (old) a.splice(i, 1);
-    if (old && keepOrder) a.splice(i, 0, rec); else a.unshift(rec);
-    libSet(a);
-    renderLib();
-  }
-
-  wrap("setScope", function (o) {
-    return function (ev) {
-      var r = o.apply(this, arguments);
-      if (ev) libUpsert(ev);
-      return r;
-    };
-  });
-  wrap("noteEventMeta", function (o) {
-    return function (meta) {
-      if (meta && meta.code) libUpsert(meta, true);   // before it may auto-leave an archived event
-      return o.apply(this, arguments);
-    };
-  });
-
-  function libRow(e) {
-    var row = mk("div", "evlib-row" + (curEvent && curEvent.code === e.code ? " current" : ""));
-    var info = mk("div", "evlib-info");
-    info.appendChild(mk("div", "evlib-name", e.name));
-    var ended = entryEnded(e);
-    var meta = e.code + (e.startTs ? " · " + fmtDate(e.startTs) : "") + (e.hosted ? " · hosted" : "");
-    info.appendChild(mk("div", "evlib-meta", meta));
-    info.appendChild(mk("span", "evlib-pill" + (ended ? " done" : ""), ended ? "Archived" : fmtLeft(e.endTs - Date.now())));
-
-    var acts = mk("div", "evlib-actions");
-    var open = mk("button", "btn btn-sm btn-primary", "Open"); open.type = "button";
-    open.onclick = function () { openLibEvent(e); };
-    var qr = mk("button", "btn btn-sm", "QR"); qr.type = "button";
-    qr.onclick = function () { openEventQR(e); };
-    var del = mk("button", "btn btn-sm", "✕"); del.type = "button";
-    del.title = "Remove from library"; del.setAttribute("aria-label", "Remove from library");
-    del.onclick = function () {
-      askConsent("Remove from library?", "\"" + e.name + "\" is removed from this list. The event itself is not deleted.", function () {
-        libSet(libGet().filter(function (x) { return x.code !== e.code; }));
-        renderLib();
-      }, { danger: true, okLabel: "Remove" });
-    };
-    acts.append(open, qr, del);
-    row.append(info, acts);
-    return row;
-  }
-
-  function renderLib() {
-    var a = libGet();
-    var sub = $("evlib-more-sub");
-    if (sub) sub.textContent = a.length ? a.length + " saved · live & archived" : "Events you join are saved here";
-    var list = $("evlib-list");
-    if (!list) return;
-    list.replaceChildren();
-    if (!a.length) {
-      list.appendChild(mk("div", "lb-empty", "No events yet. Join or host one and it will appear here."));
-      return;
+    function setWallClean(on) {
+        on = !!on;
+        if (on === d.body.classList.contains("wall-clean")) return;
+        if (on && currentView !== "wall") switchView("wall");
+        d.body.classList.toggle("wall-clean", on);
+        var x = $("wall-clean-exit");
+        if (x) x.hidden = !on;
+        try {
+            if (on && (d.fullscreenEnabled || d.webkitFullscreenEnabled) && !fsOn()) {
+                askedFs = true;
+                var p = (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
+                if (p && p.catch) p.catch(function () { askedFs = false; });
+            } else if (!on && fsOn()) {
+                askedFs = false;
+                (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+            }
+        } catch (e) { askedFs = false; }
+        if (on) showToast("Whiteboard mode · tap ✕ or press Esc to exit");
+        haptic(8);
+        relayout();
     }
-    var live = a.filter(function (e) { return !entryEnded(e); });
-    var done = a.filter(entryEnded);
-    [["Live now", live], ["Archive", done]].forEach(function (g) {
-      if (!g[1].length) return;
-      list.appendChild(mk("div", "saved-label evlib-h", g[0]));
-      g[1].forEach(function (e) { list.appendChild(libRow(e)); });
+    window.setWallClean = setWallClean;
+    window.toggleWallClean = function (force) {
+        setWallClean(typeof force === "boolean" ? force : !d.body.classList.contains("wall-clean"));
+    };
+
+    (function () {
+        var xb = d.createElement("button");
+        xb.id = "wall-clean-exit";
+        xb.type = "button";
+        xb.className = "wall-clean-exit";
+        xb.hidden = true;
+        xb.textContent = "✕";
+        xb.setAttribute("aria-label", "Exit whiteboard mode");
+        xb.onclick = function () { setWallClean(false); };
+        $("view-wall").appendChild(xb);
+    })();
+
+    ["fullscreenchange", "webkitfullscreenchange"].forEach(function (ev) {
+        d.addEventListener(ev, function () {
+            if (askedFs && !fsOn() && d.body.classList.contains("wall-clean")) { askedFs = false; setWallClean(false); }
+        });
     });
-  }
+    d.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && d.body.classList.contains("wall-clean") && !fsOn()) setWallClean(false);
+    });
 
-  function openLibEvent(e) {
-    closeLib();
-    if (curEvent && curEvent.code === e.code) { switchView("wall"); return; }
-    joinEventByCode(e.code).then(function (ok) { if (ok) switchView("wall"); });
-  }
-
-  async function refreshLibStatuses() {
-    if (!navigator.onLine) return;
-    var a = libGet().slice(0, 20);
-    await Promise.all(a.map(async function (e) {
-      try {
-        var res = await fetch(GAS_WEB_APP_URL + "?module=fwevent&code=" + encodeURIComponent(e.code) + "&_t=" + Date.now());
-        var j = await res.json();
-        if (j && j.ok && j.event) libUpsert(Object.assign({}, e, j.event), true);
-      } catch (x) {}
-    }));
-    renderLib();
-  }
-
-  function openLib() {
-    var m = $("evlib-modal");
-    if (!m) return;
-    if ($("event-modal")) closeEventModal();
-    renderLib();
-    m.classList.add("open");
-    refreshLibStatuses();
-  }
-  function closeLib() { var m = $("evlib-modal"); if (m) m.classList.remove("open"); }
-  window.openEventLibrary = openLib;
-  window.closeEventLibrary = closeLib;
-
-  // ======================================================================
-  // 4. EVENT QR CODE GENERATOR
-  // ======================================================================
-  var qrCur = null;
-
-  async function openEventQR(rec) {
-    if (!rec || !rec.code) return;
-    qrCur = rec;
-    $("evqr-modal").classList.add("open");
-    $("evqr-msg").textContent = "Making QR…";
-    var url = inviteUrl(rec.code);
-    var img = null;
-    try { img = await loadQRForExport(url, 520); } catch (e) {}
-    if (qrCur !== rec) return;
-
-    var c = $("evqr-canvas"), W = 720, H = 900;
-    c.width = W; c.height = H;
-    var x = c.getContext("2d");
-    var accent = (getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#1d4ed8").trim();
-    x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
-    x.fillStyle = accent; x.fillRect(0, 0, W, 16);
-    x.textAlign = "center"; x.textBaseline = "alphabetic";
-
-    x.fillStyle = "#64748b"; x.font = "700 22px Inter, sans-serif";
-    x.fillText("THE ARTcher · ARCHERSTUDIO", W / 2, 70);
-
-    var name = rec.name || rec.code, fs = 54;
-    x.fillStyle = "#0f172a";
-    do { x.font = "900 " + fs + "px Inter, sans-serif"; fs -= 2; } while (x.measureText(name).width > W - 100 && fs > 24);
-    if (x.measureText(name).width > W - 100) {
-      while (name.length > 3 && x.measureText(name + "…").width > W - 100) name = name.slice(0, -1);
-      name += "…";
-    }
-    x.fillText(name, W / 2, 150);
-
-    var qs = 520, qx = (W - qs) / 2, qy = 190;
-    x.strokeStyle = "#e2e8f0"; x.lineWidth = 3;
-    x.beginPath(); x.roundRect(qx - 20, qy - 20, qs + 40, qs + 40, 24); x.stroke();
-    if (img) {
-      x.drawImage(img, qx, qy, qs, qs);
-    } else {
-      x.fillStyle = "#f1f5f9"; x.fillRect(qx, qy, qs, qs);
-      x.fillStyle = "#64748b"; x.font = "600 24px Inter, sans-serif";
-      x.fillText("QR unavailable offline", W / 2, qy + qs / 2);
-    }
-
-    x.fillStyle = "#0f172a"; x.font = "900 34px Inter, sans-serif";
-    x.fillText("Scan to join", W / 2, qy + qs + 80);
-    x.fillStyle = accent; x.font = '700 44px "JetBrains Mono", monospace';
-    x.fillText(rec.code.split("").join(" "), W / 2, qy + qs + 140);
-    x.fillStyle = "#64748b"; x.font = "600 20px Inter, sans-serif";
-    x.fillText(entryEnded(rec) ? "Archived · view only" : fmtLeft(rec.endTs - Date.now()), W / 2, qy + qs + 180);
-
-    $("evqr-msg").textContent = img ? "Scan to join · opens in the app if installed" : "Couldn't load the QR (offline?). Share the code instead.";
-  }
-  function closeEventQR() { $("evqr-modal").classList.remove("open"); qrCur = null; }
-  window.openEventQR = openEventQR;
-
-  async function qrForTypedCode() {
-    var code = normCode($("evqr-code").value);
-    if (code.length < 4) { showToast("Enter the event code."); return; }
-    var rec = libGet().find(function (e) { return e.code === code; });
-    if (!rec) {
-      try {
-        var res = await fetch(GAS_WEB_APP_URL + "?module=fwevent&code=" + code + "&_t=" + Date.now());
-        var j = await res.json();
-        if (!j.ok || !j.event) { showToast("No event with that code."); return; }
-        rec = j.event;
-      } catch (e) { showToast("Couldn't reach the server."); return; }
-    }
-    openEventQR(rec);
-  }
-
-  function copyQrLink() {
-    if (!qrCur) return;
-    var url = inviteUrl(qrCur.code);
-    (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject())
-      .then(function () { showToast("Invite link copied"); })
-      .catch(function () { showToast("Share this code: " + qrCur.code); });
-  }
-
-  function shareQr() {
-    if (!qrCur) return;
-    var rec = qrCur;
-    $("evqr-canvas").toBlob(async function (b) {
-      var url = inviteUrl(rec.code);
-      var text = "Join " + rec.name + " on THE ARTcher · code " + rec.code;
-      try {
-        if (b) {
-          var f = new File([b], "artcher-event-" + rec.code + ".png", { type: "image/png" });
-          if (navigator.canShare && navigator.canShare({ files: [f] })) {
-            await navigator.share({ files: [f], title: rec.name, text: text, url: url });
-            return;
-          }
-        }
-        if (navigator.share) { await navigator.share({ title: rec.name, text: text, url: url }); return; }
-      } catch (e) { if (e && e.name === "AbortError") return; }
-      copyQrLink();
-    }, "image/png");
-  }
-
-  function saveQr() {
-    if (!qrCur) return;
-    var code = qrCur.code;
-    $("evqr-canvas").toBlob(function (b) {
-      if (!b) { showToast("Could not create the PNG."); return; }
-      downloadBlob(b, "artcher-event-" + code + ".png");
-      showToast("QR saved ✓");
-    }, "image/png");
-  }
-
-  // show the QR right after the user hosts a new event
-  wrap("hostEvent", function (o) {
-    return function () {
-      var before = curEvent && curEvent.code;
-      return Promise.resolve(o.apply(this, arguments)).then(function (r) {
-        if (curEvent && curEvent.code !== before && hostToken(curEvent.code)) {
-          closeEventModal();
-          openEventQR(curEvent);
-        }
+    var _sv = window.switchView;
+    window.switchView = function (name) {
+        if (name !== "wall" && d.body.classList.contains("wall-clean")) setWallClean(false);
+        var r = _sv.apply(this, arguments);
+        if (name === "more") loadVersionInfo(false);
         return r;
-      });
     };
-  });
 
-  // ======================================================================
-  // UI: modals + buttons (built from JS so no HTML anchors are needed)
-  // ======================================================================
-  function buildUI() {
-    var lib = mk("div", "modal-backdrop"); lib.id = "evlib-modal";
-    lib.onclick = function (e) { if (e.target === lib) closeLib(); };
-    lib.innerHTML =
-      '<div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="evlib-title">' +
-      '<div class="modal-head"><h3 id="evlib-title">Event library</h3><button type="button" class="btn btn-sm" id="evlib-close">Close</button></div>' +
-      '<p class="evlib-sub">Events you joined or hosted. Archived events open read-only.</p>' +
-      '<div class="evlib-list" id="evlib-list"></div></div>';
-    document.body.appendChild(lib);
-    $("evlib-close").onclick = closeLib;
+    /* ======================================================================
+       5. VERSION.JSON: APK link, appVersion, in-app "Download Update"
+       ====================================================================== */
+    var LS_VER = "fw_version_info_v1";
+    var ver = lsGet(LS_VER, null);
+    var lastVerFetch = 0;
 
-    var qr = mk("div", "modal-backdrop"); qr.id = "evqr-modal";
-    qr.onclick = function (e) { if (e.target === qr) closeEventQR(); };
-    qr.innerHTML =
-      '<div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="evqr-title">' +
-      '<div class="modal-head"><h3 id="evqr-title">Event QR code</h3><button type="button" class="btn btn-sm" id="evqr-close">Close</button></div>' +
-      '<div class="evqr-wrap"><canvas id="evqr-canvas" width="720" height="900"></canvas></div>' +
-      '<div class="cap-msg" id="evqr-msg"></div>' +
-      '<div class="modal-actions"><button type="button" class="btn" id="evqr-copy">Copy link</button>' +
-      '<button type="button" class="btn" id="evqr-share">Share</button>' +
-      '<button type="button" class="btn btn-accent" id="evqr-save">Save PNG</button></div>' +
-      '<div><div class="saved-label" style="margin-bottom:6px;">Make a QR for any code</div>' +
-      '<div class="evqr-row"><input type="text" id="evqr-code" class="name-input" maxlength="8" placeholder="K7M2QX" autocomplete="off" autocapitalize="characters">' +
-      '<button type="button" class="btn" id="evqr-go">Generate</button></div></div></div>';
-    document.body.appendChild(qr);
-    $("evqr-close").onclick = closeEventQR;
-    $("evqr-copy").onclick = copyQrLink;
-    $("evqr-share").onclick = shareQr;
-    $("evqr-save").onclick = saveQr;
-    $("evqr-go").onclick = qrForTypedCode;
-    $("evqr-code").addEventListener("keydown", function (e) { if (e.key === "Enter") qrForTypedCode(); });
-    document.addEventListener("keydown", function (e) {
-      if (e.key !== "Escape") return;
-      if (qr.classList.contains("open")) closeEventQR();
-      else if (lib.classList.contains("open")) closeLib();
-    });
-
-    // Event modal: QR button for the current event + library button
-    var cur = $("event-current");
-    var acts = cur && cur.querySelector(".modal-actions");
-    if (acts) {
-      var b = mk("button", "btn btn-sm", "QR code"); b.type = "button";
-      b.onclick = function () { if (curEvent) openEventQR(curEvent); };
-      acts.appendChild(b);
-    }
-    var box = $("event-modal") && $("event-modal").querySelector(".modal-box");
-    if (box) {
-      var lb = mk("button", "btn", "📚 Event library"); lb.type = "button";
-      lb.onclick = openLib;
-      var qb = mk("button", "btn", "QR code generator"); qb.type = "button";
-      qb.onclick = function () { closeEventModal(); openEventQR(curEvent || { code: "------", name: "Enter a code below", endTs: 0, status: "archived" }); };
-      var host = $("event-host");
-      var wrapDiv = mk("div", "modal-actions");
-      wrapDiv.append(lb, qb);
-      box.insertBefore(wrapDiv, host || null);
+    function hasNativeUpdate() { return !!(window.Android && typeof window.Android.checkForUpdate === "function"); }
+    function inAppShell() { return typeof window.AndroidRadio !== "undefined" || typeof window.Android !== "undefined"; }
+    function nativeInfo() {
+        try {
+            if (window.Android && typeof window.Android.getVersionInfo === "function") return JSON.parse(window.Android.getVersionInfo() || "{}");
+        } catch (e) {}
+        return {};
     }
 
-    // More tab: library row inside the Events card
-    var cards = document.querySelectorAll("#view-more .card");
-    for (var i = 0; i < cards.length; i++) {
-      var h = cards[i].querySelector(".card-head");
-      if (h && h.textContent.trim() === "Events") {
-        var row = mk("button", "list-row"); row.type = "button";
-        row.innerHTML =
-          '<span class="lead"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>' +
-          '<span>Event library<small id="evlib-more-sub">Events you join are saved here</small></span></span>';
-        row.onclick = openLib;
-        cards[i].appendChild(row);
-        break;
-      }
-    }
+    function applyVersion() {
+        var ni = nativeInfo();
 
-    // Options: open-in-app switch
-    var opt = $("opt-grid"), optCard = opt && opt.closest(".card");
-    if (optCard) {
-      var lab = mk("label", "list-row");
-      lab.innerHTML = '<span>Open links in the app<small>Android: jump to ARTcher when it is installed</small></span>' +
-        '<span class="switch"><input type="checkbox" id="opt-open-app"></span>';
-      optCard.appendChild(lab);
-      var cb = lab.querySelector("input");
-      cb.checked = lsGet(LS_OPENAPP, true) !== false;
-      cb.onchange = function () {
-        lsSet(LS_OPENAPP, cb.checked);
-        showToast(cb.checked ? "Links will open in the app" : "Links stay in the browser");
-      };
-    }
-  }
-
-  // ======================================================================
-  // 5. OPEN IN THE ANDROID APP (com.artcher.app)
-  // ======================================================================
-  function inApp() {
-    var ua = navigator.userAgent || "", p = new URLSearchParams(location.search);
-    return typeof window.AndroidRadio !== "undefined" || typeof window.AndroidHaptic !== "undefined" ||
-      /; wv\)/i.test(ua) || p.get("app") === "1" || p.get("source") === "apk" ||
-      (document.referrer || "").indexOf("android-app://") === 0 ||
-      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
-  }
-
-  function intentUrl() {
-    var fb = new URL(location.href);
-    fb.searchParams.set("noapp", "1");      // fallback page must not retry (no loop)
-    return "intent://" + location.host + location.pathname + location.search +
-      "#Intent;scheme=" + location.protocol.replace(":", "") +
-      ";package=" + APP_PKG +
-      ";S.browser_fallback_url=" + encodeURIComponent(fb.href) + ";end";
-  }
-
-  function showAppBar() {
-    try { if (sessionStorage.getItem(SS_BAR)) return; } catch (e) {}
-    var bar = mk("div", "app-open-bar"); bar.setAttribute("role", "region");
-    bar.setAttribute("aria-label", "Open in app");
-    var t = mk("div", "aob-text");
-    t.append(mk("strong", "", "Open in the ARTcher app"), mk("small", "", "Faster canvas, fullscreen and offline"));
-    var go = mk("button", "btn btn-accent btn-sm", "Open"); go.type = "button";
-    go.onclick = function () { location.href = intentUrl(); };       // a tap is a user gesture, Chrome allows it
-    var x = mk("button", "btn btn-sm", "✕"); x.type = "button"; x.setAttribute("aria-label", "Dismiss");
-    x.onclick = function () { bar.remove(); try { sessionStorage.setItem(SS_BAR, "1"); } catch (e) {} };
-    bar.append(t, go, x);
-    document.body.appendChild(bar);
-  }
-
-  async function initOpenInApp() {
-    if (!/Android/i.test(navigator.userAgent) || inApp()) return;
-    if (lsGet(LS_OPENAPP, true) === false) return;
-    if (new URLSearchParams(location.search).get("noapp") === "1") return;
-
-    // only works if the web manifest lists the app under related_applications
-    try {
-      if (navigator.getInstalledRelatedApps) {
-        var apps = await navigator.getInstalledRelatedApps();
-        if (apps.some(function (a) { return a.id === APP_PKG; })) {
-          ["apk-prompt-card", "more-apk-card"].forEach(function (id) { var e = $(id); if (e) e.hidden = true; });
+        // 1) APK links follow apkUrl
+        if (ver && ver.apkUrl) {
+            ["apk-prompt-link", "more-apk-link"].forEach(function (id) { var a = $(id); if (a) a.href = ver.apkUrl; });
         }
-      }
-    } catch (e) {}
+        var sm = d.querySelector("#more-apk-link small");
+        if (sm && ver && ver.versionName) sm.textContent = "Latest v" + ver.versionName + " · optional native wrapper for offline drawing";
 
-    showAppBar();
-    try {
-      if (!sessionStorage.getItem(SS_TRY)) {
-        sessionStorage.setItem(SS_TRY, "1");
-        location.replace(intentUrl());      // not installed -> Chrome opens the fallback URL (noapp=1)
-      }
-    } catch (e) {}
-  }
+        // 2) appVersion under "ARCHERSTUDIO @ 2026"
+        var line = $("app-version-line");
+        if (line) {
+            var parts = [];
+            if (ver && ver.appVersion) parts.push("v" + ver.appVersion);
+            if (ni.versionName) parts.push("APK " + ni.versionName);
+            line.textContent = parts.join(" · ");
+            line.hidden = !parts.length;
+        }
 
-  // ======================================================================
-  // INIT
-  // ======================================================================
-  buildUI();
-  if (curEvent) libUpsert(curEvent, true);
-  renderLib();
-  applyDrawLock();
-  setInterval(applyDrawLock, 5000);
-  initOpenInApp();
+        // 3) update card (only inside the Android app)
+        var card = $("update-card");
+        if (!card) return;
+        card.hidden = !inAppShell();
+        var has = !!(ver && ver.versionCode && ni.versionCode && ver.versionCode > ni.versionCode);
+        var title = $("update-title"), sub = $("update-sub"), pill = $("update-pill");
+        if (title) title.textContent = has ? "Download Update" : (hasNativeUpdate() ? "Check for updates" : "Download latest APK");
+        if (sub) {
+            if (has) sub.textContent = "v" + ver.versionName + " available · you have v" + ni.versionName;
+            else if (ni.versionName) sub.textContent = "You have v" + ni.versionName + (ver && ver.versionName ? " · latest v" + ver.versionName : "");
+            else sub.textContent = ver && ver.versionName ? "Latest v" + ver.versionName : "Tap to check";
+        }
+        if (pill) pill.hidden = !has;
+    }
+
+    function loadVersionInfo(force) {
+        if (!force && Date.now() - lastVerFetch < 60000) return Promise.resolve();
+        lastVerFetch = Date.now();
+        return fetch("download/version.json?_t=" + Date.now(), { cache: "no-store" })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (j) {
+                if (j && typeof j === "object") { ver = j; lsSet(LS_VER, j); }
+                applyVersion();
+            })
+            .catch(function () { applyVersion(); });
+    }
+
+    window.runUpdateAction = function () {
+        haptic(8);
+        if (hasNativeUpdate()) {
+            window.Android.checkForUpdate();
+            showToast("Checking for updates…");
+        } else if (ver && ver.apkUrl) {
+            showToast("Downloading APK…");
+            window.location.href = ver.apkUrl;
+        } else {
+            loadVersionInfo(true).then(function () { showToast(ver ? "Latest v" + ver.versionName : "Couldn't reach the server."); });
+        }
+    };
+
+    applyVersion();
+    loadVersionInfo(true);
 })();
-"""
+</script>
+'''
 
 
 def main():
-    path = Path(sys.argv[1] if len(sys.argv) > 1 else "freedomwall.html")
-    if not path.is_file():
-        sys.exit("File not found: %s" % path)
+    path = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "freedomwall.html")
+    if not path.exists():
+        sys.exit(f"File not found: {path}")
+    src = path.read_text(encoding="utf-8")
+    if MARKER in src:
+        sys.exit("Already patched (artcher-update2 found). Restore the .bak to re-run.")
 
-    html = path.read_text(encoding="utf-8")
-    if "</head>" not in html or "</body>" not in html:
-        sys.exit("This does not look like freedomwall.html (missing </head> or </body>).")
+    # --- draw-hud: remove the size readout ---------------------------------
+    src = replace_once(src, '<span id="dh-size">0.000 MB</span>', '', "hud-size")
 
-    shutil.copyfile(path, str(path) + ".bak")
+    # --- Post tab: warning dot ---------------------------------------------
+    src = replace_once(
+        src,
+        '<polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Post',
+        '<polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Post<span class="post-dot" id="post-tab-dot" hidden></span>',
+        "post-tab-dot",
+    )
 
-    # remove an earlier run of this patch so the script can be re-run to update
-    html = re.sub(r'<style id="artcher-events2">.*?</style>\n?', "", html, flags=re.S)
-    html = re.sub(r'<script id="artcher-events2-js">.*?</script>\n?', "", html, flags=re.S)
+    # --- Post pane redesign ------------------------------------------------
+    src = regex_once(
+        src,
+        r'<div class="sheet-pane" id="pane-post">.*?id="studio-size-stats">.*?</div>\s*</div>',
+        POST_PANE,
+        "post-pane",
+    )
 
-    head_end = html.index("</head>")
-    html = html[:head_end] + '<style id="artcher-events2">' + CSS + "</style>\n" + html[head_end:]
+    # --- Wall toolbar: whiteboard-only button ------------------------------
+    fit_btn = '<button class="fab-btn" onclick="resetFit()" title="Fit wall to screen" aria-label="Fit wall to screen">'
+    src = replace_once(src, fit_btn, WALL_CLEAN_BTN + fit_btn, "wall-fab")
 
-    body_end = html.rindex("</body>")
-    html = html[:body_end] + '<script id="artcher-events2-js">' + JS + "</script>\n" + html[body_end:]
+    # --- More tab: appVersion line + update card ---------------------------
+    credit = '<div class="more-credit">ARCHERSTUDIO @ 2026</div>'
+    src = replace_once(
+        src, credit,
+        credit + '\n                                                                    <div class="more-credit" id="app-version-line" hidden></div>',
+        "app-version-line",
+    )
+    apk_card = '<div class="card" id="more-apk-card" hidden>'
+    src = replace_once(src, apk_card, UPDATE_CARD + apk_card, "update-card")
 
-    path.write_text(html, encoding="utf-8")
-    print("Patched %s (backup: %s.bak)" % (path, path))
+    # --- Leaderboard thumbs use the same renderer --------------------------
+    src = replace_once(
+        src,
+        'renderStrokesInstant(c, entry.strokes || [], 112, false);',
+        'c.drawImage(getCachedTileCanvas(entry), 0, 0, 112, 112);',
+        "leaderboard-thumb",
+    )
+
+    # --- CSS + JS ----------------------------------------------------------
+    src = replace_once(src, '</head>', NEW_CSS + '</head>', "css")
+    src = replace_once(src, '</body>', NEW_JS + '</body>', "js")
+
+    shutil.copy(path, str(path) + ".bak")
+    path.write_text(src, encoding="utf-8")
+    print(f"Patched {path}  (backup: {path}.bak)")
 
 
 if __name__ == "__main__":
