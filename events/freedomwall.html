@@ -8881,8 +8881,7 @@
                                                                             ["nav-upload-btn", "dock-upload-btn", "more-upload-btn"].forEach(function (id) {
                                                                                 var b = $(id); if (b) b.classList.toggle("is-loading", on);
                                                                             });
-                                                                            if (on && !upW) { upW = { label: "Uploading to the wall…" }; works.push(upW); renderWork(); }
-                                                                            else if (!on && upW) { var i = works.indexOf(upW); if (i > -1) works.splice(i, 1); upW = null; renderWork(); }
+                                                                            if (!on && upW) { var i = works.indexOf(upW); if (i > -1) works.splice(i, 1); upW = null; renderWork(); }
                                                                             return r;
                                                                         };
                                                                     });
