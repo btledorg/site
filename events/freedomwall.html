@@ -6561,10 +6561,20 @@
                                                             }
                                                             
                                                             async function postReactionToggle(id, type) {
+                                                                const cleanId = String(id || "").trim();
+                                                                const cleanReaction = String(type || "").trim();
+                                                                if (!cleanId || !cleanReaction) throw new Error("Missing entry ID or reaction.");
                                                                 const res = await fetch(GAS_WEB_APP_URL, {
                                                                     method: "POST",
                                                                     headers: { "Content-Type": "text/plain;charset=utf-8" },
-                                                                    body: JSON.stringify({ action: "reactFreedomWall", id, type, voter: voterId })
+                                                                    body: JSON.stringify({
+                                                                        action: "reactFreedomWall",
+                                                                        id: cleanId,
+                                                                        entryId: cleanId,
+                                                                        reaction: cleanReaction,
+                                                                        type: cleanReaction,
+                                                                        voter: voterId
+                                                                    })
                                                                 });
                                                                 const j = await res.json();
                                                                 if (!j.ok) throw new Error(j.error || "failed");
