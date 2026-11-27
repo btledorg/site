@@ -464,6 +464,7 @@ async function fetchRadioStations(force = false) {
         persistRadioDirectory();
         persistRadioSettings();
         renderRadioStationList();
+        updateRadioModeUI();
         return radioStations;
     })();
 
@@ -576,7 +577,9 @@ function selectRadioStation(index) {
 async function playCurrentStation(attempt = 0) {
     if (!musicPlaying) return;
     let stations;
-    if (!radioDirectoryLoaded && radioStations.length) {
+    if (radioDirectoryLoaded) {
+        stations = radioStations;
+    } else if (radioStations.length) {
         stations = radioStations;
         fetchRadioStations().catch(error => console.error("Unable to refresh radio stations.", error));
     } else {
@@ -595,7 +598,6 @@ async function playCurrentStation(attempt = 0) {
     
     if (!radioAudio) {
         radioAudio = new Audio();
-        radioAudio.crossOrigin = "anonymous";
         radioAudio.preload = "none";
     }
     
@@ -750,11 +752,13 @@ function updateRadioModeUI(status = "") {
     }
     if (playButton) {
         const isPlaying = musicPlaying && !radioIsPaused;
+        const waitingForStations = !radioDirectoryLoaded && radioStations.length === 0;
+        playButton.disabled = waitingForStations;
         playButton.classList.toggle("is-playing", isPlaying);
         playButton.setAttribute("aria-pressed", String(isPlaying));
-        playButton.setAttribute("aria-label", radioIsPaused ? "Resume radio" : musicPlaying ? "Stop radio" : "Play radio");
+        playButton.setAttribute("aria-label", waitingForStations ? "Loading stations" : radioIsPaused ? "Resume radio" : musicPlaying ? "Stop radio" : "Play radio");
     }
-    if (playLabel) playLabel.textContent = radioIsPaused ? "Resume" : musicPlaying ? "Stop" : "Play";
+    if (playLabel) playLabel.textContent = !radioDirectoryLoaded && radioStations.length === 0 ? "Loading…" : radioIsPaused ? "Resume" : musicPlaying ? "Stop" : "Play";
     const volumeSlider = document.getElementById("music-volume-slider");
     const volumeLabel = document.getElementById("music-volume-val");
     if (volumeSlider) volumeSlider.value = String(Math.round(musicVolume * 100));
@@ -817,6 +821,19 @@ function updateMuteIcon(customStatus = null) {
 }
 
 async function toggleMusic() {
+    if (!musicPlaying && !radioDirectoryLoaded && radioStations.length === 0) {
+        updateMuteIcon("Loading stations…");
+        fetchRadioStations().then(stations => {
+            if (!musicPlaying) {
+                updateMuteIcon(stations.length ? "Stations ready — tap Play" : "No stations found — tap Play for offline chill");
+            }
+        }).catch(error => {
+            console.error("Unable to load radio stations.", error);
+            if (!musicPlaying) updateMuteIcon("Could not load stations");
+        });
+        return;
+    }
+
     musicPlaying = !musicPlaying;
     radioIsPaused = false;
     haptic(8);
@@ -828,6 +845,12 @@ async function toggleMusic() {
         if (volVal) volVal.textContent = Math.round(musicVolume * 100) + "%";
         syncRadioAutoDJTimer();
         
+        if (radioDirectoryLoaded && radioStations.length === 0) {
+            startSynthFallback("Offline chill synth ♪");
+            showToast("Offline chill synth ♪");
+            return;
+        }
+
         updateMuteIcon("Finding stations…");
         await playCurrentStation(0);
         if (musicPlaying) showToast("Radio is on ♪");
