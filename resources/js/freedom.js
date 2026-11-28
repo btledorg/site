@@ -3416,7 +3416,7 @@ function collabChatEnsureUI() {
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-label", "Team chat");
     overlay.innerHTML =
-        '<div class="cc-head"><span>💬 Team chat</span><span class="cc-live" id="collab-chat-live">Live</span>' +
+        '<div class="cc-head"><span>Team chat</span><span class="cc-live" id="collab-chat-live">Live</span>' +
         '<button type="button" class="cc-x" id="collab-chat-close" aria-label="Close chat">✕</button></div>' +
         '<div id="collab-chat-list" role="log" aria-live="polite"></div>' +
         '<form id="collab-chat-form" autocomplete="off">' +
