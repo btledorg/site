@@ -7096,8 +7096,6 @@ function preloadAllFonts() {
                 // =========================================================================
                 // Wrappers call the original code whenever the bridge is absent.
                 // =========================================================================
-                installNativeRadioBridge();
-
                 const _origHaptic = haptic;
                 var _nativeHapticAt = 0;
                 haptic = function (ms = 8) {
@@ -9705,7 +9703,7 @@ function preloadAllFonts() {
                                                         // ======================================================================
                                                         function inApp() {
                                                             var ua = navigator.userAgent || "", p = new URLSearchParams(location.search);
-                                                            return typeof window.AndroidRadio !== "undefined" || typeof window.AndroidHaptic !== "undefined" ||
+                                                            return typeof window.Android !== "undefined" || typeof window.AndroidHaptic !== "undefined" ||
                                                             /; wv\)/i.test(ua) || p.get("app") === "1" || p.get("source") === "apk" ||
                                                             (document.referrer || "").indexOf("android-app://") === 0 ||
                                                             (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
@@ -9973,7 +9971,7 @@ function preloadAllFonts() {
                                                         };
                                                         
                                                         function hasNativeUpdate() { return !!(window.Android && typeof window.Android.checkForUpdate === "function"); }
-                                                        function inAppShell() { return typeof window.AndroidRadio !== "undefined" || typeof window.Android !== "undefined"; }
+                                                        function inAppShell() { return typeof window.Android !== "undefined" || typeof window.AndroidHaptic !== "undefined"; }
                                                         function nativeInfo() {
                                                             try {
                                                                 if (window.Android && typeof window.Android.getVersionInfo === "function") return JSON.parse(window.Android.getVersionInfo() || "{}");

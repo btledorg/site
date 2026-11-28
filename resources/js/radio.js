@@ -188,7 +188,6 @@ let audioCtx = null;
 let radioAudio = null;
 let favoriteRadios = [];
 let deadRadioUrls = new Set();
-let nativeErrorBurst = false;
 let radioStationFilter = "all";
 let selectedRadioUrl = "";
 let radioStations = [];
@@ -205,38 +204,6 @@ let usingSynthFallback = false;
 let musicTimer = null;
 let chordStep = 0;
 let radioModuleInitialized = false;
-let radioMetadataBridgeWarned = false;
-
-function getRadioAppPlaybackState() {
-    if (!musicPlaying) return "stopped";
-    if (radioIsPaused) return "paused";
-    return radioAudio && !radioAudio.paused ? "playing" : "buffering";
-}
-
-function publishRadioMetadataToApp(state = getRadioAppPlaybackState()) {
-    if (!window.AndroidRadio) return;
-    if (typeof window.AndroidRadio.setWebRadioMetadata !== "function") {
-        if (!radioMetadataBridgeWarned) {
-            radioMetadataBridgeWarned = true;
-            logAppDiagnostic("warn", "Android metadata bridge is missing setWebRadioMetadata(String)");
-        }
-        return;
-    }
-
-    const station = radioStations[currentStationIdx];
-    const metadata = {
-        name: station ? station.name : "",
-        country: station ? station.country || "" : "",
-        state,
-        volume: Math.round(musicVolume * 100)
-    };
-
-    try {
-        window.AndroidRadio.setWebRadioMetadata(JSON.stringify(metadata));
-    } catch (error) {
-        logAppDiagnostic("error", "Android radio metadata update failed", error);
-    }
-}
 
 function initializeRadioModule() {
     if (radioModuleInitialized) return;
@@ -292,7 +259,7 @@ function sortStationsWithFavorites() {
 
 function pruneBrokenStation(station) {
     if (!station || !station.url) {
-        logAppDiagnostic("warn", "Skipped pruning broken Android/native radio station", {
+        logAppDiagnostic("warn", "Skipped pruning broken radio station", {
             reason: "missing station or station URL"
         });
         return;
@@ -309,10 +276,7 @@ function pruneBrokenStation(station) {
     radioStations = radioStations.filter(s => s.url !== station.url);
     if (currentStationIdx >= radioStations.length) currentStationIdx = 0;
     selectedRadioUrl = radioStations[currentStationIdx]?.url || "";
-    if (!nativeErrorBurst) persistRadioDirectory();
-    else logAppDiagnostic("info", "Skipped persistRadioDirectory during native error burst", {
-        station: station.name || ""
-    });
+    persistRadioDirectory();
     renderRadioStationList();
     persistRadioSettings();
 }
@@ -667,7 +631,6 @@ async function fetchRadioStations(force = false) {
             stopSynthFallback();
             const station = stations[currentStationIdx % stations.length];
             updateMuteIcon(`Connecting: ${station.name}...`);
-            publishRadioMetadataToApp("buffering");
             logAppDiagnostic("info", "Connecting to radio station", station.name, new URL(station.url).host, `attempt ${attempt + 1}`);
             
             if (!radioAudio) {
@@ -683,7 +646,6 @@ async function fetchRadioStations(force = false) {
                 if (settled || !musicPlaying) return;
                 settled = true;
                 logAppDiagnostic("error", "Radio stream timed out", station.name, new URL(station.url).host);
-                publishRadioMetadataToApp("error");
                 pruneBrokenStation(station);
                 playCurrentStation(attempt + 1);
             }, 7000);
@@ -693,18 +655,15 @@ async function fetchRadioStations(force = false) {
                 settled = true;
                 if (!musicPlaying) return;
                 logAppDiagnostic("info", "Radio stream is playing", station.name);
-                publishRadioMetadataToApp("playing");
                 const tag = station.country ? ` (${station.country})` : "";
                 updateMuteIcon(`Live: ${station.name}${tag}`);
             };
             
             radioAudio.onwaiting = () => {
                 logAppDiagnostic("warn", "Radio stream is buffering", station.name);
-                publishRadioMetadataToApp("buffering");
             };
             radioAudio.onstalled = () => {
                 logAppDiagnostic("warn", "Radio stream stalled", station.name);
-                publishRadioMetadataToApp("buffering");
             };
             
             radioAudio.onerror = () => {
@@ -714,7 +673,6 @@ async function fetchRadioStations(force = false) {
                 logAppDiagnostic("error", "Radio media error", station.name, radioAudio.error
                     ? { code: radioAudio.error.code, message: radioAudio.error.message }
                     : "No MediaError details");
-                    publishRadioMetadataToApp("error");
                     pruneBrokenStation(station);
                     playCurrentStation(attempt + 1);
                 };
@@ -730,7 +688,6 @@ async function fetchRadioStations(force = false) {
                             musicPlaying = false;
                             clearInterval(radioAutoDJTimer);
                             radioAutoDJTimer = null;
-                            publishRadioMetadataToApp("stopped");
                             updateMuteIcon("Tap Play to allow radio audio");
                             return;
                         }
@@ -747,7 +704,6 @@ async function fetchRadioStations(force = false) {
                 const label = document.getElementById("music-volume-val");
                 if (label) label.textContent = Math.round(musicVolume * 100) + "%";
                 if (radioAudio) radioAudio.volume = musicVolume;
-                publishRadioMetadataToApp();
             }
             
             function syncRadioAutoDJTimer() {
@@ -1069,320 +1025,3 @@ async function fetchRadioStations(force = false) {
                             return originalToggleFavorite.apply(this, arguments);
                         };
                     }
-                    
-                    function installNativeRadioBridge() {
-                        if (typeof window.AndroidRadio === "undefined" || window.AndroidRadio === null) return;
-                        var nativeRadioSig = "";
-                        var nativePaused = false;
-                        var nativePlayTimer = null;
-                        var nativeWatchdogTimer = null;
-                        var nativePlayRequestId = 0;
-                        var nativePlayPending = false;
-                        var nativePlayCommandSent = false;
-                        var nativeFailureCount = 0;
-                        var nativeLastErrorAt = 0;
-                        var nativeSetupForceResendUsed = false;
-                        function hasNativeRadio() { return typeof window.AndroidRadio !== "undefined" && window.AndroidRadio !== null; }
-                        function hasNativeHaptic() { return typeof window.AndroidHaptic !== "undefined" && window.AndroidHaptic !== null; }
-                        function isStreamError(s) {
-                            if (!s) return false;
-                            if (s.errorType === "stream_error") return true;
-                            if (typeof s.errorType === "undefined") {
-                                return typeof s.name === "string" && s.name.trim().length > 0;
-                            }
-                            return false;
-                        }
-                        
-                        function clearNativePlayPending() {
-                            if (nativePlayTimer) clearTimeout(nativePlayTimer);
-                            if (nativeWatchdogTimer) clearTimeout(nativeWatchdogTimer);
-                            nativePlayTimer = null;
-                            nativeWatchdogTimer = null;
-                            nativePlayPending = false;
-                            nativePlayRequestId++;
-                        }
-                        
-                        function resetNativeFailureState() {
-                            nativeFailureCount = 0;
-                            nativeLastErrorAt = 0;
-                            nativeSetupForceResendUsed = false;
-                            nativeErrorBurst = false;
-                        }
-                        
-                        function nativeSendStations(force = false) {
-                            const list = radioStations.map(s => ({ name: s.name, url: s.url, country: s.country || "" }));
-                            const sig = JSON.stringify(list);
-                            if (force || sig !== nativeRadioSig) {
-                                nativeRadioSig = sig;
-                                logAppDiagnostic("info", "Sending station list to Android player", { count: list.length });
-                                try {
-                                    window.AndroidRadio.setStations(sig);
-                                } catch (error) {
-                                    logAppDiagnostic("error", "Android setStations call failed", error);
-                                    throw error;
-                                }
-                            }
-                        }
-                        function nativePlay(idx) {
-                            clearNativePlayPending();
-                            const requestId = nativePlayRequestId;
-                            nativePlayPending = true;
-                            nativePlayCommandSent = false;
-                            try {
-                                nativeSendStations();
-                            } catch (error) {
-                                clearNativePlayPending();
-                                updateMuteIcon("Could not send stations to Android — see App diagnostics");
-                                return;
-                            }
-                            try {
-                                window.AndroidRadio.setVolume(Math.round(musicVolume * 100));
-                            } catch (error) {
-                                logAppDiagnostic("warn", "Android setVolume call failed", error);
-                            }
-                            logAppDiagnostic("info", "Android station setup queued; delaying Play to let the app update its playlist", { index: idx });
-                            nativePlayTimer = setTimeout(() => {
-                                if (requestId !== nativePlayRequestId || !musicPlaying) return;
-                                nativePlayCommandSent = true;
-                                try {
-                                    logAppDiagnostic("info", "Sending Android Play command", { index: idx });
-                                    window.AndroidRadio.play(idx);
-                                } catch (error) {
-                                    logAppDiagnostic("error", "Android Play call failed", error);
-                                }
-                            }, 650);
-                            
-                            nativeWatchdogTimer = setTimeout(() => {
-                                if (requestId !== nativePlayRequestId || !nativePlayPending || !musicPlaying) return;
-                                logAppDiagnostic("error", "Android player did not respond within 10s", { index: idx });
-                                nativeLastErrorAt = 0;
-                                window.onNativeRadio({ state: "error", errorType: "setup_timeout", name: "", index: idx });
-                            }, 10000);
-                        }
-                        
-                        // ---- playback stays in the website; only metadata is sent to Android ----
-                        const _origToggleMusic = toggleMusic;
-                        toggleMusic = async function () {
-                            const result = await _origToggleMusic.apply(this, arguments);
-                            publishRadioMetadataToApp(musicPlaying ? "buffering" : "stopped");
-                            return result;
-                        };
-                        
-                        // ---- native -> web state (notification buttons, headset keys, errors) ----
-                        window.onNativeRadio = function (s) {
-                            if (typeof s === "string") { try { s = JSON.parse(s); } catch (e) { return; } }
-                            if (!s) return;
-                            logAppDiagnostic(s.state === "error" ? "error" : "info", "Android radio state", {
-                                state: s.state || "unknown",
-                                name: s.name || "",
-                                index: s.index,
-                                errorType: s.errorType,
-                                detail: s.detail
-                            });
-                            if (!nativePlayPending) {
-                                logAppDiagnostic("info", "Ignored native radio state; website audio owns playback", {
-                                    state: s.state || "unknown"
-                                });
-                                return;
-                            }
-                            if (nativePlayPending && s.state === "stopped") {
-                                logAppDiagnostic("info", "Ignored stray Android 'stopped' while Play is pending");
-                                return;
-                            }
-                            if (nativePlayPending && nativePlayCommandSent &&
-                                ["buffering", "playing"].includes(s.state)) {
-                                    clearNativePlayPending();
-                                }
-                                if (nativePlayPending && !nativePlayCommandSent &&
-                                    ["buffering", "paused"].includes(s.state)) {
-                                        logAppDiagnostic("info", "Android is preparing the station list; waiting to send Play");
-                                        return;
-                                    }
-                                    
-                                    let idx = s.name ? radioStations.findIndex(st => st.name === s.name) : -1;
-                                    const isSetupError = s.state === "error" && !isStreamError(s);
-                                    if (idx < 0 && !isSetupError && Number.isInteger(s.index) && s.index >= 0 && s.index < radioStations.length) idx = s.index;
-                                    if (idx >= 0) currentStationIdx = idx;
-                                    
-                                    if (typeof s.volume === "number") {
-                                        musicVolume = Math.max(0, Math.min(1, s.volume / 100));
-                                        const sl = document.getElementById("music-volume-slider");
-                                        const lb = document.getElementById("music-volume-val");
-                                        if (sl) sl.value = Math.round(musicVolume * 100);
-                                        if (lb) lb.textContent = Math.round(musicVolume * 100) + "%";
-                                        lsSet(LS_MUSIC_VOL, musicVolume);
-                                    }
-                                    
-                                    const st = radioStations[currentStationIdx];
-                                    const nm = st ? st.name : (s.name || "Radio");
-                                    const tag = st && st.country ? ` (${st.country})` : "";
-                                    
-                                    switch (s.state) {
-                                        case "buffering":
-                                        musicPlaying = true; nativePaused = false; radioIsPaused = false;
-                                        updateMuteIcon(`Connecting: ${nm}...`);
-                                        break;
-                                        case "playing":
-                                        musicPlaying = true; nativePaused = false; radioIsPaused = false;
-                                        nativeFailureCount = 0;
-                                        nativeLastErrorAt = 0;
-                                        nativeSetupForceResendUsed = false;
-                                        nativeErrorBurst = false;
-                                        stopSynthFallback();
-                                        syncRadioAutoDJTimer();
-                                        updateMuteIcon(`Live: ${nm}${tag}`);
-                                        break;
-                                        case "paused":
-                                        musicPlaying = true; nativePaused = true; radioIsPaused = true;
-                                        clearInterval(radioAutoDJTimer);
-                                        radioAutoDJTimer = null;
-                                        updateMuteIcon(`Paused: ${nm}`);
-                                        break;
-                                        case "stopped":
-                                        musicPlaying = false; nativePaused = false; radioIsPaused = false;
-                                        clearInterval(radioAutoDJTimer);
-                                        radioAutoDJTimer = null;
-                                        const sleepSelect = document.getElementById("radio-sleep-select");
-                                        if (sleepSelect) sleepSelect.value = "0";
-                                        stopSynthFallback();
-                                        updateMuteIcon();
-                                        break;
-                                        case "error":
-                                        {
-                                            const now = Date.now();
-                                            if (now - nativeLastErrorAt < 1000) {
-                                                logAppDiagnostic("warn", "Ignored duplicate Android radio error", {
-                                                    withinMs: now - nativeLastErrorAt,
-                                                    name: s.name || "",
-                                                    errorType: s.errorType
-                                                });
-                                                break;
-                                            }
-                                            nativeLastErrorAt = now;
-                                            clearNativePlayPending();
-                                            nativeErrorBurst = true;
-                                            
-                                            const streamError = isStreamError(s);
-                                            nativeFailureCount++;
-                                            logAppDiagnostic(streamError ? "error" : "warn", "Android radio error classified", {
-                                                classification: streamError ? "stream_error" : "setup_error",
-                                                errorType: typeof s.errorType === "undefined" ? "undefined" : s.errorType,
-                                                name: s.name || "",
-                                                index: s.index,
-                                                failureCount: nativeFailureCount
-                                            });
-                                            logAppDiagnostic("warn", "Native radio failure count", {
-                                                failureCount: nativeFailureCount,
-                                                limit: 4
-                                            });
-                                            
-                                            if (nativeFailureCount >= 4) {
-                                                logAppDiagnostic("error", "Native radio failure cap reached", {
-                                                    failureCount: nativeFailureCount,
-                                                    classification: streamError ? "stream_error" : "setup_error",
-                                                    name: s.name || "",
-                                                    errorType: typeof s.errorType === "undefined" ? "undefined" : s.errorType
-                                                });
-                                                clearNativePlayPending();
-                                                musicPlaying = false;
-                                                nativePaused = false;
-                                                radioIsPaused = false;
-                                                clearInterval(radioAutoDJTimer);
-                                                radioAutoDJTimer = null;
-                                                stopSynthFallback();
-                                                try { window.AndroidRadio.stop(); } catch (e) {}
-                                                updateMuteIcon("Could not start radio — see App diagnostics");
-                                                showToast("Radio could not start");
-                                                break;
-                                            }
-                                            
-                                            if (streamError) {
-                                                const badStation = radioStations[currentStationIdx];
-                                                let streamPruningSkipped = false;
-                                                if (badStation) {
-                                                    const countBefore = radioStations.length;
-                                                    pruneBrokenStation(badStation);
-                                                    if (radioStations.length === countBefore) {
-                                                        streamPruningSkipped = true;
-                                                        if (radioStations.length <= 20) {
-                                                            logAppDiagnostic("warn", "Native stream pruning skipped", {
-                                                                reason: "station list guard kept it at 20 or fewer",
-                                                                station: badStation.name || "",
-                                                                count: radioStations.length
-                                                            });
-                                                        } else {
-                                                            logAppDiagnostic("warn", "Native stream pruning skipped", {
-                                                                reason: "station had no matching removable URL",
-                                                                station: badStation.name || ""
-                                                            });
-                                                        }
-                                                    }
-                                                } else {
-                                                    logAppDiagnostic("warn", "Native stream pruning skipped", {
-                                                        reason: "no station resolved at the current index",
-                                                        index: currentStationIdx
-                                                    });
-                                                }
-                                                
-                                                if (radioStations.length) {
-                                                    if (streamPruningSkipped) {
-                                                        currentStationIdx = (currentStationIdx + 1) % radioStations.length;
-                                                    } else if (currentStationIdx >= radioStations.length) {
-                                                        currentStationIdx = 0;
-                                                    }
-                                                    selectedRadioUrl = radioStations[currentStationIdx]?.url || "";
-                                                    nativePlay(currentStationIdx);
-                                                    showToast("Stream failed, trying the next station...");
-                                                    updateMuteIcon("Android stream error — see App diagnostics");
-                                                } else {
-                                                    musicPlaying = false;
-                                                    clearInterval(radioAutoDJTimer);
-                                                    radioAutoDJTimer = null;
-                                                    updateMuteIcon("Could not find a radio stream");
-                                                    showToast("No radio stations available");
-                                                }
-                                            } else {
-                                                const retryIndex = radioStations.length
-                                                ? currentStationIdx % radioStations.length
-                                                : 0;
-                                                const forceResend = !nativeSetupForceResendUsed;
-                                                if (forceResend) nativeSetupForceResendUsed = true;
-                                                logAppDiagnostic("warn", "Retrying Android radio setup in 1500 ms", {
-                                                    failureCount: nativeFailureCount,
-                                                    forceResend
-                                                });
-                                                updateMuteIcon("Radio setup failed — retrying...");
-                                                nativePlayTimer = setTimeout(() => {
-                                                    if (!musicPlaying) return;
-                                                    if (forceResend) {
-                                                        try {
-                                                            nativeSendStations(true);
-                                                            logAppDiagnostic("info", "Forced Android station-list resend on setup retry", {
-                                                                count: radioStations.length
-                                                            });
-                                                        } catch (error) {
-                                                            logAppDiagnostic("error", "Forced Android station-list resend failed", error);
-                                                        }
-                                                    }
-                                                    nativePlay(retryIndex);
-                                                }, 1500);
-                                            }
-                                        }
-                                        break;
-                                    }
-                                    renderRadioStationList();
-                                };
-                                
-                                
-                                // ---- app re-opened while the service is still playing ----
-                                try {
-                                    if (hasNativeRadio()) {
-                                        fetchRadioStations();
-                                        window.AndroidRadio.stop();
-                                    }
-                                } catch (error) {
-                                    logAppDiagnostic("error", "Unable to stop native playback while switching to WebView audio", error);
-                                }
-                                
-                                
-                            }
