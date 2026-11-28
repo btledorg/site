@@ -1196,7 +1196,8 @@ async function fetchRadioStations(force = false) {
                                 state: s.state || "unknown",
                                 name: s.name || "",
                                 index: s.index,
-                                errorType: s.errorType
+                                errorType: s.errorType,
+                                detail: s.detail
                             });
                             if (nativePlayPending && s.state === "stopped") {
                                 logAppDiagnostic("info", "Ignored stray Android 'stopped' while Play is pending");
