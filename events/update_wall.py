@@ -1,260 +1,351 @@
 #!/usr/bin/env python3
-import os
-import re
-import subprocess
-import sys
-import tempfile
+"""
+patch_freedom.py  -  revises freedom.js
 
-TARGET = sys.argv[1] if len(sys.argv) > 1 else "freedomwall.html"
+  1. Studio canvas: free pan (left/right/up/down) + zoom toward the touch/cursor point
+  2. Teams: live chat for the shared-room session, with delivery retry + history
+     sync (so a message or a late joiner never "misses" the update)
 
-PATCH_JS = r"""
-/* =====================================================================
-   ARCHERSTUDIO PERFORMANCE & NATIVE SHAPE PATCH (v2026.11.27)
-   1. Offscreen tile bitmap cache + viewport culling (eliminates wall lag)
-   2. Shapes paste directly into active layer strokes (erasable & native)
-   ===================================================================== */
-(function () {
-    "use strict";
+Usage:   python3 patch_freedom.py freedom.js
+Output:  freedom.js is updated in place; the original is saved as freedom.js.bak
+"""
+import re, shutil, sys
 
-    // --- 1. TILE BITMAP CACHE & VIEWPORT CULLING ---
-    var tileBitmapCache = new Map();
-    var MAX_CACHE_TILES = 120;
+def flex(anchor):
+    """Regex for `anchor` that ignores differences in whitespace/indentation."""
+    return r"\s+".join(re.escape(t) for t in anchor.split())
 
-    function tileCacheKey(entry) {
-        if (!entry) return "";
-        var ver = entry.updatedAt || entry.ts || (entry.strokes ? entry.strokes.length : 0);
-        return String(entry.id || entry.slot || "") + ":" + String(ver);
+def patch(src, anchor, repl, label):
+    rx = re.compile(flex(anchor))
+    hits = rx.findall(src)
+    if len(hits) != 1:
+        sys.exit(f"[FAIL] {label}: anchor found {len(hits)} times (expected 1). Nothing written.")
+    print(f"[ ok ] {label}")
+    return rx.sub(lambda m: repl, src, count=1)
+
+# ----------------------------------------------------------------------------
+# 1. ZOOM / PAN FIX
+#    The old clamp only allowed pan values <= 0 (assumed a top-left origin) but the
+#    stage rotates/scales around its CENTRE, so any move right/down - and any zoom
+#    anchored away from the centre - was clamped back to 0.
+# ----------------------------------------------------------------------------
+PAN_OLD = """const minX = w - extentX; const minY = h - extentY;
+studioPanX = Math.min(0, Math.max(minX, studioPanX));
+studioPanY = Math.min(0, Math.max(minY, studioPanY));"""
+PAN_NEW = """// stage pivots on its centre -> allowed pan is symmetric (+/-). Keep >= 80px of canvas on screen.
+const keepVisible = 80;
+const limX = Math.max(0, (extentX + w) / 2 - keepVisible);
+const limY = Math.max(0, (extentY + h) / 2 - keepVisible);
+studioPanX = Math.min(limX, Math.max(-limX, studioPanX));
+studioPanY = Math.min(limY, Math.max(-limY, studioPanY));"""
+
+APPLY_OLD = """if (Math.abs(studioScale - 1) <= 0.001 && Math.abs(studioRotation % 360) < 0.001) {
+studioScale = 1; studioPanX = 0; studioPanY = 0; } else { clampStudioPan(); }"""
+APPLY_NEW = """if (Math.abs(studioScale - 1) <= 0.001) studioScale = 1;
+clampStudioPan();   // pan stays free at 100% too; tap the zoom % label to recentre"""
+
+# ----------------------------------------------------------------------------
+# 2. TEAM CHAT
+# ----------------------------------------------------------------------------
+CHAT_JS = r"""
+// =========================================================================
+// TEAM CHAT (shared-room session)
+//  - every message has a unique id -> de-duplicated on both sides
+//  - failed sends are retried automatically until delivered
+//  - a "chat-sync" heartbeat lists the ids each side has; whoever has messages
+//    the other lacks pushes them ("chat-history"), so late joiners and dropped
+//    packets always converge.
+// =========================================================================
+var collabChat = [];
+var collabChatIds = new Set();
+var collabChatUnread = 0;
+var collabChatTimer = null;
+var collabChatLastSentAt = 0;
+var COLLAB_CHAT_MAX = 200;
+var COLLAB_CHAT_LEN = 300;
+
+function collabChatInjectStyle() {
+    if (document.getElementById("collab-chat-style")) return;
+    const s = document.createElement("style");
+    s.id = "collab-chat-style";
+    s.textContent =
+    "#collab-chat-card{margin-top:12px;border:1px solid var(--border,#e2e8f0);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--surface,#fff)}" +
+    "#collab-chat-card[hidden]{display:none}" +
+    ".cc-head{display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:13px}" +
+    ".cc-live{font-size:11px;font-weight:700;color:#16a34a}.cc-live.off{color:#dc2626}" +
+    "#collab-chat-list{display:flex;flex-direction:column;gap:6px;max-height:220px;min-height:90px;overflow-y:auto;padding:2px}" +
+    ".cc-empty{margin:auto;font-size:12px;color:var(--muted,#64748b);text-align:center}" +
+    ".cc-msg{max-width:84%;padding:6px 10px;border-radius:12px;font-size:13px;line-height:1.35;word-break:break-word;background:#f1f5f9;color:#0f172a;align-self:flex-start}" +
+    ".cc-msg.me{align-self:flex-end;background:var(--accent,#1d4ed8);color:#fff}" +
+    ".cc-msg b{display:block;font-size:10.5px;opacity:.7;margin-bottom:1px}" +
+    ".cc-msg small{display:block;font-size:10px;opacity:.7;text-align:right}" +
+    ".cc-msg.failed{outline:2px solid #dc2626;cursor:pointer}" +
+    "#collab-chat-form{display:flex;gap:6px}" +
+    "#collab-chat-input{flex:1;min-width:0}" +
+    ".collab-chat-dot{display:inline-block;min-width:16px;height:16px;line-height:16px;margin-left:5px;padding:0 4px;border-radius:99px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;text-align:center;vertical-align:middle}" +
+    ".collab-chat-dot[hidden]{display:none}";
+    document.head.appendChild(s);
+}
+
+function collabChatEnsureUI() {
+    if (document.getElementById("collab-chat-card")) return true;
+    const pane = document.getElementById("pane-team");
+    if (!pane) return false;
+    collabChatInjectStyle();
+    const card = document.createElement("div");
+    card.id = "collab-chat-card";
+    card.hidden = true;
+    card.innerHTML =
+        '<div class="cc-head"><span>💬 Team chat</span><span class="cc-live" id="collab-chat-live">Live</span></div>' +
+        '<div id="collab-chat-list" role="log" aria-live="polite"></div>' +
+        '<form id="collab-chat-form" autocomplete="off">' +
+        '<input class="name-input" id="collab-chat-input" type="text" maxlength="' + COLLAB_CHAT_LEN + '" placeholder="Message your teammate…" enterkeyhint="send">' +
+        '<button type="submit" class="btn btn-accent btn-sm">Send</button></form>';
+    pane.appendChild(card);
+    card.querySelector("form").addEventListener("submit", e => {
+        e.preventDefault();
+        const input = document.getElementById("collab-chat-input");
+        if (collabChatSend(input.value)) input.value = "";
+    });
+    // keep tab dot
+    const tab = document.querySelector('.sheet-tab[data-pane="team"]');
+    if (tab && !tab.querySelector(".collab-chat-dot")) {
+        const dot = document.createElement("span");
+        dot.className = "collab-chat-dot";
+        dot.hidden = true;
+        tab.appendChild(dot);
     }
+    return true;
+}
 
-    function getCachedTileCanvas(entry, renderFn) {
-        var key = tileCacheKey(entry);
-        if (tileBitmapCache.has(key)) {
-            var hit = tileBitmapCache.get(key);
-            // Refresh LRU order
-            tileBitmapCache.delete(key);
-            tileBitmapCache.set(key, hit);
-            return hit;
-        }
-        var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-        var size = Math.round(250 * dpr);
-        var off = document.createElement("canvas");
-        off.width = size;
-        off.height = size;
-        var octx = off.getContext("2d");
-        octx.scale(size / 500, size / 500);
-        renderFn(octx, entry);
+function collabChatPaneOpen() {
+    const pane = document.getElementById("pane-team");
+    return !!pane && pane.classList.contains("active") && currentView === "draw";
+}
 
-        if (tileBitmapCache.size >= MAX_CACHE_TILES) {
-            var oldest = tileBitmapCache.keys().next().value;
-            tileBitmapCache.delete(oldest);
-        }
-        tileBitmapCache.set(key, off);
-        return off;
+function collabChatSyncVisibility() {
+    if (!collabChatEnsureUI()) return;
+    const card = document.getElementById("collab-chat-card");
+    card.hidden = !collabChannel;
+    const live = document.getElementById("collab-chat-live");
+    if (live) {
+        const ok = !!collabChannel && collabChannel.state === "joined";
+        live.textContent = ok ? "Live" : "Reconnecting…";
+        live.classList.toggle("off", !ok);
     }
+}
 
-    window.invalidateTileCache = function (entryId) {
-        if (!entryId) { tileBitmapCache.clear(); return; }
-        Array.from(tileBitmapCache.keys()).forEach(function (k) {
-            if (k.indexOf(String(entryId) + ":") === 0) tileBitmapCache.delete(k);
+function collabChatRender() {
+    const list = document.getElementById("collab-chat-list");
+    if (list) {
+        const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+        list.replaceChildren();
+        if (!collabChat.length) {
+            const empty = document.createElement("div");
+            empty.className = "cc-empty";
+            empty.textContent = "No messages yet. Say hi 👋";
+            list.appendChild(empty);
+        }
+        collabChat.forEach(m => {
+            const mine = m.peerId === collabSelfKey;
+            const row = document.createElement("div");
+            row.className = "cc-msg" + (mine ? " me" : "") + (m.status === "failed" ? " failed" : "");
+            if (!mine) {
+                const who = document.createElement("b");
+                who.textContent = m.name || "Artist";
+                row.appendChild(who);
+            }
+            row.appendChild(document.createTextNode(m.text));
+            const meta = document.createElement("small");
+            const t = new Date(m.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            meta.textContent = mine && m.status === "sending" ? "sending…" : mine && m.status === "failed" ? "not sent · tap to retry" : t;
+            row.appendChild(meta);
+            if (m.status === "failed") row.onclick = () => { m.status = "sending"; collabChatRender(); collabChatDeliver(m); };
+            list.appendChild(row);
         });
+        if (nearBottom || collabChat.length <= 1) list.scrollTop = list.scrollHeight;
+    }
+    const dot = document.querySelector('.sheet-tab[data-pane="team"] .collab-chat-dot');
+    if (dot) {
+        dot.hidden = collabChatUnread === 0;
+        dot.textContent = collabChatUnread > 9 ? "9+" : String(collabChatUnread);
+    }
+}
+
+window.collabChatOnTabOpen = function () {
+    collabChatUnread = 0;
+    collabChatSyncVisibility();
+    collabChatRender();
+    const list = document.getElementById("collab-chat-list");
+    if (list) list.scrollTop = list.scrollHeight;
+};
+
+function collabChatClean(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    if (typeof raw.id !== "string" || raw.id.length > 80 || typeof raw.text !== "string") return null;
+    const text = raw.text.trim().slice(0, COLLAB_CHAT_LEN);
+    if (!text) return null;
+    return {
+        id: raw.id,
+        peerId: String(raw.peerId || "").slice(0, 40),
+        name: String(raw.name || "Artist").slice(0, 24),
+        text,
+        ts: Number.isFinite(raw.ts) ? raw.ts : Date.now()
     };
+}
 
-    // Wrap wall tile renderer if exposed so offscreen bitmaps + culling apply automatically
-    if (typeof window.drawWallTile === "function") {
-        var _origDrawWallTile = window.drawWallTile;
-        window.drawWallTile = function (ctx, entry, x, y, w, h, viewBounds) {
-            if (viewBounds) {
-                if (x + w < viewBounds.left || x > viewBounds.right ||
-                    y + h < viewBounds.top || y > viewBounds.bottom) {
-                    return; // Cull off-screen tile
-                }
-            }
-            var bmp = getCachedTileCanvas(entry, function (octx, ent) {
-                _origDrawWallTile(octx, ent, 0, 0, 500, 500, null);
-            });
-            ctx.drawImage(bmp, x, y, w, h);
-        };
+// returns true when the message was new
+function collabChatAdd(msg) {
+    if (collabChatIds.has(msg.id)) return false;
+    collabChatIds.add(msg.id);
+    collabChat.push(msg);
+    collabChat.sort((a, b) => a.ts - b.ts);
+    while (collabChat.length > COLLAB_CHAT_MAX) collabChatIds.delete(collabChat.shift().id);
+    return true;
+}
+
+function collabChatDeliver(msg) {
+    collabSend("chat-msg", { id: msg.id, peerId: msg.peerId, name: msg.name, text: msg.text, ts: msg.ts }).then(ok => {
+        msg.status = ok ? "sent" : "failed";
+        collabChatRender();
+    });
+}
+
+function collabChatSend(text) {
+    if (!collabChannel) { showToast("Join a shared room to chat"); return false; }
+    text = String(text || "").trim().slice(0, COLLAB_CHAT_LEN);
+    if (!text) return false;
+    const now = Date.now();
+    if (now - collabChatLastSentAt < 250) return false;
+    collabChatLastSentAt = now;
+    const msg = {
+        id: collabSelfKey + ":" + now.toString(36) + Math.random().toString(36).slice(2, 6),
+        peerId: collabSelfKey,
+        name: collabArtistName(),
+        text, ts: now, status: "sending"
+    };
+    collabChatAdd(msg);
+    collabChatRender();
+    collabChatDeliver(msg);
+    haptic(6);
+    return true;
+}
+
+function collabChatReceive(payload) {
+    if (!collabChannel || !payload || payload.peerId === collabSelfKey) return;
+    const msg = collabChatClean(payload);
+    if (!msg) return;
+    msg.status = "sent";
+    if (!collabChatAdd(msg)) return;
+    if (collabChatPaneOpen()) {
+        collabChatRender();
+    } else {
+        collabChatUnread++;
+        collabChatRender();
+        showToast("💬 " + msg.name + ": " + msg.text.slice(0, 40));
+        haptic(10);
     }
+}
 
-    // Throttle high-frequency wall pan/zoom repaints to 1 per animation frame
-    if (typeof window.renderWall === "function") {
-        var _origRenderWall = window.renderWall;
-        var wallRafPending = false;
-        window.renderWall = function (immediate) {
-            if (immediate === true) {
-                wallRafPending = false;
-                return _origRenderWall.apply(this, arguments);
-            }
-            if (wallRafPending) return;
-            wallRafPending = true;
-            requestAnimationFrame(function () {
-                wallRafPending = false;
-                _origRenderWall.call(window);
-            });
-        };
-    }
-
-    // --- 2. PASTE SHAPES INTO CURRENT LAYER (NO SEPARATE SHAPE LAYER, ERASABLE) ---
-    function getTargetDrawingLayer() {
-        if (typeof activeLayer === "function") {
-            var a = activeLayer();
-            if (a && !a.locked) return a;
+function collabChatReceiveHistory(payload) {
+    if (!collabChannel || !payload || payload.peerId === collabSelfKey || !Array.isArray(payload.messages)) return;
+    let added = 0;
+    payload.messages.slice(0, 80).forEach(raw => {
+        const msg = collabChatClean(raw);
+        if (!msg) return;
+        msg.status = "sent";
+        if (collabChatAdd(msg)) {
+            added++;
+            if (msg.peerId !== collabSelfKey && !collabChatPaneOpen()) collabChatUnread++;
         }
-        if (Array.isArray(window.layers) && window.layers.length) {
-            var idx = typeof window.activeLayerIdx === "number" ? window.activeLayerIdx : 0;
-            var lyr = window.layers[idx] || window.layers[0];
-            if (lyr) return lyr;
-        }
-        return null;
-    }
+    });
+    if (added) collabChatRender();
+}
 
-    function commitShapeToCurrentLayer(sh) {
-        if (!sh || typeof window.shapeToStroke !== "function") return false;
-        var target = getTargetDrawingLayer();
-        if (!target) return false;
+// tell the other side which ids we hold; they push anything we are missing
+function collabChatHeartbeat() {
+    if (!collabChannel) return;
+    collabChatSyncVisibility();
+    collabChat.filter(m => m.peerId === collabSelfKey && m.status === "failed").forEach(m => { m.status = "sending"; collabChatDeliver(m); });
+    collabSend("chat-sync", { peerId: collabSelfKey, have: collabChat.slice(-60).map(m => m.id) });
+}
 
-        var stroke = window.shapeToStroke(sh);
-        // Mark as regular vector stroke so standard eraser/replay handles it
-        stroke.erased = false;
-        stroke.fromShape = true;
+function collabChatReceiveSync(payload) {
+    if (!collabChannel || !payload || payload.peerId === collabSelfKey || !Array.isArray(payload.have)) return;
+    const have = new Set(payload.have.slice(0, 120).map(String));
+    const missing = collabChat.slice(-60).filter(m => !have.has(m.id));
+    if (!missing.length) return;
+    collabSend("chat-history", {
+        peerId: collabSelfKey,
+        messages: missing.map(m => ({ id: m.id, peerId: m.peerId, name: m.name, text: m.text, ts: m.ts }))
+    });
+}
 
-        if (!Array.isArray(target.strokes)) target.strokes = [];
-        target.strokes.push(stroke);
+function collabChatJoined() {
+    collabChatEnsureUI();
+    collabChatSyncVisibility();
+    collabChatRender();
+    clearInterval(collabChatTimer);
+    collabChatTimer = setInterval(collabChatHeartbeat, 5000);
+    setTimeout(collabChatHeartbeat, 400);
+    setTimeout(collabChatHeartbeat, 1800);
+}
 
-        // Remove any temporary shape-only layer wrapper if the host script created one
-        if (Array.isArray(window.layers)) {
-            for (var i = window.layers.length - 1; i >= 0; i--) {
-                if (window.layers[i] && window.layers[i].shape && window.layers[i] !== target) {
-                    window.layers.splice(i, 1);
-                }
-            }
-        }
+function collabChatReset() {
+    clearInterval(collabChatTimer);
+    collabChatTimer = null;
+    collabChat = [];
+    collabChatIds = new Set();
+    collabChatUnread = 0;
+    collabChatRender();
+    const card = document.getElementById("collab-chat-card");
+    if (card) card.hidden = true;
+}
 
-        if (typeof window.selectShape === "function") window.selectShape(null);
-        if (typeof window.pushUndo === "function") window.pushUndo();
-        if (typeof window.renderStudio === "function") window.renderStudio();
-        if (typeof window.renderLayersUI === "function") window.renderLayersUI();
-        return true;
-    }
-
-    // Intercept shape finalization / layer creation so shapes merge into active layer
-    if (typeof window.finalizeShape === "function") {
-        var _origFinalizeShape = window.finalizeShape;
-        window.finalizeShape = function (sh) {
-            var shapeObj = sh || (typeof window.selectedShape === "function" && window.selectedShape() && window.selectedShape().shape);
-            if (shapeObj && commitShapeToCurrentLayer(shapeObj)) return;
-            return _origFinalizeShape.apply(this, arguments);
-        };
-    }
-
-    if (typeof window.addShapeLayer === "function") {
-        window.addShapeLayer = function (sh) {
-            if (!commitShapeToCurrentLayer(sh)) {
-                var target = getTargetDrawingLayer();
-                if (target && Array.isArray(target.strokes) && typeof window.shapeToStroke === "function") {
-                    target.strokes.push(window.shapeToStroke(sh));
-                }
-            }
-        };
-    }
-
-    // Ensure eraser checks all strokes in the active layer, including pasted shapes
-    if (typeof window.eraseAtPoint === "function") {
-        var _origEraseAtPoint = window.eraseAtPoint;
-        window.eraseAtPoint = function (pt, radius) {
-            var target = getTargetDrawingLayer();
-            if (target && Array.isArray(target.strokes)) {
-                var r = radius || (window.brushSize || 12) / 2;
-                var changed = false;
-                for (var i = target.strokes.length - 1; i >= 0; i--) {
-                    var st = target.strokes[i];
-                    if (!st || !Array.isArray(st.p)) continue;
-                    // Split or remove stroke segments hit by the eraser
-                    var remaining = [];
-                    var currentSeg = [];
-                    for (var j = 0; j < st.p.length; j++) {
-                        var p = st.p[j];
-                        var dx = p[0] - pt[0], dy = p[1] - pt[1];
-                        if (dx * dx + dy * dy <= r * r) {
-                            changed = true;
-                            if (currentSeg.length > 1) remaining.push(currentSeg);
-                            currentSeg = [];
-                        } else {
-                            currentSeg.push(p);
-                        }
-                    }
-                    if (currentSeg.length > 1) remaining.push(currentSeg);
-                    if (changed) {
-                        if (remaining.length === 0) {
-                            target.strokes.splice(i, 1);
-                        } else {
-                            var clones = remaining.map(function (seg) {
-                                return Object.assign({}, st, { p: seg });
-                            });
-                            Array.prototype.splice.apply(target.strokes, [i, 1].concat(clones));
-                        }
-                    }
-                }
-                if (changed) {
-                    if (typeof window.renderStudio === "function") window.renderStudio();
-                    return;
-                }
-            }
-            return _origEraseAtPoint.apply(this, arguments);
-        };
-    }
-})();
 """
 
+CHAT_ON = """.on("broadcast", { event: "snapshot-request" }, () => sendCollabSnapshot())
+.on("broadcast", { event: "chat-msg" }, ({ payload }) => collabChatReceive(payload))
+.on("broadcast", { event: "chat-sync" }, ({ payload }) => collabChatReceiveSync(payload))
+.on("broadcast", { event: "chat-history" }, ({ payload }) => collabChatReceiveHistory(payload))"""
 
-def validate_js(js_code: str) -> None:
-    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as tmp:
-        tmp.write(js_code)
-        tmp_path = tmp.name
-    try:
-        subprocess.run(["node", "--check", tmp_path], check=True, capture_output=True, text=True)
-    finally:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+def main():
+    if len(sys.argv) < 2:
+        sys.exit(__doc__)
+    path = sys.argv[1]
+    src = open(path, encoding="utf-8").read()
+    out = src
 
-
-def main() -> None:
-    if not os.path.exists(TARGET):
-        print(f"Error: {TARGET} not found.", file=sys.stderr)
-        sys.exit(1)
-
-    with open(TARGET, "r", encoding="utf-8") as f:
-        html = f.read()
-
-    # Validate patch syntax with node --check before touching freedomwall.html
-    validate_js(PATCH_JS)
-
-    marker = "ARCHERSTUDIO PERFORMANCE & NATIVE SHAPE PATCH"
-    if marker in html:
-        html = re.sub(
-            r"/\* =+\s*ARCHERSTUDIO PERFORMANCE & NATIVE SHAPE PATCH[\s\S]*?\}\)\(\);\s*",
-            PATCH_JS.strip() + "\n",
-            html,
-            count=1,
-        )
+    if "keepVisible" not in out:
+        out = patch(out, PAN_OLD, PAN_NEW, "pan clamp (symmetric, free movement)")
+        out = patch(out, APPLY_OLD, APPLY_NEW, "applyStudioTransform (no forced pan reset)")
     else:
-        idx = html.rfind("</script>")
-        if idx == -1:
-            print("Error: No closing </script> tag found in target HTML.", file=sys.stderr)
-            sys.exit(1)
-        html = html[:idx] + "\n" + PATCH_JS.strip() + "\n" + html[idx:]
+        print("[skip] zoom/pan fix already applied")
 
-    # Validate all inline scripts in the resulting HTML
-    scripts = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)</script>", html, flags=re.IGNORECASE)
-    for i, block in enumerate(scripts, 1):
-        if block.strip():
-            validate_js(block)
+    if "collabChatJoined" not in out:
+        out = patch(out, "Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite });",
+                    CHAT_JS + "Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite, collabChatSend });",
+                    "chat engine + UI")
+        out = patch(out, '.on("broadcast", { event: "snapshot-request" }, () => sendCollabSnapshot())', CHAT_ON, "chat broadcast listeners")
+        out = patch(out, 'if (!collabIsHost) updateCollabUI("connecting", "Syncing shared drawing…");',
+                    'if (!collabIsHost) updateCollabUI("connecting", "Syncing shared drawing…");\ncollabChatJoined();',
+                    "start chat when room is joined")
+        out = patch(out, "if (channel && window.sbClient) {", "collabChatReset();\nif (channel && window.sbClient) {", "reset chat on leave")
+        out = patch(out, "if (invite) invite.hidden = !collabChannel; renderCollabInviteQR();",
+                    "if (invite) invite.hidden = !collabChannel; renderCollabInviteQR(); collabChatSyncVisibility();",
+                    "show/hide chat with room state")
+        out = patch(out, 'if (activeTab) activeTab.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });',
+                    'if (activeTab) activeTab.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });\nif (name === "team" && window.collabChatOnTabOpen) window.collabChatOnTabOpen();',
+                    "clear unread when Team tab opens")
+    else:
+        print("[skip] team chat already applied")
 
-    with open(TARGET, "w", encoding="utf-8") as f:
-        f.write(html)
-
-    print(f"Successfully patched and verified {TARGET} ({len(scripts)} inline script blocks checked).")
-
+    if out == src:
+        print("Nothing to change.")
+        return
+    shutil.copyfile(path, path + ".bak")
+    open(path, "w", encoding="utf-8").write(out)
+    print(f"\nDone. Backup: {path}.bak")
 
 if __name__ == "__main__":
     main()
