@@ -806,6 +806,7 @@ function preloadAllFonts() {
                     if (document.getElementById("view-wall").classList.contains("active")) {
                         createWallTile(payload, true, true);
                         if (!userMoved) fitWallToScreen();
+                        else updateMinimap();
                     }
                     showToast(`🎨 ${who} just posted! (${wallEntries.length} on wall)`);
                 } else {
@@ -1704,7 +1705,13 @@ function preloadAllFonts() {
             if (currentView === "draw" && viewName !== "draw") deselectText();
             if (currentView !== viewName) haptic(8);
             closeModal();
+            if (currentView === "wall" && viewName !== "wall" && typeof window.cancelUnifiedWallReplay === "function") {
+                window.cancelUnifiedWallReplay();
+            }
             currentView = viewName;
+            syncWeatherEngineForView();
+            startSeasonalParticles();
+            if (weatherOn && isWeatherViewActive() && !weatherSyncStarted) initWeatherSync();
             
             document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
             document.getElementById("view-" + viewName).classList.add("active");
@@ -4273,7 +4280,6 @@ function preloadAllFonts() {
                         alphaBtn.setAttribute("aria-pressed", lyr.alphaLock ? "true" : "false");
                         alphaBtn.setAttribute("role", "menuitem");
                         alphaBtn.disabled = lyr.type !== "draw";
-                        alphaBtn.onclick = (e) => toggleLayerAlphaLock(lyr.id, e);
 
                         const clipBtn = document.createElement("button");
                         clipBtn.type = "button";
@@ -4284,7 +4290,6 @@ function preloadAllFonts() {
                         clipBtn.setAttribute("aria-pressed", lyr.clipToBelow ? "true" : "false");
                         clipBtn.setAttribute("role", "menuitem");
                         clipBtn.disabled = lyr.type !== "draw" || !layers.slice(0, i).some(layer => layer.type === "draw");
-                        clipBtn.onclick = (e) => toggleLayerClip(lyr.id, e);
                         
                         const upBtn = document.createElement("button");
                         upBtn.type = "button";
@@ -4293,7 +4298,6 @@ function preloadAllFonts() {
                         upBtn.title = "Move layer up";
                         upBtn.setAttribute("role", "menuitem");
                         upBtn.disabled = (i === layers.length - 1);
-                        upBtn.onclick = (e) => moveLayerOrder(lyr.id, 1, e);
                         
                         const dnBtn = document.createElement("button");
                         dnBtn.type = "button";
@@ -4302,7 +4306,6 @@ function preloadAllFonts() {
                         dnBtn.title = "Move layer down";
                         dnBtn.setAttribute("role", "menuitem");
                         dnBtn.disabled = (i === 0);
-                        dnBtn.onclick = (e) => moveLayerOrder(lyr.id, -1, e);
                         
                         const delBtn = document.createElement("button");
                         delBtn.type = "button";
@@ -4310,7 +4313,6 @@ function preloadAllFonts() {
                         delBtn.textContent = "×  Delete layer";
                         delBtn.title = "Delete layer";
                         delBtn.setAttribute("role", "menuitem");
-                        delBtn.onclick = (e) => deleteLayerById(lyr.id, e);
                         
                         const menu = document.createElement("div");
                         menu.className = "layer-more-menu";
@@ -4320,6 +4322,15 @@ function preloadAllFonts() {
                         menu.addEventListener("click", event => {
                             if (event.target.closest && event.target.closest(".layer-menu-item")) closeMenu(menu);
                         });
+                        const runMenuAction = action => e => {
+                            closeMenu(menu);
+                            action(e);
+                        };
+                        alphaBtn.onclick = runMenuAction(e => toggleLayerAlphaLock(lyr.id, e));
+                        clipBtn.onclick = runMenuAction(e => toggleLayerClip(lyr.id, e));
+                        upBtn.onclick = runMenuAction(e => moveLayerOrder(lyr.id, 1, e));
+                        dnBtn.onclick = runMenuAction(e => moveLayerOrder(lyr.id, -1, e));
+                        delBtn.onclick = runMenuAction(e => deleteLayerById(lyr.id, e));
 
                         const moreBtn = document.createElement("button");
                         moreBtn.type = "button";
@@ -5316,9 +5327,11 @@ function preloadAllFonts() {
                                 newlyAdded.forEach(entry => {
                                     const existingEl = document.querySelector(`.wall-tile[data-id="${CSS.escape(entry.id)}"]`);
                                     if (existingEl) existingEl.remove();
-                                    createWallTile(entry, true, true);
+                                    createWallTile(entry, false, true);
                                 });
+                                startUnifiedWallReplay(newlyAdded);
                                 if (!userMoved) fitWallToScreen();
+                                else updateMinimap();
                             } else if (changed) {
                                 renderWall(autoPlay);
                                 if (manual) showToast("Wall updated ✓");
@@ -5352,22 +5365,56 @@ function preloadAllFonts() {
                 }
                 
                 const tileBitmapCache = new Map();
+                const MAX_TILE_CACHE_BYTES = 24 * 1024 * 1024;
+                let tileBitmapCacheBytes = 0;
                 const activeReplayAnims = new Map();
                 let wallPaintRaf = 0;
                 let batchReplayRaf = 0;
                 
+                function deleteTileBitmapCache(id) {
+                    const cached = tileBitmapCache.get(id);
+                    if (!cached) return;
+                    tileBitmapCache.delete(id);
+                    tileBitmapCacheBytes -= cached.width * cached.height * 4;
+                }
+
+                function clearTileBitmapCache() {
+                    tileBitmapCache.clear();
+                    tileBitmapCacheBytes = 0;
+                }
+
+                function cacheTileBitmap(id, canvas) {
+                    deleteTileBitmapCache(id);
+                    tileBitmapCache.set(id, canvas);
+                    tileBitmapCacheBytes += canvas.width * canvas.height * 4;
+                    while (tileBitmapCacheBytes > MAX_TILE_CACHE_BYTES && tileBitmapCache.size > 1) {
+                        deleteTileBitmapCache(tileBitmapCache.keys().next().value);
+                    }
+                    return canvas;
+                }
+
+                function wallTileBitmapSize() {
+                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                    return Math.max(64, Math.min(256, Math.ceil(CELL_SIZE * scale * dpr)));
+                }
+
                 function getCachedTileCanvas(entry) {
                     let cached = tileBitmapCache.get(entry.id);
-                    if (cached) return cached;
+                    const size = wallTileBitmapSize();
+                    if (cached && cached.width === size) {
+                        tileBitmapCache.delete(entry.id);
+                        tileBitmapCache.set(entry.id, cached);
+                        return cached;
+                    }
+                    if (cached) deleteTileBitmapCache(entry.id);
                     const cvs = document.createElement("canvas");
-                    cvs.width = 256;
-                    cvs.height = 256;
+                    cvs.width = size;
+                    cvs.height = size;
                     const ctx = cvs.getContext("2d");
                     ctx.fillStyle = bgOf(entry.strokes);
-                    ctx.fillRect(0, 0, 256, 256);
-                    renderStrokesInstant(ctx, entry.strokes || [], 256, false);
-                    tileBitmapCache.set(entry.id, cvs);
-                    return cvs;
+                    ctx.fillRect(0, 0, size, size);
+                    renderStrokesInstant(ctx, entry.strokes || [], size, false);
+                    return cacheTileBitmap(entry.id, cvs);
                 }
                 
                 function paintWallViewport() {
@@ -5451,19 +5498,18 @@ function preloadAllFonts() {
                     
                     stage.appendChild(tile);
                     updateTilePill(entry.id);
-                    updateMinimap();
                     
                     if (animate) startTileReplayOnWall(entry);
-                    else {
-                        getCachedTileCanvas(entry);
-                        scheduleWallPaint();
-                    }
+                    else scheduleWallPaint();
                     
                     if (isNewArrival) setTimeout(() => tile.classList.remove("just-arrived"), 5000);
                     return null;
                 }
                 
                 function renderWall(autoPlay = true) {
+                    if (typeof window.cancelUnifiedWallReplay === "function") {
+                        window.cancelUnifiedWallReplay();
+                    }
                     wallTileAnimators.forEach(a => a.cancel());
                     wallTileAnimators = [];
                     if (batchReplayRaf) {
@@ -5471,6 +5517,7 @@ function preloadAllFonts() {
                         batchReplayRaf = 0;
                     }
                     activeReplayAnims.clear();
+                    clearTileBitmapCache();
                     
                     const stage = document.getElementById("wall-stage");
                     stage.querySelectorAll(".wall-tile").forEach(el => el.remove());
@@ -5486,6 +5533,9 @@ function preloadAllFonts() {
                     if (autoPlay && wallEntries.length > 0) {
                         startUnifiedWallReplay(wallEntries);
                     } else {
+                        if (typeof window.setWallRenderEffectsPaused === "function") {
+                            window.setWallRenderEffectsPaused(false);
+                        }
                         scheduleWallPaint();
                     }
                 }
@@ -5906,7 +5956,7 @@ function preloadAllFonts() {
                     curEvent = ev || null;
                     lsSet(LS_EVENT, curEvent);
                     serverEntries = lsGet(cacheKey(), []);
-                    tileBitmapCache.clear();
+                    clearTileBitmapCache();
                     loadingWall = false;
                     userMoved = false;
                     myTileCycleIdx = -1;
@@ -6651,6 +6701,7 @@ function preloadAllFonts() {
                 
                 let activeSeason = null;
                 let seasonFxRaf = null;
+                let wallRenderEffectsPaused = false;
                 
                 function getResolvedSeason() {
                     if (lsGet("fw_seasons_on_v1", true) === false) return null;
@@ -6722,20 +6773,16 @@ function preloadAllFonts() {
                 }
                 
                 function startSeasonalParticles() {
-                    if (seasonFxRaf) {
-                        cancelAnimationFrame(seasonFxRaf);
-                        seasonFxRaf = null;
-                    }
+                    stopSeasonalParticles();
                     const cvs = document.getElementById("seasonal-canvas");
                     if (!cvs) return;
                     const ctx = cvs.getContext("2d");
-                    ctx.clearRect(0, 0, cvs.width, cvs.height);
                     
                     const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
                     const enabled = lsGet(LS_SEASON_FX, true) !== false;
                     const wMode = typeof getActiveWeatherMode === "function" ? getActiveWeatherMode() : "clear";
                     const isWetWeather = wMode === "rain" || wMode === "storm";
-                    if (!activeSeason || !enabled || reduced || isWetWeather) return;
+                    if (!activeSeason || !enabled || reduced || isWetWeather || !isWeatherViewActive() || document.hidden || wallRenderEffectsPaused) return;
                     
                     const resize = () => {
                         cvs.width = window.innerWidth;
@@ -6756,34 +6803,53 @@ function preloadAllFonts() {
                     }));
                     
                     function tick() {
+                        if (!activeSeason || !isWeatherViewActive() || document.hidden || wallRenderEffectsPaused) {
+                            seasonFxRaf = null;
+                            ctx.clearRect(0, 0, cvs.width, cvs.height);
+                            return;
+                        }
+                        const modeNow = typeof getActiveWeatherMode === "function" ? getActiveWeatherMode() : "clear";
+                        if (modeNow === "rain" || modeNow === "storm") {
+                            seasonFxRaf = null;
+                            ctx.clearRect(0, 0, cvs.width, cvs.height);
+                            return;
+                        }
                         ctx.clearRect(0, 0, cvs.width, cvs.height);
-                        if (currentView === "home" || currentView === "wall") {
-                            for (const p of items) {
-                                p.y += p.vy;
-                                p.phase += 0.02;
-                                p.x += p.vx + Math.sin(p.phase) * 0.35;
-                                if (p.y > cvs.height + 12) { p.y = -10; p.x = Math.random() * cvs.width; }
-                                if (p.x > cvs.width + 12) p.x = -10;
-                                if (p.x < -12) p.x = cvs.width + 10;
-                                
-                                ctx.save();
-                                ctx.globalAlpha = 0.42;
-                                if (mode === "snow") {
-                                    ctx.fillStyle = "#93c5fd";
-                                    ctx.beginPath();
-                                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                                    ctx.fill();
-                                } else {
-                                    ctx.fillStyle = activeSeason.accent;
-                                    ctx.font = `${Math.round(p.r * 3.2)}px sans-serif`;
-                                    ctx.fillText(p.glyph, p.x, p.y);
-                                }
-                                ctx.restore();
+                        for (const p of items) {
+                            p.y += p.vy;
+                            p.phase += 0.02;
+                            p.x += p.vx + Math.sin(p.phase) * 0.35;
+                            if (p.y > cvs.height + 12) { p.y = -10; p.x = Math.random() * cvs.width; }
+                            if (p.x > cvs.width + 12) p.x = -10;
+                            if (p.x < -12) p.x = cvs.width + 10;
+                            
+                            ctx.save();
+                            ctx.globalAlpha = 0.42;
+                            if (mode === "snow") {
+                                ctx.fillStyle = "#93c5fd";
+                                ctx.beginPath();
+                                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                                ctx.fill();
+                            } else {
+                                ctx.fillStyle = activeSeason.accent;
+                                ctx.font = `${Math.round(p.r * 3.2)}px sans-serif`;
+                                ctx.fillText(p.glyph, p.x, p.y);
                             }
+                            ctx.restore();
                         }
                         seasonFxRaf = requestAnimationFrame(tick);
                     }
                     seasonFxRaf = requestAnimationFrame(tick);
+                }
+
+                function stopSeasonalParticles() {
+                    if (seasonFxRaf !== null) {
+                        cancelAnimationFrame(seasonFxRaf);
+                        seasonFxRaf = null;
+                    }
+                    const cvs = document.getElementById("seasonal-canvas");
+                    const ctx = cvs && cvs.getContext("2d");
+                    if (ctx) ctx.clearRect(0, 0, cvs.width, cvs.height);
                 }
                 
                 renderRadioStationList();
@@ -6880,9 +6946,9 @@ function preloadAllFonts() {
                     rebuildWeatherParticles();
                     updateWeatherPillUI();
                     if (typeof startSeasonalParticles === "function") startSeasonalParticles();
-                    if (weatherReady && weatherOn) {
-                        if (!weatherRaf) startWeatherEngine();
-                        initWeatherSync();
+                    if (weatherReady) {
+                        syncWeatherEngineForView();
+                        if (weatherOn && isWeatherViewActive()) initWeatherSync();
                     }
                 }
                 
@@ -7775,7 +7841,57 @@ function preloadAllFonts() {
                                                 }
                                             }
                                             
+                                            function isWeatherViewActive() {
+                                                return currentView === "home" ||
+                                                    currentView === "wall" ||
+                                                    currentView === "leaderboard";
+                                            }
+
+                                            function stopWeatherEngine() {
+                                                if (weatherRaf !== null) {
+                                                    cancelAnimationFrame(weatherRaf);
+                                                    weatherRaf = null;
+                                                }
+                                                const cvs = document.getElementById("weather-canvas");
+                                                const ctx = cvs && cvs.getContext("2d");
+                                                if (ctx) ctx.clearRect(0, 0, cvs.width, cvs.height);
+                                            }
+
+                                            function syncWeatherEngineForView() {
+                                                if (!weatherOn || !weatherReady || !isWeatherViewActive() || document.hidden || wallRenderEffectsPaused) {
+                                                    stopWeatherEngine();
+                                                    return;
+                                                }
+                                                if (!weatherRaf) startWeatherEngine();
+                                            }
+
+                                            function setWallRenderEffectsPaused(paused) {
+                                                wallRenderEffectsPaused = !!paused;
+                                                if (wallRenderEffectsPaused || document.hidden) {
+                                                    stopWeatherEngine();
+                                                    stopSeasonalParticles();
+                                                    return;
+                                                }
+                                                syncWeatherEngineForView();
+                                                startSeasonalParticles();
+                                            }
+                                            window.setWallRenderEffectsPaused = setWallRenderEffectsPaused;
+
+                                            document.addEventListener("visibilitychange", () => {
+                                                if (document.hidden) {
+                                                    stopWeatherEngine();
+                                                    stopSeasonalParticles();
+                                                } else {
+                                                    syncWeatherEngineForView();
+                                                    startSeasonalParticles();
+                                                }
+                                            });
+
                                             function startWeatherEngine() {
+                                                if (!weatherOn || !isWeatherViewActive() || document.hidden || wallRenderEffectsPaused) {
+                                                    stopWeatherEngine();
+                                                    return;
+                                                }
                                                 if (weatherRaf) cancelAnimationFrame(weatherRaf);
                                                 const cvs = document.getElementById("weather-canvas");
                                                 if (!cvs) return;
@@ -7785,14 +7901,18 @@ function preloadAllFonts() {
                                                 if (!window.__wxResize) { window.__wxResize = true; window.addEventListener("resize", rebuildWeatherParticles); }
                                                 
                                                 function tick() {
-                                                    if (!weatherOn) { ctx.clearRect(0, 0, cvs.width, cvs.height); weatherRaf = null; return; }
+                                                    if (!weatherOn || !isWeatherViewActive() || document.hidden || wallRenderEffectsPaused) {
+                                                        ctx.clearRect(0, 0, cvs.width, cvs.height);
+                                                        weatherRaf = null;
+                                                        return;
+                                                    }
                                                     if (cvs.width !== window.innerWidth || cvs.height !== window.innerHeight) {
                                                         cvs.width = window.innerWidth;
                                                         cvs.height = window.innerHeight;
                                                     }
                                                     ctx.clearRect(0, 0, cvs.width, cvs.height);
                                                     
-                                                    const viewAlphaScale = currentView === "draw" ? 0.65 : 1.0;
+                                                    const viewAlphaScale = 1.0;
                                                     const mode = getActiveWeatherMode();
                                                     
                                                     if (mode === "cloudy") {
@@ -7876,14 +7996,15 @@ function preloadAllFonts() {
                                                     liveWeatherState = { mode, temp, label, timezone: String(data.timezone || "") };
                                                     rebuildWeatherParticles();
                                                     updateWeatherPillUI();
+                                                    startSeasonalParticles();
                                                 } catch (e) {
                                                     updateWeatherPillUI();
                                                 }
                                             }
                                             
                                             weatherReady = true;
-                                            startWeatherEngine();
-                                            initWeatherSync();
+                                            syncWeatherEngineForView();
+                                            if (isWeatherViewActive()) initWeatherSync();
                                             
                                             function closeRadioPopover() {
                                                 const p = document.getElementById("radio-pop"), b = document.getElementById("radio-chip-btn");
@@ -9220,17 +9341,28 @@ function preloadAllFonts() {
                                                         };
                                                         
                                                         var liveJobs = [];
-                                                        window.startUnifiedWallReplay = function (entriesToPlay) {
+                                                        function cancelWallReplay(resumeEffects) {
                                                             if (batchReplayRaf) { cancelAnimationFrame(batchReplayRaf); batchReplayRaf = 0; }
                                                             liveJobs.forEach(function (j) { j.rp.dispose(); });
+                                                            liveJobs = [];
                                                             activeReplayAnims.clear();
+                                                            if (resumeEffects && typeof window.setWallRenderEffectsPaused === "function") {
+                                                                window.setWallRenderEffectsPaused(false);
+                                                            }
+                                                        }
+                                                        window.cancelUnifiedWallReplay = function () { cancelWallReplay(true); };
+                                                        window.startUnifiedWallReplay = function (entriesToPlay) {
+                                                            cancelWallReplay(false);
+                                                            if (typeof window.setWallRenderEffectsPaused === "function") {
+                                                                window.setWallRenderEffectsPaused(true);
+                                                            }
                                                             
                                                             var dim = scale < 0.45 ? 160 : 220;
                                                             var t0 = performance.now();
                                                             var jobs = [];
                                                             entriesToPlay.forEach(function (entry, index) {
                                                                 var rp = makeReplay(entry.strokes, dim);
-                                                                if (!rp.total) return;
+                                                                if (!rp.total) { rp.dispose(); return; }
                                                                 activeReplayAnims.set(entry.id, rp.out);
                                                                 jobs.push({
                                                                     entry: entry, rp: rp, done: false,
@@ -9239,6 +9371,13 @@ function preloadAllFonts() {
                                                                 });
                                                             });
                                                             liveJobs = jobs;
+                                                            if (!jobs.length) {
+                                                                if (typeof window.setWallRenderEffectsPaused === "function") {
+                                                                    window.setWallRenderEffectsPaused(false);
+                                                                }
+                                                                paintWallViewport();
+                                                                return;
+                                                            }
                                                             
                                                             function tick(now) {
                                                                 var remaining = 0;
@@ -9249,32 +9388,45 @@ function preloadAllFonts() {
                                                                 for (var i = 0; i < jobs.length; i++) {
                                                                     var job = jobs[i];
                                                                     if (job.done) continue;
-                                                                    if (now - t0 < job.delay) { remaining++; continue; }
-                                                                    
                                                                     var sx = job.entry.gx * ts + panX, sy = job.entry.gy * ts + panY;
                                                                     var inView = !(sx + ts < -60 || sx > vw + 60 || sy + ts < -60 || sy > vh + 60);
+                                                                    if (!inView) {
+                                                                        job.done = true;
+                                                                        job.rp.dispose();
+                                                                        activeReplayAnims.delete(job.entry.id);
+                                                                        continue;
+                                                                    }
+                                                                    if (now - t0 < job.delay) { remaining++; continue; }
                                                                     
                                                                     var finished = job.rp.advance(job.rate);
                                                                     if (finished) {
                                                                         job.done = true;
                                                                         job.rp.dispose();
                                                                         activeReplayAnims.delete(job.entry.id);
-                                                                        tileBitmapCache.delete(job.entry.id);
+                                                                        deleteTileBitmapCache(job.entry.id);
                                                                         getCachedTileCanvas(job.entry);
                                                                     } else {
-                                                                        if (inView) job.rp.render();
+                                                                        job.rp.render();
                                                                         remaining++;
                                                                     }
                                                                 }
                                                                 paintWallViewport();
-                                                                batchReplayRaf = remaining > 0 ? requestAnimationFrame(tick) : 0;
+                                                                if (remaining > 0) {
+                                                                    batchReplayRaf = requestAnimationFrame(tick);
+                                                                } else {
+                                                                    batchReplayRaf = 0;
+                                                                    liveJobs = [];
+                                                                    if (typeof window.setWallRenderEffectsPaused === "function") {
+                                                                        window.setWallRenderEffectsPaused(false);
+                                                                    }
+                                                                }
                                                             }
                                                             
                                                             paintWallViewport();
                                                             if (jobs.length) batchReplayRaf = requestAnimationFrame(tick);
                                                         };
                                                         
-                                                        try { tileBitmapCache.clear(); scheduleWallPaint(); } catch (e) {}
+                                                        try { clearTileBitmapCache(); scheduleWallPaint(); } catch (e) {}
                                                     })();
                                                     
                                                     (function () {
@@ -9775,22 +9927,27 @@ function preloadAllFonts() {
                                                         
                                                         window.getCachedTileCanvas = function (entry) {
                                                             var hit = tileBitmapCache.get(entry.id);
-                                                            if (hit) return hit;
+                                                            var size = wallTileBitmapSize();
+                                                            if (hit && hit.width === size) {
+                                                                tileBitmapCache.delete(entry.id);
+                                                                tileBitmapCache.set(entry.id, hit);
+                                                                return hit;
+                                                            }
+                                                            if (hit) deleteTileBitmapCache(entry.id);
                                                             var list = entry.strokes || [];
                                                             tileScratchCtx.clearRect(0, 0, 500, 500);
                                                             renderStrokesInstant(tileScratchCtx, list, 500, true);
                                                             var cvs = d.createElement("canvas");
-                                                            cvs.width = cvs.height = 256;
+                                                            cvs.width = cvs.height = size;
                                                             var c = cvs.getContext("2d");
                                                             c.fillStyle = bgOf(list);
-                                                            c.fillRect(0, 0, 256, 256);
+                                                            c.fillRect(0, 0, size, size);
                                                             c.imageSmoothingEnabled = true;
                                                             c.imageSmoothingQuality = "high";
-                                                            c.drawImage(tileScratch, 0, 0, 256, 256);
-                                                            tileBitmapCache.set(entry.id, cvs);
-                                                            return cvs;
+                                                            c.drawImage(tileScratch, 0, 0, size, size);
+                                                            return cacheTileBitmap(entry.id, cvs);
                                                         };
-                                                        try { tileBitmapCache.clear(); scheduleWallPaint(); } catch (e) {}
+                                                        try { clearTileBitmapCache(); scheduleWallPaint(); } catch (e) {}
                                                         
                                                         /* ======================================================================
                                                         2. POST SIZE METER (moved out of the draw-hud)

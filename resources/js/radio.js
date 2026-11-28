@@ -500,6 +500,7 @@ async function fetchRadioStations(force = false) {
                 persistRadioSettings();
                 renderRadioStationList();
                 updateRadioModeUI();
+                pushRadioStateToNative();
                 return radioStations;
             })();
             
@@ -986,6 +987,8 @@ async function fetchRadioStations(force = false) {
                 osc.stop(now + 0.12);
             }
             
+            
+            
             function installRadioConsent(askConsent) {
                 const doubleTapMs = 2500;
                 let radioStartedAt = 0;
@@ -1025,3 +1028,53 @@ async function fetchRadioStations(force = false) {
                             return originalToggleFavorite.apply(this, arguments);
                         };
                     }
+                    
+                    /* ---------- Native media notification bridge ---------- */
+                    let lastNativeRadioKey = "";
+                    
+                    function pushRadioStateToNative() {
+                        const bridge = window.AndroidRadio;
+                        if (!bridge || typeof bridge.update !== "function") return;
+                        
+                        const station = radioStations[currentStationIdx];
+                        const playing = musicPlaying && !radioIsPaused;
+                        const title = usingSynthFallback ? "Offline chill synth" : (station ? station.name : "ARTcher Radio");
+                        const subtitle = usingSynthFallback
+                        ? "Offline"
+                        : station
+                        ? [station.category === "filipino" ? "Filipino" :
+                            station.category === "english" ? "English" :
+                            station.category === "lofi" ? "Lo-Fi" : "Saved station", station.country]
+                            .filter(Boolean).join(" · ")
+                            : "";
+                            
+                            const key = [title, subtitle, playing].join("|");
+                            if (key === lastNativeRadioKey) return;
+                            lastNativeRadioKey = key;
+                            
+                            try {
+                                bridge.update(title, subtitle, playing);
+                            } catch (error) {
+                                logAppDiagnostic("warn", "Native radio bridge failed", error);
+                            }
+                        }
+                        
+                        // Called by the Android notification buttons / headset buttons
+                        window.onNativeRadioCommand = function (command) {
+                            switch (command) {
+                                case "play":
+                                if (!musicPlaying || radioIsPaused) toggleMusic();
+                                break;
+                                case "pause":
+                                case "stop":
+                                if (musicPlaying) toggleMusic();
+                                break;
+                                case "next":
+                                nextRadioStation();
+                                break;
+                                case "prev":
+                                prevRadioStation();
+                                break;
+                            }
+                        };
+                        
