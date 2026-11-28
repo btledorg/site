@@ -1,408 +1,190 @@
 #!/usr/bin/env python3
 """
-patch_freedom.py  -  revises freedom.js
+update_walljs_v3.py - run AFTER update_walljs.py (V1) and update_walljs_v2.py (V2).
 
-  1. Studio canvas: free pan (left/right/up/down) + zoom toward the touch/cursor point
-  2. Teams: live chat overlay (open/close from a Chat button in the tool dock) for the
-     shared-room session, with delivery retry + history sync
+Usage:  python3 update_walljs_v3.py freedom.js
 
-Usage:   python3 patch_freedom.py freedom.js
-Output:  freedom.js is updated in place; the original is saved as freedom.js.bak
+Changes:
+  * Guests see a note in the Post tab explaining why posting is disabled.
+  * When the room is full (2 people) the invite link, copy, share and QR are
+    hidden for the host too. They return if someone leaves.
+  * QR card redesigned: header, QR, "Scan to join". No code pill, no footer note.
+  * Team tab buttons sit in one row and share the width equally
+    (Start room | Scan invite, and Leave | Team chat).
 """
-import re, shutil, sys
+import re
+import shutil
+import sys
+import os
 
-def flex(anchor):
-    """Regex for `anchor` that ignores differences in whitespace/indentation."""
-    return r"\s+".join(re.escape(t) for t in anchor.split())
+V2 = "__ARTCHER_TEAM_UPDATE_V2__"
+MARKER = "__ARTCHER_TEAM_UPDATE_V3__"
+ANCHOR = 'const APK_DOWNLOAD_URL = "download/ARTcher-v1.11.apk";'
 
-def patch(src, anchor, repl, label):
-    rx = re.compile(flex(anchor))
-    hits = rx.findall(src)
-    if len(hits) != 1:
-        sys.exit(f"[FAIL] {label}: anchor found {len(hits)} times (expected 1). Nothing written.")
-    print(f"[ ok ] {label}")
-    return rx.sub(lambda m: repl, src, count=1)
-
-# ----------------------------------------------------------------------------
-# 1. ZOOM / PAN FIX
-#    The old clamp only allowed pan values <= 0 (assumed a top-left origin) but the
-#    stage rotates/scales around its CENTRE, so any move right/down - and any zoom
-#    anchored away from the centre - was clamped back to 0.
-# ----------------------------------------------------------------------------
-PAN_OLD = """const minX = w - extentX; const minY = h - extentY;
-studioPanX = Math.min(0, Math.max(minX, studioPanX));
-studioPanY = Math.min(0, Math.max(minY, studioPanY));"""
-PAN_NEW = """// stage pivots on its centre -> allowed pan is symmetric (+/-). Keep >= 80px of canvas on screen.
-const keepVisible = 80;
-const limX = Math.max(0, (extentX + w) / 2 - keepVisible);
-const limY = Math.max(0, (extentY + h) / 2 - keepVisible);
-studioPanX = Math.min(limX, Math.max(-limX, studioPanX));
-studioPanY = Math.min(limY, Math.max(-limY, studioPanY));"""
-
-APPLY_OLD = """if (Math.abs(studioScale - 1) <= 0.001 && Math.abs(studioRotation % 360) < 0.001) {
-studioScale = 1; studioPanX = 0; studioPanY = 0; } else { clampStudioPan(); }"""
-APPLY_NEW = """if (Math.abs(studioScale - 1) <= 0.001) studioScale = 1;
-clampStudioPan();   // pan stays free at 100% too; tap the zoom % label to recentre"""
-
-# ----------------------------------------------------------------------------
-# 2. TEAM CHAT
-# ----------------------------------------------------------------------------
-CHAT_JS = r"""
-// =========================================================================
-// TEAM CHAT (shared-room session) - floating overlay opened from the tool dock
-//  - every message has a unique id -> de-duplicated on both sides
-//  - failed sends are retried automatically until delivered
-//  - a "chat-sync" heartbeat lists the ids each side has; whoever has messages
-//    the other lacks pushes them ("chat-history"), so late joiners and dropped
-//    packets always converge.
-// =========================================================================
-var collabChat = [];
-var collabChatIds = new Set();
-var collabChatUnread = 0;
-var collabChatTimer = null;
-var collabChatLastSentAt = 0;
-var COLLAB_CHAT_MAX = 200;
-var COLLAB_CHAT_LEN = 300;
-
-function collabChatInjectStyle() {
-    if (document.getElementById("collab-chat-style")) return;
+BLOCK = r"""
+/* __ARTCHER_TEAM_UPDATE_V3__ =================================================
+   Post-disabled note, hide sharing when full, simple QR, equal-width buttons.
+=========================================================================== */
+(function () {
     const s = document.createElement("style");
-    s.id = "collab-chat-style";
     s.textContent =
-    "#collab-chat-overlay{position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));width:min(340px,calc(100vw - 24px));z-index:700;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:16px;border:1px solid #e2e8f0;background:#fff;color:#0f172a;box-shadow:0 18px 40px rgba(15,23,42,.28);animation:ccIn .16s ease-out}" +
-    "#collab-chat-overlay[hidden]{display:none}" +
-    "@keyframes ccIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}" +
-    ".cc-head{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13px}" +
-    ".cc-head>span:first-child{flex:1}" +
-    ".cc-live{font-size:11px;font-weight:700;color:#16a34a}.cc-live.off{color:#dc2626}" +
-    ".cc-x{border:0;background:#f1f5f9;color:#334155;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1}" +
-    "#collab-chat-list{display:flex;flex-direction:column;gap:6px;height:min(240px,40vh);overflow-y:auto;padding:2px}" +
-    ".cc-empty{margin:auto;font-size:12px;color:#64748b;text-align:center}" +
-    ".cc-msg{max-width:84%;padding:6px 10px;border-radius:12px;font-size:13px;line-height:1.35;word-break:break-word;background:#f1f5f9;color:#0f172a;align-self:flex-start}" +
-    ".cc-msg.me{align-self:flex-end;background:var(--accent,#1d4ed8);color:#fff}" +
-    ".cc-msg b{display:block;font-size:10.5px;opacity:.7;margin-bottom:1px}" +
-    ".cc-msg small{display:block;font-size:10px;opacity:.7;text-align:right}" +
-    ".cc-msg.failed{outline:2px solid #dc2626;cursor:pointer}" +
-    "#collab-chat-form{display:flex;gap:6px}" +
-    "#collab-chat-input{flex:1;min-width:0}" +
-    ".collab-chat-tool{position:relative}" +
-    ".collab-chat-tool.chat-on{background:var(--accent-soft,#eff6ff);color:var(--accent,#1d4ed8)}" +
-    ".collab-chat-tool.no-room{opacity:.55}" +
-    ".collab-chat-tool.cc-fab{position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:650;width:46px;height:46px;border-radius:50%;border:1px solid #e2e8f0;background:#fff;box-shadow:0 6px 16px rgba(15,23,42,.2)}" +
-    ".collab-chat-dot{position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;line-height:16px;padding:0 4px;border-radius:99px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;text-align:center}" +
-    ".collab-chat-dot[hidden]{display:none}";
+        ".tm-wrap .tm-actions{flex-wrap:nowrap}" +
+        ".tm-wrap .tm-actions>.tm-btn{flex:1 1 0;min-width:0;white-space:nowrap}" +
+        ".tm-wrap .tm-actions>.tm-btn span{overflow:hidden;text-overflow:ellipsis}" +
+        "#collab-post-note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;margin:6px 0;border-radius:14px;" +
+        "background:var(--accent-soft,#eff6ff);border:1px solid #e2e8f0;font-size:12.5px;line-height:1.4;font-weight:600}" +
+        "#collab-post-note strong{display:block;font-size:13px;margin-bottom:2px}" +
+        "#collab-post-note small{display:block;font-weight:500;color:var(--muted,#64748b);font-size:11.5px}";
     document.head.appendChild(s);
+})();
+
+/* ---------- room full? ---------- */
+function collabRoomFull() {
+    if (!collabChannel) return false;
+    try { return Object.keys(collabChannel.presenceState() || {}).length >= 2; }
+    catch (e) { return false; }
 }
 
-var COLLAB_CHAT_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-
-function collabChatEnsureUI() {
-    if (document.getElementById("collab-chat-overlay")) return true;
-    if (!document.body) return false;
-    collabChatInjectStyle();
-
-    const overlay = document.createElement("div");
-    overlay.id = "collab-chat-overlay";
-    overlay.hidden = true;
-    overlay.setAttribute("role", "dialog");
-    overlay.setAttribute("aria-label", "Team chat");
-    overlay.innerHTML =
-        '<div class="cc-head"><span>💬 Team chat</span><span class="cc-live" id="collab-chat-live">Live</span>' +
-        '<button type="button" class="cc-x" id="collab-chat-close" aria-label="Close chat">✕</button></div>' +
-        '<div id="collab-chat-list" role="log" aria-live="polite"></div>' +
-        '<form id="collab-chat-form" autocomplete="off">' +
-        '<input class="name-input" id="collab-chat-input" type="text" maxlength="' + COLLAB_CHAT_LEN + '" placeholder="Message your teammate…" enterkeyhint="send">' +
-        '<button type="submit" class="btn btn-accent btn-sm">Send</button></form>';
-    document.body.appendChild(overlay);
-    overlay.querySelector("#collab-chat-close").addEventListener("click", () => collabChatClose());
-    overlay.querySelector("form").addEventListener("submit", e => {
-        e.preventDefault();
-        const input = document.getElementById("collab-chat-input");
-        if (collabChatSend(input.value)) input.value = "";
-        input.focus();
-    });
-    document.addEventListener("keydown", e => {
-        if (e.key === "Escape" && collabChatIsOpen()) collabChatClose();
-    });
-
-    // Chat button inside the tool dock (floating button if the dock isn't found)
-    const dock = document.querySelector(".tool-dock");
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.id = "collab-chat-tool";
-    btn.className = "tool-btn collab-chat-tool no-room" + (dock ? "" : " cc-fab");
-    btn.title = "Team chat";
-    btn.setAttribute("aria-label", "Team chat");
-    btn.innerHTML = COLLAB_CHAT_ICON + (dock ? "<span>Chat</span>" : "") + '<span class="collab-chat-dot" hidden></span>';
-    btn.addEventListener("click", collabChatToggle);
-    (dock || document.body).appendChild(btn);
-
-    // shortcut button inside the Team tab
-    const pane = document.getElementById("pane-team");
-    if (pane) {
-        const pb = document.createElement("button");
-        pb.type = "button";
-        pb.id = "collab-chat-pane-btn";
-        pb.className = "btn btn-sm";
-        pb.style.marginTop = "10px";
-        pb.hidden = true;
-        pb.textContent = "💬 Open team chat";
-        pb.addEventListener("click", collabChatOpen);
-        pane.appendChild(pb);
-    }
-    return true;
-}
-
-function collabChatIsOpen() {
-    const o = document.getElementById("collab-chat-overlay");
-    return !!o && !o.hidden;
-}
-
-function collabChatOpen() {
-    if (!collabChannel) { showToast("Start or join a team room in Teams to chat"); return; }
-    if (!collabChatEnsureUI()) return;
-    document.getElementById("collab-chat-overlay").hidden = false;
-    const tb = document.getElementById("collab-chat-tool");
-    if (tb) tb.classList.add("chat-on");
-    collabChatUnread = 0;
-    collabChatSyncVisibility();
-    collabChatRender();
-    const list = document.getElementById("collab-chat-list");
-    if (list) list.scrollTop = list.scrollHeight;
-    if (window.matchMedia && window.matchMedia("(pointer: fine)").matches) {
-        setTimeout(() => { const i = document.getElementById("collab-chat-input"); if (i) i.focus(); }, 30);
-    }
-    haptic(6);
-}
-
-function collabChatClose() {
-    const o = document.getElementById("collab-chat-overlay");
-    if (o) o.hidden = true;
-    const tb = document.getElementById("collab-chat-tool");
-    if (tb) tb.classList.remove("chat-on");
-}
-
-function collabChatToggle() {
-    if (collabChatIsOpen()) collabChatClose(); else collabChatOpen();
-}
-
-function collabChatSyncVisibility() {
-    if (!collabChatEnsureUI()) return;
-    const inRoom = !!collabChannel;
-    const ok = inRoom && collabChannel.state === "joined";
-    const live = document.getElementById("collab-chat-live");
-    if (live) {
-        live.textContent = ok ? "Live" : "Reconnecting…";
-        live.classList.toggle("off", !ok);
-    }
-    const tb = document.getElementById("collab-chat-tool");
-    if (tb) tb.classList.toggle("no-room", !inRoom);
-    const pb = document.getElementById("collab-chat-pane-btn");
-    if (pb) pb.hidden = !inRoom;
-    if (!inRoom) collabChatClose();
-}
-
-function collabChatRender() {
-    const list = document.getElementById("collab-chat-list");
-    if (list) {
-        const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
-        list.replaceChildren();
-        if (!collabChat.length) {
-            const empty = document.createElement("div");
-            empty.className = "cc-empty";
-            empty.textContent = "No messages yet. Say hi 👋";
-            list.appendChild(empty);
-        }
-        collabChat.forEach(m => {
-            const mine = m.peerId === collabSelfKey;
-            const row = document.createElement("div");
-            row.className = "cc-msg" + (mine ? " me" : "") + (m.status === "failed" ? " failed" : "");
-            if (!mine) {
-                const who = document.createElement("b");
-                who.textContent = m.name || "Artist";
-                row.appendChild(who);
-            }
-            row.appendChild(document.createTextNode(m.text));
-            const meta = document.createElement("small");
-            const t = new Date(m.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-            meta.textContent = mine && m.status === "sending" ? "sending…" : mine && m.status === "failed" ? "not sent · tap to retry" : t;
-            row.appendChild(meta);
-            if (m.status === "failed") row.onclick = () => { m.status = "sending"; collabChatRender(); collabChatDeliver(m); };
-            list.appendChild(row);
-        });
-        if (nearBottom || collabChat.length <= 1) list.scrollTop = list.scrollHeight;
-    }
-    document.querySelectorAll(".collab-chat-dot").forEach(dot => {
-        dot.hidden = collabChatUnread === 0;
-        dot.textContent = collabChatUnread > 9 ? "9+" : String(collabChatUnread);
-    });
-}
-
-function collabChatClean(raw) {
-    if (!raw || typeof raw !== "object") return null;
-    if (typeof raw.id !== "string" || raw.id.length > 80 || typeof raw.text !== "string") return null;
-    const text = raw.text.trim().slice(0, COLLAB_CHAT_LEN);
-    if (!text) return null;
-    return {
-        id: raw.id,
-        peerId: String(raw.peerId || "").slice(0, 40),
-        name: String(raw.name || "Artist").slice(0, 24),
-        text,
-        ts: Number.isFinite(raw.ts) ? raw.ts : Date.now()
+/* ---------- guest / room UI (replaces the V2 version) ---------- */
+collabApplyGuestUI = function () {
+    const inRoom = !!collabChannel, guest = collabIsGuest();
+    const hideIf = (id, cond) => {
+        const el = tmEl(id);
+        if (el) el.toggleAttribute("data-collab-hide", !!cond);
     };
-}
 
-// returns true when the message was new
-function collabChatAdd(msg) {
-    if (collabChatIds.has(msg.id)) return false;
-    collabChatIds.add(msg.id);
-    collabChat.push(msg);
-    collabChat.sort((a, b) => a.ts - b.ts);
-    while (collabChat.length > COLLAB_CHAT_MAX) collabChatIds.delete(collabChat.shift().id);
-    return true;
-}
+    /* Team tab: one row for the buttons */
+    const row = document.querySelector("#pane-team .collab-actions");
+    const chat = tmEl("collab-chat-pane-btn");
+    if (row && chat && chat.parentElement !== row) row.appendChild(chat);
+    hideIf("collab-chat-pane-btn", !inRoom);
+    hideIf("collab-start-btn", inRoom);
+    hideIf("tm-join-btn", inRoom);
+    hideIf("collab-invite", guest || collabRoomFull());   // link + copy + share + QR
 
-function collabChatDeliver(msg) {
-    collabSend("chat-msg", { id: msg.id, peerId: msg.peerId, name: msg.name, text: msg.text, ts: msg.ts }).then(ok => {
-        msg.status = ok ? "sent" : "failed";
-        collabChatRender();
+    /* Post tab */
+    document.querySelectorAll("[data-collab-post-hid]").forEach(el => {
+        el.removeAttribute("data-collab-hide");
+        el.removeAttribute("data-collab-post-hid");
     });
-}
+    const oldNote = tmEl("collab-post-note");
+    if (!guest) { if (oldNote) oldNote.remove(); return; }
 
-function collabChatSend(text) {
-    if (!collabChannel) { showToast("Join a shared room to chat"); return false; }
-    text = String(text || "").trim().slice(0, COLLAB_CHAT_LEN);
-    if (!text) return false;
-    const now = Date.now();
-    if (now - collabChatLastSentAt < 250) return false;
-    collabChatLastSentAt = now;
-    const msg = {
-        id: collabSelfKey + ":" + now.toString(36) + Math.random().toString(36).slice(2, 6),
-        peerId: collabSelfKey,
-        name: collabArtistName(),
-        text, ts: now, status: "sending"
-    };
-    collabChatAdd(msg);
-    collabChatRender();
-    collabChatDeliver(msg);
-    haptic(6);
-    return true;
-}
+    const hide = el => { el.setAttribute("data-collab-hide", ""); el.setAttribute("data-collab-post-hid", ""); };
+    const btn = tmEl("submit-btn");
+    const quick = tmEl("focus-quick-post-btn");
+    if (quick) hide(quick);
+    if (!btn) return;
+    hide(btn);
 
-function collabChatReceive(payload) {
-    if (!collabChannel || !payload || payload.peerId === collabSelfKey) return;
-    const msg = collabChatClean(payload);
-    if (!msg) return;
-    msg.status = "sent";
-    if (!collabChatAdd(msg)) return;
-    if (!collabChatIsOpen()) {
-        collabChatUnread++;
-        showToast("💬 " + msg.name + ": " + msg.text.slice(0, 40));
-        haptic(10);
-    }
-    collabChatRender();
-}
-
-function collabChatReceiveHistory(payload) {
-    if (!collabChannel || !payload || payload.peerId === collabSelfKey || !Array.isArray(payload.messages)) return;
-    let added = 0;
-    payload.messages.slice(0, 80).forEach(raw => {
-        const msg = collabChatClean(raw);
-        if (!msg) return;
-        msg.status = "sent";
-        if (collabChatAdd(msg)) {
-            added++;
-            if (msg.peerId !== collabSelfKey && !collabChatIsOpen()) collabChatUnread++;
+    const pane = btn.closest('[id^="pane-"],.tab-pane,.draw-pane,.pane');
+    if (pane && pane.querySelector(COLLAB_POST_KEEP)) {
+        const holdsKeep = el => el.id === "collab-post-note" || el.matches(COLLAB_POST_KEEP) || !!el.querySelector(COLLAB_POST_KEEP);
+        let node = btn;
+        while (node && node !== pane && node.parentElement) {
+            Array.from(node.parentElement.children).forEach(sib => {
+                if (sib !== node && !holdsKeep(sib)) hide(sib);
+            });
+            node = node.parentElement;
         }
-    });
-    if (added) collabChatRender();
-}
+    }
 
-// tell the other side which ids we hold; they push anything we are missing
-function collabChatHeartbeat() {
-    if (!collabChannel) return;
-    collabChatSyncVisibility();
-    collabChat.filter(m => m.peerId === collabSelfKey && m.status === "failed").forEach(m => { m.status = "sending"; collabChatDeliver(m); });
-    collabSend("chat-sync", { peerId: collabSelfKey, have: collabChat.slice(-60).map(m => m.id) });
-}
+    /* explain why posting is off */
+    let note = oldNote;
+    if (!note) {
+        note = document.createElement("div");
+        note.id = "collab-post-note";
+        note.setAttribute("role", "note");
+        note.innerHTML = '<span>🔒</span><div><strong>Posting is disabled</strong>' +
+            'Only the host can post a shared drawing.' +
+            '<small>Your own design comes back when you leave the room.</small></div>';
+    }
+    if (note.parentElement !== btn.parentElement || note.nextSibling !== btn) btn.parentElement.insertBefore(note, btn);
+};
 
-function collabChatReceiveSync(payload) {
-    if (!collabChannel || !payload || payload.peerId === collabSelfKey || !Array.isArray(payload.have)) return;
-    const have = new Set(payload.have.slice(0, 120).map(String));
-    const missing = collabChat.slice(-60).filter(m => !have.has(m.id));
-    if (!missing.length) return;
-    collabSend("chat-history", {
-        peerId: collabSelfKey,
-        messages: missing.map(m => ({ id: m.id, peerId: m.peerId, name: m.name, text: m.text, ts: m.ts }))
-    });
-}
+const _updateCollabPresenceUIV3 = updateCollabPresenceUI;
+updateCollabPresenceUI = function () {
+    const r = _updateCollabPresenceUIV3.apply(this, arguments);
+    try { collabApplyGuestUI(); } catch (e) {}
+    return r;
+};
 
-function collabChatJoined() {
-    collabChatEnsureUI();
-    collabChatSyncVisibility();
-    collabChatRender();
-    clearInterval(collabChatTimer);
-    collabChatTimer = setInterval(collabChatHeartbeat, 5000);
-    setTimeout(collabChatHeartbeat, 400);
-    setTimeout(collabChatHeartbeat, 1800);
-}
+/* ---------- simple QR card ---------- */
+collabComposeQrCard = function (qrImg) {
+    const W = 520, H = 660;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    const accent = (getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#1d4ed8").trim();
 
-function collabChatReset() {
-    clearInterval(collabChatTimer);
-    collabChatTimer = null;
-    collabChat = [];
-    collabChatIds = new Set();
-    collabChatUnread = 0;
-    collabChatClose();
-    collabChatRender();
-    collabChatSyncVisibility();
-}
+    x.fillStyle = "#eef2f7"; x.fillRect(0, 0, W, H);
+    x.save();
+    x.shadowColor = "rgba(15,23,42,.18)"; x.shadowBlur = 28; x.shadowOffsetY = 8;
+    x.fillStyle = "#fff"; x.beginPath(); x.roundRect(30, 30, W - 60, H - 60, 32); x.fill();
+    x.restore();
 
-collabChatEnsureUI();
+    x.save();
+    x.beginPath(); x.roundRect(30, 30, W - 60, 120, [32, 32, 0, 0]); x.clip();
+    const g = x.createLinearGradient(30, 30, W - 30, 150);
+    g.addColorStop(0, accent); g.addColorStop(1, "#7c3aed");
+    x.fillStyle = g; x.fillRect(30, 30, W - 60, 120);
+    x.restore();
+    x.textAlign = "center"; x.fillStyle = "#fff";
+    x.font = "800 38px Inter, sans-serif"; x.fillText("Draw together", W / 2, 106);
 
+    const qs = 320, qx = (W - qs) / 2, qy = 186;
+    x.imageSmoothingEnabled = false;
+    x.drawImage(qrImg, qx, qy, qs, qs);
+    x.imageSmoothingEnabled = true;
+
+    x.fillStyle = "#0f172a"; x.font = "800 32px Inter, sans-serif";
+    x.fillText("Scan to join", W / 2, qy + qs + 70);
+    return c.toDataURL("image/png");
+};
+
+/* ---------- init ---------- */
+(function () {
+    const w = tmEl("collab-qr-card");
+    if (w) w.dataset.inviteUrl = "";            // force the QR to redraw with the new design
+    try { renderCollabInviteQR(); } catch (e) {}
+    try { collabApplyGuestUI(); } catch (e) {}
+})();
 """
 
-CHAT_ON = """.on("broadcast", { event: "snapshot-request" }, () => sendCollabSnapshot())
-.on("broadcast", { event: "chat-msg" }, ({ payload }) => collabChatReceive(payload))
-.on("broadcast", { event: "chat-sync" }, ({ payload }) => collabChatReceiveSync(payload))
-.on("broadcast", { event: "chat-history" }, ({ payload }) => collabChatReceiveHistory(payload))"""
+
+def anchor_regex(text):
+    return re.compile(r"\s+".join(re.escape(t) for t in text.split()))
+
 
 def main():
     if len(sys.argv) < 2:
-        sys.exit(__doc__)
+        print("Usage: python3 update_walljs_v3.py freedom.js")
+        sys.exit(1)
     path = sys.argv[1]
-    src = open(path, encoding="utf-8").read()
-    out = src
-
-    if "keepVisible" not in out:
-        out = patch(out, PAN_OLD, PAN_NEW, "pan clamp (symmetric, free movement)")
-        out = patch(out, APPLY_OLD, APPLY_NEW, "applyStudioTransform (no forced pan reset)")
-    else:
-        print("[skip] zoom/pan fix already applied")
-
-    if "collabChatJoined" in out and "collab-chat-overlay" not in out:
-        sys.exit("An older chat version is already in this file. Restore the .bak backup (copy freedom.js.bak over freedom.js) and run this script again.")
-    if "collabChatJoined" not in out:
-        out = patch(out, "Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite });",
-                    CHAT_JS + "Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite, collabChatSend, collabChatToggle });",
-                    "chat engine + UI")
-        out = patch(out, '.on("broadcast", { event: "snapshot-request" }, () => sendCollabSnapshot())', CHAT_ON, "chat broadcast listeners")
-        out = patch(out, 'if (!collabIsHost) updateCollabUI("connecting", "Syncing shared drawing…");',
-                    'if (!collabIsHost) updateCollabUI("connecting", "Syncing shared drawing…");\ncollabChatJoined();',
-                    "start chat when room is joined")
-        out = patch(out, "if (channel && window.sbClient) {", "collabChatReset();\nif (channel && window.sbClient) {", "reset chat on leave")
-        out = patch(out, "if (invite) invite.hidden = !collabChannel; renderCollabInviteQR();",
-                    "if (invite) invite.hidden = !collabChannel; renderCollabInviteQR(); collabChatSyncVisibility();",
-                    "show/hide chat with room state")
-    else:
-        print("[skip] team chat already applied")
-
-    if out == src:
-        print("Nothing to change.")
+    if not os.path.isfile(path):
+        print("File not found: " + path)
+        sys.exit(1)
+    with open(path, "r", encoding="utf-8", newline="") as f:
+        src = f.read()
+    if MARKER in src:
+        print("V3 already applied.")
         return
-    shutil.copyfile(path, path + ".bak")
-    open(path, "w", encoding="utf-8").write(out)
-    print(f"\nDone. Backup: {path}.bak")
+    if V2 not in src:
+        print("Run update_walljs.py (V1) and update_walljs_v2.py (V2) first.")
+        sys.exit(2)
+    matches = list(anchor_regex(ANCHOR).finditer(src))
+    if len(matches) != 1:
+        print("[FAIL] APK anchor -> %d matches (expected 1)" % len(matches))
+        sys.exit(2)
+    m = matches[0]
+    out = src[:m.start()] + BLOCK + "\n" + m.group(0) + src[m.end():]
+    bak = path + ".v3.bak"
+    if not os.path.exists(bak):
+        shutil.copyfile(path, bak)
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        f.write(out)
+    print("Done. V3 applied to " + path)
+
 
 if __name__ == "__main__":
     main()

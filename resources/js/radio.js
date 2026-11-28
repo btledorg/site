@@ -1078,3 +1078,49 @@ async function fetchRadioStations(force = false) {
                             }
                         };
                         
+                        window.getRadioState = function () {
+    if (usingSynthFallback) {
+        return { id: "synth", name: "Offline chill synth", playing: musicPlaying && !radioIsPaused };
+    }
+    const station = radioStations[currentStationIdx];
+    if (!station) return { id: "", name: "", playing: false };
+    return {
+        id: station.url,
+        name: station.name,
+        playing: musicPlaying && !radioIsPaused
+    };
+};
+
+window.setRadioState = function (state) {
+    if (!state || typeof state !== "object") return false;
+
+    // Host stopped the radio.
+    if (state.playing === false) {
+        if (musicPlaying) toggleMusic();
+        return true;
+    }
+
+    // Only https stream URLs are accepted (same rule as every other station).
+    const url = normalizeRadioUrl(state.id);
+    if (!url) return false;
+
+    let index = radioStations.findIndex(station => station.url === url);
+    if (index < 0) {
+        // Guest does not have this station yet: add it to the local list.
+        radioStations.push({
+            name: String(state.name || "Host station").trim().slice(0, 100),
+            url,
+            country: "",
+            category: "all",
+            language: ""
+        });
+        index = radioStations.length - 1;
+        persistRadioDirectory();
+    }
+
+    // Already listening to this exact station: do nothing (avoids restarting the stream).
+    if (musicPlaying && !radioIsPaused && !usingSynthFallback && currentStationIdx === index) return true;
+
+    selectRadioStation(index);
+    return true;
+};

@@ -1744,13 +1744,13 @@ function preloadAllFonts() {
             { view: "draw", pane: "text", target: "#pane-text .text-tools", title: "Add and edit text", copy: "Add text to the canvas, choose a font, and resize it. Select the text to move it; Stamp bakes it into the artwork so it becomes part of the drawing.", focus: true },
             { view: "draw", pane: "layers", target: "#pane-layers .wip-controls", title: "Use layers and drafts", copy: "Layers keep drawing and text elements separate, so you can select, hide, or edit parts independently. Drafts let you keep multiple works in progress on this device.", focus: true },
             { view: "draw", pane: "shapes", target: "#shape-grid", title: "Draw precise shapes", copy: "Pick a shape, then drag on the canvas to create it. You can adjust its stroke and fill, and edit a selected shape afterward.", focus: true },
-            { view: "draw", pane: "post", target: "#submit-btn", title: "Save, share, or post", copy: "Post to wall sends your drawing to the current wall. The other buttons let you save a PNG, share it, replay the drawing, or make a video. Posting is never triggered by this tour.", focus: true },
+            { view: "draw", pane: "post", target: "#submit-btn", title: "Save, share, or post", copy: "Post to wall sends your drawing to the current wall. The other buttons let you save a PNG, replay the drawing, or make a video. Posting is never triggered by this tour.", focus: true },
             { view: "wall", target: ".wall-fab", title: "Explore the wall", copy: "Drag the wall to move around, and use its controls to zoom, refresh, or view the minimap. Tap a drawing to open its details and reactions." },
             { view: "wall", target: "#event-btn", title: "Open event options", copy: "Events have their own wall. Open Event to join with a code or QR invite, or to manage an event you host." },
             { view: "wall", eventModal: true, target: "#event-code-input", title: "Join with a code", copy: "Enter the event code you received, or use the QR scan option on the next step. Invites are handled inside ARTcher." },
             { view: "wall", eventModal: true, target: ".ev-scan-btn", title: "Scan an invite QR", copy: "The scanner can read event and collaboration invites. It will ask for camera permission only if you choose to start the scanner; you can also paste a code or link instead." },
             { view: "wall", eventModal: true, hostDetails: true, target: "#event-host > summary", title: "Host and focus an event", copy: "Hosts can create an event, hide or reveal its art, and choose whether invite links open directly in the drawing studio with focus mode. This tour does not change those settings." },
-            { view: "draw", pane: "team", target: function () { var start = document.getElementById("collab-start-btn"); var leave = document.getElementById("collab-leave-btn"); return start && !start.hidden ? start : (leave && !leave.hidden ? leave : document.querySelector("#pane-team .collab-actions")); }, title: "Draw together in Teams", copy: "Start a shared room or join with an invite link or QR. Strokes and pointers sync live between two artists. Joining a room replaces the current drawing, so save or switch drafts first.", focus: true },
+            { view: "draw", pane: "team", target: function () { var start = document.getElementById("collab-start-btn"); var leave = document.getElementById("collab-leave-btn"); return start && !start.hidden ? start : (leave && !leave.hidden ? leave : document.querySelector("#pane-team .collab-actions")); }, title: "Draw together in Teams", copy: "Start a shared room or join with an invite link or QR. Strokes and pointers sync live between two artists. Only the host can post, and your own drawing comes back when you leave.", focus: true },
             { view: "more", target: "#acct-profile-card", title: "Profile and preferences", copy: "More contains your profile, weather location, guided help, upload status, and app preferences. You can use ARTcher as a guest; an account is optional." },
             { view: "home", target: ".landing-title", title: "You're ready to create", copy: "That covers the main ARTcher workflows. You can restart this guided tour from Help & information in More or the studio toolbar in focus mode." }
         ];
@@ -2748,7 +2748,7 @@ clampStudioPan();   // pan stays free at 100% too; tap the zoom % label to recen
                         status.dataset.state = state;
                         status.textContent = message;
                     }
-                    if (participants) participants.textContent = collabChannel ? "Connecting artists…" : "Only you";
+                    if (participants) participants.textContent = collabChannel ? "Connecting" : "Only you";
                     if (startButton) startButton.hidden = state === "connected" || state === "connecting" || !!collabChannel;
                     if (leaveButton) leaveButton.hidden = !collabChannel;
                     if (invite) invite.hidden = !collabChannel; renderCollabInviteQR(); collabChatSyncVisibility();
@@ -2861,7 +2861,8 @@ clampStudioPan();   // pan stays free at 100% too; tap the zoom % label to recen
                         return Number(a.meta.joinedAt || 0) - Number(b.meta.joinedAt || 0);
                     }).slice(0, 2);
                     if (allowed.some(entry => entry.meta.host)) collabHadHost = true;
-                    if (collabHadHost && !allowed.some(entry => entry.meta.host) && allowed.some(entry => entry.key === collabSelfKey)) {
+                    collabHostWatch(allowed);
+                    if (false && collabHadHost && !allowed.some(entry => entry.meta.host) && allowed.some(entry => entry.key === collabSelfKey)) {
                         collabIsHost = true;
                         collabChannel.track({
                             name: collabArtistName(),
@@ -3105,7 +3106,7 @@ clampStudioPan();   // pan stays free at 100% too; tap the zoom % label to recen
                                 collabSyncReady = true;
                                 clearTimeout(collabSyncTimer);
                                 collabSyncTimer = null;
-                                updateCollabUI("connected", "Connected · live drawing");
+                                updateCollabUI("connected", "Connected");
                                 while (collabPendingStrokeCommits.length) {
                                     applyCollabStrokeCommit(collabPendingStrokeCommits.shift());
                                 }
@@ -3211,6 +3212,8 @@ clampStudioPan();   // pan stays free at 100% too; tap the zoom % label to recen
                             }
                         })
                         .on("broadcast", { event: "snapshot-request" }, () => sendCollabSnapshot())
+.on("broadcast", { event: "radio-sync" }, ({ payload }) => collabRadioReceive(payload))
+.on("broadcast", { event: "radio-request" }, () => collabRadioSendNow())
 .on("broadcast", { event: "chat-msg" }, ({ payload }) => collabChatReceive(payload))
 .on("broadcast", { event: "chat-sync" }, ({ payload }) => collabChatReceiveSync(payload))
 .on("broadcast", { event: "chat-history" }, ({ payload }) => collabChatReceiveHistory(payload))
@@ -3232,7 +3235,7 @@ clampStudioPan();   // pan stays free at 100% too; tap the zoom % label to recen
                                     showToast("Couldn't join the shared room");
                                     return;
                                 }
-                                updateCollabUI("connected", "Connected · live drawing");
+                                updateCollabUI("connected", "Connected");
                                 if (!collabIsHost) updateCollabUI("connecting", "Syncing shared drawing…");
 collabChatJoined();
                                 if (!collabIsHost) {
@@ -5354,6 +5357,7 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                         
                         function pickRandomOpenSlot(existingEntries) {
                             const occupied = new Set(existingEntries.map(e => `${e.gx},${e.gy}`));
+    const reachSet = wallReachSet(existingEntries);
                             let radius = 2;
                             
                             while (radius < 60) {
@@ -5364,7 +5368,9 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                                         if (!occupied.has(`${gx},${gy}`)) candidates.push({ gx, gy });
                                     }
                                 }
-                                if (candidates.length >= 6) return candidates[Math.floor(Math.random() * candidates.length)];
+                                const near = candidates.filter(cd => reachSet.has(cd.gx + "," + cd.gy));
+                                if (near.length >= 6 || (near.length && radius >= 8)) return near[Math.floor(Math.random() * near.length)];
+                                if (!near.length && radius >= 40 && candidates.length >= 6) return candidates[Math.floor(Math.random() * candidates.length)];
                                 radius++;
                             }
                             return { gx: 2, gy: 0 };
@@ -5410,6 +5416,7 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                                 showToast("This device has already posted to this event.");
                                 return;
                             }
+                            if (collabChannel && !collabIsHost) { showToast("Only the host can post the shared drawing."); return; }
                             const probe = getAllFlattenedStrokes(false);
                             if (probe.length === 0) {
                                 showToast("Draw something first before posting.");
@@ -5417,7 +5424,7 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                             }
                             if (curEvent && !evIsLive()) { showToast("This event has ended. Leave it to post on the main wall."); return; }
                             // user-initiated posts: choose a tile, then pass the human check
-                            openTilePicker(() => openCaptcha(() => submitToWallCore()));
+                            openPostTerms(() => openTilePicker(() => openCaptcha(() => submitToWallCore())));
                         }
                         
                         async function submitToWallCore() {
@@ -5426,6 +5433,7 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                                 showToast("This device has already posted to this event.");
                                 return;
                             }
+                            if (collabChannel && !collabIsHost) { showToast("Only the host can post the shared drawing."); return; }
                             const postingInFocusMode = focusModeActive && !!evCode();
                             const postedKey = postingInFocusMode ? focusPostedKey() : "";
                             const items = getAllFlattenedStrokes(false);
@@ -7990,7 +7998,799 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                                                         window.addEventListener("orientationchange", () => setTimeout(update, 300));
                                                     })();
                                                     
-                                                    const APK_DOWNLOAD_URL = "download/ARTcher-v1.11.apk";
+                                                    
+/* __ARTCHER_TEAM_UPDATE_V1__ ================================================
+   Team tab revamp, synced radio, host-only posting, design revert,
+   host session persistence, terms & conditions, far-tile lock helpers.
+   (var is used on purpose: these are read by boot code that runs earlier.)
+=========================================================================== */
+var LS_COLLAB_HOST = "fw_collab_host_v1";
+var LS_COLLAB_PING = "fw_collab_ping_v1";
+var COLLAB_HOST_TTL = 10 * 60 * 1000;      // host session stays valid for 10 min without a heartbeat
+var COLLAB_HOST_GRACE_MS = 25000;          // guests wait this long for a host who vanished
+var TERMS_VERSION = "2026-1";
+var TERMS_ASK_EVERY_TIME = true;           // false = ask once per TERMS_VERSION
+var LS_TERMS = "fw_terms_v1";
+var collabStash = null;                    // the user's own design while in a room
+var collabForceKey = null;
+var collabHostGoneTimer = null;
+var collabRadioOn = false;
+var collabRadioLast = "";
+var collabRadioHint = null;
+var collabRadioHostState = null;
+
+function tmEl(id) { return document.getElementById(id); }
+
+/* ---------- tiles: only allow slots near existing art ---------- */
+function wallReachSet(entries, reach) {
+    reach = reach == null ? 2 : reach;
+    const set = new Set();
+    const mark = (gx, gy) => {
+        for (let dx = -reach; dx <= reach; dx++) {
+            for (let dy = -reach; dy <= reach; dy++) set.add((gx + dx) + "," + (gy + dy));
+        }
+    };
+    [[-1, -1], [0, -1], [-1, 0], [0, 0]].forEach(p => mark(p[0], p[1]));
+    (entries || []).forEach(e => mark(e.gx, e.gy));
+    return set;
+}
+
+/* ---------- post lock (guests cannot post) ---------- */
+function collabPostLocked() { return !!collabChannel && !collabIsHost; }
+const _syncFocusPostUI = syncFocusPostUI;
+syncFocusPostUI = function () {
+    const r = _syncFocusPostUI.apply(this, arguments);
+    if (collabPostLocked()) {
+        ["submit-btn", "focus-quick-post-btn"].forEach(id => {
+            const b = tmEl(id);
+            if (!b) return;
+            b.disabled = true;
+            b.textContent = "Host posts only";
+            b.title = "Only the host can post the shared drawing.";
+        });
+    }
+    return r;
+};
+
+/* ---------- keep the user's own design safe while in a room ---------- */
+function collabPersistHost() {
+    if (!collabChannel || !collabIsHost || !collabRoomId) return;
+    lsSet(LS_COLLAB_HOST, { roomId: collabRoomId, key: collabSelfKey, lastActive: Date.now(), draft: serializeStudioDraft() });
+    lsSet(LS_COLLAB_PING, Date.now());
+}
+function collabClearHostSession() { lsRemove(LS_COLLAB_HOST); lsRemove(LS_COLLAB_PING); }
+
+const _saveWipNow = saveCurrentWipNow;
+saveCurrentWipNow = function () {
+    if (collabStash) { collabPersistHost(); return true; }   // never overwrite the user's own draft with the shared one
+    return _saveWipNow.apply(this, arguments);
+};
+
+["switchWipDraft", "newWipDraft", "deleteWipDraft"].forEach(name => {
+    const orig = window[name];
+    if (typeof orig !== "function") return;
+    window[name] = function () {
+        if (collabChannel) { showToast("Leave the shared room before switching drafts."); renderWipSelector(); return; }
+        return orig.apply(this, arguments);
+    };
+});
+
+const _collabRandomHex = collabRandomHex;
+collabRandomHex = function (n) {
+    if (n === 8 && collabForceKey) { const k = collabForceKey; collabForceKey = null; return k; }
+    return _collabRandomHex.apply(this, arguments);
+};
+
+const _startCollabRoom = startCollabRoom;
+startCollabRoom = function (roomId, isHost) {
+    if (collabChannel) return _startCollabRoom.apply(this, arguments);
+    const hadStash = !!collabStash;
+    if (!hadStash) collabStash = serializeStudioDraft();
+    if (!isHost) collabClearHostSession();
+    const ok = _startCollabRoom.apply(this, arguments);
+    collabForceKey = null;
+    if (!ok && !hadStash) collabStash = null;
+    if (ok && isHost) collabPersistHost();
+    return ok;
+};
+
+function collabSaveSharedDraft(data) {
+    try {
+        if (wipDrafts.length >= 3) {
+            const oldest = wipDrafts.filter(d => d.id !== activeWipId).sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0))[0];
+            if (oldest) wipDrafts = wipDrafts.filter(d => d !== oldest);
+        }
+        wipDrafts.push({
+            id: "wip_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+            title: "Shared room " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            updatedAt: Date.now() - 1,
+            data: data
+        });
+        persistWipDrafts();
+        renderWipSelector();
+        showToast("Shared drawing saved as a draft");
+    } catch (e) { console.error("Could not save the shared drawing as a draft.", e); }
+}
+
+const _leaveCollaboration = leaveCollaboration;
+leaveCollaboration = async function (silent) {
+    const wasHost = collabIsHost, hadRoom = !!collabChannel, stash = collabStash;
+    let sharedCopy = null;
+    if (hadRoom && wasHost) {
+        try {
+            const lyr = layers.find(l => l.id === collabSharedLayerId);
+            if (lyr && lyr.strokes.length) sharedCopy = serializeStudioDraft();
+        } catch (e) {}
+    }
+    clearTimeout(collabHostGoneTimer);
+    collabHostGoneTimer = null;
+    const result = await _leaveCollaboration.apply(this, arguments);
+    if (wasHost) collabClearHostSession();
+    collabStopRadio();
+    clearTimeout(draftSaveTimer);
+    collabStash = null;
+    if (hadRoom && stash) {
+        if (sharedCopy) collabSaveSharedDraft(sharedCopy);
+        loadDraft(stash);                       // back to the design that was on this device
+    }
+    return result;
+};
+
+/* guests: when the host disappears, wait a moment then go back to their own design */
+function collabHostWatch(allowed) {
+    if (collabIsHost || !collabHadHost) { clearTimeout(collabHostGoneTimer); collabHostGoneTimer = null; return; }
+    const hostHere = allowed.some(e => e.meta && e.meta.host);
+    if (hostHere) { clearTimeout(collabHostGoneTimer); collabHostGoneTimer = null; return; }
+    if (collabHostGoneTimer) return;
+    showToast("Host disconnected. Waiting for them to come back…");
+    collabHostGoneTimer = setTimeout(() => {
+        collabHostGoneTimer = null;
+        if (!collabChannel || collabIsHost) return;
+        leaveCollaboration(true);
+        showToast("The host left. Back to your own drawing.");
+    }, COLLAB_HOST_GRACE_MS);
+}
+
+/* host: resume the same room after an accidental refresh */
+function collabTryResumeHost(roomId) {
+    const s = lsGet(LS_COLLAB_HOST, null);
+    if (!s || !/^[a-f0-9]{32}$/i.test(s.roomId || "") || !s.draft) return false;
+    if (roomId && roomId.toLowerCase() !== s.roomId.toLowerCase()) return false;
+    const last = Math.max(Number(s.lastActive) || 0, Number(lsGet(LS_COLLAB_PING, 0)) || 0);
+    if (Date.now() - last > COLLAB_HOST_TTL) { collabClearHostSession(); return false; }
+    collabStash = serializeStudioDraft();
+    try { loadDraft(s.draft); } catch (e) { loadDraft(collabStash); collabStash = null; return false; }
+    collabForceKey = /^[a-f0-9]{16}$/i.test(s.key || "") ? s.key : null;
+    switchView("draw");
+    setDrawTab("team");
+    if (!startCollabRoom(s.roomId, true)) {
+        const own = collabStash;
+        collabStash = null;
+        if (own) loadDraft(own);
+        return false;
+    }
+    showToast("Resumed your shared room");
+    return true;
+}
+function collabBoot() {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    if (collabTryResumeHost(hash.get("collab"))) return;
+    initializeCollaborationFromInvite();
+}
+setInterval(() => { if (collabChannel && collabIsHost) lsSet(LS_COLLAB_PING, Date.now()); }, 10000);
+
+/* ---------- synced radio ---------- */
+function collabRadioGet() {
+    let s = null;
+    try {
+        if (typeof window.getRadioState === "function") s = window.getRadioState();
+        else if (window.RadioMode && typeof window.RadioMode.getState === "function") s = window.RadioMode.getState();
+    } catch (e) {}
+    if (!s) return collabRadioHint;
+    return {
+        id: String(s.id != null ? s.id : (s.stationId != null ? s.stationId : (s.url || ""))),
+        name: String(s.name || s.title || "").slice(0, 40),
+        playing: s.playing !== false
+    };
+}
+function collabRadioApply(s) {
+    if (!s) return false;
+    try {
+        if (typeof window.setRadioState === "function") { window.setRadioState(s); return true; }
+        if (window.RadioMode && typeof window.RadioMode.setState === "function") { window.RadioMode.setState(s); return true; }
+        if (s.playing === false && typeof window.stopRadio === "function") { window.stopRadio(); return true; }
+        if (typeof window.playRadioStation === "function" && s.id) { window.playRadioStation(s.id); return true; }
+        if (s.id) {
+            const sel = '[data-station-id="' + CSS.escape(s.id) + '"],[data-station="' + CSS.escape(s.id) + '"],[data-radio-station="' + CSS.escape(s.id) + '"]';
+            const el = document.querySelector(sel);
+            if (el) { el.click(); return true; }
+        }
+    } catch (e) { console.error("Radio sync could not apply the host's station.", e); }
+    return false;
+}
+function collabRadioSendNow() {
+    if (!collabChannel || !collabIsHost || !collabRadioOn) return;
+    const s = collabRadioGet();
+    if (!s) return;
+    collabRadioLast = JSON.stringify([s.id, s.playing]);
+    collabSend("radio-sync", { peerId: collabSelfKey, on: true, state: s });
+}
+function collabRadioReceive(p) {
+    if (!collabChannel || collabIsHost || !p || p.peerId === collabSelfKey) return;
+    collabRadioHostState = p;
+    const now = tmEl("tm-radio-now");
+    if (now) now.textContent = p.on === false ? "" : (p.state && p.state.name ? "Host: " + p.state.name : "");
+    if (!collabRadioOn || p.on === false) return;
+    if (!collabRadioApply(p.state)) showToast("Host is listening to " + ((p.state && p.state.name) || "a station"));
+}
+function collabStopRadio() {
+    collabRadioOn = false;
+    collabRadioLast = "";
+    collabRadioHostState = null;
+    const cb = tmEl("tm-radio-on");
+    if (cb) cb.checked = false;
+    const now = tmEl("tm-radio-now");
+    if (now) now.textContent = "";
+}
+window.collabRadioToggle = function (cb) {
+    if (!collabChannel) { cb.checked = false; collabRadioOn = false; showToast("Join a room first"); return; }
+    collabRadioOn = !!cb.checked;
+    if (collabIsHost) {
+        if (collabRadioOn) collabRadioSendNow();
+        else collabSend("radio-sync", { peerId: collabSelfKey, on: false });
+        showToast(collabRadioOn ? "Sharing your station with the room" : "Radio sharing off");
+    } else if (collabRadioOn) {
+        collabSend("radio-request", { peerId: collabSelfKey });
+        if (collabRadioHostState && collabRadioHostState.on !== false) collabRadioApply(collabRadioHostState.state);
+        showToast("Listening along with the host");
+    } else {
+        showToast("Radio is yours again");
+    }
+};
+setInterval(() => {
+    if (!collabChannel || !collabIsHost || !collabRadioOn) return;
+    const s = collabRadioGet();
+    if (s && JSON.stringify([s.id, s.playing]) !== collabRadioLast) collabRadioSendNow();
+}, 2000);
+document.addEventListener("click", e => {
+    const el = e.target.closest && e.target.closest("[data-station-id],[data-station],[data-radio-station]");
+    if (!el) return;
+    const id = el.dataset.stationId || el.dataset.station || el.dataset.radioStation;
+    collabRadioHint = { id: String(id), name: (el.textContent || "").trim().slice(0, 40), playing: true };
+    setTimeout(collabRadioSendNow, 400);
+}, true);
+
+/* ---------- Team tab UI ---------- */
+function tmIcon(d, size) {
+    size = size || 16;
+    return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+}
+var TM_ICONS = {
+    users: tmIcon('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', 18),
+    plus: tmIcon('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'),
+    scan: tmIcon('<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/>'),
+    logout: tmIcon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'),
+    copy: tmIcon('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>'),
+    share: tmIcon('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/>'),
+    download: tmIcon('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'),
+    radio: tmIcon('<circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>', 18),
+    chat: tmIcon('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'),
+    crown: tmIcon('<path d="M2 18h20l-2-10-5 4-3-7-3 7-5-4z"/>', 11)
+};
+
+function tmInjectStyle() {
+    if (tmEl("tm-style")) return;
+    const s = document.createElement("style");
+    s.id = "tm-style";
+    s.textContent =
+    ".tm-wrap{display:flex;flex-direction:column;gap:10px;font-size:13px}" +
+    ".tm-wrap [hidden]{display:none!important}" +
+    ".tm-hero{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;color:#fff;background:linear-gradient(135deg,var(--accent,#1d4ed8),#7c3aed)}" +
+    ".tm-hero-ico{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.2);display:grid;place-items:center;flex:none}" +
+    ".tm-hero-txt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}" +
+    ".tm-hero-txt strong{font-size:14px}.tm-hero-txt small{opacity:.85;font-size:11px}" +
+    ".tm-status{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.22);max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
+    ".tm-status[data-state=connected]{background:#16a34a}.tm-status[data-state=connecting]{background:#d97706}.tm-status[data-state=error]{background:#dc2626}" +
+    ".tm-people{display:flex;align-items:center;gap:8px;flex-wrap:wrap}" +
+    ".tm-chip{display:flex;align-items:center;gap:7px;padding:4px 10px 4px 4px;border-radius:99px;border:1px solid #e2e8f0;background:var(--surface,#fff)}" +
+    ".tm-chip.empty{border-style:dashed;opacity:.65;padding-right:12px}" +
+    ".tm-av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--c,#2563eb);color:#fff;font-weight:800;font-size:12px;position:relative;flex:none}" +
+    ".tm-av i{position:absolute;right:-4px;top:-6px;color:#f59e0b;display:grid}" +
+    ".tm-pn{display:flex;flex-direction:column;line-height:1.1;font-weight:700;font-size:12px}.tm-pn small{font-weight:600;font-size:10px;color:var(--muted,#64748b)}" +
+    ".tm-part{font-size:11px;color:var(--muted,#64748b);margin-left:auto}" +
+    ".tm-actions{display:flex;gap:8px;flex-wrap:wrap}" +
+    ".tm-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border-radius:10px;border:1px solid #e2e8f0;background:var(--surface,#fff);color:inherit;font:700 12px/1 inherit;cursor:pointer;text-decoration:none;min-height:36px}" +
+    ".tm-btn.primary{background:var(--accent,#1d4ed8);border-color:transparent;color:#fff}" +
+    ".tm-btn.danger{color:#dc2626;border-color:#fecaca;background:#fef2f2}" +
+    ".tm-btn.ico{width:36px;padding:0;flex:none}" +
+    ".tm-btn:disabled{opacity:.5;cursor:not-allowed}" +
+    ".tm-linkrow{display:flex;gap:6px}.tm-linkrow input{flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:0 10px;font:600 11px/1 inherit;background:var(--surface,#fff);color:inherit;height:36px}" +
+    ".tm-qr{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;border-radius:16px;background:linear-gradient(180deg,var(--accent-soft,#eff6ff),#fff);border:1px solid #e2e8f0}" +
+    ".tm-qr img{width:100%;max-width:230px;border-radius:14px;box-shadow:0 10px 24px rgba(15,23,42,.16)}" +
+    ".tm-qr-status{font-size:11px;color:var(--muted,#64748b);text-align:center}" +
+    ".tm-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:14px;background:var(--surface,#fff)}" +
+    ".tm-card-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft,#eff6ff);color:var(--accent,#1d4ed8);flex:none}" +
+    ".tm-card-txt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}.tm-card-txt strong{font-size:13px}.tm-card-txt small{font-size:11px;color:var(--muted,#64748b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+    ".tm-sw{appearance:none;-webkit-appearance:none;width:40px;height:24px;border-radius:99px;background:#cbd5e1;position:relative;cursor:pointer;flex:none;transition:background .15s;margin:0}" +
+    ".tm-sw::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}" +
+    ".tm-sw:checked{background:var(--accent,#1d4ed8)}.tm-sw:checked::after{transform:translateX(16px)}.tm-sw:disabled{opacity:.45;cursor:not-allowed}" +
+    ".tm-hint{margin:0;font-size:11px;color:var(--muted,#64748b);line-height:1.4}" +
+    "#terms-modal .tc-box{max-width:420px}#terms-modal .tc-scroll{max-height:42vh;overflow:auto;padding:2px 4px 2px 0;font-size:12.5px;line-height:1.45}" +
+    "#terms-modal .tc-scroll ol{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px}" +
+    "#terms-modal .tc-check{display:flex;gap:8px;align-items:flex-start;margin:12px 0;font-size:12.5px;font-weight:600}" +
+    "#terms-modal .tc-actions{display:flex;gap:8px;justify-content:flex-end}";
+    document.head.appendChild(s);
+}
+
+function collabBuildTeamPane() {
+    const pane = tmEl("pane-team");
+    if (!pane || pane.dataset.tmBuilt) return;
+    tmInjectStyle();
+    const chatBtn = tmEl("collab-chat-pane-btn");
+    pane.dataset.tmBuilt = "1";
+    pane.innerHTML =
+    '<div class="tm-wrap">' +
+      '<div class="tm-hero"><span class="tm-hero-ico">' + TM_ICONS.users + '</span>' +
+        '<div class="tm-hero-txt"><strong>Team room</strong><small>Draw live with one friend</small></div>' +
+        '<span class="tm-status" id="collab-status" data-state="offline">Not collaborating</span></div>' +
+      '<div class="tm-people"><span id="tm-people" class="tm-people"></span><span class="tm-part" id="collab-participants">Only you</span></div>' +
+      '<div class="tm-actions collab-actions">' +
+        '<button type="button" class="tm-btn primary" id="collab-start-btn" onclick="startCollaboration()">' + TM_ICONS.plus + '<span>Start room</span></button>' +
+        '<button type="button" class="tm-btn" id="tm-join-btn" onclick="openQRScanner(\'team\')">' + TM_ICONS.scan + '<span>Scan invite</span></button>' +
+        '<button type="button" class="tm-btn danger" id="collab-leave-btn" onclick="collabLeaveClick()" hidden>' + TM_ICONS.logout + '<span>Leave</span></button>' +
+      '</div>' +
+      '<div id="collab-invite" hidden>' +
+        '<div class="tm-linkrow"><input id="collab-invite-link" readonly aria-label="Invite link">' +
+          '<button type="button" class="tm-btn ico" title="Copy link" aria-label="Copy invite link" onclick="copyCollabInvite()">' + TM_ICONS.copy + '</button>' +
+          '<button type="button" class="tm-btn ico" title="Share" aria-label="Share invite" onclick="collabShareInvite()">' + TM_ICONS.share + '</button></div>' +
+        '<div class="tm-qr" id="collab-qr-card" hidden style="margin-top:10px">' +
+          '<img id="collab-invite-qr" alt="Room invite QR code">' +
+          '<div class="tm-qr-status" id="collab-qr-status"></div>' +
+          '<a class="tm-btn" id="collab-qr-download">' + TM_ICONS.download + '<span>Save QR</span></a>' +
+        '</div>' +
+      '</div>' +
+      '<div class="tm-card"><span class="tm-card-ico">' + TM_ICONS.radio + '</span>' +
+        '<span class="tm-card-txt"><strong id="tm-radio-title">Share my radio</strong><small id="tm-radio-sub">Join a room to sync</small><small id="tm-radio-now"></small></span>' +
+        '<input type="checkbox" class="tm-sw" id="tm-radio-on" aria-label="Synced radio" onchange="collabRadioToggle(this)" disabled></div>' +
+      '<div id="tm-chat-slot"></div>' +
+      '<p class="tm-hint" id="tm-hint"></p>' +
+    '</div>';
+    const slot = tmEl("tm-chat-slot");
+    if (chatBtn && slot) {
+        chatBtn.className = "tm-btn";
+        chatBtn.style.marginTop = "";
+        chatBtn.innerHTML = TM_ICONS.chat + "<span>Team chat</span>";
+        slot.appendChild(chatBtn);
+    }
+    collabRenderPeople();
+    collabTeamSync();
+}
+
+function collabRenderPeople() {
+    const box = tmEl("tm-people");
+    if (!box) return;
+    box.replaceChildren();
+    let list = [];
+    if (collabChannel) {
+        const st = collabChannel.presenceState();
+        list = Object.entries(st).map(([key, v]) => ({ key, meta: Array.isArray(v) ? (v[0] || {}) : (v || {}) }))
+            .sort((a, b) => (!!a.meta.host !== !!b.meta.host) ? (a.meta.host ? -1 : 1) : Number(a.meta.joinedAt || 0) - Number(b.meta.joinedAt || 0))
+            .slice(0, 2);
+    }
+    const chip = (name, role, color, host, empty) => {
+        const c = document.createElement("span");
+        c.className = "tm-chip" + (empty ? " empty" : "");
+        const av = document.createElement("span");
+        av.className = "tm-av";
+        av.style.setProperty("--c", color);
+        av.textContent = empty ? "?" : (name.trim()[0] || "A").toUpperCase();
+        if (host) { const i = document.createElement("i"); i.innerHTML = TM_ICONS.crown; av.appendChild(i); }
+        const pn = document.createElement("span");
+        pn.className = "tm-pn";
+        pn.textContent = name;
+        if (role) { const sm = document.createElement("small"); sm.textContent = role; pn.appendChild(sm); }
+        c.append(av, pn);
+        box.appendChild(c);
+    };
+    if (!list.length) { chip("You", "Offline", "#64748b", false, false); return; }
+    list.forEach(e => {
+        const me = e.key === collabSelfKey;
+        chip(me ? "You" : String(e.meta.name || "Artist").slice(0, 16), e.meta.host ? "Host" : "Guest", collabColor(e.key), !!e.meta.host, false);
+    });
+    if (list.length < 2) chip("Waiting…", "", "#94a3b8", false, true);
+}
+
+function collabTeamSync() {
+    const inRoom = !!collabChannel;
+    const hint = tmEl("tm-hint"), sub = tmEl("tm-radio-sub"), title = tmEl("tm-radio-title"), cb = tmEl("tm-radio-on");
+    if (hint) hint.textContent = !inRoom
+        ? "Start a room or scan an invite to draw live with a friend."
+        : (collabIsHost
+            ? "You are the host: only you can post. Your own design returns when you end the room."
+            : "The host posts the final drawing. Your own design returns when you leave.");
+    if (title) title.textContent = (!inRoom || collabIsHost) ? "Share my radio" : "Listen with host";
+    if (sub) sub.textContent = !inRoom ? "Join a room to sync" : (collabIsHost ? "Everyone hears your station" : "Follow the host's station");
+    if (cb) { cb.disabled = !inRoom; if (!inRoom) { cb.checked = false; collabRadioOn = false; } }
+}
+
+window.collabLeaveClick = function () {
+    if (!collabChannel) return;
+    if (collabIsHost) {
+        askConsent("End the shared room?", "Guests go back to their own drawings. The shared drawing is saved as a draft and your own design comes back.",
+            () => leaveCollaboration(), { danger: true, okLabel: "End room" });
+    } else {
+        askConsent("Leave the room?", "You go back to your own drawing on this device.", () => leaveCollaboration(), { okLabel: "Leave" });
+    }
+};
+
+window.collabShareInvite = async function () {
+    const input = tmEl("collab-invite-link");
+    if (!input || !input.value) return;
+    try {
+        if (navigator.share) {
+            await navigator.share({ title: "Draw with me on ARTcher", text: "Join my shared drawing room", url: input.value });
+            return;
+        }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    copyCollabInvite();
+};
+
+const _updateCollabUI = updateCollabUI;
+updateCollabUI = function () {
+    const r = _updateCollabUI.apply(this, arguments);
+    try { collabRenderPeople(); collabTeamSync(); syncFocusPostUI(); } catch (e) {}
+    return r;
+};
+const _updateCollabPresenceUI = updateCollabPresenceUI;
+updateCollabPresenceUI = function () {
+    const r = _updateCollabPresenceUI.apply(this, arguments);
+    try { collabRenderPeople(); } catch (e) {}
+    return r;
+};
+
+/* ---------- designed QR ticket ---------- */
+function collabComposeQrCard(qrImg, roomId) {
+    const W = 560, H = 800;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    const accent = (getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#1d4ed8").trim();
+    x.fillStyle = "#eef2f7"; x.fillRect(0, 0, W, H);
+    x.save();
+    x.shadowColor = "rgba(15,23,42,.18)"; x.shadowBlur = 30; x.shadowOffsetY = 10;
+    x.fillStyle = "#fff"; x.beginPath(); x.roundRect(30, 30, W - 60, H - 60, 36); x.fill();
+    x.restore();
+    x.save();
+    x.beginPath(); x.roundRect(30, 30, W - 60, 170, [36, 36, 0, 0]); x.clip();
+    const g = x.createLinearGradient(30, 30, W - 30, 200);
+    g.addColorStop(0, accent); g.addColorStop(1, "#7c3aed");
+    x.fillStyle = g; x.fillRect(30, 30, W - 60, 170);
+    x.fillStyle = "rgba(255,255,255,.13)";
+    x.beginPath(); x.arc(W - 70, 60, 90, 0, Math.PI * 2); x.fill();
+    x.beginPath(); x.arc(90, 190, 60, 0, Math.PI * 2); x.fill();
+    x.restore();
+    x.textAlign = "center"; x.fillStyle = "#fff";
+    x.font = "800 40px Inter, sans-serif"; x.fillText("Draw together", W / 2, 112);
+    x.globalAlpha = 0.9; x.font = "600 20px Inter, sans-serif"; x.fillText("THE ARTcher · Team room", W / 2, 150); x.globalAlpha = 1;
+    const qs = 320, qx = (W - qs) / 2, qy = 236;
+    x.fillStyle = "#fff"; x.strokeStyle = "#e2e8f0"; x.lineWidth = 3;
+    x.beginPath(); x.roundRect(qx - 24, qy - 24, qs + 48, qs + 48, 26); x.fill(); x.stroke();
+    x.imageSmoothingEnabled = false; x.drawImage(qrImg, qx, qy, qs, qs); x.imageSmoothingEnabled = true;
+    x.strokeStyle = accent; x.lineWidth = 7; x.lineCap = "round";
+    const m = qx - 24, n = qy - 24, s = qs + 48, L = 36;
+    [[m, n, 1, 1], [m + s, n, -1, 1], [m, n + s, 1, -1], [m + s, n + s, -1, -1]].forEach(p => {
+        x.beginPath(); x.moveTo(p[0] + p[2] * L, p[1]); x.lineTo(p[0], p[1]); x.lineTo(p[0], p[1] + p[3] * L); x.stroke();
+    });
+    x.fillStyle = "#0f172a"; x.font = "800 34px Inter, sans-serif"; x.fillText("Scan to join", W / 2, qy + qs + 86);
+    const code = String(roomId).slice(0, 8).toUpperCase();
+    const spaced = code.slice(0, 4) + " " + code.slice(4);
+    x.font = '700 30px "JetBrains Mono", monospace';
+    const tw = x.measureText(spaced).width + 48, cy = qy + qs + 112;
+    x.globalAlpha = 0.12; x.fillStyle = accent; x.beginPath(); x.roundRect(W / 2 - tw / 2, cy, tw, 58, 29); x.fill(); x.globalAlpha = 1;
+    x.fillStyle = accent; x.fillText(spaced, W / 2, cy + 40);
+    x.fillStyle = "#64748b"; x.font = "600 18px Inter, sans-serif"; x.fillText("2 artists max", W / 2, cy + 98);
+    return c.toDataURL("image/png");
+}
+
+renderCollabInviteQR = function () {
+    const wrapper = tmEl("collab-qr-card"), image = tmEl("collab-invite-qr"), status = tmEl("collab-qr-status");
+    const download = tmEl("collab-qr-download"), invite = tmEl("collab-invite-link");
+    if (!wrapper || !image || !status || !download || !invite) return;
+    const inviteUrl = invite.value;
+    if (!collabChannel || !collabIsHost || !collabRoomId || !inviteUrl) {
+        wrapper.hidden = true;
+        wrapper.dataset.inviteUrl = "";
+        image.removeAttribute("src");
+        download.removeAttribute("href");
+        return;
+    }
+    wrapper.hidden = false;
+    if (wrapper.dataset.inviteUrl === inviteUrl) return;
+    wrapper.dataset.inviteUrl = inviteUrl;
+    status.textContent = "Generating QR…";
+    let dataUrl;
+    try {
+        if (typeof window.qrcode !== "function") throw new Error("The local QR encoder is unavailable.");
+        const qr = window.qrcode(0, "M");
+        qr.addData(inviteUrl);
+        qr.make();
+        dataUrl = qr.createDataURL(8, 0);
+    } catch (error) {
+        image.removeAttribute("src");
+        download.removeAttribute("href");
+        status.textContent = "QR couldn't be created. Copy the invite link instead.";
+        console.error("Could not generate the collaboration invite QR code.", error);
+        return;
+    }
+    const raw = new Image();
+    raw.onload = () => {
+        if (wrapper.dataset.inviteUrl !== inviteUrl) return;
+        const out = collabComposeQrCard(raw, collabRoomId);
+        image.src = out;
+        download.href = out;
+        download.download = "artcher-team-invite-" + collabRoomId.slice(0, 8) + ".png";
+        status.textContent = "Scan to open the invite in ARTcher.";
+    };
+    raw.onerror = () => { status.textContent = "QR couldn't be created. Copy the invite link instead."; };
+    raw.src = dataUrl;
+};
+
+/* ---------- Terms & Conditions before posting ---------- */
+function termsBuild() {
+    if (tmEl("terms-modal")) return;
+    tmInjectStyle();
+    const m = document.createElement("div");
+    m.className = "modal-backdrop";
+    m.id = "terms-modal";
+    m.innerHTML =
+    '<div class="modal-box tc-box" role="dialog" aria-modal="true" aria-labelledby="terms-title">' +
+      '<div class="modal-head"><h3 id="terms-title">Before you post</h3></div>' +
+      '<div class="tc-scroll"><ol>' +
+        '<li><b>Public display.</b> Your drawing, nickname and tile position appear on the public wall (or the event wall) and can be viewed, replayed, reacted to, saved and shared by others.</li>' +
+        '<li><b>Keep it respectful.</b> No sexual, hateful, harassing, violent or illegal content, and no personal information about yourself or anyone else.</li>' +
+        '<li><b>Your work, your permission.</b> You confirm the drawing is yours or you have the right to use it, and you allow ARTcher / ArcherStudio to display, store, replay and export it on the wall, in events, and in images or videos of the wall.</li>' +
+        '<li><b>Moderation.</b> Posts may be hidden or removed by admins or event hosts at any time. Repeated violations may lose posting access.</li>' +
+        '<li><b>Posting is final.</b> Once uploaded, a post stays visible until a moderator removes it. Drawings saved offline upload automatically when you are back online.</li>' +
+        '<li><b>Events.</b> Hosts may hide, reveal or archive an event wall, and some events allow one post per device.</li>' +
+        '<li><b>Your data.</b> We store your nickname, drawing, timestamp and reactions on our servers. Trace/reference images stay on your device and are never posted.</li>' +
+      '</ol></div>' +
+      '<label class="tc-check"><input type="checkbox" id="terms-check"><span>I have read and agree to the Terms &amp; Conditions.</span></label>' +
+      '<div class="tc-actions"><button type="button" class="btn" id="terms-cancel">Cancel</button>' +
+      '<button type="button" class="btn btn-accent" id="terms-go" disabled>Agree &amp; continue</button></div>' +
+    '</div>';
+    document.body.appendChild(m);
+    const check = tmEl("terms-check"), go = tmEl("terms-go");
+    const close = () => { m.classList.remove("open"); m._next = null; };
+    check.addEventListener("change", () => { go.disabled = !check.checked; });
+    tmEl("terms-cancel").addEventListener("click", close);
+    m.addEventListener("click", e => { if (e.target === m) close(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && m.classList.contains("open")) close(); });
+    go.addEventListener("click", () => {
+        if (!check.checked) return;
+        lsSet(LS_TERMS, TERMS_VERSION);
+        const next = m._next;
+        close();
+        if (typeof next === "function") next();
+    });
+}
+function openPostTerms(next) {
+    if (!TERMS_ASK_EVERY_TIME && lsGet(LS_TERMS, "") === TERMS_VERSION) { next(); return; }
+    termsBuild();
+    const m = tmEl("terms-modal");
+    m._next = next;
+    tmEl("terms-check").checked = false;
+    tmEl("terms-go").disabled = true;
+    m.classList.add("open");
+}
+window.openPostTerms = openPostTerms;
+
+/* ---------- init ---------- */
+document.querySelectorAll('[onclick*="shareStudio"]').forEach(b => b.remove());   // no Share in the Post tab
+collabBuildTeamPane();
+try { syncFocusPostUI(); } catch (e) {}
+
+
+
+/* __ARTCHER_TEAM_UPDATE_V2__ =================================================
+   Guest-only Team tab + no post UI for collaborators.
+=========================================================================== */
+(function () {
+    const s = document.createElement("style");
+    s.textContent = "[data-collab-hide]{display:none!important}";
+    document.head.appendChild(s);
+})();
+
+function collabIsGuest() { return !!collabChannel && !collabIsHost; }
+
+/* Buttons that must stay visible in the Post tab for collaborators. */
+const COLLAB_POST_KEEP = [
+    '[onclick*="eplay"]', '[onclick*="PNG"]', '[onclick*="png"]',
+    '[onclick*="ideo"]', '[onclick*="lear"]', '[onclick*="xport"]',
+    '[onclick*="ownload"]', '[data-keep-in-collab]'
+].join(",");
+
+function collabApplyGuestUI() {
+    const inRoom = !!collabChannel, guest = collabIsGuest();
+
+    /* Team tab */
+    const hideIf = (id, cond) => {
+        const el = tmEl(id);
+        if (el) el.toggleAttribute("data-collab-hide", !!cond);
+    };
+    hideIf("collab-start-btn", inRoom);
+    hideIf("tm-join-btn", inRoom);
+    hideIf("collab-invite", guest);          // link + copy + share + QR
+
+    /* Post tab */
+    document.querySelectorAll("[data-collab-post-hid]").forEach(el => {
+        el.removeAttribute("data-collab-hide");
+        el.removeAttribute("data-collab-post-hid");
+    });
+    if (!guest) return;
+    const hide = el => { el.setAttribute("data-collab-hide", ""); el.setAttribute("data-collab-post-hid", ""); };
+    const btn = tmEl("submit-btn");
+    const quick = tmEl("focus-quick-post-btn");
+    if (quick) hide(quick);
+    if (!btn) return;
+    hide(btn);
+    const pane = btn.closest('[id^="pane-"],.tab-pane,.draw-pane,.pane');
+    if (!pane || !pane.querySelector(COLLAB_POST_KEEP)) return;   // can't tell what to keep: only the Post button is hidden
+    const holdsKeep = el => el.matches(COLLAB_POST_KEEP) || !!el.querySelector(COLLAB_POST_KEEP);
+    let node = btn;
+    while (node && node !== pane && node.parentElement) {
+        Array.from(node.parentElement.children).forEach(sib => {
+            if (sib !== node && !holdsKeep(sib)) hide(sib);
+        });
+        node = node.parentElement;
+    }
+}
+
+const _collabTeamSyncV2 = collabTeamSync;
+collabTeamSync = function () {
+    const r = _collabTeamSyncV2.apply(this, arguments);
+    try { collabApplyGuestUI(); } catch (e) { console.error("Guest UI update failed.", e); }
+    return r;
+};
+
+const _syncFocusPostUIV2 = syncFocusPostUI;
+syncFocusPostUI = function () {
+    const r = _syncFocusPostUIV2.apply(this, arguments);
+    try { collabApplyGuestUI(); } catch (e) {}
+    return r;
+};
+
+try { collabApplyGuestUI(); } catch (e) {}
+
+
+/* __ARTCHER_TEAM_UPDATE_V3__ =================================================
+   Post-disabled note, hide sharing when full, simple QR, equal-width buttons.
+=========================================================================== */
+(function () {
+    const s = document.createElement("style");
+    s.textContent =
+        ".tm-wrap .tm-actions{flex-wrap:nowrap}" +
+        ".tm-wrap .tm-actions>.tm-btn{flex:1 1 0;min-width:0;white-space:nowrap}" +
+        ".tm-wrap .tm-actions>.tm-btn span{overflow:hidden;text-overflow:ellipsis}" +
+        "#collab-post-note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;margin:6px 0;border-radius:14px;" +
+        "background:var(--accent-soft,#eff6ff);border:1px solid #e2e8f0;font-size:12.5px;line-height:1.4;font-weight:600}" +
+        "#collab-post-note strong{display:block;font-size:13px;margin-bottom:2px}" +
+        "#collab-post-note small{display:block;font-weight:500;color:var(--muted,#64748b);font-size:11.5px}";
+    document.head.appendChild(s);
+})();
+
+/* ---------- room full? ---------- */
+function collabRoomFull() {
+    if (!collabChannel) return false;
+    try { return Object.keys(collabChannel.presenceState() || {}).length >= 2; }
+    catch (e) { return false; }
+}
+
+/* ---------- guest / room UI (replaces the V2 version) ---------- */
+collabApplyGuestUI = function () {
+    const inRoom = !!collabChannel, guest = collabIsGuest();
+    const hideIf = (id, cond) => {
+        const el = tmEl(id);
+        if (el) el.toggleAttribute("data-collab-hide", !!cond);
+    };
+
+    /* Team tab: one row for the buttons */
+    const row = document.querySelector("#pane-team .collab-actions");
+    const chat = tmEl("collab-chat-pane-btn");
+    if (row && chat && chat.parentElement !== row) row.appendChild(chat);
+    hideIf("collab-chat-pane-btn", !inRoom);
+    hideIf("collab-start-btn", inRoom);
+    hideIf("tm-join-btn", inRoom);
+    hideIf("collab-invite", guest || collabRoomFull());   // link + copy + share + QR
+
+    /* Post tab */
+    document.querySelectorAll("[data-collab-post-hid]").forEach(el => {
+        el.removeAttribute("data-collab-hide");
+        el.removeAttribute("data-collab-post-hid");
+    });
+    const oldNote = tmEl("collab-post-note");
+    if (!guest) { if (oldNote) oldNote.remove(); return; }
+
+    const hide = el => { el.setAttribute("data-collab-hide", ""); el.setAttribute("data-collab-post-hid", ""); };
+    const btn = tmEl("submit-btn");
+    const quick = tmEl("focus-quick-post-btn");
+    if (quick) hide(quick);
+    if (!btn) return;
+    hide(btn);
+
+    const pane = btn.closest('[id^="pane-"],.tab-pane,.draw-pane,.pane');
+    if (pane && pane.querySelector(COLLAB_POST_KEEP)) {
+        const holdsKeep = el => el.id === "collab-post-note" || el.matches(COLLAB_POST_KEEP) || !!el.querySelector(COLLAB_POST_KEEP);
+        let node = btn;
+        while (node && node !== pane && node.parentElement) {
+            Array.from(node.parentElement.children).forEach(sib => {
+                if (sib !== node && !holdsKeep(sib)) hide(sib);
+            });
+            node = node.parentElement;
+        }
+    }
+
+    /* explain why posting is off */
+    let note = oldNote;
+    if (!note) {
+        note = document.createElement("div");
+        note.id = "collab-post-note";
+        note.setAttribute("role", "note");
+        note.innerHTML = '<span>🔒</span><div><strong>Posting is disabled</strong>' +
+            'Only the host can post a shared drawing.' +
+            '<small>Your own design comes back when you leave the room.</small></div>';
+    }
+    if (note.parentElement !== btn.parentElement || note.nextSibling !== btn) btn.parentElement.insertBefore(note, btn);
+};
+
+const _updateCollabPresenceUIV3 = updateCollabPresenceUI;
+updateCollabPresenceUI = function () {
+    const r = _updateCollabPresenceUIV3.apply(this, arguments);
+    try { collabApplyGuestUI(); } catch (e) {}
+    return r;
+};
+
+/* ---------- simple QR card ---------- */
+collabComposeQrCard = function (qrImg) {
+    const W = 520, H = 660;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    const accent = (getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#1d4ed8").trim();
+
+    x.fillStyle = "#eef2f7"; x.fillRect(0, 0, W, H);
+    x.save();
+    x.shadowColor = "rgba(15,23,42,.18)"; x.shadowBlur = 28; x.shadowOffsetY = 8;
+    x.fillStyle = "#fff"; x.beginPath(); x.roundRect(30, 30, W - 60, H - 60, 32); x.fill();
+    x.restore();
+
+    x.save();
+    x.beginPath(); x.roundRect(30, 30, W - 60, 120, [32, 32, 0, 0]); x.clip();
+    const g = x.createLinearGradient(30, 30, W - 30, 150);
+    g.addColorStop(0, accent); g.addColorStop(1, "#7c3aed");
+    x.fillStyle = g; x.fillRect(30, 30, W - 60, 120);
+    x.restore();
+    x.textAlign = "center"; x.fillStyle = "#fff";
+    x.font = "800 38px Inter, sans-serif"; x.fillText("Draw together", W / 2, 106);
+
+    const qs = 320, qx = (W - qs) / 2, qy = 186;
+    x.imageSmoothingEnabled = false;
+    x.drawImage(qrImg, qx, qy, qs, qs);
+    x.imageSmoothingEnabled = true;
+
+    x.fillStyle = "#0f172a"; x.font = "800 32px Inter, sans-serif";
+    x.fillText("Scan to join", W / 2, qy + qs + 70);
+    return c.toDataURL("image/png");
+};
+
+/* ---------- init ---------- */
+(function () {
+    const w = tmEl("collab-qr-card");
+    if (w) w.dataset.inviteUrl = "";            // force the QR to redraw with the new design
+    try { renderCollabInviteQR(); } catch (e) {}
+    try { collabApplyGuestUI(); } catch (e) {}
+})();
+
+const APK_DOWNLOAD_URL = "download/ARTcher-v1.11.apk";
                                                     const LS_APK_DISMISSED = "fw_apk_prompt_dismissed_v1";
                                                     
                                                     function isRunningInsideAppOrPWA() {
@@ -8044,8 +8844,7 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                                                     loadOptions();
                                                     initStudioControls();
                                                     loadDraft();
-                                                    restoreReferenceDraft();
-                                                    initializeCollaborationFromInvite();
+                                                    restoreReferenceDraft(); collabBoot();
                                                     preloadAllFonts();
                                                     layoutMonument();
                                                     applyStageTransform();
@@ -8850,7 +9649,7 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                                                                 const m = document.getElementById("tilepick-msg");
                                                                 const go = document.getElementById("tilepick-go");
                                                                 if (tp.sel) { m.textContent = "Your tile: " + tp.sel.gx + ", " + tp.sel.gy; m.classList.add("ok"); }
-                                                                else { m.textContent = "Tap a free square to claim it."; m.classList.remove("ok"); }
+                                                                else { m.textContent = "Tap a free square next to existing art."; m.classList.remove("ok"); }
                                                                 if (go) go.disabled = !tp.sel;
                                                             }
                                                             
@@ -8861,6 +9660,7 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                                                                 const c = cv.getContext("2d");
                                                                 c.fillStyle = "#fff"; c.fillRect(0, 0, cv.width, cv.height);
                                                                 const accent = (getComputedStyle(document.documentElement).getPropertyValue("--accent") || "#1d4ed8").trim();
+                                                                tp.reach = wallReachSet(wallEntries);
                                                                 for (let r = 0; r < tp.rows; r++) {
                                                                     for (let k = 0; k < tp.cols; k++) {
                                                                         const gx = tp.minX + k, gy = tp.minY + r, x = k * C, y = r * C;
@@ -8872,7 +9672,10 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                                                                             c.fillStyle = "rgba(148,163,184,.5)"; c.fillRect(x, y, C, C);
                                                                         } else {
                                                                             c.save();
-                                                                            c.strokeStyle = "#cbd5e1"; c.lineWidth = 1; c.setLineDash([3, 3]);
+                                                                            const far = !(tp.reach && tp.reach.has(gx + "," + gy));
+                                                                            if (far) { c.fillStyle = "rgba(148,163,184,.18)"; c.fillRect(x + 1, y + 1, C - 2, C - 2); }
+                                                                            c.strokeStyle = far ? "#e2e8f0" : "#cbd5e1"; c.lineWidth = 1; c.setLineDash(far ? [] : [3, 3]);
+                                                                            if (far) { c.beginPath(); c.moveTo(x + 9, y + 9); c.lineTo(x + C - 9, y + C - 9); c.moveTo(x + C - 9, y + 9); c.lineTo(x + 9, y + C - 9); c.stroke(); }
                                                                             c.strokeRect(x + 3.5, y + 3.5, C - 7, C - 7);
                                                                             c.restore();
                                                                         }
@@ -8930,6 +9733,7 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                                                             window.tpContinue = function () {
                                                                 if (!tp.sel) { showToast("Tap a free square first."); return; }
                                                                 if (tpEntryAt(tp.sel.gx, tp.sel.gy)) { tp.sel = null; tpRender(false); showToast("That tile was just taken."); return; }
+                                                                if (!wallReachSet(wallEntries).has(tp.sel.gx + "," + tp.sel.gy)) { tp.sel = null; tpRender(false); showToast("That tile is too far from the wall."); return; }
                                                                 window.__chosenSlot = { gx: tp.sel.gx, gy: tp.sel.gy };
                                                                 const fn = tp.onOk;
                                                                 window.closeTilePicker();
@@ -8942,6 +9746,7 @@ Object.assign(window, { startCollaboration, leaveCollaboration, copyCollabInvite
                                                                 const gy = tp.minY + Math.floor(((e.clientY - r.top) * (cv.height / r.height)) / TP_CELL);
                                                                 if (tpReserved(gx, gy)) { showToast("The center is reserved for the logo."); return; }
                                                                 if (tpEntryAt(gx, gy)) { showToast("That tile is already taken."); return; }
+                                                                if (!wallReachSet(wallEntries).has(gx + "," + gy)) { showToast("Too far from the wall. Pick a tile next to existing art."); return; }
                                                                 tp.sel = { gx, gy };
                                                                 haptic(8);
                                                                 tpRender(false);

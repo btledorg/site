@@ -3,5 +3,6 @@
     "versionName": "1.22",
     "apkUrl": "https://btledorg.github.io/site/events/download/ARTcher-v1.22.apk",
     "changeLog": "Added new features and bug fixes!",
-    "appVersion": "1.0.42",
-    "siteChangeLog": "- Revamped Radio Mode (stability fixes still ongoing)\n- Revamped weather system and seasonal effects\n- Optimized drawing canvas and brush performance\n- General app performance optimizations\n- Added new features and UI improvements"}
+    "appVersion": "1.0.43",
+    "siteChangeLog": "- Revamped Radio Mode (stability fixes still ongoing)\n- Revamped weather system and seasonal effects\n- Optimized drawing canvas and brush performance\n- General app performance optimizations\n- New Team room: cleaner layout, simple QR invite, host/guest roles, auto-hidden invites when the room is full\n- Synced radio: listen along with the host\n- Host-only posting in shared rooms, with a clear message for guests\n- Your own design is now safe while in a room and returns when you leave\n- Host can resume a room after a refresh\n- Terms & Conditions shown before posting\n- Wall tiles can now only be claimed next to existing art"
+}
