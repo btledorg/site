@@ -37,7 +37,8 @@ function logAppDiagnostic(level, ...values) {
     renderAppDiagnostics();
 }
 
-["warn", "error"].forEach(level => {
+["log", "info", "debug", "warn", "error"].forEach(level => {
+    if (typeof console[level] !== "function") return;
     const original = console[level].bind(console);
     console[level] = (...values) => {
         original(...values);
@@ -55,6 +56,16 @@ window.addEventListener("unhandledrejection", event => {
 function clearAppDiagnostics() {
     appDiagnostics.length = 0;
     renderAppDiagnostics();
+}
+
+function toggleAppDiagnostics() {
+    const output = document.getElementById("app-diagnostics-log");
+    const toggle = document.getElementById("app-diagnostics-toggle");
+    if (!output || !toggle) return;
+    const isExpanded = toggle.getAttribute("aria-expanded") === "true";
+    output.hidden = isExpanded;
+    toggle.setAttribute("aria-expanded", String(!isExpanded));
+    toggle.textContent = isExpanded ? "Show logs" : "Hide logs";
 }
 
 function copyAppDiagnostics() {
@@ -1084,21 +1095,12 @@ var nativeRadioSig = "";
                     let stations;
                     if (!radioDirectoryLoaded && radioStations.length) {
                         stations = radioStations;
-                        const startedCount = radioStations.length;
+                        const activeUrl = radioStations[currentStationIdx]?.url;
                         fetchRadioStations().then(() => {
                             if (!musicPlaying || !hasNativeRadio()) return;
-                            if (radioStations.length !== startedCount) {
-                                logAppDiagnostic("info", "Station directory refreshed during playback; restarting current station", {
-                                    previousCount: startedCount,
-                                    updatedCount: radioStations.length,
-                                    index: currentStationIdx
-                                });
-                            }
                             nativeSendStations();
-                            if (radioStations.length) {
-                                nativePaused = false;
-                                nativePlay(currentStationIdx);
-                            }
+                            const newIdx = radioStations.findIndex(station => station.url === activeUrl);
+                            if (newIdx >= 0) currentStationIdx = newIdx;
                         }).catch(error => console.error("Unable to refresh radio stations.", error));
                     } else {
                         stations = await fetchRadioStations();
@@ -1209,6 +1211,9 @@ var nativeRadioSig = "";
                         updateMuteIcon();
                         break;
                         case "error":
+                        const badStation = radioStations[currentStationIdx];
+                        if (badStation) pruneBrokenStation(badStation);
+                        if (radioStations.length) nativePlay(currentStationIdx % radioStations.length);
                         showToast("Stream failed, trying the next station...");
                         updateMuteIcon("Android stream error — see App diagnostics");
                         break;
