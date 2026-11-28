@@ -7098,7 +7098,6 @@ function preloadAllFonts() {
                 // =========================================================================
                 installNativeRadioBridge();
 
-// ---- haptics: real vibration through the app ----
                 const _origHaptic = haptic;
                 var _nativeHapticAt = 0;
                 haptic = function (ms = 8) {

@@ -205,6 +205,38 @@ let usingSynthFallback = false;
 let musicTimer = null;
 let chordStep = 0;
 let radioModuleInitialized = false;
+let radioMetadataBridgeWarned = false;
+
+function getRadioAppPlaybackState() {
+    if (!musicPlaying) return "stopped";
+    if (radioIsPaused) return "paused";
+    return radioAudio && !radioAudio.paused ? "playing" : "buffering";
+}
+
+function publishRadioMetadataToApp(state = getRadioAppPlaybackState()) {
+    if (!window.AndroidRadio) return;
+    if (typeof window.AndroidRadio.setWebRadioMetadata !== "function") {
+        if (!radioMetadataBridgeWarned) {
+            radioMetadataBridgeWarned = true;
+            logAppDiagnostic("warn", "Android metadata bridge is missing setWebRadioMetadata(String)");
+        }
+        return;
+    }
+
+    const station = radioStations[currentStationIdx];
+    const metadata = {
+        name: station ? station.name : "",
+        country: station ? station.country || "" : "",
+        state,
+        volume: Math.round(musicVolume * 100)
+    };
+
+    try {
+        window.AndroidRadio.setWebRadioMetadata(JSON.stringify(metadata));
+    } catch (error) {
+        logAppDiagnostic("error", "Android radio metadata update failed", error);
+    }
+}
 
 function initializeRadioModule() {
     if (radioModuleInitialized) return;
@@ -635,6 +667,7 @@ async function fetchRadioStations(force = false) {
             stopSynthFallback();
             const station = stations[currentStationIdx % stations.length];
             updateMuteIcon(`Connecting: ${station.name}...`);
+            publishRadioMetadataToApp("buffering");
             logAppDiagnostic("info", "Connecting to radio station", station.name, new URL(station.url).host, `attempt ${attempt + 1}`);
             
             if (!radioAudio) {
@@ -650,6 +683,7 @@ async function fetchRadioStations(force = false) {
                 if (settled || !musicPlaying) return;
                 settled = true;
                 logAppDiagnostic("error", "Radio stream timed out", station.name, new URL(station.url).host);
+                publishRadioMetadataToApp("error");
                 pruneBrokenStation(station);
                 playCurrentStation(attempt + 1);
             }, 7000);
@@ -659,12 +693,19 @@ async function fetchRadioStations(force = false) {
                 settled = true;
                 if (!musicPlaying) return;
                 logAppDiagnostic("info", "Radio stream is playing", station.name);
+                publishRadioMetadataToApp("playing");
                 const tag = station.country ? ` (${station.country})` : "";
                 updateMuteIcon(`Live: ${station.name}${tag}`);
             };
             
-            radioAudio.onwaiting = () => logAppDiagnostic("warn", "Radio stream is buffering", station.name);
-            radioAudio.onstalled = () => logAppDiagnostic("warn", "Radio stream stalled", station.name);
+            radioAudio.onwaiting = () => {
+                logAppDiagnostic("warn", "Radio stream is buffering", station.name);
+                publishRadioMetadataToApp("buffering");
+            };
+            radioAudio.onstalled = () => {
+                logAppDiagnostic("warn", "Radio stream stalled", station.name);
+                publishRadioMetadataToApp("buffering");
+            };
             
             radioAudio.onerror = () => {
                 clearTimeout(failTimeout);
@@ -673,6 +714,7 @@ async function fetchRadioStations(force = false) {
                 logAppDiagnostic("error", "Radio media error", station.name, radioAudio.error
                     ? { code: radioAudio.error.code, message: radioAudio.error.message }
                     : "No MediaError details");
+                    publishRadioMetadataToApp("error");
                     pruneBrokenStation(station);
                     playCurrentStation(attempt + 1);
                 };
@@ -688,6 +730,7 @@ async function fetchRadioStations(force = false) {
                             musicPlaying = false;
                             clearInterval(radioAutoDJTimer);
                             radioAutoDJTimer = null;
+                            publishRadioMetadataToApp("stopped");
                             updateMuteIcon("Tap Play to allow radio audio");
                             return;
                         }
@@ -704,6 +747,7 @@ async function fetchRadioStations(force = false) {
                 const label = document.getElementById("music-volume-val");
                 if (label) label.textContent = Math.round(musicVolume * 100) + "%";
                 if (radioAudio) radioAudio.volume = musicVolume;
+                publishRadioMetadataToApp();
             }
             
             function syncRadioAutoDJTimer() {
@@ -1116,76 +1160,12 @@ async function fetchRadioStations(force = false) {
                             }, 10000);
                         }
                         
-                        const _origSelectRadioStation = selectRadioStation;
-                        selectRadioStation = function (index) {
-                            if (!hasNativeRadio()) return _origSelectRadioStation.apply(this, arguments);
-                            resetNativeFailureState();
-                            clearNativePlayPending();
-                            return _origSelectRadioStation.apply(this, arguments);
-                        };
-                        
-                        // ---- play: HTML <audio> replaced by the native service ----
-                        const _origPlayCurrentStation = playCurrentStation;
-                        playCurrentStation = async function (attempt = 0) {
-                            if (!hasNativeRadio()) return _origPlayCurrentStation.apply(this, arguments);
-                            if (!musicPlaying) return;
-                            let stations;
-                            if (!radioDirectoryLoaded && radioStations.length) {
-                                stations = radioStations;
-                                const activeUrl = radioStations[currentStationIdx]?.url;
-                                fetchRadioStations().then(() => {
-                                    if (!musicPlaying || !hasNativeRadio()) return;
-                                    nativeSendStations();
-                                    const newIdx = radioStations.findIndex(station => station.url === activeUrl);
-                                    if (newIdx >= 0) currentStationIdx = newIdx;
-                                }).catch(error => console.error("Unable to refresh radio stations.", error));
-                            } else {
-                                stations = await fetchRadioStations();
-                            }
-                            if (!musicPlaying) return;
-                            if (!stations.length) { startSynthFallback("Offline chill synth ♪"); return; }
-                            stopSynthFallback();
-                            if (radioAudio) { try { radioAudio.pause(); radioAudio.removeAttribute("src"); } catch (e) {} }
-                            nativePaused = false;
-                            nativePlay(currentStationIdx % stations.length);
-                        };
-                        
-                        // ---- stop (More-page row, topbar pill X, sleep timer) ----
+                        // ---- playback stays in the website; only metadata is sent to Android ----
                         const _origToggleMusic = toggleMusic;
-                        toggleMusic = function () {
-                            if (hasNativeRadio() && (!musicPlaying || nativePaused)) {
-                                resetNativeFailureState();
-                            }
-                            if (hasNativeRadio() && musicPlaying && nativePaused) {
-                                nativePaused = false;
-                                radioIsPaused = false;
-                                syncRadioAutoDJTimer();
-                                return playCurrentStation(0);
-                            }
-                            if (hasNativeRadio() && musicPlaying) {
-                                clearNativePlayPending();
-                                try { window.AndroidRadio.stop(); } catch (error) { logAppDiagnostic("error", "Android stop call failed", error); }
-                                nativePaused = false;
-                                radioIsPaused = false;
-                            }
-                            return _origToggleMusic.apply(this, arguments);
-                        };
-                        
-                        // ---- volume ----
-                        const _origSetMusicVolume = setMusicVolume;
-                        setMusicVolume = function (val) {
-                            _origSetMusicVolume.apply(this, arguments);
-                            if (hasNativeRadio()) { try { window.AndroidRadio.setVolume(Math.round(musicVolume * 100)); } catch (e) {} }
-                        };
-                        
-                        // ---- sleep timer: must run natively, JS timers freeze when the screen is off ----
-                        const _origSetRadioSleepTimer = setRadioSleepTimer;
-                        setRadioSleepTimer = function (minsStr) {
-                            _origSetRadioSleepTimer.apply(this, arguments);
-                            if (!hasNativeRadio()) return;
-                            const mins = Number(minsStr) || 0;
-                            clearTimeout(radioSleepTimer);
-                            try { window.AndroidRadio.setSleepTimer(mins); } catch (e) {}
+                        toggleMusic = async function () {
+                            const result = await _origToggleMusic.apply(this, arguments);
+                            publishRadioMetadataToApp(musicPlaying ? "buffering" : "stopped");
+                            return result;
                         };
                         
                         // ---- native -> web state (notification buttons, headset keys, errors) ----
@@ -1199,6 +1179,12 @@ async function fetchRadioStations(force = false) {
                                 errorType: s.errorType,
                                 detail: s.detail
                             });
+                            if (!nativePlayPending) {
+                                logAppDiagnostic("info", "Ignored native radio state; website audio owns playback", {
+                                    state: s.state || "unknown"
+                                });
+                                return;
+                            }
                             if (nativePlayPending && s.state === "stopped") {
                                 logAppDiagnostic("info", "Ignored stray Android 'stopped' while Play is pending");
                                 return;
@@ -1392,12 +1378,10 @@ async function fetchRadioStations(force = false) {
                                 try {
                                     if (hasNativeRadio()) {
                                         fetchRadioStations();
-                                        if (typeof window.AndroidRadio.requestState === "function") {
-                                            window.AndroidRadio.requestState();
-                                        }
+                                        window.AndroidRadio.stop();
                                     }
                                 } catch (error) {
-                                    logAppDiagnostic("error", "Android radio state request failed", error);
+                                    logAppDiagnostic("error", "Unable to stop native playback while switching to WebView audio", error);
                                 }
                                 
                                 
